@@ -1,0 +1,32 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Builds y caché
+.next/
+dist/
+out/
+.turbo/
+*.tsbuildinfo
+coverage/
+
+# Variables de entorno (nunca se suben)
+.env
+.env.*
+!.env.example
+
+# Media generada localmente
+media/
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

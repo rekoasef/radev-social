@@ -1,0 +1,74 @@
+LUMUS — BRANDING (sacado del código real, src/app/globals.css y layout.tsx)
+
+NOMBRE / WORDMARK
+- "LUMUS" en mayúsculas, semibold, tracking ancho (0.18em), color #e4dfff
+- Tipografía del wordmark y títulos: Hanken Grotesk (fallback Geist Sans)
+
+LOGO
+- Una "L" estilizada: trazo vertical redondeado arriba + base en cuña diagonal
+- Degradado blanco -> lavanda (#e4dfff aprox. a #9d95d8)
+- Sobre fondo oscuro se usa con mix-blend-screen y opacidad 0.9
+
+ORBE
+- Esfera violeta luminosa con anillos de luz, partículas y reflejo abajo
+- Es el elemento emocional de la marca (landing, onboarding, estados vacíos)
+
+TIPOGRAFÍA
+- Títulos / display: Hanken Grotesk
+- Texto / UI: Geist Sans
+- Números / código: Geist Mono
+- Escala: 12 / 14 / 16 / 18 / 20 / 24 / 30 / 36 px
+
+COLORES — MODO OSCURO (default)
+Fondos
+  bg-base        #0b0b12
+  bg-surface     #15141d
+  card           #171620
+  bg-elevated    #1d1b28
+  popover        #201f27
+  bg-hover       #2a2932
+  sidebar        #111018
+  borde          #2e2b3d
+Texto
+  primario       #f0edf7
+  secundario     #c8c4d7
+  apagado        #8f8b9e
+  foreground     #e5e0ed
+Acento (lavanda Lumus)
+  accent         #bdb4ff
+  accent hover   #a99dff
+  accent muted   rgba(189,180,255,0.12)
+  wordmark       #e4dfff
+Semánticos
+  éxito          #22c55e
+  aviso          #ffb86e  (durazno)
+  peligro        #ef4444
+  info           #3b82f6
+
+COLORES — MODO CLARO
+  fondo #fafafa · surface #ffffff · elevated #f4f4f8 · hover #ededf5
+  borde #e4e4ef · texto #0f0f1a / #5a5a72 / #9494aa
+  acento #7c6dfa (violeta Lumus clásico) · peligro #dc2626
+
+COLOR "HISTÓRICO" DE LA MARCA
+- #7c6dfa es el violeta Lumus original (lo usa el modo claro y el manifest).
+  En oscuro se aclaró a #bdb4ff para que tenga contraste.
+- Color de la PWA (theme/background): #0a0a0f
+
+FONDO DE PANTALLA / ATMÓSFERA
+- Dos glows radiales sobre el fondo: lavanda arriba a la izquierda
+  rgba(189,180,255,0.08) y durazno arriba a la derecha rgba(255,184,110,0.045)
+- Paneles "glass": rgba(24,23,34,0.68) con borde rgba(255,255,255,0.08)
+  y borde superior más claro rgba(255,255,255,0.14)
+- Grilla sutil de líneas rgba(255,255,255,0.025) en algunas secciones
+
+FORMAS
+- Radios: 4 (tags) / 8 (inputs, botones) / 12 (cards) / 16 (modales) / 20 / pill
+- Botón principal de landing: pill, fondo #f0edf7, texto #0b0b12
+- Sombras: 0 1px 3px / 0 4px 16px / 0 8px 32px negras; glow de acento
+  0 0 24px rgba(189,180,255,0.22)
+
+PERSONALIDAD
+- Premium, minimalista con carácter, oscuro por default (refs: Linear, Arc, Raycast, Apple)
+- El color señaliza, no decora; mucho espacio; micro-animaciones
+- Voz: español rioplatense, cercano, natural, nunca robótico
