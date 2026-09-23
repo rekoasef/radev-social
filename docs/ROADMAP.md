@@ -8,12 +8,12 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 
 ## Fase 0 — Cimientos (local)
 
-- [ ] Monorepo con pnpm workspaces + Turborepo (`apps/web`, `apps/worker`, `packages/core`, `packages/db`, `packages/slides`, `packages/ai`, `packages/publishers`)
-- [ ] TypeScript strict compartido, Biome, Vitest
-- [ ] Next.js App Router + Tailwind + shadcn/ui en `apps/web`
+- [x] Monorepo con pnpm workspaces + Turborepo (`apps/web`, `apps/worker`, `packages/core`, `packages/db`, `packages/slides`, `packages/ai`, `packages/publishers`)
+- [x] TypeScript strict compartido, Biome, Vitest
+- [x] Next.js App Router + Tailwind + shadcn/ui en `apps/web`
 - [ ] Docker Compose local: `postgres`, `web`, `worker` (esqueleto), con imágenes multi-arquitectura
-- [ ] Drizzle: tablas `brands`, `settings`; seed inicial de RAdev y Lumus desde `seeds/brands/` (sin assets todavía)
-- [ ] Better Auth con GitHub + lista blanca `ALLOWED_EMAILS`
+- [x] Drizzle: tablas `brands`, `settings`; seed inicial de RAdev y Lumus desde `seeds/brands/` (sin assets todavía)
+- [x] Better Auth con GitHub + lista blanca `ALLOWED_EMAILS`
 - [ ] Layout base del panel (navegación, selector de marca)
 - [ ] Sección "Comandos" del CLAUDE.md actualizada
 

@@ -49,17 +49,24 @@ docs/               Documentación del proyecto
 
 ## Comandos
 
-Se definen en la Fase 0. Cuando existan, mantené esta sección actualizada:
+Mantené esta sección actualizada. Antes de cualquier comando: `nvm use` (Node 24, ver `.nvmrc`).
 
 ```
-pnpm dev            # web + worker en modo desarrollo
+docker compose up -d postgres   # Postgres local (puerto 5433 en 127.0.0.1)
+pnpm dev            # modo desarrollo (hoy: web en http://localhost:3000)
 pnpm test           # Vitest en todos los paquetes
-pnpm lint           # Biome
-pnpm db:generate    # generar migración Drizzle
+pnpm lint           # Biome (pnpm format corrige formato)
+pnpm typecheck      # TypeScript en todos los paquetes
+pnpm db:generate    # generar migración Drizzle tras cambiar el schema
 pnpm db:migrate     # aplicar migraciones
-pnpm db:seed        # cargar marcas iniciales desde seeds/brands
-docker compose up   # stack completo local
+pnpm db:seed        # cargar marcas iniciales (solo agrega las que faltan)
+pnpm db:studio      # ver y editar la base
 ```
+
+Notas del entorno:
+- El `.env` vive en la raíz. La web lo carga con `scripts/with-root-env.mjs`; los scripts de `packages/db`, con `load-root-env.ts`.
+- El puerto 5432 lo usa un Postgres nativo de WSL de otros proyectos: el nuestro va por 5433. No tocar el nativo.
+- pnpm bloquea scripts de instalación y versiones muy recientes: se autorizan en `pnpm-workspace.yaml`.
 
 ## Reglas de arquitectura (no negociables)
 
