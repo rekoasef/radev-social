@@ -54,7 +54,7 @@ Mantené esta sección actualizada. Antes de cualquier comando: `nvm use` (Node 
 
 ```
 docker compose up -d postgres   # Postgres local (puerto 5433 en 127.0.0.1)
-pnpm dev            # modo desarrollo (hoy: web en http://localhost:3000)
+pnpm dev            # modo desarrollo: web (http://localhost:3000) + worker
 pnpm test           # Vitest en todos los paquetes
 pnpm lint           # Biome (pnpm format corrige formato)
 pnpm typecheck      # TypeScript en todos los paquetes
@@ -67,6 +67,7 @@ pnpm db:studio      # ver y editar la base
 Notas del entorno:
 - El `.env` vive en la raíz. La web lo carga con `scripts/with-root-env.mjs`; los scripts de `packages/db`, con `load-root-env.ts`.
 - El puerto 5432 lo usa un Postgres nativo de WSL de otros proyectos: el nuestro va por 5433. No tocar el nativo.
+- El worker escribe logs JSON (una línea por evento); `LOG_LEVEL=debug` muestra más. pg-boss guarda su cola en el esquema `pgboss` de la misma base.
 - pnpm bloquea scripts de instalación y versiones muy recientes: se autorizan en `pnpm-workspace.yaml`.
 
 ## Reglas de arquitectura (no negociables)
