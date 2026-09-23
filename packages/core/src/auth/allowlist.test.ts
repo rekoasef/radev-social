@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isEmailAllowed, parseAllowedEmails } from "./allowlist";
+import { isEmailAllowed, isOperator, parseAllowedEmails } from "./allowlist";
 
 describe("parseAllowedEmails", () => {
   it("returns an empty set when the value is missing or blank", () => {
@@ -33,5 +33,22 @@ describe("isEmailAllowed", () => {
 
   it("rejects everyone when the allowlist is empty", () => {
     expect(isEmailAllowed("renzo@example.com", parseAllowedEmails(""))).toBe(false);
+  });
+});
+
+describe("isOperator", () => {
+  const allowed = parseAllowedEmails("renzo@example.com");
+
+  it("accepts a verified, allowlisted email", () => {
+    expect(isOperator({ email: "Renzo@example.com", emailVerified: true }, allowed)).toBe(true);
+  });
+
+  it("rejects an allowlisted email that the provider did not verify", () => {
+    expect(isOperator({ email: "renzo@example.com", emailVerified: false }, allowed)).toBe(false);
+    expect(isOperator({ email: "renzo@example.com" }, allowed)).toBe(false);
+  });
+
+  it("rejects a verified email outside the allowlist", () => {
+    expect(isOperator({ email: "intruso@example.com", emailVerified: true }, allowed)).toBe(false);
   });
 });

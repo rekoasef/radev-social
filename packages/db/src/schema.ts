@@ -64,3 +64,5 @@ export const settings = pgTable("settings", {
 export type Brand = typeof brands.$inferSelect;
 export type NewBrand = typeof brands.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
+
+export * from "./auth-schema";

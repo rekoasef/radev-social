@@ -1,14 +1,17 @@
 import { listBrands } from "@radev/db";
 import { connection } from "next/server";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ChannelMonitor } from "@/components/console/channel-monitor";
 import { ConsoleClock } from "@/components/console/console-clock";
 import { Plate } from "@/components/console/plate";
 import { Rundown } from "@/components/console/rundown";
 import { Tally } from "@/components/console/tally";
 import { db } from "@/lib/db";
+import { requireOperator } from "@/lib/session";
 
 export default async function Home() {
   await connection();
+  const { user } = await requireOperator();
   const channels = await listBrands(db);
   const onAir = channels.filter((brand) => brand.archivedAt === null).length;
 
@@ -22,7 +25,14 @@ export default async function Home() {
             </span>
             <Tally state="ready">Base en línea</Tally>
           </div>
-          <ConsoleClock />
+          <div className="flex items-center gap-6">
+            <ConsoleClock />
+            <div className="hidden flex-col items-end gap-1.5 md:flex">
+              <span className="text-sm text-ink">{user.name}</span>
+              <span className="plate-text text-ink-faint">Operador</span>
+            </div>
+            <SignOutButton />
+          </div>
         </div>
       </header>
 

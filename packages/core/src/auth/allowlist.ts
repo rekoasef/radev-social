@@ -19,3 +19,16 @@ export function isEmailAllowed(
   if (!email) return false;
   return allowed.has(email.trim().toLowerCase());
 }
+
+export type OperatorIdentity = {
+  email?: string | null | undefined;
+  emailVerified?: boolean | null | undefined;
+};
+
+/**
+ * The panel has a single operator: only a verified email that is in the allowlist may
+ * sign in. An unverified provider email could belong to someone else.
+ */
+export function isOperator(identity: OperatorIdentity, allowed: ReadonlySet<string>): boolean {
+  return identity.emailVerified === true && isEmailAllowed(identity.email, allowed);
+}
