@@ -1,13 +1,18 @@
 // SlideFrame, style presets, slide templates and their Zod schemas.
 export { type Carousel, carouselSchema, HOOK_TYPES, type HookType } from "./content/carousel";
 export {
+  type ChartDataset,
+  chartDatasetSchema,
+  type Datasets,
+} from "./content/datasets";
+export {
   countEmphasis,
   MAX_EMPHASIS_PER_SLIDE,
   type ParsedText,
   parseEmphasis,
   type TextSegment,
 } from "./content/emphasis";
-export { exampleCarousel, exampleSlides } from "./content/examples";
+export { exampleCarousel, exampleDatasets, exampleSlides } from "./content/examples";
 export { limits } from "./content/limits";
 export {
   SLIDE_TYPES,
@@ -25,6 +30,7 @@ export {
   isFontFamily,
   supportsWeight,
 } from "./fonts/registry";
+export { formatNumber } from "./format";
 export {
   EXCLUSION_ZONES,
   FORMAT,

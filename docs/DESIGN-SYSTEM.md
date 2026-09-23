@@ -95,6 +95,7 @@ Las slides sin referencia (`statement`, `question`, `cta` y las demás) se dise�
 
 **`comparison`** — X contra Y.
 - `title` (≤60) · `left` / `right`: `{ name≤18, icon?, points: 2–5 × ≤40 }` · `verdict` (≤90)
+- `right` es la opción hacia la que se inclina el veredicto: el preset la destaca. Si ninguna gana, el veredicto lo dice igual; va a la derecha la que se recomienda en la mayoría de los casos.
 
 **`costBreakdown`** — desglose de costos (serie "¿Cuánto cuesta realmente...?").
 - `title` (≤60) · `items`: 3–6 × `{ label≤30, range≤20 }` · `total`: `{ label≤20, range≤24 }` · `note?` (≤100)
@@ -109,7 +110,8 @@ Las slides sin referencia (`statement`, `question`, `cta` y las demás) se dise�
 
 **`chart`** — gráfico simple de líneas o barras en SVG.
 - `title` (≤60) · `kind`: `line` | `bar` · `datasetRef` · `caption?` (≤100) · `source` (≤90)
-- La IA elige el dataset; los puntos los inyecta el código.
+- La IA elige el dataset; los puntos los inyecta el código. Cada dataset (`chartDatasetSchema`) tiene `unit?`, `unitPosition` y 2–60 puntos `{ label≤10, value }`. El render recibe los datasets de la marca; si falta el de `datasetRef`, falla (nunca se dibuja un gráfico sin datos reales).
+- Números con "." de miles y "," decimal (`formatNumber`, sin `Intl` para no depender del runtime). Sin decimales si todos los valores son enteros o desde 100.
 
 **`cta`** — cierre con llamado a la acción.
 - `title` (≤70) · `subtitle?` (≤120) · `button` (≤50) · `icon?`
@@ -178,6 +180,12 @@ Carousel = {
 - `statement`: el visual `from → to` son dos tarjetas en los extremos unidas por un conector punteado con flecha; el ícono del destino va en acento.
 - `question`: caja destacada (radio `callout`) con el ícono en acento a la izquierda y `lead` (en negrita) + `text` como un solo párrafo.
 - `cta`: botón sólido en acento con texto en el color de fondo y el ícono; debajo, el tagline de la marca (`footer.tagline`) con barrita, en `muted`.
+- `comparison`: dos columnas; la izquierda neutra (borde `line`, sin brillo), la derecha en acento (borde, brillo, viñetas e ícono). Veredicto abajo.
+- `costBreakdown`: filas concepto / rango separadas por líneas finas, rangos en `fonts.label` 700 con números tabulares; el total en una caja destacada (radio `callout`) con el rango grande en acento. La nota, chica abajo.
+- `steps`: badges cuadrados "01", "02"… en acento, unidos por un riel vertical; título del paso en 700 y texto en apoyo.
+- `bigNumber`: la cifra enorme en acento con brillo, en una línea (el tamaño se ajusta al largo, hasta 260 px); etiqueta en 600, contexto y fuente.
+- `chart`: SVG propio. Grilla punteada en `line`, ejes en `muted`. Línea en acento con brillo y área con degradado; barras en acento al 42 % salvo la última, sólida. El último valor va en una etiqueta en acento. Con ≤ 8 puntos se rotulan todos; si hay más, el primero, el del medio y el último.
+- Toda slide con datos (`bigNumber`, `chart`) muestra "Fuente: …" en `muted`.
 - Tamaño del título según el largo visible: hasta 24 caracteres 100 px, hasta 48 84 px, más 70 px (a calibrar en la T11).
 - Las etiquetas de un mismo diagrama comparten tamaño: se achican todas juntas hasta que entra la palabra más larga (en los chips, la etiqueta entera, que va en una línea), con un mínimo. Es una estimación por cantidad de caracteres, sin medir en el navegador.
 

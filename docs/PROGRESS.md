@@ -9,8 +9,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T6: plantillas `bold` de datos (`comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart`) con datos de ejemplo.
-- **Última actualización:** 2026-09-23, al cerrar la T5 de la Fase 1
+- **Próximo paso:** T7: `brand_assets` (tabla, subida con validación, `media/`) y el seed que enlaza los assets de Lumus.
+- **Última actualización:** 2026-09-23, al cerrar la T6 de la Fase 1
+- **Para retomar:** las 12 plantillas de `bold` se ven en `/render/preview/radev/<tipo>?token=…` con `pnpm dev`. La T7 toca la base (tabla nueva `brand_assets` + migración): explicarle al operador la migración antes de correrla.
 
 ## Fase 1 — tareas
 
@@ -24,7 +25,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | T3 | `SlideFrame` 4:5 (encabezado, pie, número de página, decoraciones deterministas, zonas seguras). Ruta `/render/preview/...` protegida con `RENDER_TOKEN` (sin login). Capa de zonas seguras y superposición de la captura de TikTok. Playwright como dependencia de desarrollo para capturas. 👁 | ✅ |
 | T4 | Plantillas `bold` con referencia: `cardGrid`, `flow`, `hubDiagram`. 👁 contra las refs | ✅ |
 | T5 | Plantillas `bold` sin referencia: `cover`, `statement`, `question`, `cta`. 👁 | ✅ |
-| T6 | Plantillas `bold` de datos: `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart` (datos de ejemplo). 👁 | |
+| T6 | Plantillas `bold` de datos: `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart` (datos de ejemplo). 👁 | ✅ |
 | T7 | `brand_assets`: tabla, subida con validación de tipo y tamaño, `media/`. El seed carga y enlaza los assets de Lumus | |
 | T8 | Preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus. 👁 | |
 | T9 | CRUD de marcas (borrar solo sin posts) | |
@@ -84,11 +85,17 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Plantillas sin referencia (T5)**: reglas en `DESIGN-SYSTEM.md` §7. Las plantillas reciben `{ slide, tokens }` (`TemplateSet<Tokens>` en `slide-content.tsx`) para lo que no viaja en variables CSS, como el tagline.
 - **Tagline**: se muestra debajo del botón de la `cta` (resuelto el pendiente de la T3). El token `footer.tagline` queda con ese uso.
 - **Interlineado del título: 1.06** (no 0.95): con 0.95 las mayúsculas acentuadas se montan sobre la línea de arriba. Verificado con una captura ampliada; ojo, las capturas achicadas muestran marcas falsas entre líneas.
+- **Plantillas de datos (T6)**: las 12 plantillas de `bold` están hechas. Reglas en `DESIGN-SYSTEM.md` §5 y §7. En `comparison`, la columna derecha es la que se destaca (dato para el prompt de la Fase 3).
+- **Datasets de gráficos**: `chartDatasetSchema` y el tipo `Datasets` en `content/datasets.ts`. `SlideContent` recibe `datasets` y cada plantilla los ve (`TemplateProps`). Si falta el dataset, `chart` tira error: el render falla antes de publicar un gráfico sin datos. Para la preview, `exampleDatasets` (valores inventados solo para la forma). Los reales llegan con `data.json` (Fase 5).
+- **Formato de números**: `formatNumber` / `decimalsFor` / `withUnit` en `src/format.ts`, a mano (sin `Intl`).
+- **Geometría del gráfico**: `presets/bold/chart-layout.ts` (`niceStep`, `niceScale`, `chartLayout`), con tests.
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante
 
 **Fase 1:**
+- T11: el control de zonas seguras y desbordes de las T4–T6 se hizo con un script de Playwright temporal (no está en el repo): recorre `[data-qa="content"]` contra el área segura y la columna de TikTok, y `[data-qa="text"]` buscando `scrollWidth/scrollHeight` mayores que la caja o texto que se sale de su contenedor. Conviene sumarlo al repo (por ejemplo `pnpm capture --check`) para calibrar límites en la T11; en la Fase 2 es la base del QA del render (§9).
+- Las plantillas se prueban con variantes (3–6 nodos, textos largos) armando una página temporal en `apps/web/app/render/tmp-variants/` que se borra antes del commit. En la T11 esas variantes pueden pasar a ser ejemplos permanentes de casos extremos.
 - T11: en `flow` de 4 nodos una palabra de ~20 letras ("Internacionalización") no entra ni al tamaño mínimo y se corta dentro de la tarjeta (`overflow-wrap: anywhere`, último recurso). Evaluar si conviene limitar el largo de palabra de las etiquetas. También revisar el salto de 84 a 70 px en títulos de más de 48 caracteres.
 - La captura de TikTok (`docs/references/tiktok-4x5.jpeg`, post "¿Cuánto cuesta tener una APP?") ya se superpuso en la T3 (`overlay=tiktok`) y confirmó las zonas seguras.
 - Ese post usa una tipografía condensada en el título, distinta de Inter Tight de las referencias. Por ahora se sigue con Inter Tight; si el operador la quiere, se suma a la lista curada.

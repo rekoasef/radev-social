@@ -1,4 +1,5 @@
 import type { Carousel } from "./carousel";
+import type { Datasets } from "./datasets";
 import type { SlideOf, SlideType } from "./slides";
 
 // Sample content for previews and tests. Texts from docs/references/radev/ where one exists.
@@ -132,6 +133,21 @@ export const exampleSlides: { [T in SlideType]: SlideOf<T> } = {
     subtitle: "Contame qué hacés hoy a mano y vemos qué se puede automatizar.",
     button: "Escribime por WhatsApp",
     icon: "message-circle",
+  },
+};
+
+/**
+ * Datasets for the example `chart`. Made-up values that only give the chart a shape: the real
+ * ones come from the brand's data.
+ */
+export const exampleDatasets: Datasets = {
+  "usd-blue-30d": {
+    unit: "$",
+    unitPosition: "before",
+    points: Array.from({ length: 30 }, (_, i) => ({
+      label: `Día ${i + 1}`,
+      value: Math.round(1000 + 40 * Math.sin(i / 4) + 3 * i),
+    })),
   },
 };
 

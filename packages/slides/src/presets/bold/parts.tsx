@@ -209,6 +209,18 @@ export function TemplateLayout({ title, children }: { title: string; children: R
   );
 }
 
+/** Where a figure comes from. Every data slide shows it (docs/DESIGN-SYSTEM.md §5). */
+export function Source({ text }: { text: string }) {
+  return (
+    <p
+      data-qa="text"
+      style={{ margin: 0, ...labelText(15), letterSpacing: "0.2em", color: "var(--muted)" }}
+    >
+      Fuente: {text}
+    </p>
+  );
+}
+
 /** Arrowhead for connectors (`markerEnd="url(#id)"`). The id must be unique per template. */
 export function ArrowMarker({ id }: { id: string }) {
   return (

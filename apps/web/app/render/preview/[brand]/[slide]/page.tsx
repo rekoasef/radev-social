@@ -1,5 +1,6 @@
 import { getBrandBySlug } from "@radev/db";
 import {
+  exampleDatasets,
   exampleSlides,
   FORMAT,
   hasTemplate,
@@ -75,7 +76,11 @@ export default async function PreviewSlidePage({
       >
         {type &&
           (hasTemplate(parsed.theme.preset, type) ? (
-            <SlideContent theme={parsed.theme} slide={exampleSlides[type]} />
+            <SlideContent
+              theme={parsed.theme}
+              slide={exampleSlides[type]}
+              datasets={exampleDatasets}
+            />
           ) : (
             <p style={{ margin: "auto", fontSize: 28, opacity: 0.5 }}>
               Plantilla {type}: pendiente

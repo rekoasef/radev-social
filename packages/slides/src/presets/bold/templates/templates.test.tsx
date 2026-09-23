@@ -1,10 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { exampleSlides } from "../../../content/examples";
+import { exampleDatasets, exampleSlides } from "../../../content/examples";
 import { SLIDE_TYPES, type Slide } from "../../../content/slides";
+import { formatNumber } from "../../../format";
 import { hasTemplate, SlideContent } from "../../../slide-content";
 import { type BrandTheme, defaultTokens, parseTheme } from "../../registry";
 import { fitFontSize, titleSize } from "../parts";
+import { bigNumberSize } from "./big-number";
 import { coverTitleSize } from "./cover";
 
 const parsed = parseTheme("bold", defaultTokens("bold"));
@@ -12,26 +14,67 @@ if (!parsed.ok) throw new Error(parsed.issues.join("\n"));
 const theme = parsed.theme;
 
 const render = (slide: Slide, t: BrandTheme = theme) =>
-  renderToStaticMarkup(<SlideContent theme={t} slide={slide} />);
+  renderToStaticMarkup(<SlideContent theme={t} slide={slide} datasets={exampleDatasets} />);
 
 const count = (html: string, needle: string) => html.split(needle).length - 1;
 
 describe("bold templates", () => {
-  it("exist for every type but the data ones (T6)", () => {
-    for (const type of SLIDE_TYPES) {
-      const data = ["comparison", "costBreakdown", "steps", "bigNumber", "chart"].includes(type);
-      expect(hasTemplate("bold", type)).toBe(!data);
-    }
+  it("exist for every slide type", () => {
+    for (const type of SLIDE_TYPES) expect(hasTemplate("bold", type), type).toBe(true);
     expect(hasTemplate("soft", "cardGrid")).toBe(false);
   });
 
-  it("render every implemented example without emphasis marks", () => {
+  it("render every example without emphasis marks", () => {
     for (const type of SLIDE_TYPES) {
-      if (!hasTemplate("bold", type)) continue;
       const html = render(exampleSlides[type]);
       expect(html, type).toContain('data-qa="text"');
       expect(html, type).not.toMatch(/\*[^\s)]/);
     }
+  });
+
+  it("comparison favors the right column: accent border and markers", () => {
+    const html = render(exampleSlides.comparison);
+    expect(html).toContain("Sistema propio");
+    expect(html).toContain("border:1.5px solid var(--line)");
+    expect(html.indexOf("var(--line)")).toBeLessThan(html.indexOf("Sistema propio"));
+  });
+
+  it("costBreakdown lists every item and highlights the total", () => {
+    const html = render(exampleSlides.costBreakdown);
+    for (const item of exampleSlides.costBreakdown.items) expect(html).toContain(item.label);
+    expect(html).toContain("USD 00–000");
+  });
+
+  it("steps numbers them 01, 02… with a rail between consecutive steps only", () => {
+    const html = render(exampleSlides.steps);
+    expect(html).toContain(">01<");
+    expect(html).toContain(">03<");
+    expect(count(html, 'aria-hidden="true" style="position:absolute')).toBe(
+      exampleSlides.steps.steps.length - 1,
+    );
+  });
+
+  it("bigNumber shows value and source, and sizes the value to fit", () => {
+    const html = render(exampleSlides.bigNumber);
+    expect(html).toContain(">0.000<");
+    expect(html).toContain("Fuente: Bluelytics (ejemplo)");
+    expect(bigNumberSize("12")).toBe(260);
+    expect(bigNumberSize("USD 1.250.000")).toBeLessThan(120);
+  });
+
+  it("chart draws the dataset's points with the latest value formatted", () => {
+    const html = render(exampleSlides.chart);
+    const points = exampleDatasets["usd-blue-30d"]?.points ?? [];
+    const lastValue = points[points.length - 1]?.value ?? 0;
+    expect(html).toContain(`$ ${formatNumber(lastValue)}`);
+    expect(html).toContain("Día 1");
+    expect(html).toContain("Día 30");
+  });
+
+  it("chart fails without its dataset instead of drawing made-up numbers", () => {
+    expect(() =>
+      renderToStaticMarkup(<SlideContent theme={theme} slide={exampleSlides.chart} />),
+    ).toThrow(/usd-blue-30d/);
   });
 
   it("cover shows kicker, title and subtitle, with a bigger title for short hooks", () => {
