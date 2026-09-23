@@ -1,2 +1,3 @@
 // Drizzle schema, migrations, queries and seed.
-export {};
+export { createDb, type Database } from "./client";
+export * from "./schema";

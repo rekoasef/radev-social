@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/*.md", "!seeds", "!docs"]
+    "includes": ["**", "!**/*.md", "!seeds", "!docs", "!packages/db/migrations"]
   },
   "formatter": {
     "enabled": true,

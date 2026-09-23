@@ -1,6 +1,13 @@
 packages:
   - apps/*
   - packages/*
+
+# Paquetes autorizados a ejecutar scripts al instalarse (pnpm los bloquea por defecto).
+allowBuilds:
+  esbuild: true
+
+# pnpm no instala versiones publicadas hace muy poco (protección ante paquetes comprometidos).
+# Excepciones explícitas para versiones fijadas que eran muy recientes al instalarlas.
 minimumReleaseAgeExclude:
   - '@turbo/darwin-64@2.11.3'
   - '@turbo/darwin-arm64@2.11.3'
