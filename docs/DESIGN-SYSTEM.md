@@ -18,7 +18,7 @@ Una identidad visual = **preset de estilo** (código) + **tokens** (datos editab
 
 - El **preset** define la personalidad: cómo se ven las tarjetas, qué decoraciones existen y cómo se ubican, comportamiento tipográfico (mayúsculas, interlineados), estilo del énfasis, componentes de encabezado y pie. Vive en `packages/slides/presets/<preset>/`.
 - Los **tokens** son los valores que el preset expone para configurar: colores, tipografías, radios, textos, assets, intensidades. Viven en `brands.theme_tokens` (JSON) y se editan desde el panel con vista previa en vivo.
-- Cada preset exporta un **schema Zod de sus tokens** (con valores por defecto). El panel genera el formulario desde ese schema y valida todo lo que se guarda.
+- Cada preset exporta un **schema Zod de sus tokens** (con valores por defecto neutros: los de cada marca viven en la base). Los assets se guardan como id de `brand_assets`. El panel genera el formulario desde ese schema y valida todo lo que se guarda.
 - Las plantillas nunca usan colores ni fuentes literales: consumen el preset y los tokens vía CSS variables.
 - **Marca nueva = elegir preset + cargar tokens y assets. Cero código.** Un estilo visual completamente distinto = un preset nuevo (código), que queda disponible para todas las marcas.
 
@@ -199,10 +199,10 @@ Referencias: `docs/references/radev/`. Cuando una referencia contradice estas re
 | `fonts.body` | Geist Sans 400 | Texto |
 | `fonts.numeric` | Geist Mono 500 | Cifras y gráficos |
 | `radius.card` / `radius.panel` | 12 / 16 | Botones pill |
-| `wordmark` | `{ text: "LUMUS", tracking: "0.18em" }` | |
+| `wordmark` | `{ text: "LUMUS", tracking: 0.18 }` | Tracking en em |
 | `footer.url` | `gestorlumus.site` | |
-| `heroAsset` | `lumus-orb.png` | Protagonista en `cover` y `cta` |
-| `logoAsset` | `logoLumus.png` (192px; redibujar en SVG si se usa grande) | Se prefiere el wordmark |
+| `heroAsset` | id de `brand_assets` → `lumus-orb.png` | Protagonista en `cover` y `cta` |
+| `logoAsset` | id de `brand_assets` → `logoLumus.png` (192px; redibujar en SVG si se usa grande) | Se prefiere el wordmark |
 
 ### Comportamiento del preset (código)
 

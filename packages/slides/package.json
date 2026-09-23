@@ -8,7 +8,8 @@
     "./fonts": "./src/fonts/load.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "icons:sync": "node scripts/sync-icon-names.mjs"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "5.3.0",

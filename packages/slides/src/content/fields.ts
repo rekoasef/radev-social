@@ -1,6 +1,7 @@
-import { iconNames } from "lucide-react/dynamic";
 import { z } from "zod";
 import { parseEmphasis } from "./emphasis";
+// Lucide icon names, synced from lucide-react by scripts/sync-icon-names.mjs.
+import iconNames from "./icon-names.json" with { type: "json" };
 
 // Messages are in Spanish: they reach the operator (editor) and the AI (regeneration feedback).
 

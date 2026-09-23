@@ -6,7 +6,14 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/*.md", "!seeds", "!docs", "!packages/db/migrations"]
+    "includes": [
+      "**",
+      "!**/*.md",
+      "!seeds",
+      "!docs",
+      "!packages/db/migrations",
+      "!packages/slides/src/content/icon-names.json"
+    ]
   },
   "formatter": {
     "enabled": true,

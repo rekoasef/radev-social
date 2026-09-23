@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T2 — schemas Zod de tokens de `bold` y `soft`.
-- **Última actualización:** 2026-09-23, al cerrar la T1 de la Fase 1
+- **Próximo paso:** T3: `SlideFrame` 4:5, ruta de preview con token y Playwright para capturas.
+- **Última actualización:** 2026-09-23, al cerrar la T2 de la Fase 1
 
 ## Fase 1 — tareas
 
@@ -20,7 +20,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 |---|---|---|
 | T0 | Tipografías curadas auto-hospedadas (`@fontsource-variable`) y registro en `packages/slides` | ✅ |
 | T1 | Schemas Zod de contenido: 12 tipos de slide (con `flow`), `Carousel`, límites, parser de énfasis. Tests | ✅ |
-| T2 | Schemas Zod de tokens de `bold` y `soft` con valores por defecto, registro de presets. Migración de datos que reescribe los tokens de RAdev y Lumus al formato nuevo. Reemplaza `apps/web/lib/brand-tokens.ts`. Tests | |
+| T2 | Schemas Zod de tokens de `bold` y `soft` con valores por defecto, registro de presets. Migración de datos que reescribe los tokens de RAdev y Lumus al formato nuevo. Reemplaza `apps/web/lib/brand-tokens.ts`. Tests | ✅ |
 | T3 | `SlideFrame` 4:5 (encabezado, pie, número de página, decoraciones deterministas, zonas seguras). Ruta `/render/preview/...` protegida con `RENDER_TOKEN` (sin login). Capa de zonas seguras y superposición de la captura de TikTok. Playwright como dependencia de desarrollo para capturas. 👁 | |
 | T4 | Plantillas `bold` con referencia: `cardGrid`, `flow`, `hubDiagram`. 👁 contra las refs | |
 | T5 | Plantillas `bold` sin referencia: `cover`, `statement`, `question`, `cta`. 👁 | |
@@ -59,7 +59,6 @@ Plan aprobado el 2026-09-23. Terminada.
 - TypeScript 6.0.3 (no 7). Tailwind v4.
 - Postgres 17 en el puerto **5433** (el 5432 es de un Postgres nativo de otros proyectos). Driver `pg`.
 - Drizzle 0.45 estable. Paquetes internos sin compilar (`transpilePackages`).
-- Tokens de marca sin validar hasta la Fase 1 (lectura defensiva en `apps/web/lib/brand-tokens.ts`).
 - Better Auth 1.7.5 con `user.validateUserInfo` (lista blanca) y `account.encryptOAuthTokens`. Sin CLI de Better Auth: schema escrito a mano en `packages/db/src/auth-schema.ts`.
 - Panel: grupo de rutas `app/(panel)/` cuyo layout llama a `requireOperator()`. Marca activa en la cookie `active-brand` (Server Action validada con Zod); la regla vive en `packages/core` (`pickActiveBrand`).
 - Worker: pg-boss 12 en el esquema `pgboss` de la misma base; logger JSON propio (`apps/worker/src/logger.ts`, sin dependencias); apagado con `stop({ graceful: true })` y 30 s de margen. Corre con `tsx` (sin compilar). Todavía no depende de `@radev/db`: se agrega cuando llegue el primer job.
@@ -69,9 +68,11 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Tipo de slide nuevo `flow`**: tarjetas en orden con conectores (refs `flow-1/2`); `cardGrid` queda para tarjetas sin orden.
 - **Preset `bold`, dos contenedores**: *tarjeta* (ícono blanco en un cuadradito oscuro y texto en oración debajo; el énfasis da los dos tonos) y *chip* (ícono y texto en una línea, para `hubDiagram`). Se descartan las etiquetas en MAYÚSCULAS espaciadas dentro de las tarjetas (`flow-2`). Cuando una referencia contradice las reglas, mandan las reglas.
 - **Tipografías**: paquetes `@fontsource-variable/*` 5.3.0 (fuentes variables, versión fija) en `packages/slides`. Registro en `src/fonts/registry.ts` (`FONT_FAMILIES`, `fontStack`, `supportsWeight`); `@radev/slides/fonts` registra los `@font-face` y se importa una vez en `apps/web/app/layout.tsx`. El nombre curado ("Geist Sans") es distinto del nombre CSS ("Geist Variable"): siempre pasar por `fontStack`. Un test verifica que el registro, `load.ts` y el CSS de cada paquete coincidan. El panel sigue con su propia Geist vía `next/font`.
-- **Contenido** (`packages/slides/src/content/`): Zod 4. Campos `richText(max)` / `plainText(max)` / `iconName` en `fields.ts`; límites en `limits.ts` (cuentan caracteres visibles); `slideSchema` es una unión por `type` con máx. 2 énfasis por slide; `carouselSchema` exige `cover` primera y `cta` última (y en ningún otro lugar). Mensajes de error en español porque llegan al editor y a la IA. Sin transformaciones en los schemas de slides, para que `z.toJSONSchema` funcione (lo usa la Fase 3). Íconos validados contra `iconNames` de `lucide-react/dynamic` (no se incluyen en el JSON Schema como enum: son ~1600).
+- **Contenido** (`packages/slides/src/content/`): Zod 4. Campos `richText(max)` / `plainText(max)` / `iconName` en `fields.ts`; límites en `limits.ts` (cuentan caracteres visibles); `slideSchema` es una unión por `type` con máx. 2 énfasis por slide; `carouselSchema` exige `cover` primera y `cta` última (y en ningún otro lugar). Mensajes de error en español porque llegan al editor y a la IA. Sin transformaciones en los schemas de slides, para que `z.toJSONSchema` funcione (lo usa la Fase 3). Íconos validados contra `src/content/icon-names.json` (2112 nombres, generado con `pnpm --filter @radev/slides icons:sync`; un test lo compara con el `lucide-react` instalado). No se usa `lucide-react/dynamic` porque es `"use client"`: en el servidor sus exports llegan como referencias y no como datos. Tampoco van como enum en el JSON Schema.
 - **Tarjetas sin énfasis**: `cardGrid.cards` tiene `lead?` (línea liviana) + `label` (700). Las etiquetas de tarjetas, chips y nodos son texto plano. Así `ref-cardgrid` entra en el límite de 2 énfasis (se descarta su tarjeta resaltada en naranja).
 - **Ejemplos** en `content/examples.ts`: una slide por tipo con los textos de las referencias y un carrusel. Las cifras son de relleno a propósito (`USD 0–00`, `0.000`). Los usan la preview (T3) y los tests.
+- **Tokens** (`packages/slides/src/presets/`): un schema por preset armado con `color`, `font`, `range`, `text`, `lines`, `toggle` y `asset` (`presets/fields.ts`). Cada campo tiene un valor por defecto y `.meta({ title, widget, ... })` para el formulario de la T10. Los objetos anidados usan `.prefault({})` (en Zod 4, `.default` no aplica los defaults internos). Los valores por defecto son neutros, no los de RAdev ni Lumus (regla 6). `parseTheme(preset, tokens)` valida y completa, y devuelve los problemas como `ruta › mensaje`; `defaultTokens(preset)` da una identidad completa. Los assets son ids de `brand_assets` (uuid) o `null`. `wordmark.tracking` de `soft` es un número en em.
+- **Tokens guardados**: la migración `0002_lumus_tokens_phase1.sql` (idempotente) pasó el tracking de Lumus a número y dejó en `null` sus assets (antes nombres de archivo). El seed de la T7 los vuelve a enlazar. `packages/db` tiene `@radev/slides` como devDependency solo para el test que valida los tokens del seed.
 - **Slides sin referencia** (`statement`, `question`, `cta`, etc.): no se esperan imágenes del operador. Se diseñan en código con las reglas del preset y el operador aprueba mirando capturas del render.
 
 ## Anotado para más adelante

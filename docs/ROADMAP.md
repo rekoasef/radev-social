@@ -34,7 +34,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Página de preview de todos los tipos de slide por marca
 - [ ] Confirmar las zonas seguras superponiendo un render real sobre la captura de TikTok
 - [ ] Calibrar límites de caracteres con casos extremos
-- [ ] Tests de schemas de contenido y de tokens
+- [x] Tests de schemas de contenido y de tokens
 
 **Terminado cuando:** la app reproduce fielmente las cuatro referencias de RAdev (con las reglas unificadas del preset), apruebo las slides sin referencia y un carrusel de ejemplo de Lumus, y puedo crear una tercera marca de prueba desde el panel, cambiarle colores, tipografías y logo, y ver el resultado sin tocar código.
 

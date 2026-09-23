@@ -270,11 +270,14 @@ importers:
     dependencies:
       drizzle-orm:
         specifier: 0.45.3
-        version: 0.45.3(@types/pg@8.23.1)(pg@8.23.0)
+        version: 0.45.3(@types/pg@8.23.1)(kysely@0.29.6)(pg@8.23.0)
       pg:
         specifier: 8.23.0
         version: 8.23.0
     devDependencies:
+      '@radev/slides':
+        specifier: workspace:*
+        version: link:../slides
       '@types/pg':
         specifier: 8.23.1
         version: 8.23.1
@@ -4740,12 +4743,6 @@ snapshots:
     optionalDependencies:
       '@types/pg': 8.23.1
       kysely: 0.29.6
-      pg: 8.23.0
-    optional: true
-
-  drizzle-orm@0.45.3(@types/pg@8.23.1)(pg@8.23.0):
-    optionalDependencies:
-      '@types/pg': 8.23.1
       pg: 8.23.0
 
   dunder-proto@1.0.1:

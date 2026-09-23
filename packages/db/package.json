@@ -18,6 +18,7 @@
     "pg": "8.23.0"
   },
   "devDependencies": {
+    "@radev/slides": "workspace:*",
     "@types/pg": "8.23.1",
     "drizzle-kit": "0.31.11",
     "tsx": "4.23.15"

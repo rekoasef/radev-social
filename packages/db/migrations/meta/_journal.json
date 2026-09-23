@@ -15,6 +15,13 @@
       "when": 1790174919209,
       "tag": "0001_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790198742623,
+      "tag": "0002_lumus_tokens_phase1",
+      "breakpoints": true
     }
   ]
 }

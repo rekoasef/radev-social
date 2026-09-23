@@ -1,7 +1,6 @@
 import type { Brand } from "@radev/db";
+import { fontStack, parseTheme } from "@radev/slides";
 import type { CSSProperties } from "react";
-import { brandFontFamily } from "@/lib/brand-fonts";
-import { readColor, readColors, readFont } from "@/lib/brand-tokens";
 import { cityOf, offsetOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { Tally } from "./tally";
@@ -25,13 +24,17 @@ export function ChannelMonitor({
   /** The brand the panel is tuned to (brand switcher). */
   selected: boolean;
 }) {
-  const colors = readColors(brand.themeTokens);
-  const display = readFont(brand.themeTokens, "display");
+  const parsed = parseTheme(brand.stylePreset, brand.themeTokens);
+  const tokens = parsed.ok ? parsed.theme.tokens : undefined;
+  const colors = tokens
+    ? Object.entries(tokens.colors).map(([name, value]) => ({ name, value }))
+    : [];
+  const display = tokens?.fonts.display;
   const screen = {
-    "--screen-bg": readColor(brand.themeTokens, "bg") ?? "var(--color-console)",
-    "--screen-ink": readColor(brand.themeTokens, "text") ?? "var(--color-ink)",
-    "--screen-accent": readColor(brand.themeTokens, "accent") ?? "var(--color-ink-dim)",
-    "--screen-muted": readColor(brand.themeTokens, "muted") ?? "var(--color-ink-dim)",
+    "--screen-bg": tokens?.colors.bg ?? "var(--color-console)",
+    "--screen-ink": tokens?.colors.text ?? "var(--color-ink)",
+    "--screen-accent": tokens?.colors.accent ?? "var(--color-ink-dim)",
+    "--screen-muted": tokens?.colors.muted ?? "var(--color-ink-dim)",
     animationDelay: `${index * 140}ms`,
   } as CSSProperties;
   const archived = brand.archivedAt !== null;
@@ -59,7 +62,7 @@ export function ChannelMonitor({
           <h2
             id={headingId}
             className="monitor-name"
-            style={{ fontFamily: brandFontFamily(display?.family), fontWeight: display?.weight }}
+            style={display && { fontFamily: fontStack(display.family), fontWeight: display.weight }}
           >
             {brand.name}
             <span className="monitor-accent" aria-hidden="true" />
@@ -68,7 +71,11 @@ export function ChannelMonitor({
         </div>
       </div>
 
-      {colors.length > 0 ? (
+      {!parsed.ok ? (
+        <p className="mt-4 text-sm text-ink-faint" title={parsed.issues.join("\n")}>
+          La identidad visual tiene errores ({parsed.issues.length}).
+        </p>
+      ) : colors.length > 0 ? (
         <figure className="mt-4">
           <div className="bars" role="img" aria-label={`Colores de ${brand.name}`}>
             {colors.map((swatch) => (
@@ -105,7 +112,7 @@ export function ChannelMonitor({
           {display ? (
             <>
               {display.family}
-              {display.weight && <span className="timecode text-ink-dim"> · {display.weight}</span>}
+              <span className="timecode text-ink-dim"> · {display.weight}</span>
             </>
           ) : (
             <span className="text-ink-faint">Sin definir</span>

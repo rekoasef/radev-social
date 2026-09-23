@@ -71,11 +71,12 @@ export const seedBrands: NewBrand[] = [
         numeric: { family: "Geist Mono", weight: 500 },
       },
       radius: { card: 12, panel: 16 },
-      wordmark: { text: "LUMUS", tracking: "0.18em" },
+      wordmark: { text: "LUMUS", tracking: 0.18 },
       footer: { url: "gestorlumus.site" },
-      // File names in seeds/brands/lumus/assets/. Linked to brand_assets in phase 1.
-      heroAsset: "lumus-orb.png",
-      logoAsset: "logoLumus.png",
+      // Ids in brand_assets. The seed links lumus-orb.png and logoLumus.png once that table
+      // exists (phase 1, T7).
+      heroAsset: null,
+      logoAsset: null,
     },
   },
 ];

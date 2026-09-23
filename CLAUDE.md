@@ -73,6 +73,9 @@ pnpm db:generate    # generar migración Drizzle tras cambiar el schema
 pnpm db:migrate     # aplicar migraciones
 pnpm db:seed        # cargar marcas iniciales (solo agrega las que faltan)
 pnpm db:studio      # ver y editar la base
+
+# Slides
+pnpm --filter @radev/slides icons:sync   # regenerar la lista de íconos tras actualizar lucide-react
 ```
 
 Notas del entorno:

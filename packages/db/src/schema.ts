@@ -28,7 +28,7 @@ export const brands = pgTable(
     codePrefix: text("code_prefix").notNull(),
     /** Style preset implemented in packages/slides (e.g. "bold", "soft"). */
     stylePreset: text("style_preset").notNull(),
-    /** Tokens for the preset. Validated against the preset's Zod schema from phase 1 on. */
+    /** Tokens for the preset, validated with its Zod schema (packages/slides, parseTheme). */
     themeTokens: jsonb("theme_tokens").$type<Record<string, unknown>>().notNull().default({}),
     /** IANA time zone used to display and schedule posts. */
     timezone: text("timezone").notNull().default("America/Argentina/Buenos_Aires"),
