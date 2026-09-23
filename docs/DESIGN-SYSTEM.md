@@ -64,7 +64,7 @@ El contenido (`data-qa="content"`) no puede invadir ninguna zona. Las decoracion
 
 ## 5. Catálogo de slides
 
-La estructura (campos) es común a todos los presets. Límites de caracteres iniciales, a calibrar en Fase 1 con casos extremos. Todo texto admite énfasis (§6) salvo que se indique.
+La estructura (campos) es común a todos los presets. Schemas en `packages/slides/src/content/`; límites centralizados en `limits.ts`, a calibrar en Fase 1 con casos extremos. Los límites cuentan caracteres **visibles** (sin los asteriscos del énfasis). Todo texto admite énfasis (§6) salvo que se indique. **No admiten énfasis** (texto plano, `*` prohibido): las etiquetas dentro de tarjetas, chips y nodos (`label`, `lead`), el `kicker` de `cover`, `value` y `source` de `bigNumber`, `source` de `chart`, los rangos y etiquetas de `costBreakdown`, `name` de `comparison` y `button` de `cta`. Los íconos son nombres de Lucide en kebab-case y se valida que existan.
 
 ### v1
 
@@ -80,7 +80,8 @@ Las slides sin referencia (`statement`, `question`, `cta` y las demás) se dise�
 - `title` (≤80) · `callout`: `{ icon, lead≤30, text≤80 }`
 
 **`cardGrid`** — grilla de tarjetas con ícono, **sin orden** entre ellas (opciones, ejemplos). Ref: `ref-cardgrid.png`
-- `title` (≤60) · `intro?` (≤40) · `cards`: 3–6 × `{ icon, label≤28 }` · `footer?` (≤80)
+- `title` (≤60) · `intro?` (≤40) · `cards`: 3–6 × `{ icon, lead?≤16, label≤28 }` · `footer?` (≤80)
+- `lead` es la línea liviana sobre la etiqueta ("una" → "automatización"): da los dos tonos de la referencia sin gastar énfasis.
 
 **`flow`** — tarjetas unidas por conectores, **en orden** (un proceso, un recorrido). Refs: `ref-flow-1.png`, `ref-flow-2.png`
 - `title` (≤60) · `nodes`: 3–5 × `{ icon, label≤22 }` · `body?` (≤180) · `closing?` (≤90)
@@ -133,7 +134,7 @@ Carousel = {
 
 - Sintaxis: `*texto*` → estilo de énfasis del preset con el color de acento de la marca.
 - Máximo **2 fragmentos por slide**.
-- Parser propio y simple. Asteriscos sin cerrar = error de validación.
+- Parser propio y simple (`parseEmphasis`). Son errores de validación: un asterisco sin cerrar, un énfasis vacío (`**`) y un énfasis que empieza o termina con espacio. Sin escape ni anidamiento.
 
 ## 7. Preset `bold` — tokens iniciales de RAdev
 
@@ -167,7 +168,7 @@ Carousel = {
 - Pie: línea divisoria, wordmark a la izquierda, tagline a la derecha.
 - Decoraciones: líneas curvas finas en esquinas terminadas en punto brillante, grillas de puntos, línea punteada vertical izquierda, glow radial suave (solo portada y `cta`).
 - Contenedores: dos formas y no más. Las referencias usan cuatro variantes distintas; estas reglas las unifican:
-  - **Tarjeta** (`cardGrid`, `flow`, `steps`): fondo `surface`, borde 1px acento con glow, radio `radius.card`. Ícono en color `text` dentro de un cuadradito oscuro (un tono sobre `surface`, sin borde de acento). Texto debajo del ícono en `fonts.body`, en oración normal (no mayúsculas). El énfasis (`*...*`) va en peso 700 con acento, y así se logra el efecto de dos tonos de `ref-cardgrid`.
+  - **Tarjeta** (`cardGrid`, `flow`, `steps`): fondo `surface`, borde 1px acento con glow, radio `radius.card`. Ícono en color `text` dentro de un cuadradito oscuro (un tono sobre `surface`, sin borde de acento). Texto debajo del ícono en `fonts.body`, en oración normal (no mayúsculas): `lead` liviano y `label` en peso 700, en color `text`. Así se logran los dos tonos de `ref-cardgrid`. Ninguna tarjeta se resalta en acento (en la referencia, la primera sí: se descarta porque superaría los 2 énfasis por slide).
   - **Chip** (nodos de `hubDiagram`): mismo borde y fondo; ícono y texto en una sola línea, sin cuadradito. El centro del hub lleva el ícono en acento.
 - Conectores de diagramas: 1–2px en acento con puntos brillantes en los extremos. En `hubDiagram` terminan en flecha hacia el centro.
 

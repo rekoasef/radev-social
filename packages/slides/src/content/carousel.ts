@@ -1,0 +1,73 @@
+import { z } from "zod";
+import { key, plainText } from "./fields";
+import { limits as L } from "./limits";
+import { slideSchema } from "./slides";
+
+export const HOOK_TYPES = [
+  "cost",
+  "warning",
+  "myth",
+  "comparison",
+  "question",
+  "data",
+  "story",
+  "howto",
+] as const;
+
+export type HookType = (typeof HOOK_TYPES)[number];
+
+export const carouselSchema = z
+  .object({
+    hook: plainText(L.carousel.hook),
+    pillarKey: key,
+    hookType: z.enum(HOOK_TYPES),
+    slides: z.array(slideSchema).min(L.carousel.slides.min).max(L.carousel.slides.max),
+    caption: z.string().trim().min(1).max(L.carousel.caption),
+    hashtags: z
+      .array(z.string().regex(/^[\p{L}\p{N}_]+$/u, { error: "Sin #, espacios ni signos." }))
+      .max(L.carousel.hashtags),
+    /** One per slide. */
+    altTexts: z.array(z.string().trim().min(1)).optional(),
+  })
+  .superRefine((carousel, ctx) => {
+    const last = carousel.slides.length - 1;
+    carousel.slides.forEach((slide, index) => {
+      if (index === 0 && slide.type !== "cover") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["slides", 0],
+          message: "La primera slide tiene que ser `cover`.",
+        });
+      }
+      if (index === last && slide.type !== "cta") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["slides", index],
+          message: "La última slide tiene que ser `cta`.",
+        });
+      }
+      if (index !== 0 && slide.type === "cover") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["slides", index],
+          message: "`cover` solo puede ir primera.",
+        });
+      }
+      if (index !== last && slide.type === "cta") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["slides", index],
+          message: "`cta` solo puede ir última.",
+        });
+      }
+    });
+    if (carousel.altTexts && carousel.altTexts.length !== carousel.slides.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["altTexts"],
+        message: `Tiene que haber un texto alternativo por slide (${carousel.slides.length}).`,
+      });
+    }
+  });
+
+export type Carousel = z.infer<typeof carouselSchema>;

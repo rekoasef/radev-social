@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T1 — schemas Zod de contenido.
-- **Última actualización:** 2026-09-23, al cerrar la T0 de la Fase 1
+- **Próximo paso:** T2 — schemas Zod de tokens de `bold` y `soft`.
+- **Última actualización:** 2026-09-23, al cerrar la T1 de la Fase 1
 
 ## Fase 1 — tareas
 
@@ -19,7 +19,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | Tarea | Qué | Estado |
 |---|---|---|
 | T0 | Tipografías curadas auto-hospedadas (`@fontsource-variable`) y registro en `packages/slides` | ✅ |
-| T1 | Schemas Zod de contenido: 12 tipos de slide (con `flow`), `Carousel`, límites, parser de énfasis. Tests | |
+| T1 | Schemas Zod de contenido: 12 tipos de slide (con `flow`), `Carousel`, límites, parser de énfasis. Tests | ✅ |
 | T2 | Schemas Zod de tokens de `bold` y `soft` con valores por defecto, registro de presets. Migración de datos que reescribe los tokens de RAdev y Lumus al formato nuevo. Reemplaza `apps/web/lib/brand-tokens.ts`. Tests | |
 | T3 | `SlideFrame` 4:5 (encabezado, pie, número de página, decoraciones deterministas, zonas seguras). Ruta `/render/preview/...` protegida con `RENDER_TOKEN` (sin login). Capa de zonas seguras y superposición de la captura de TikTok. Playwright como dependencia de desarrollo para capturas. 👁 | |
 | T4 | Plantillas `bold` con referencia: `cardGrid`, `flow`, `hubDiagram`. 👁 contra las refs | |
@@ -69,6 +69,9 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Tipo de slide nuevo `flow`**: tarjetas en orden con conectores (refs `flow-1/2`); `cardGrid` queda para tarjetas sin orden.
 - **Preset `bold`, dos contenedores**: *tarjeta* (ícono blanco en un cuadradito oscuro y texto en oración debajo; el énfasis da los dos tonos) y *chip* (ícono y texto en una línea, para `hubDiagram`). Se descartan las etiquetas en MAYÚSCULAS espaciadas dentro de las tarjetas (`flow-2`). Cuando una referencia contradice las reglas, mandan las reglas.
 - **Tipografías**: paquetes `@fontsource-variable/*` 5.3.0 (fuentes variables, versión fija) en `packages/slides`. Registro en `src/fonts/registry.ts` (`FONT_FAMILIES`, `fontStack`, `supportsWeight`); `@radev/slides/fonts` registra los `@font-face` y se importa una vez en `apps/web/app/layout.tsx`. El nombre curado ("Geist Sans") es distinto del nombre CSS ("Geist Variable"): siempre pasar por `fontStack`. Un test verifica que el registro, `load.ts` y el CSS de cada paquete coincidan. El panel sigue con su propia Geist vía `next/font`.
+- **Contenido** (`packages/slides/src/content/`): Zod 4. Campos `richText(max)` / `plainText(max)` / `iconName` en `fields.ts`; límites en `limits.ts` (cuentan caracteres visibles); `slideSchema` es una unión por `type` con máx. 2 énfasis por slide; `carouselSchema` exige `cover` primera y `cta` última (y en ningún otro lugar). Mensajes de error en español porque llegan al editor y a la IA. Sin transformaciones en los schemas de slides, para que `z.toJSONSchema` funcione (lo usa la Fase 3). Íconos validados contra `iconNames` de `lucide-react/dynamic` (no se incluyen en el JSON Schema como enum: son ~1600).
+- **Tarjetas sin énfasis**: `cardGrid.cards` tiene `lead?` (línea liviana) + `label` (700). Las etiquetas de tarjetas, chips y nodos son texto plano. Así `ref-cardgrid` entra en el límite de 2 énfasis (se descarta su tarjeta resaltada en naranja).
+- **Ejemplos** en `content/examples.ts`: una slide por tipo con los textos de las referencias y un carrusel. Las cifras son de relleno a propósito (`USD 0–00`, `0.000`). Los usan la preview (T3) y los tests.
 - **Slides sin referencia** (`statement`, `question`, `cta`, etc.): no se esperan imágenes del operador. Se diseñan en código con las reglas del preset y el operador aprueba mirando capturas del render.
 
 ## Anotado para más adelante

@@ -1,0 +1,34 @@
+/**
+ * Content limits (docs/DESIGN-SYSTEM.md §5). Text limits count visible characters, without
+ * emphasis asterisks. Initial values: calibrated with extreme cases in phase 1 (T11).
+ */
+export const limits = {
+  cover: { kicker: 24, title: 60, subtitle: 90 },
+  statement: { title: 70, body: 160, visualLabel: 16 },
+  question: { title: 80, calloutLead: 30, calloutText: 80 },
+  cardGrid: {
+    title: 60,
+    intro: 40,
+    cards: { min: 3, max: 6 },
+    cardLead: 16,
+    cardLabel: 28,
+    footer: 80,
+  },
+  flow: { title: 60, nodes: { min: 3, max: 5 }, nodeLabel: 22, body: 180, closing: 90 },
+  hubDiagram: { title: 60, nodes: { min: 3, max: 6 }, nodeLabel: 16, body: 180, closing: 70 },
+  comparison: { title: 60, name: 18, points: { min: 2, max: 5 }, point: 40, verdict: 90 },
+  costBreakdown: {
+    title: 60,
+    items: { min: 3, max: 6 },
+    itemLabel: 30,
+    itemRange: 20,
+    totalLabel: 20,
+    totalRange: 24,
+    note: 100,
+  },
+  steps: { title: 60, steps: { min: 3, max: 5 }, stepTitle: 32, stepText: 90 },
+  bigNumber: { kicker: 30, value: 10, label: 80, context: 140, source: 90 },
+  chart: { title: 60, caption: 100, source: 90 },
+  cta: { title: 70, subtitle: 120, button: 50 },
+  carousel: { hook: 100, slides: { min: 5, max: 8 }, caption: 2000, hashtags: 5 },
+} as const;
