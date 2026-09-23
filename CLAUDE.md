@@ -9,7 +9,8 @@ Gestor de redes sociales que genera, renderiza, programa y publica carruseles pa
 | Qué hace el sistema, requerimientos, alcance | `docs/PRD.md` |
 | Estructura, servicios, datos, jobs, estados, IA, infraestructura | `docs/ARCHITECTURE.md` |
 | Plantillas, presets, temas, tokens, render | `docs/DESIGN-SYSTEM.md` |
-| Qué fase estamos haciendo y qué falta | `docs/ROADMAP.md` |
+| **Siempre, al empezar**: en qué tarea estamos, decisiones tomadas, cómo trabajamos | `docs/PROGRESS.md` |
+| Qué incluye cada fase | `docs/ROADMAP.md` |
 | Por qué se tomó una decisión | `docs/decisions/` |
 
 Trabajamos **una fase del roadmap a la vez**. No implementes cosas de fases futuras salvo que se pida explícitamente.
@@ -96,6 +97,6 @@ Notas del entorno:
 ## Forma de trabajo
 
 - Empezá cada tarea no trivial proponiendo un plan corto antes de codear.
-- Al terminar una tarea del roadmap, marcala en `docs/ROADMAP.md`.
+- Al terminar una tarea, actualizá `docs/PROGRESS.md` (estado, tarea, decisiones nuevas) en el mismo commit, y marcá en `docs/ROADMAP.md` los ítems que cierre.
 - Si tomás una decisión que contradice o amplía la documentación, frená y preguntá. Si se aprueba, actualizá el doc o agregá un ADR en `docs/decisions/`.
 - Si una tarea toca plantillas o presets, verificá el render real con Playwright contra `docs/references/`.
