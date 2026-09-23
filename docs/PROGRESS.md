@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 0 — Cimientos
-- **Próxima tarea:** T10 (Docker)
-- **Última actualización:** 2026-09-23, al cerrar la T9
+- **Próxima tarea:** T11 (cierre de la Fase 0)
+- **Última actualización:** 2026-09-23, al cerrar la T10
 
 ## Fase 0 — tareas
 
@@ -28,8 +28,8 @@ Plan aprobado el 2026-09-23.
 | T7 | Better Auth con GitHub + lista blanca (probado de punta a punta) | ✅ |
 | T8 | Layout del panel: navegación, selector de marca en cookie, menú de usuario, `apps/web/DESIGN.md` | ✅ |
 | T9 | Worker: `apps/worker/src/index.ts` conecta a la base, arranca pg-boss (crea su esquema), logs estructurados, apagado limpio. Sin jobs todavía | ✅ |
-| T10 | Docker: Dockerfile de web (`output: "standalone"`) y worker, imágenes multi-arquitectura, compose con web + worker + postgres, migraciones al arrancar, probar `docker buildx build --platform linux/arm64`. La web necesita las variables de Better Auth en compose | ⏳ próxima |
-| T11 | Cierre: sección Comandos del CLAUDE.md completa, ROADMAP marcado, README "cómo levantar", recorrer el criterio de terminado de la fase | ⬜ |
+| T10 | Docker: Dockerfile de web (`output: "standalone"`) y worker, imágenes multi-arquitectura, compose con web + worker + postgres, migraciones al arrancar, probar `docker buildx build --platform linux/arm64`. La web necesita las variables de Better Auth en compose | ✅ |
+| T11 | Cierre: sección Comandos del CLAUDE.md completa, ROADMAP marcado, README "cómo levantar", recorrer el criterio de terminado de la fase | ⏳ próxima |
 
 ## Decisiones tomadas (no re-discutir)
 
@@ -41,6 +41,7 @@ Plan aprobado el 2026-09-23.
 - Better Auth 1.7.5 con `user.validateUserInfo` (lista blanca) y `account.encryptOAuthTokens`. Sin CLI de Better Auth: schema escrito a mano en `packages/db/src/auth-schema.ts`.
 - Panel: grupo de rutas `app/(panel)/` cuyo layout llama a `requireOperator()`. Marca activa en la cookie `active-brand` (Server Action validada con Zod); la regla vive en `packages/core` (`pickActiveBrand`).
 - Worker: pg-boss 12 en el esquema `pgboss` de la misma base; logger JSON propio (`apps/worker/src/logger.ts`, sin dependencias); apagado con `stop({ graceful: true })` y 30 s de margen. Corre con `tsx` (sin compilar). Todavía no depende de `@radev/db`: se agrega cuando llegue el primer job.
+- Docker: un `Dockerfile` en la raíz con destinos `web` (Next `output: "standalone"`, `outputFileTracingRoot` en la raíz del monorepo), `worker` (`pnpm deploy --prod`, corre con `node --import tsx`) y `migrate` (migraciones + seed con tsx directo: `pnpm run` intenta reinstalar y falla sin root). Base `node:24-bookworm-slim` (amd64 + arm64), todo como usuario `node`. El build de la web usa variables de relleno solo en ese `RUN`. En compose, web y worker leen `DATABASE_URL` apuntando a `postgres:5432` (pisa la del `.env`); la web usa `env_file: .env`.
 - Estilo del panel: "Sala de control", documentado en `apps/web/DESIGN.md`. Las secciones de fases futuras se ven apagadas con su fase, sin páginas vacías.
 
 ## Anotado para más adelante

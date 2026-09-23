@@ -1,0 +1,11 @@
+# Solo lo necesario para construir las imágenes. Nunca secretos.
+**/node_modules
+**/.next
+**/.turbo
+**/*.tsbuildinfo
+**/.impeccable
+.git
+.env
+.env.*
+!.env.example
+docs

@@ -11,7 +11,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Monorepo con pnpm workspaces + Turborepo (`apps/web`, `apps/worker`, `packages/core`, `packages/db`, `packages/slides`, `packages/ai`, `packages/publishers`)
 - [x] TypeScript strict compartido, Biome, Vitest
 - [x] Next.js App Router + Tailwind + shadcn/ui en `apps/web`
-- [ ] Docker Compose local: `postgres`, `web`, `worker` (esqueleto), con imágenes multi-arquitectura
+- [x] Docker Compose local: `postgres`, `web`, `worker` (esqueleto), con imágenes multi-arquitectura
 - [x] Drizzle: tablas `brands`, `settings`; seed inicial de RAdev y Lumus desde `seeds/brands/` (sin assets todavía)
 - [x] Better Auth con GitHub + lista blanca `ALLOWED_EMAILS`
 - [x] Layout base del panel (navegación, selector de marca)
