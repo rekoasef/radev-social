@@ -3,6 +3,7 @@
 Gestor de redes sociales con IA para múltiples marcas (hoy RAdev y Lumus): genera, diseña, programa y publica carruseles en TikTok. Costo objetivo: USD 0 extra por mes.
 
 - Guía para Claude Code: `CLAUDE.md`
+- En qué estamos y qué sigue: `docs/PROGRESS.md`
 - Producto y alcance: `docs/PRD.md`
 - Arquitectura: `docs/ARCHITECTURE.md`
 - Design system: `docs/DESIGN-SYSTEM.md`
@@ -10,4 +11,63 @@ Gestor de redes sociales con IA para múltiples marcas (hoy RAdev y Lumus): gene
 - Decisiones: `docs/decisions/`
 - Datos iniciales de marcas: `seeds/`
 
-Estado: documentación lista, desarrollo por arrancar (Fase 0).
+## Cómo levantarlo
+
+### 1. Requisitos (una sola vez por máquina)
+
+- Windows con **WSL2** (Ubuntu) y **Docker Desktop** con la integración de WSL activada (Settings → Resources → WSL Integration).
+- Dentro de WSL: `git`, [nvm](https://github.com/nvm-sh/nvm) y, para clonar el repo privado, `gh` logueado (`gh auth login`).
+- El repo va en el disco de Linux (ej. `~/Proyectos/radev-social`), **nunca en `/mnt/c/...`**: ahí Docker y Next.js andan mucho más lento.
+
+### 2. Código y dependencias
+
+```bash
+git clone https://github.com/rekoasef/radev-social.git ~/Proyectos/radev-social
+cd ~/Proyectos/radev-social
+nvm install && nvm use       # Node 24 (lee .nvmrc)
+npm i -g pnpm@12.5.1         # si no lo tenés
+pnpm install
+```
+
+### 3. Variables de entorno (`.env`)
+
+El `.env` tiene claves y **nunca se sube a git**. Si ya tenés uno de otra máquina, copialo a la raíz del repo y saltá al paso 4. Si no:
+
+```bash
+cp .env.example .env
+openssl rand -hex 24         # → POSTGRES_PASSWORD (y reemplazalo también dentro de DATABASE_URL)
+openssl rand -base64 32      # → BETTER_AUTH_SECRET
+```
+
+- `ALLOWED_EMAILS`: tu email verificado de GitHub (los que no estén en la lista no pueden entrar).
+- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`: de una OAuth App en github.com/settings/developers → *New OAuth App*, con homepage `http://localhost:3000` y callback `http://localhost:3000/api/auth/callback/github`.
+
+### 4. Levantar
+
+**Opción A: todo en Docker** (un comando; lo más parecido a producción):
+
+```bash
+docker compose up -d --build
+```
+
+Levanta Postgres, aplica migraciones, carga RAdev y Lumus, y arranca la web y el worker. Entrá a http://localhost:3000.
+
+**Opción B: para desarrollar** (recarga al guardar):
+
+```bash
+docker compose up -d postgres
+pnpm db:migrate && pnpm db:seed
+pnpm dev                     # web en http://localhost:3000 + worker
+```
+
+Las dos opciones usan el puerto 3000: frená una antes de usar la otra (`docker compose stop web worker` o Ctrl+C en `pnpm dev`). La base es la misma.
+
+### 5. Apagar
+
+```bash
+docker compose down          # los datos quedan guardados en el volumen de Docker
+```
+
+`docker compose down -v` **borra la base de datos**: no lo uses salvo que quieras empezar de cero.
+
+Todos los comandos están en la sección "Comandos" de `CLAUDE.md`.

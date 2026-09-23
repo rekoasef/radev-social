@@ -53,13 +53,22 @@ docs/               Documentación del proyecto
 Mantené esta sección actualizada. Antes de cualquier comando: `nvm use` (Node 24, ver `.nvmrc`).
 
 ```
-docker compose up -d postgres   # solo Postgres (puerto 5433 en 127.0.0.1), para desarrollar con pnpm dev
-docker compose up -d --build    # todo en Docker: postgres, migraciones + seed, web (:3000) y worker
-docker compose logs -f web worker  # ver logs; `docker compose stop web worker` para frenarlos
-pnpm dev            # modo desarrollo: web (http://localhost:3000) + worker
-pnpm test           # Vitest en todos los paquetes
+# Docker
+docker compose up -d postgres      # solo Postgres (127.0.0.1:5433), para desarrollar con pnpm dev
+docker compose up -d --build       # todo: postgres, migraciones + seed, web (:3000) y worker
+docker compose logs -f web worker  # ver logs en vivo
+docker compose stop web worker     # frenar web y worker (Postgres sigue arriba)
+docker compose down                # apagar todo; los datos quedan en el volumen
+                                   # NUNCA `down -v` sin confirmar: borra la base
+
+# Desarrollo
+pnpm dev            # web (http://localhost:3000) + worker, con recarga al guardar
+pnpm build          # build de producción de todos los paquetes
+pnpm test           # Vitest en todos los paquetes (pnpm test:watch para modo continuo)
 pnpm lint           # Biome (pnpm format corrige formato)
 pnpm typecheck      # TypeScript en todos los paquetes
+
+# Base de datos
 pnpm db:generate    # generar migración Drizzle tras cambiar el schema
 pnpm db:migrate     # aplicar migraciones
 pnpm db:seed        # cargar marcas iniciales (solo agrega las que faltan)
@@ -67,7 +76,7 @@ pnpm db:studio      # ver y editar la base
 ```
 
 Notas del entorno:
-- El `.env` vive en la raíz. La web lo carga con `scripts/with-root-env.mjs`; los scripts de `packages/db`, con `load-root-env.ts`.
+- El `.env` vive en la raíz. La web y el worker lo cargan con `scripts/with-root-env.mjs`; los scripts de `packages/db`, con `load-root-env.ts`.
 - El puerto 5432 lo usa un Postgres nativo de WSL de otros proyectos: el nuestro va por 5433. No tocar el nativo.
 - `pnpm dev` y la web de Docker usan el puerto 3000 (lo exige la OAuth App de GitHub): frená uno antes de levantar el otro. `WEB_PORT=3001 docker compose up -d` sirve solo para probar la imagen.
 - Imágenes: un solo `Dockerfile` con destinos `web`, `worker` y `migrate`. El servicio `migrate` corre en cada `up` y termina; web y worker esperan a que salga bien.

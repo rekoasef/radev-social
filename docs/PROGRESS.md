@@ -8,9 +8,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 0 — Cimientos
-- **Próxima tarea:** T11 (cierre de la Fase 0)
-- **Última actualización:** 2026-09-23, al cerrar la T10
+- **Fase:** 0 — Cimientos ✅ terminada (2026-09-23). Duración real: 1 día (referencia para estimar las demás fases, ver ROADMAP).
+- **Próximo paso:** Fase 1 — Design system, presets y gestión de marcas. Empezar partiéndola en tareas (T0, T1…) con un plan corto para aprobar, y anotarlas acá.
+- **Última actualización:** 2026-09-23, al cerrar la T11
 
 ## Fase 0 — tareas
 
@@ -29,7 +29,7 @@ Plan aprobado el 2026-09-23.
 | T8 | Layout del panel: navegación, selector de marca en cookie, menú de usuario, `apps/web/DESIGN.md` | ✅ |
 | T9 | Worker: `apps/worker/src/index.ts` conecta a la base, arranca pg-boss (crea su esquema), logs estructurados, apagado limpio. Sin jobs todavía | ✅ |
 | T10 | Docker: Dockerfile de web (`output: "standalone"`) y worker, imágenes multi-arquitectura, compose con web + worker + postgres, migraciones al arrancar, probar `docker buildx build --platform linux/arm64`. La web necesita las variables de Better Auth en compose | ✅ |
-| T11 | Cierre: sección Comandos del CLAUDE.md completa, ROADMAP marcado, README "cómo levantar", recorrer el criterio de terminado de la fase | ⏳ próxima |
+| T11 | Cierre: sección Comandos del CLAUDE.md completa, ROADMAP marcado, README "cómo levantar", recorrer el criterio de terminado de la fase (probado desde un clon limpio con base vacía) | ✅ |
 
 ## Decisiones tomadas (no re-discutir)
 
@@ -63,17 +63,4 @@ Plan aprobado el 2026-09-23.
 
 ## Retomar en otra máquina
 
-Requisitos: WSL2, Docker Desktop con integración WSL, git, nvm, `gh` logueado, Claude Code. El repo va en el disco de Linux (ej. `~/Proyectos/radev-social`), nunca en `/mnt/c`.
-
-```
-git clone https://github.com/rekoasef/radev-social.git && cd radev-social
-nvm install && nvm use
-npm i -g pnpm@12.5.1        # si no está
-pnpm install
-# .env: NO está en el repo; copiarlo por un canal privado (plantilla: .env.example)
-docker compose up -d postgres
-pnpm db:migrate && pnpm db:seed
-pnpm dev                    # http://localhost:3000
-```
-
-La base de cada máquina es independiente: el seed recrea las marcas.
+Seguir "Cómo levantarlo" del `README.md`. Lo que no viaja con el repo: el `.env` (copiarlo por un canal privado) y los datos de la base (cada máquina tiene la suya; el seed recrea las marcas).
