@@ -17,11 +17,13 @@
     "db:generate": "pnpm --filter @radev/db db:generate",
     "db:migrate": "pnpm --filter @radev/db db:migrate",
     "db:seed": "pnpm --filter @radev/db db:seed",
-    "db:studio": "pnpm --filter @radev/db db:studio"
+    "db:studio": "pnpm --filter @radev/db db:studio",
+    "capture": "node scripts/capture.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@types/node": "24.13.6",
+    "playwright": "1.63.0",
     "turbo": "2.11.3",
     "typescript": "6.0.3",
     "vitest": "5.0.1"

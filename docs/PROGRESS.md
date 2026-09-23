@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T3: `SlideFrame` 4:5, ruta de preview con token y Playwright para capturas.
-- **Última actualización:** 2026-09-23, al cerrar la T2 de la Fase 1
+- **Próximo paso:** T4: plantillas `bold` con referencia (`cardGrid`, `flow`, `hubDiagram`), comparadas contra `docs/references/`.
+- **Última actualización:** 2026-09-23, al cerrar la T3 de la Fase 1
 
 ## Fase 1 — tareas
 
@@ -21,7 +21,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | T0 | Tipografías curadas auto-hospedadas (`@fontsource-variable`) y registro en `packages/slides` | ✅ |
 | T1 | Schemas Zod de contenido: 12 tipos de slide (con `flow`), `Carousel`, límites, parser de énfasis. Tests | ✅ |
 | T2 | Schemas Zod de tokens de `bold` y `soft` con valores por defecto, registro de presets. Migración de datos que reescribe los tokens de RAdev y Lumus al formato nuevo. Reemplaza `apps/web/lib/brand-tokens.ts`. Tests | ✅ |
-| T3 | `SlideFrame` 4:5 (encabezado, pie, número de página, decoraciones deterministas, zonas seguras). Ruta `/render/preview/...` protegida con `RENDER_TOKEN` (sin login). Capa de zonas seguras y superposición de la captura de TikTok. Playwright como dependencia de desarrollo para capturas. 👁 | |
+| T3 | `SlideFrame` 4:5 (encabezado, pie, número de página, decoraciones deterministas, zonas seguras). Ruta `/render/preview/...` protegida con `RENDER_TOKEN` (sin login). Capa de zonas seguras y superposición de la captura de TikTok. Playwright como dependencia de desarrollo para capturas. 👁 | ✅ |
 | T4 | Plantillas `bold` con referencia: `cardGrid`, `flow`, `hubDiagram`. 👁 contra las refs | |
 | T5 | Plantillas `bold` sin referencia: `cover`, `statement`, `question`, `cta`. 👁 | |
 | T6 | Plantillas `bold` de datos: `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart` (datos de ejemplo). 👁 | |
@@ -74,11 +74,15 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Tokens** (`packages/slides/src/presets/`): un schema por preset armado con `color`, `font`, `range`, `text`, `lines`, `toggle` y `asset` (`presets/fields.ts`). Cada campo tiene un valor por defecto y `.meta({ title, widget, ... })` para el formulario de la T10. Los objetos anidados usan `.prefault({})` (en Zod 4, `.default` no aplica los defaults internos). Los valores por defecto son neutros, no los de RAdev ni Lumus (regla 6). `parseTheme(preset, tokens)` valida y completa, y devuelve los problemas como `ruta › mensaje`; `defaultTokens(preset)` da una identidad completa. Los assets son ids de `brand_assets` (uuid) o `null`. `wordmark.tracking` de `soft` es un número en em.
 - **Tokens guardados**: la migración `0002_lumus_tokens_phase1.sql` (idempotente) pasó el tracking de Lumus a número y dejó en `null` sus assets (antes nombres de archivo). El seed de la T7 los vuelve a enlazar. `packages/db` tiene `@radev/slides` como devDependency solo para el test que valida los tokens del seed.
 - **Slides sin referencia** (`statement`, `question`, `cta`, etc.): no se esperan imágenes del operador. Se diseñan en código con las reglas del preset y el operador aprueba mirando capturas del render.
+- **Frame** (`packages/slides/src/frame/`): `SlideFrame` elige el marco del preset (`presets/bold/frame.tsx`; `soft` tira error hasta la T8). Geometría y zonas seguras en `frame/geometry.ts` (`FORMAT`, `SAFE_AREA`, `EXCLUSION_ZONES`, `isInSafeZone`); las plantillas ubican su contenido en `BOLD_CONTENT_BOX` (80,150 · 920×1040). Decoraciones deterministas por `seed` (`frame/random.ts`). La portada muestra "Deslizá →" en vez del número; `glow` solo en `cover` y `cta`.
+- **Pie sin tagline** (aprobado mirando la captura con TikTok encima): la columna de botones tapaba el lema. Queda wordmark + indicador de página. El token `footer.tagline` sigue en el schema sin dibujarse (ver pendientes).
+- **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante
 
 **Fase 1:**
-- Captura de TikTok para calibrar: `docs/references/tiktok-4x5.jpeg` (post "¿Cuánto cuesta tener una APP?"). Superponer un render real para confirmar las zonas seguras.
+- Token `footer.tagline` de `bold`: ya no se dibuja en el pie. Decidir en la T5 (¿va en la `cta`?) o quitarlo en la T10 con una migración.
+- La captura de TikTok (`docs/references/tiktok-4x5.jpeg`, post "¿Cuánto cuesta tener una APP?") ya se superpuso en la T3 (`overlay=tiktok`) y confirmó las zonas seguras.
 - Ese post usa una tipografía condensada en el título, distinta de Inter Tight de las referencias. Por ahora se sigue con Inter Tight; si el operador la quiere, se suma a la lista curada.
 - `heroAsset` / `logoAsset` de Lumus son nombres de archivo sin enlazar a `brand_assets`.
 
@@ -88,7 +92,8 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Commits solo con OK del operador**, en Conventional Commits en inglés. Cada commit de tarea actualiza este archivo.
 - **Infraestructura:** explicar cada comando en 1–2 frases antes de correrlo, sin dar nada por sabido.
 - **Decisiones visuales:** mostrar ejemplos o capturas; una página de texto con colores no alcanza para elegir.
-- **Capturas de la web:** Edge headless de Windows (`/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe --headless=new --screenshot=...`). Para ancho de celular, meter la página en un iframe de 390px (Edge no baja de ~500px). Las páginas con login no se pueden capturar así: pedirle al operador que las mire.
+- **Capturas de slides:** `pnpm capture` (Playwright). En una máquina nueva, Chromium necesita librerías del sistema: `pnpm exec playwright install chromium` y después `sudo "$(which node)" node_modules/playwright/cli.js install-deps chromium` (lo corre el operador, pide contraseña).
+- **Capturas del panel:** Edge headless de Windows (`/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe --headless=new --screenshot=...`). Para ancho de celular, meter la página en un iframe de 390px (Edge no baja de ~500px). Las páginas con login no se pueden capturar así: pedirle al operador que las mire.
 - **Tokens:** el operador limpia el contexto entre tareas; este archivo tiene que alcanzar para retomar sin re-derivar nada.
 
 ## Retomar en otra máquina

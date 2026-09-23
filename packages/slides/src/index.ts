@@ -25,6 +25,17 @@ export {
   isFontFamily,
   supportsWeight,
 } from "./fonts/registry";
+export {
+  EXCLUSION_ZONES,
+  FORMAT,
+  isInSafeZone,
+  type Rect,
+  SAFE_AREA,
+  SAFE_MARGINS,
+} from "./frame/geometry";
+export { createRandom, type Random } from "./frame/random";
+export { SafeZoneOverlay } from "./frame/safe-zone-overlay";
+export { SlideFrame, type SlideFrameProps } from "./frame/slide-frame";
 export { type BoldTokens, boldTokensSchema } from "./presets/bold/tokens";
 export type { TokenWidget } from "./presets/fields";
 export {

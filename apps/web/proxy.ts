@@ -11,6 +11,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Everything except the login page, Better Auth's endpoints and static files.
-  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico).*)"],
+  // Everything except the login page, Better Auth's endpoints, static files and /render
+  // (internal render pages: they check RENDER_TOKEN, and Caddy blocks them in production).
+  matcher: ["/((?!login|api/auth|render|_next/static|_next/image|favicon.ico).*)"],
 };

@@ -26,7 +26,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Schemas Zod de `Slide` y `Carousel`, límites de caracteres y parser de énfasis
 - [x] Tipografías curadas auto-hospedadas
 - [ ] Preset `bold` y preset `soft`, cada uno con su schema Zod de tokens
-- [ ] `SlideFrame` en formato `4x5` (único, ADR 0011), zonas seguras con la interfaz de TikTok, indicador de página
+- [x] `SlideFrame` en formato `4x5` (único, ADR 0011), zonas seguras con la interfaz de TikTok, indicador de página
 - [ ] Plantillas v1: `cover`, `statement`, `question`, `cardGrid`, `flow`, `hubDiagram`, `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart`, `cta`
 - [ ] CRUD de marcas: crear, editar, archivar, borrar (solo sin posts)
 - [ ] Editor de identidad visual: elegir preset, formulario de tokens generado desde el schema, vista previa en vivo con slides de ejemplo

@@ -54,7 +54,7 @@ El contenido (`data-qa="content"`) no puede invadir ninguna zona. Las decoracion
 │  CONTENIDO                       │  varía según el tipo de slide
 │                                  │
 │──────────────────────────────────│
-│ logo/wordmark        tagline  3/7│  pie (preset + tokens) + indicador de página
+│ logo/wordmark                 3/7│  pie (preset + tokens) + indicador de página
 └──────────────────────────────────┘
    + decoraciones del preset
 ```
@@ -156,7 +156,7 @@ Carousel = {
 | `fonts.label` | Inter 500 | Etiquetas |
 | `radius.card` / `radius.callout` | 16 / 20 | |
 | `header.left` / `header.right` | "PROCESOS DE HOY" / "RESULTADOS DE MAÑANA" | Etiquetas de esquina |
-| `footer.tagline` | "AUTOMATIZACIÓN" / "IDEAS EN RESULTADOS" | Dos líneas |
+| `footer.tagline` | "AUTOMATIZACIÓN" / "IDEAS EN RESULTADOS" | Dos líneas. Hoy no se dibuja en el pie (lo tapan los botones de TikTok); pendiente decidir si se usa en otro lado o se quita |
 | `wordmark` | `{ strong: "RA", light: "dev", dot: true }` | Construido en código |
 | `logoAsset` | — | Opcional; si existe, reemplaza al wordmark |
 
@@ -165,7 +165,7 @@ Carousel = {
 - Títulos en MAYÚSCULAS, interlineado 0.95, tracking -0.02em. Escala sugerida: 104 / 84 / 64 · cuerpo 36 · etiqueta 18. Se ajusta en Fase 1.
 - Énfasis en títulos: color de acento. En apoyo: peso 700, acento, mayúsculas.
 - Etiquetas: mayúsculas, tracking 0.3em, barra vertical fina.
-- Pie: línea divisoria, wordmark a la izquierda, tagline a la derecha.
+- Pie: línea divisoria, wordmark a la izquierda, indicador de página a la derecha (en la portada, "Deslizá →"). Sin tagline: la columna de botones de TikTok tapa la esquina inferior derecha.
 - Decoraciones: líneas curvas finas en esquinas terminadas en punto brillante, grillas de puntos, línea punteada vertical izquierda, glow radial suave (solo portada y `cta`).
 - Contenedores: dos formas y no más. Las referencias usan cuatro variantes distintas; estas reglas las unifican:
   - **Tarjeta** (`cardGrid`, `flow`, `steps`): fondo `surface`, borde 1px acento con glow, radio `radius.card`. Ícono en color `text` dentro de un cuadradito oscuro (un tono sobre `surface`, sin borde de acento). Texto debajo del ícono en `fonts.body`, en oración normal (no mayúsculas): `lead` liviano y `label` en peso 700, en color `text`. Así se logran los dos tonos de `ref-cardgrid`. Ninguna tarjeta se resalta en acento (en la referencia, la primera sí: se descarta porque superaría los 2 énfasis por slide).
