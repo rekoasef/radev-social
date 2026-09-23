@@ -1,0 +1,285 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Control-room palette. Brand colors never appear here: they live only inside each channel. */
+@theme {
+  --color-console: #0c0e12;
+  --color-panel: #13161c;
+  --color-panel-raised: #1a1e26;
+  --color-bezel: #252a34;
+  --color-bezel-strong: #343a47;
+  --color-ink: #e8eaed;
+  --color-ink-dim: #a3a9b4;
+  --color-ink-faint: #7d8491;
+  --color-tally-red: #f2555a;
+  --color-tally-amber: #f2b53a;
+  --color-tally-green: #3dd68c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+/* shadcn variables mapped onto the console palette (the panel is always dark). */
+:root {
+  color-scheme: dark;
+  --background: var(--color-console);
+  --foreground: var(--color-ink);
+  --card: var(--color-panel);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-panel-raised);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-ink);
+  --primary-foreground: var(--color-console);
+  --secondary: var(--color-panel-raised);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-panel);
+  --muted-foreground: var(--color-ink-dim);
+  --accent: var(--color-panel-raised);
+  --accent-foreground: var(--color-ink);
+  --destructive: var(--color-tally-red);
+  --border: var(--color-bezel);
+  --input: var(--color-bezel-strong);
+  --ring: var(--color-ink-dim);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    scrollbar-color: var(--color-bezel-strong) var(--color-console);
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--color-tally-amber) 35%, transparent);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-tally-amber);
+    outline-offset: 3px;
+  }
+}
+
+/* Engraved label text and tabular readouts, reusable with @apply. */
+@utility plate-text {
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@utility timecode {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: 0.02em;
+}
+
+@layer components {
+  .plate {
+    @apply plate-text text-ink;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    padding: 7px 10px 6px;
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 3px;
+    background: linear-gradient(var(--color-panel-raised), var(--color-panel));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.05),
+      0 1px 2px rgb(0 0 0 / 0.4);
+  }
+
+  .console-bar {
+    background: color-mix(in oklab, var(--color-console) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--color-bezel);
+  }
+
+  .callsign {
+    @apply timecode text-ink;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    padding: 4px 8px;
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 3px;
+  }
+
+  /* Channel monitor: bezel + screen painted with the brand's own tokens. */
+  .monitor {
+    padding: 6px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #1c2028, #111318);
+    border: 1px solid var(--color-bezel);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.04),
+      0 18px 40px -18px rgb(0 0 0 / 0.8);
+  }
+  .monitor-screen {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    aspect-ratio: 16 / 9;
+    padding: clamp(1rem, 3.5vw, 1.75rem);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--screen-bg);
+    color: var(--screen-ink);
+    isolation: isolate;
+  }
+  .monitor-screen::after {
+    /* Faint scanlines: a monitor, not a card. */
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: repeating-linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.018) 0 1px,
+      transparent 1px 3px
+    );
+    pointer-events: none;
+  }
+  .monitor-name {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.12em;
+    font-size: clamp(2.5rem, 6.5vw, 4.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--screen-ink);
+  }
+  .monitor-accent {
+    width: 0.16em;
+    height: 0.16em;
+    border-radius: 999px;
+    background: var(--screen-accent);
+    box-shadow: 0 0 0.35em color-mix(in oklab, var(--screen-accent) 70%, transparent);
+  }
+  .monitor-meta {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--screen-muted);
+  }
+
+  /* Test pattern built from the brand's color tokens. */
+  .bars {
+    display: flex;
+    height: 28px;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  }
+  .bar {
+    flex: 1 1 0;
+    box-shadow: inset -1px 0 0 rgb(0 0 0 / 0.35);
+  }
+
+  .rundown-grid {
+    display: grid;
+    grid-template-columns: 7rem 7rem 1fr 9rem;
+    gap: 1rem;
+  }
+  @media (max-width: 640px) {
+    .rundown-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .rundown-grid > :nth-child(n + 3) {
+      display: none;
+    }
+  }
+
+  .console-button {
+    @apply plate-text text-ink;
+    padding: 10px 14px;
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 4px;
+    background: var(--color-panel-raised);
+    transition:
+      background-color 160ms ease-out,
+      border-color 160ms ease-out;
+  }
+  .console-button:hover {
+    background: var(--color-bezel);
+    border-color: var(--color-ink-faint);
+  }
+
+  .tally-glow {
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+}
+
+/* The one authored moment: monitors power on like a CRT when the wall loads. */
+@media (prefers-reduced-motion: no-preference) {
+  .monitor-screen {
+    animation: power-on 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: inherit;
+  }
+  .monitor {
+    animation-delay: inherit;
+  }
+  .channel .monitor-screen > * {
+    animation: signal-in 480ms cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
+  }
+}
+
+@keyframes power-on {
+  0% {
+    clip-path: inset(46% 0 46% 0);
+    filter: brightness(2.2);
+  }
+  45% {
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1.35);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1);
+  }
+}
+
+@keyframes signal-in {
+  from {
+    opacity: 0.4;
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}

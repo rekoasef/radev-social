@@ -1,5 +1,5 @@
 import { createDb } from "../client";
-import { loadRootEnv } from "../env";
+import { loadRootEnv } from "../load-root-env";
 import { brands } from "../schema";
 import { seedBrands } from "./brands";
 

@@ -1,5 +1,6 @@
 import { defineConfig } from "drizzle-kit";
-import { loadRootEnv, requireDatabaseUrl } from "./src/env";
+import { requireDatabaseUrl } from "./src/env";
+import { loadRootEnv } from "./src/load-root-env";
 
 loadRootEnv();
 

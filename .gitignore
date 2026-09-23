@@ -4,6 +4,7 @@ node_modules/
 
 # Builds y caché
 .next/
+next-env.d.ts
 dist/
 out/
 .turbo/
@@ -30,3 +31,9 @@ Thumbs.db
 *.log
 npm-debug.log*
 pnpm-debug.log*
+
+# Archivos de trabajo de la skill de diseño (se versionan solo PRODUCT.md y .impeccable/surfaces/)
+**/.impeccable/build/
+**/.impeccable/questions/
+**/.impeccable/review/
+**/.impeccable/mocks/

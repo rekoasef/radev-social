@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { createDb } from "./client";
-import { loadRootEnv } from "./env";
+import { loadRootEnv } from "./load-root-env";
 
 loadRootEnv();
 
