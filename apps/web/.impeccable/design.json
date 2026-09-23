@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-23T17:27:22.866624+00:00",
+  "title": "Design System: RAdev Social",
+  "extensions": {
+    "colorMeta": {
+      "console": {
+        "role": "neutral",
+        "displayName": "Consola",
+        "tonalRamp": [
+          "oklch(15% 0.012 260)",
+          "oklch(25% 0.012 260)",
+          "oklch(35% 0.012 260)",
+          "oklch(48% 0.012 260)",
+          "oklch(60% 0.012 260)",
+          "oklch(72% 0.012 260)",
+          "oklch(84% 0.012 260)",
+          "oklch(95% 0.012 260)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "tonalRamp": [
+          "oklch(15% 0.012 260)",
+          "oklch(25% 0.012 260)",
+          "oklch(35% 0.012 260)",
+          "oklch(48% 0.012 260)",
+          "oklch(60% 0.012 260)",
+          "oklch(72% 0.012 260)",
+          "oklch(84% 0.012 260)",
+          "oklch(95% 0.012 260)"
+        ]
+      },
+      "panel-raised": {
+        "role": "neutral",
+        "displayName": "Panel elevado",
+        "tonalRamp": [
+          "oklch(15% 0.012 260)",
+          "oklch(25% 0.012 260)",
+          "oklch(35% 0.012 260)",
+          "oklch(48% 0.012 260)",
+          "oklch(60% 0.012 260)",
+          "oklch(72% 0.012 260)",
+          "oklch(84% 0.012 260)",
+          "oklch(95% 0.012 260)"
+        ]
+      },
+      "bezel": {
+        "role": "neutral",
+        "displayName": "Bisel",
+        "tonalRamp": [
+          "oklch(15% 0.012 260)",
+          "oklch(25% 0.012 260)",
+          "oklch(35% 0.012 260)",
+          "oklch(48% 0.012 260)",
+          "oklch(60% 0.012 260)",
+          "oklch(72% 0.012 260)",
+          "oklch(84% 0.012 260)",
+          "oklch(95% 0.012 260)"
+        ]
+      },
+      "bezel-strong": {
+        "role": "neutral",
+        "displayName": "Bisel fuerte",
+        "tonalRamp": [
+          "oklch(15% 0.012 260)",
+          "oklch(25% 0.012 260)",
+          "oklch(35% 0.012 260)",
+          "oklch(48% 0.012 260)",
+          "oklch(60% 0.012 260)",
+          "oklch(72% 0.012 260)",
+          "oklch(84% 0.012 260)",
+          "oklch(95% 0.012 260)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "tonalRamp": [
+          "oklch(15% 0.012 260)",
+          "oklch(25% 0.012 260)",
+          "oklch(35% 0.012 260)",
+          "oklch(48% 0.012 260)",
+          "oklch(60% 0.012 260)",
+          "oklch(72% 0.012 260)",
+          "oklch(84% 0.012 260)",
+          "oklch(95% 0.012 260)"
+        ]
+      },
+      "ink-dim": {
+        "role": "neutral",
+        "displayName": "Tinta tenue",
+        "tonalRamp": [
+          "oklch(15% 0.012 260)",
+          "oklch(25% 0.012 260)",
+          "oklch(35% 0.012 260)",
+          "oklch(48% 0.012 260)",
+          "oklch(60% 0.012 260)",
+          "oklch(72% 0.012 260)",
+          "oklch(84% 0.012 260)",
+          "oklch(95% 0.012 260)"
+        ]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Tinta apagada",
+        "tonalRamp": [
+          "oklch(15% 0.012 260)",
+          "oklch(25% 0.012 260)",
+          "oklch(35% 0.012 260)",
+          "oklch(48% 0.012 260)",
+          "oklch(60% 0.012 260)",
+          "oklch(72% 0.012 260)",
+          "oklch(84% 0.012 260)",
+          "oklch(95% 0.012 260)"
+        ]
+      },
+      "tally-red": {
+        "role": "primary",
+        "displayName": "Rojo al aire",
+        "tonalRamp": [
+          "oklch(15% 0.17 22)",
+          "oklch(25% 0.17 22)",
+          "oklch(35% 0.17 22)",
+          "oklch(48% 0.17 22)",
+          "oklch(60% 0.17 22)",
+          "oklch(72% 0.17 22)",
+          "oklch(84% 0.17 22)",
+          "oklch(95% 0.17 22)"
+        ]
+      },
+      "tally-amber": {
+        "role": "primary",
+        "displayName": "Ámbar en cola",
+        "tonalRamp": [
+          "oklch(15% 0.15 75)",
+          "oklch(25% 0.15 75)",
+          "oklch(35% 0.15 75)",
+          "oklch(48% 0.15 75)",
+          "oklch(60% 0.15 75)",
+          "oklch(72% 0.15 75)",
+          "oklch(84% 0.15 75)",
+          "oklch(95% 0.15 75)"
+        ]
+      },
+      "tally-green": {
+        "role": "primary",
+        "displayName": "Verde listo",
+        "tonalRamp": [
+          "oklch(15% 0.16 155)",
+          "oklch(25% 0.16 155)",
+          "oklch(35% 0.16 155)",
+          "oklch(48% 0.16 155)",
+          "oklch(60% 0.16 155)",
+          "oklch(72% 0.16 155)",
+          "oklch(84% 0.16 155)",
+          "oklch(95% 0.16 155)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Nombre de la marca dentro de su monitor, con la fuente de la marca."
+      },
+      "plate": {
+        "displayName": "Plate",
+        "purpose": "Título grabado de cada zona."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Etiquetas, lámparas, pestañas y botones."
+      },
+      "timecode": {
+        "displayName": "Timecode",
+        "purpose": "Horas, códigos, números y hex."
+      }
+    },
+    "shadows": [
+      {
+        "name": "engraved",
+        "value": "inset 0 1px 0 rgb(255 255 255 / 0.05), 0 1px 2px rgb(0 0 0 / 0.4)",
+        "purpose": "Plates."
+      },
+      {
+        "name": "monitor",
+        "value": "inset 0 1px 0 rgb(255 255 255 / 0.04), 0 18px 40px -18px rgb(0 0 0 / 0.8)",
+        "purpose": "Bisel de cada canal."
+      },
+      {
+        "name": "popup",
+        "value": "0 18px 40px -12px rgb(0 0 0 / 0.7)",
+        "purpose": "Menús desplegables."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state",
+        "value": "160ms ease-out",
+        "purpose": "Hover de botones, pestañas y selector."
+      },
+      {
+        "name": "popup",
+        "value": "120ms ease-out, scale 0.97",
+        "purpose": "Entrada y salida de menús."
+      },
+      {
+        "name": "power-on",
+        "value": "620ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Encendido CRT de los monitores; único momento de movimiento, se apaga con reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Plate",
+      "kind": "custom",
+      "refersTo": "plate",
+      "description": "Título grabado de una zona.",
+      "html": "<h2 class=\"ds-plate\">Canales</h2>",
+      "css": ".ds-plate{display:inline-block;font:600 12px/1 Geist,system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#e8eaed;padding:7px 10px 6px;border:1px solid #343a47;border-radius:3px;background:linear-gradient(#1a1e26,#13161c);box-shadow:inset 0 1px 0 rgb(255 255 255/.05),0 1px 2px rgb(0 0 0/.4)}"
+    },
+    {
+      "name": "Console Button",
+      "kind": "button",
+      "refersTo": "console-button",
+      "description": "Botón por defecto del panel.",
+      "html": "<button class=\"ds-btn\">Salir</button>",
+      "css": ".ds-btn{font:500 11px/1 Geist,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#e8eaed;padding:10px 14px;border:1px solid #343a47;border-radius:4px;background:#1a1e26;transition:background-color 160ms ease-out,border-color 160ms ease-out;cursor:pointer}.ds-btn:hover{background:#252a34;border-color:#7d8491}.ds-btn:focus-visible{outline:2px solid #f2b53a;outline-offset:3px}"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "console-button-primary",
+      "description": "Acción única de una pantalla.",
+      "html": "<button class=\"ds-btn-primary\">Entrar con GitHub</button>",
+      "css": ".ds-btn-primary{font:500 12px/1 Geist,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#0c0e12;padding:14px 20px;border:1px solid #e8eaed;border-radius:4px;background:#e8eaed;cursor:pointer;transition:background-color 160ms ease-out}.ds-btn-primary:hover{background:#fff}.ds-btn-primary:focus-visible{outline:2px solid #f2b53a;outline-offset:3px}"
+    },
+    {
+      "name": "Tally",
+      "kind": "chip",
+      "refersTo": "tally",
+      "description": "Lámpara de estado con forma y texto.",
+      "html": "<span class=\"ds-tally\"><svg viewBox=\"0 0 10 10\" width=\"10\" height=\"10\"><rect x=\"1.2\" y=\"1.2\" width=\"7.6\" height=\"7.6\" fill=\"currentColor\"/></svg>Base en línea</span>",
+      "css": ".ds-tally{display:inline-flex;align-items:center;gap:8px;font:500 11px/1 Geist,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#3dd68c}"
+    },
+    {
+      "name": "Brand Switcher",
+      "kind": "custom",
+      "refersTo": "switcher",
+      "description": "Selector de la marca activa.",
+      "html": "<button class=\"ds-switcher\"><span class=\"ds-callsign\">RA</span><span>RAdev</span></button>",
+      "css": ".ds-switcher{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px 6px 6px;border:1px solid #343a47;border-radius:6px;background:#13161c;color:#e8eaed;font:400 14px Geist,system-ui,sans-serif;cursor:pointer;transition:background-color 160ms ease-out,border-color 160ms ease-out}.ds-switcher:hover{background:#1a1e26;border-color:#7d8491}.ds-switcher:focus-visible{outline:2px solid #f2b53a;outline-offset:3px}.ds-callsign{font:600 13px 'Geist Mono',ui-monospace,monospace;letter-spacing:.12em;padding:4px 8px;border:1px solid #343a47;border-radius:3px}"
+    },
+    {
+      "name": "Nav Key",
+      "kind": "nav",
+      "refersTo": "nav-key",
+      "description": "Pestañas del panel: actual, en reposo y fuera del aire.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-key\" aria-current=\"page\" href=\"#\">Inicio</a><a class=\"ds-key\" href=\"#\">Posts</a><span class=\"ds-key ds-off\">Ideas <span class=\"ds-phase\">F3</span></span></nav>",
+      "css": ".ds-nav{display:flex;gap:4px;border-bottom:1px solid #252a34;background:#0c0e12}.ds-key{position:relative;display:inline-flex;align-items:center;gap:8px;padding:12px 12px 13px;font:500 11px/1 Geist,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#a3a9b4;text-decoration:none;transition:color 160ms ease-out}.ds-key:hover{color:#e8eaed}.ds-key[aria-current=page]{color:#e8eaed}.ds-key[aria-current=page]::after{content:'';position:absolute;left:12px;right:12px;bottom:-1px;height:2px;background:#e8eaed}.ds-off,.ds-off:hover{color:#7d8491}.ds-phase{font:10px 'Geist Mono',monospace;padding:2px 4px;border:1px solid #343a47;border-radius:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La sala de control",
+    "overview": "El panel es la sala de control de una emisora: cada marca es un canal, cada post un bloque en la planilla de emisión. Consola de grafito siempre oscura, biseles finos, etiquetas grabadas y datos en mono. El color de cada marca vive solo dentro de su canal; el estado se comunica con lámparas tally con forma y texto.",
+    "keyCharacteristics": [
+      "Consola de grafito siempre oscura",
+      "Plates grabados como títulos de zona",
+      "Datos en Geist Mono tabular",
+      "Color de marca solo dentro de su canal",
+      "Secciones futuras apagadas con su fase"
+    ],
+    "rules": [
+      {
+        "name": "La regla del canal propio",
+        "body": "El color de una marca solo se pinta dentro de su canal; nunca en el cromo del panel.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla de la lámpara",
+        "body": "Todo estado lleva forma y texto además del color.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla del dato en mono",
+        "body": "Horas, códigos, números y colores van en timecode.",
+        "section": "typography"
+      },
+      {
+        "name": "La regla del vidrio de consola",
+        "body": "Solo las barras fijas usan fondo translúcido con desenfoque.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do titular cada zona con un plate y su conteo al margen",
+      "Do mostrar el estado real con una lámpara tally",
+      "Do mostrar secciones futuras apagadas con su fase",
+      "Do usar timecode para valores",
+      "Do controles táctiles de 44px o más"
+    ],
+    "donts": [
+      "Don't usar el color de una marca en el cromo del panel",
+      "Don't comunicar estado solo con color",
+      "Don't usar barra lateral más grilla de tarjetas",
+      "Don't agregar sombras flotantes",
+      "Don't agregar modo claro",
+      "Don't usar vidrio fuera de las barras fijas"
+    ]
+  }
+}

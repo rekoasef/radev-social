@@ -15,7 +15,16 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function ChannelMonitor({ brand, index }: { brand: Brand; index: number }) {
+export function ChannelMonitor({
+  brand,
+  index,
+  selected,
+}: {
+  brand: Brand;
+  index: number;
+  /** The brand the panel is tuned to (brand switcher). */
+  selected: boolean;
+}) {
   const colors = readColors(brand.themeTokens);
   const display = readFont(brand.themeTokens, "display");
   const screen = {
@@ -31,7 +40,10 @@ export function ChannelMonitor({ brand, index }: { brand: Brand; index: number }
   return (
     <article aria-labelledby={headingId} className="channel flex min-w-0 flex-col">
       <header className="flex items-center justify-between gap-4 pb-3">
-        <span className="callsign">{brand.codePrefix}</span>
+        <span className="flex items-center gap-3">
+          <span className="callsign">{brand.codePrefix}</span>
+          {selected && <Tally state="cued">Activa</Tally>}
+        </span>
         {archived ? (
           <Tally state="off">Archivada</Tally>
         ) : (
@@ -39,7 +51,7 @@ export function ChannelMonitor({ brand, index }: { brand: Brand; index: number }
         )}
       </header>
 
-      <div className="monitor" style={screen}>
+      <div className={cn("monitor", selected && "monitor-selected")} style={screen}>
         <div className="monitor-screen">
           <span className="monitor-meta">
             {brand.slug} · preset {brand.stylePreset}

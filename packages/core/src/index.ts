@@ -5,3 +5,4 @@ export {
   type OperatorIdentity,
   parseAllowedEmails,
 } from "./auth/allowlist";
+export { pickActiveBrand, type SelectableBrand } from "./brands/active-brand";

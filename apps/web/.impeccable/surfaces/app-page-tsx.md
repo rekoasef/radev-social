@@ -1,8 +1,8 @@
 ---
 version: 1
 slug: "app-page-tsx"
-primary_target: "app/page.tsx"
-related_targets: []
+primary_target: "app/(panel)/page.tsx"
+related_targets: ["app/(panel)/layout.tsx", "components/panel/"]
 ---
 
 # Surface brief: panel home (brands)

@@ -14,7 +14,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Docker Compose local: `postgres`, `web`, `worker` (esqueleto), con imágenes multi-arquitectura
 - [x] Drizzle: tablas `brands`, `settings`; seed inicial de RAdev y Lumus desde `seeds/brands/` (sin assets todavía)
 - [x] Better Auth con GitHub + lista blanca `ALLOWED_EMAILS`
-- [ ] Layout base del panel (navegación, selector de marca)
+- [x] Layout base del panel (navegación, selector de marca)
 - [ ] Sección "Comandos" del CLAUDE.md actualizada
 
 **Terminado cuando:** levanto todo con un comando en WSL, entro con mi cuenta de GitHub, cualquier otra cuenta es rechazada, y veo RAdev y Lumus en el selector.
