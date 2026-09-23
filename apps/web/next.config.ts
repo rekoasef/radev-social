@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   // Trace from the monorepo root so workspace packages end up in the standalone output.
   outputFileTracingRoot: fileURLToPath(new URL("../../", import.meta.url)),
   // Workspace packages export TypeScript source; Next compiles them.
-  transpilePackages: ["@radev/db"],
+  transpilePackages: ["@radev/db", "@radev/slides"],
 };
 
 export default nextConfig;

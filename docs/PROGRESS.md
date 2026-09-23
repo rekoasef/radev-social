@@ -8,13 +8,35 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 0 — Cimientos ✅ terminada (2026-09-23). Duración real: 1 día (referencia para estimar las demás fases, ver ROADMAP).
-- **Próximo paso:** Fase 1 — Design system, presets y gestión de marcas. Empezar partiéndola en tareas (T0, T1…) con un plan corto para aprobar, y anotarlas acá.
-- **Última actualización:** 2026-09-23, decisiones de diseño previas a la Fase 1 (formato, tarjetas, `flow`, slides sin referencia)
+- **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
+- **Próximo paso:** T1 — schemas Zod de contenido.
+- **Última actualización:** 2026-09-23, al cerrar la T0 de la Fase 1
+
+## Fase 1 — tareas
+
+Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador apruebe el diseño.
+
+| Tarea | Qué | Estado |
+|---|---|---|
+| T0 | Tipografías curadas auto-hospedadas (`@fontsource-variable`) y registro en `packages/slides` | ✅ |
+| T1 | Schemas Zod de contenido: 12 tipos de slide (con `flow`), `Carousel`, límites, parser de énfasis. Tests | |
+| T2 | Schemas Zod de tokens de `bold` y `soft` con valores por defecto, registro de presets. Migración de datos que reescribe los tokens de RAdev y Lumus al formato nuevo. Reemplaza `apps/web/lib/brand-tokens.ts`. Tests | |
+| T3 | `SlideFrame` 4:5 (encabezado, pie, número de página, decoraciones deterministas, zonas seguras). Ruta `/render/preview/...` protegida con `RENDER_TOKEN` (sin login). Capa de zonas seguras y superposición de la captura de TikTok. Playwright como dependencia de desarrollo para capturas. 👁 | |
+| T4 | Plantillas `bold` con referencia: `cardGrid`, `flow`, `hubDiagram`. 👁 contra las refs | |
+| T5 | Plantillas `bold` sin referencia: `cover`, `statement`, `question`, `cta`. 👁 | |
+| T6 | Plantillas `bold` de datos: `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart` (datos de ejemplo). 👁 | |
+| T7 | `brand_assets`: tabla, subida con validación de tipo y tamaño, `media/`. El seed carga y enlaza los assets de Lumus | |
+| T8 | Preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus. 👁 | |
+| T9 | CRUD de marcas (borrar solo sin posts) | |
+| T10 | Editor de identidad visual: preset, formulario desde el schema, vista previa en vivo, aviso de contraste | |
+| T11 | Calibración de límites de caracteres con casos extremos; la preview marca desbordes | |
+| T12 | Cierre: criterio de terminado, docs, comandos | |
+
+Decisiones aprobadas con el plan: (1) ruta `/render/preview/...` con token interno en vez de login, para poder capturarla; (2) Playwright como dependencia de desarrollo desde la Fase 1 (el job de render sigue siendo de la Fase 2); (3) migración de datos para los tokens de las marcas existentes.
 
 ## Fase 0 — tareas
 
-Plan aprobado el 2026-09-23.
+Plan aprobado el 2026-09-23. Terminada.
 
 | Tarea | Qué | Estado |
 |---|---|---|
@@ -46,6 +68,7 @@ Plan aprobado el 2026-09-23.
 - **Formato único 4:5** (1080×1350) para TikTok e Instagram (ADR 0011). Zonas seguras medidas sobre una captura real de TikTok: márgenes 80/80/80/100 y exclusión abajo a la derecha (`x ≥ 930`, `y ≥ 650`) por la columna de botones. Detalle en `DESIGN-SYSTEM.md` §3.
 - **Tipo de slide nuevo `flow`**: tarjetas en orden con conectores (refs `flow-1/2`); `cardGrid` queda para tarjetas sin orden.
 - **Preset `bold`, dos contenedores**: *tarjeta* (ícono blanco en un cuadradito oscuro y texto en oración debajo; el énfasis da los dos tonos) y *chip* (ícono y texto en una línea, para `hubDiagram`). Se descartan las etiquetas en MAYÚSCULAS espaciadas dentro de las tarjetas (`flow-2`). Cuando una referencia contradice las reglas, mandan las reglas.
+- **Tipografías**: paquetes `@fontsource-variable/*` 5.3.0 (fuentes variables, versión fija) en `packages/slides`. Registro en `src/fonts/registry.ts` (`FONT_FAMILIES`, `fontStack`, `supportsWeight`); `@radev/slides/fonts` registra los `@font-face` y se importa una vez en `apps/web/app/layout.tsx`. El nombre curado ("Geist Sans") es distinto del nombre CSS ("Geist Variable"): siempre pasar por `fontStack`. Un test verifica que el registro, `load.ts` y el CSS de cada paquete coincidan. El panel sigue con su propia Geist vía `next/font`.
 - **Slides sin referencia** (`statement`, `question`, `cta`, etc.): no se esperan imágenes del operador. Se diseñan en código con las reglas del preset y el operador aprueba mirando capturas del render.
 
 ## Anotado para más adelante

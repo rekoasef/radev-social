@@ -1,6 +1,6 @@
 import type { Brand } from "@radev/db";
 import type { CSSProperties } from "react";
-import { brandFontClass } from "@/lib/brand-fonts";
+import { brandFontFamily } from "@/lib/brand-fonts";
 import { readColor, readColors, readFont } from "@/lib/brand-tokens";
 import { cityOf, offsetOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -58,8 +58,8 @@ export function ChannelMonitor({
           </span>
           <h2
             id={headingId}
-            className={cn("monitor-name", brandFontClass(display?.family))}
-            style={{ fontWeight: display?.weight }}
+            className="monitor-name"
+            style={{ fontFamily: brandFontFamily(display?.family), fontWeight: display?.weight }}
           >
             {brand.name}
             <span className="monitor-accent" aria-hidden="true" />

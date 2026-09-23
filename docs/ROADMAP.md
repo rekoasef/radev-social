@@ -24,7 +24,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 ## Fase 1 — Design system, presets y gestión de marcas
 
 - [ ] Schemas Zod de `Slide` y `Carousel`, límites de caracteres y parser de énfasis
-- [ ] Tipografías curadas auto-hospedadas
+- [x] Tipografías curadas auto-hospedadas
 - [ ] Preset `bold` y preset `soft`, cada uno con su schema Zod de tokens
 - [ ] `SlideFrame` en formato `4x5` (único, ADR 0011), zonas seguras con la interfaz de TikTok, indicador de página
 - [ ] Plantillas v1: `cover`, `statement`, `question`, `cardGrid`, `flow`, `hubDiagram`, `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart`, `cta`

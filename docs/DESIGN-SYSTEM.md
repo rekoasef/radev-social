@@ -23,7 +23,7 @@ Una identidad visual = **preset de estilo** (código) + **tokens** (datos editab
 - **Marca nueva = elegir preset + cargar tokens y assets. Cero código.** Un estilo visual completamente distinto = un preset nuevo (código), que queda disponible para todas las marcas.
 
 ### Tipografías disponibles (lista curada)
-Todas libres, auto-hospedadas en el proyecto (no se cargan de internet al renderizar): Inter, Inter Tight, Hanken Grotesk, Geist Sans, Geist Mono, Space Grotesk, Manrope, DM Sans, JetBrains Mono. Se amplía agregando archivos al proyecto.
+Todas libres, auto-hospedadas en el proyecto (no se cargan de internet al renderizar): Inter, Inter Tight, Hanken Grotesk, Geist Sans, Geist Mono, Space Grotesk, Manrope, DM Sans, JetBrains Mono. Vienen de paquetes `@fontsource-variable` (fuentes variables). Para sumar una: instalar su paquete en `packages/slides` y registrarla en `src/fonts/registry.ts` y `src/fonts/load.ts`.
 
 ### Presets de la v1
 
