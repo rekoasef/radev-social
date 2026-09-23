@@ -82,7 +82,7 @@ Cada requerimiento indica la fase del roadmap en la que se implementa.
 - **RF-26** (F4) Ventana horaria de generación automática (por defecto de madrugada, para no competir con el uso del operador).
 
 ### Render
-- **RF-27** (F1) Renderizar cada slide en 1080×1920 (9:16, principal) y 1080×1350 (4:5, para cuando se sume Instagram) con el tema de la marca.
+- **RF-27** (F1) Renderizar cada slide en 1080×1350 (4:5, formato único para TikTok e Instagram, ADR 0011) con el tema de la marca.
 - **RF-28** (F2) Control de calidad automático post-render: texto desbordado o contenido fuera de la zona segura invalida el render; si viene de IA, se regenera (máx. 2 veces).
 - **RF-29** (F2) Descargar el carrusel (PNGs + copy) para publicar manualmente.
 
@@ -125,7 +125,7 @@ Cada requerimiento indica la fase del roadmap en la que se implementa.
 Todo lo listado en §6 (fases 0 a 6): marcas gestionables, RAdev y Lumus, **solo TikTok**, solo carruseles.
 
 ### Fuera de la v1
-- Instagram (las plantillas ya soportan 4:5; se suma después).
+- Instagram (el formato ya es 4:5; se suma después).
 - LinkedIn y otras redes.
 - Video de cualquier tipo.
 - Generación de imágenes con IA: las slides se construyen con plantillas; nunca fotos ni personas.

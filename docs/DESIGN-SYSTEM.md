@@ -34,21 +34,16 @@ Todas libres, auto-hospedadas en el proyecto (no se cargan de internet al render
 
 ## 3. Formatos y zonas seguras
 
-| Formato | Tamaño | Destino | Prioridad v1 |
-|---|---|---|---|
-| `9x16` | 1080×1920 | TikTok (modo foto) | **principal** |
-| `4x5` | 1080×1350 | Instagram (post-v1) | secundario, se renderiza igual |
+**Formato único de la v1: `4x5` (1080×1350)**, para TikTok y, más adelante, Instagram (ADR 0011). TikTok muestra el 4:5 ajustado al ancho, sin recortar, con negro arriba y abajo.
 
-En `9x16` no se estira el diseño: el contenido ocupa la zona segura y se agrega aire arriba y abajo.
+**Zonas seguras** (medidas sobre una captura real de un carrusel de RAdev en TikTok; confirmar superponiendo un render real):
 
-**Zonas seguras** (PROVISORIAS, calibrar en Fase 1 con una captura real de un carrusel publicado):
+| Zona | Valor | Por qué |
+|---|---|---|
+| Márgenes | superior 80 · izquierdo 80 · derecho 80 · inferior 100 | Aire de las referencias; abajo, los puntitos de paginación de TikTok (~90 px) |
+| Exclusión inferior derecha | `x ≥ 930` y `y ≥ 650` (150 px del borde derecho, mitad inferior) | Columna de botones de TikTok (avatar, me gusta, comentarios, guardar) |
 
-| Formato | Superior | Inferior | Izquierdo | Derecho |
-|---|---|---|---|---|
-| `9x16` | 180 | 420 | 80 | 150 |
-| `4x5` | 80 | 80 | 80 | 80 |
-
-En `9x16` la interfaz de TikTok tapa la parte inferior (descripción) y la columna derecha (botones). Ningún contenido puede invadir esas zonas; solo decoraciones.
+El contenido (`data-qa="content"`) no puede invadir ninguna zona. Las decoraciones sí, y también el encabezado y el pie: el pie puede quedar parcialmente tapado en TikTok, porque es firma y no información.
 
 ## 4. Anatomía de una slide
 
@@ -76,14 +71,21 @@ La estructura (campos) es común a todos los presets. Límites de caracteres ini
 **`cover`** — portada con el hook.
 - `kicker?` (≤24, sin énfasis) · `title` (≤60) · `subtitle?` (≤90)
 
-**`statement`** — afirmación fuerte con apoyo. Ref: `docs/references/radev/ref-statement.png`
+Las slides sin referencia (`statement`, `question`, `cta` y las demás) se diseñan en código con las reglas del preset y el operador las aprueba sobre capturas del render real.
+
+**`statement`** — afirmación fuerte con apoyo.
 - `title` (≤70) · `body?` (≤160) · `visual?`: `{ from: {icon, label≤16}, to: {icon, label≤16} }`
 
-**`question`** — pregunta con caja de callout. Ref: `ref-question.png`
+**`question`** — pregunta con caja de callout.
 - `title` (≤80) · `callout`: `{ icon, lead≤30, text≤80 }`
 
-**`cardGrid`** — grilla de tarjetas con ícono. Ref: `ref-cardgrid.png`
+**`cardGrid`** — grilla de tarjetas con ícono, **sin orden** entre ellas (opciones, ejemplos). Ref: `ref-cardgrid.png`
 - `title` (≤60) · `intro?` (≤40) · `cards`: 3–6 × `{ icon, label≤28 }` · `footer?` (≤80)
+
+**`flow`** — tarjetas unidas por conectores, **en orden** (un proceso, un recorrido). Refs: `ref-flow-1.png`, `ref-flow-2.png`
+- `title` (≤60) · `nodes`: 3–5 × `{ icon, label≤22 }` · `body?` (≤180) · `closing?` (≤90)
+- Hasta 4 nodos: una fila (como `ref-flow-2`). 5 nodos: dos filas en "S", 3 + 2 (como `ref-flow-1`).
+- A diferencia de `steps`, los nodos no llevan texto propio: el recorrido se entiende de un vistazo.
 
 **`hubDiagram`** — fuentes que confluyen en un centro. Ref: `ref-hubdiagram.png`
 - `title` (≤60) · `nodes`: 3–6 × `{ icon, label≤16 }` · `center`: `{ icon }` · `body?` (≤180) · `closing?` (≤70)
@@ -106,7 +108,7 @@ La estructura (campos) es común a todos los presets. Límites de caracteres ini
 - `title` (≤60) · `kind`: `line` | `bar` · `datasetRef` · `caption?` (≤100) · `source` (≤90)
 - La IA elige el dataset; los puntos los inyecta el código.
 
-**`cta`** — cierre con llamado a la acción. Ref: `ref-cta.png`
+**`cta`** — cierre con llamado a la acción.
 - `title` (≤70) · `subtitle?` (≤120) · `button` (≤50) · `icon?`
 - Si la marca tiene WhatsApp configurado, el `button` refleja esa acción ("Escribime por WhatsApp").
 
@@ -159,15 +161,17 @@ Carousel = {
 
 ### Comportamiento del preset (código)
 
-- Títulos en MAYÚSCULAS, interlineado 0.95, tracking -0.02em. Escala sugerida (4x5): 104 / 84 / 64 · cuerpo 36 · etiqueta 18. Se ajusta en Fase 1.
+- Títulos en MAYÚSCULAS, interlineado 0.95, tracking -0.02em. Escala sugerida: 104 / 84 / 64 · cuerpo 36 · etiqueta 18. Se ajusta en Fase 1.
 - Énfasis en títulos: color de acento. En apoyo: peso 700, acento, mayúsculas.
 - Etiquetas: mayúsculas, tracking 0.3em, barra vertical fina.
 - Pie: línea divisoria, wordmark a la izquierda, tagline a la derecha.
 - Decoraciones: líneas curvas finas en esquinas terminadas en punto brillante, grillas de puntos, línea punteada vertical izquierda, glow radial suave (solo portada y `cta`).
-- Tarjetas: fondo `surface`, borde 1px acento con glow, divisor corto bajo el ícono.
-- Conectores de diagramas: 1–2px con puntos en los extremos.
+- Contenedores: dos formas y no más. Las referencias usan cuatro variantes distintas; estas reglas las unifican:
+  - **Tarjeta** (`cardGrid`, `flow`, `steps`): fondo `surface`, borde 1px acento con glow, radio `radius.card`. Ícono en color `text` dentro de un cuadradito oscuro (un tono sobre `surface`, sin borde de acento). Texto debajo del ícono en `fonts.body`, en oración normal (no mayúsculas). El énfasis (`*...*`) va en peso 700 con acento, y así se logra el efecto de dos tonos de `ref-cardgrid`.
+  - **Chip** (nodos de `hubDiagram`): mismo borde y fondo; ícono y texto en una sola línea, sin cuadradito. El centro del hub lleva el ícono en acento.
+- Conectores de diagramas: 1–2px en acento con puntos brillantes en los extremos. En `hubDiagram` terminan en flecha hacia el centro.
 
-Referencias: `docs/references/radev/`.
+Referencias: `docs/references/radev/`. Cuando una referencia contradice estas reglas, mandan las reglas.
 
 ## 8. Preset `soft` — tokens iniciales de Lumus
 

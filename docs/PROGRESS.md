@@ -10,7 +10,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 - **Fase:** 0 — Cimientos ✅ terminada (2026-09-23). Duración real: 1 día (referencia para estimar las demás fases, ver ROADMAP).
 - **Próximo paso:** Fase 1 — Design system, presets y gestión de marcas. Empezar partiéndola en tareas (T0, T1…) con un plan corto para aprobar, y anotarlas acá.
-- **Última actualización:** 2026-09-23, al cerrar la T11
+- **Última actualización:** 2026-09-23, decisiones de diseño previas a la Fase 1 (formato, tarjetas, `flow`, slides sin referencia)
 
 ## Fase 0 — tareas
 
@@ -43,13 +43,16 @@ Plan aprobado el 2026-09-23.
 - Worker: pg-boss 12 en el esquema `pgboss` de la misma base; logger JSON propio (`apps/worker/src/logger.ts`, sin dependencias); apagado con `stop({ graceful: true })` y 30 s de margen. Corre con `tsx` (sin compilar). Todavía no depende de `@radev/db`: se agrega cuando llegue el primer job.
 - Docker: un `Dockerfile` en la raíz con destinos `web` (Next `output: "standalone"`, `outputFileTracingRoot` en la raíz del monorepo), `worker` (`pnpm deploy --prod`, corre con `node --import tsx`) y `migrate` (migraciones + seed con tsx directo: `pnpm run` intenta reinstalar y falla sin root). Base `node:24-bookworm-slim` (amd64 + arm64), todo como usuario `node`. El build de la web usa variables de relleno solo en ese `RUN`. En compose, web y worker leen `DATABASE_URL` apuntando a `postgres:5432` (pisa la del `.env`); la web usa `env_file: .env`.
 - Estilo del panel: "Sala de control", documentado en `apps/web/DESIGN.md`. Las secciones de fases futuras se ven apagadas con su fase, sin páginas vacías.
+- **Formato único 4:5** (1080×1350) para TikTok e Instagram (ADR 0011). Zonas seguras medidas sobre una captura real de TikTok: márgenes 80/80/80/100 y exclusión abajo a la derecha (`x ≥ 930`, `y ≥ 650`) por la columna de botones. Detalle en `DESIGN-SYSTEM.md` §3.
+- **Tipo de slide nuevo `flow`**: tarjetas en orden con conectores (refs `flow-1/2`); `cardGrid` queda para tarjetas sin orden.
+- **Preset `bold`, dos contenedores**: *tarjeta* (ícono blanco en un cuadradito oscuro y texto en oración debajo; el énfasis da los dos tonos) y *chip* (ícono y texto en una línea, para `hubDiagram`). Se descartan las etiquetas en MAYÚSCULAS espaciadas dentro de las tarjetas (`flow-2`). Cuando una referencia contradice las reglas, mandan las reglas.
+- **Slides sin referencia** (`statement`, `question`, `cta`, etc.): no se esperan imágenes del operador. Se diseñan en código con las reglas del preset y el operador aprueba mirando capturas del render.
 
 ## Anotado para más adelante
 
 **Fase 1:**
-- Faltan las referencias `ref-statement.png`, `ref-question.png`, `ref-cta.png` y una captura real de TikTok para calibrar zonas seguras.
-- `ref-flow-1/2.png` sugieren un tipo de slide nuevo `flow` (recomendado) en vez de un `cardGrid` conectado: decidir con el operador.
-- Las 4 referencias actuales son inconsistentes entre sí: fijar reglas y mostrárselas al operador antes de implementar.
+- Captura de TikTok para calibrar: `docs/references/tiktok-4x5.jpeg` (post "¿Cuánto cuesta tener una APP?"). Superponer un render real para confirmar las zonas seguras.
+- Ese post usa una tipografía condensada en el título, distinta de Inter Tight de las referencias. Por ahora se sigue con Inter Tight; si el operador la quiere, se suma a la lista curada.
 - `heroAsset` / `logoAsset` de Lumus son nombres de archivo sin enlazar a `brand_assets`.
 
 ## Cómo trabajamos

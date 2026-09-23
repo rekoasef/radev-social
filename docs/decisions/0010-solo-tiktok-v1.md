@@ -1,6 +1,6 @@
 # 0010 — Solo TikTok en la v1
 
-**Estado:** aceptada · 2026-09
+**Estado:** aceptada · 2026-09 · formato ampliado por 0011 (4:5 único)
 
 **Contexto.** El público y la tracción actuales están en TikTok. Instagram requiere cuenta profesional, página de Facebook y revisión de app de Meta.
 

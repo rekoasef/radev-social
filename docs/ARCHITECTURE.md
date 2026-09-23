@@ -162,7 +162,7 @@ Todos idempotentes (clave `singletonKey` derivada del objetivo), con reintentos 
 | `ideas.generate` | manual / cron | propone ideas desde pilares, series e historial (modelo gratuito por defecto) |
 | `ideas.research` | cron semanal por marca | investiga temas del nicho con búsqueda web (Claude) |
 | `carousel.generate` | manual, `slots.fill`, rechazo | idea → JSON validado → nueva versión |
-| `carousel.render` | tras generar o editar | Playwright renderiza cada slide en 9:16 y 4:5, QA, guarda assets |
+| `carousel.render` | tras generar o editar | Playwright renderiza cada slide en 4:5, QA, guarda assets |
 | `review.notify` | post entra a `in_review` | aviso agrupado por Telegram |
 | `post.publish` | `startAfter = scheduled_at` | publica vía adaptador |
 | `slots.fill` | cron diario **dentro de la ventana de generación** | llena slots vacíos de los próximos días respetando la mezcla |
@@ -237,7 +237,7 @@ Cada ejecución queda en `generation_runs` con proveedor, modelo, uso, duración
 
 ## 8. Render
 
-1. El worker abre `http://web:3000/render/<postVersionId>/<slideIndex>?format=9x16|4x5` con el token interno.
+1. El worker abre `http://web:3000/render/<postVersionId>/<slideIndex>?format=4x5` con el token interno (hoy el único formato, ADR 0011).
 2. La página carga el preset y los tokens de la marca desde la base, renderiza el `SlideFrame` y la plantilla al tamaño exacto, sin UI del panel.
 3. Expone `window.__renderReady = true` cuando cargaron fuentes y assets.
 4. **QA** en la página: desborde de texto (`data-qa="text"`), contenido fuera de la zona segura (`data-qa="content"`), fuentes cargadas. Devuelve violaciones.
@@ -258,7 +258,7 @@ interface PublisherAdapter {
 ```
 
 - `manual`: a la hora programada notifica por Telegram con link de descarga; el operador marca "publicado".
-- `tiktok`: Content Posting API, modo foto, `PULL_FROM_URL` desde `media.gestorlumus.site` (formato 9:16). Antes de la auditoría: modo borrador a la bandeja.
+- `tiktok`: Content Posting API, modo foto, `PULL_FROM_URL` desde `media.gestorlumus.site` (formato 4:5; verificar que la API lo acepte, ver ADR 0011). Antes de la auditoría: modo borrador a la bandeja.
 - Instagram queda fuera de la v1; la interfaz ya lo contempla.
 
 ## 10. Modelo de datos
@@ -274,7 +274,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `ideas` | id, brand_id, pillar_id, title, angle, source (`manual` \| `ai` \| `research` \| `recycled` \| `series`), series_key, status (`new` \| `used` \| `discarded`), created_at |
 | `posts` | id, brand_id, public_code, idea_id, pillar_id, hook_type, status, current_version_id, scheduled_at, slot_id, rejection_feedback, created_at, updated_at |
 | `post_versions` | id, post_id, number, content (jsonb `Carousel`), schema_version, origin (`ai` \| `manual`), generation_run_id, created_at |
-| `assets` | id, post_version_id, format (`9x16` \| `4x5`), slide_index, path, width, height, checksum |
+| `assets` | id, post_version_id, format (`4x5`; enum ampliable), slide_index, path, width, height, checksum |
 | `schedule_slots` | id, brand_id, weekday (0–6), local_time, active |
 | `social_accounts` | id, brand_id, network, external_id, handle, access_token_enc, refresh_token_enc, expires_at, status |
 | `publications` | id, post_id, social_account_id, network, status, external_id, url, error, attempts, published_at |

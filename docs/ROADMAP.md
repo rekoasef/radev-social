@@ -26,17 +26,17 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Schemas Zod de `Slide` y `Carousel`, límites de caracteres y parser de énfasis
 - [ ] Tipografías curadas auto-hospedadas
 - [ ] Preset `bold` y preset `soft`, cada uno con su schema Zod de tokens
-- [ ] `SlideFrame` con formatos `9x16` y `4x5`, zonas seguras, indicador de página
-- [ ] Plantillas v1: `cover`, `statement`, `question`, `cardGrid`, `hubDiagram`, `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart`, `cta`
+- [ ] `SlideFrame` en formato `4x5` (único, ADR 0011), zonas seguras con la interfaz de TikTok, indicador de página
+- [ ] Plantillas v1: `cover`, `statement`, `question`, `cardGrid`, `flow`, `hubDiagram`, `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart`, `cta`
 - [ ] CRUD de marcas: crear, editar, archivar, borrar (solo sin posts)
 - [ ] Editor de identidad visual: elegir preset, formulario de tokens generado desde el schema, vista previa en vivo con slides de ejemplo
 - [ ] Tabla `brand_assets` y subida de assets (validación de tipo y tamaño); seed con los assets de Lumus
 - [ ] Página de preview de todos los tipos de slide por marca
-- [ ] Calibrar zonas seguras de `9x16` con una captura real de TikTok
+- [ ] Confirmar las zonas seguras superponiendo un render real sobre la captura de TikTok
 - [ ] Calibrar límites de caracteres con casos extremos
 - [ ] Tests de schemas de contenido y de tokens
 
-**Terminado cuando:** la app reproduce fielmente las cinco referencias de RAdev y un carrusel de ejemplo de Lumus, y puedo crear una tercera marca de prueba desde el panel, cambiarle colores, tipografías y logo, y ver el resultado sin tocar código.
+**Terminado cuando:** la app reproduce fielmente las cuatro referencias de RAdev (con las reglas unificadas del preset), apruebo las slides sin referencia y un carrusel de ejemplo de Lumus, y puedo crear una tercera marca de prueba desde el panel, cambiarle colores, tipografías y logo, y ver el resultado sin tocar código.
 
 ---
 
@@ -48,9 +48,9 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Editor de carrusel: formulario por tipo de slide, reordenar, vista previa en vivo
 - [ ] Versionado: ver y restaurar versiones
 - [ ] Ruta interna `/render/[versionId]/[index]` con token y señal `__renderReady`
-- [ ] Worker con pg-boss y job `carousel.render` (Playwright, ambos formatos)
+- [ ] Worker con pg-boss y job `carousel.render` (Playwright, 4:5)
 - [ ] QA de render (desborde, zona segura, fuentes y assets)
-- [ ] Exportar: ZIP con PNGs 9:16 + copy, y copiar el copy con un toque
+- [ ] Exportar: ZIP con PNGs 4:5 + copy, y copiar el copy con un toque
 - [ ] Adaptador `manual`: marcar como publicado
 
 **Terminado cuando:** armo un carrusel en la app, lo descargo y lo publico a mano en TikTok. Desde acá el sistema ya ahorra trabajo real.
@@ -105,7 +105,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Verificar `media.gestorlumus.site` en TikTok
 - [ ] Tablas `social_accounts` (tokens cifrados) y `publications`
 - [ ] Conexión de cuentas de TikTok por OAuth desde el panel
-- [ ] Adaptador TikTok (modo foto, `PULL_FROM_URL`, 9:16); modo borrador hasta aprobar la auditoría
+- [ ] Adaptador TikTok (modo foto, `PULL_FROM_URL`, 4:5; si la API no lo acepta, 9:16 derivado según ADR 0011); modo borrador hasta aprobar la auditoría
 - [ ] Pantalla de publicación que cumpla las pautas de UX de TikTok (vista previa, edición del texto, consentimiento)
 - [ ] Job `post.publish` idempotente con reintentos; `publish_failed` notificado
 - [ ] Job `tokens.refresh`
@@ -131,7 +131,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 
 ## Después de la v1
 
-- Instagram (las plantillas ya soportan 4:5)
+- Instagram (el formato ya es 4:5)
 - LinkedIn
 - Tipo de slide `code`
 - Presets de estilo adicionales
