@@ -1,5 +1,14 @@
 import { getBrandBySlug } from "@radev/db";
-import { FORMAT, parseTheme, SafeZoneOverlay, SLIDE_TYPES, SlideFrame } from "@radev/slides";
+import {
+  exampleSlides,
+  FORMAT,
+  hasTemplate,
+  parseTheme,
+  SafeZoneOverlay,
+  SLIDE_TYPES,
+  SlideContent,
+  SlideFrame,
+} from "@radev/slides";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RenderReady } from "@/components/render/render-ready";
@@ -29,7 +38,8 @@ export default async function PreviewSlidePage({
 }: PageProps<"/render/preview/[brand]/[slide]">) {
   const [{ brand: slug, slide }, query] = await Promise.all([params, searchParams]);
   if (!isValidRenderToken(query.token)) notFound();
-  if (slide !== "frame" && !SLIDE_TYPES.some((type) => type === slide)) notFound();
+  const type = SLIDE_TYPES.find((t) => t === slide);
+  if (slide !== "frame" && !type) notFound();
 
   const brand = await getBrandBySlug(db, slug);
   if (!brand) notFound();
@@ -63,9 +73,14 @@ export default async function PreviewSlidePage({
         seed={single(query.seed) ?? "preview"}
         glow={slide === "cover" || slide === "cta"}
       >
-        {slide !== "frame" && (
-          <p style={{ margin: "auto", fontSize: 28, opacity: 0.5 }}>Plantilla {slide}: pendiente</p>
-        )}
+        {type &&
+          (hasTemplate(parsed.theme.preset, type) ? (
+            <SlideContent theme={parsed.theme} slide={exampleSlides[type]} />
+          ) : (
+            <p style={{ margin: "auto", fontSize: 28, opacity: 0.5 }}>
+              Plantilla {type}: pendiente
+            </p>
+          ))}
       </SlideFrame>
       {overlay === "safe" && <SafeZoneOverlay />}
       {overlay === "tiktok" && <TikTokOverlay />}

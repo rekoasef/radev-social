@@ -36,6 +36,7 @@ export {
 export { createRandom, type Random } from "./frame/random";
 export { SafeZoneOverlay } from "./frame/safe-zone-overlay";
 export { SlideFrame, type SlideFrameProps } from "./frame/slide-frame";
+export { iconComponent, SlideIcon } from "./icons";
 export { type BoldTokens, boldTokensSchema } from "./presets/bold/tokens";
 export type { TokenWidget } from "./presets/fields";
 export {
@@ -49,3 +50,4 @@ export {
   type ThemeResult,
 } from "./presets/registry";
 export { GLOW_POSITIONS, type SoftTokens, softTokensSchema } from "./presets/soft/tokens";
+export { hasTemplate, SlideContent } from "./slide-content";

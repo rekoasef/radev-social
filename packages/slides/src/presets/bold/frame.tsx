@@ -9,8 +9,11 @@ import type { BoldTokens } from "./tokens";
 // wordmark and page indicator, decorations. Measured on docs/references/radev/ (1122 px wide,
 // scaled to 1080). No tagline in the footer: TikTok's button column covers its bottom right.
 
-/** Where templates lay out their content. Inside the safe area, between header and footer. */
-export const BOLD_CONTENT_BOX: Rect = { x: 80, y: 150, width: 920, height: 1040 };
+/**
+ * Where templates lay out their content: inside the safe area, between header and footer, and
+ * left of TikTok's button column (x < 930) at every height, so no template has to dodge it.
+ */
+export const BOLD_CONTENT_BOX: Rect = { x: 80, y: 150, width: 850, height: 1040 };
 
 const FOOTER_TOP = 1228;
 

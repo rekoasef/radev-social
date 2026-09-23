@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T4: plantillas `bold` con referencia (`cardGrid`, `flow`, `hubDiagram`), comparadas contra `docs/references/`.
-- **Última actualización:** 2026-09-23, al cerrar la T3 de la Fase 1
+- **Próximo paso:** T5: plantillas `bold` sin referencia (`cover`, `statement`, `question`, `cta`).
+- **Última actualización:** 2026-09-23, al cerrar la T4 de la Fase 1
 
 ## Fase 1 — tareas
 
@@ -22,7 +22,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | T1 | Schemas Zod de contenido: 12 tipos de slide (con `flow`), `Carousel`, límites, parser de énfasis. Tests | ✅ |
 | T2 | Schemas Zod de tokens de `bold` y `soft` con valores por defecto, registro de presets. Migración de datos que reescribe los tokens de RAdev y Lumus al formato nuevo. Reemplaza `apps/web/lib/brand-tokens.ts`. Tests | ✅ |
 | T3 | `SlideFrame` 4:5 (encabezado, pie, número de página, decoraciones deterministas, zonas seguras). Ruta `/render/preview/...` protegida con `RENDER_TOKEN` (sin login). Capa de zonas seguras y superposición de la captura de TikTok. Playwright como dependencia de desarrollo para capturas. 👁 | ✅ |
-| T4 | Plantillas `bold` con referencia: `cardGrid`, `flow`, `hubDiagram`. 👁 contra las refs | |
+| T4 | Plantillas `bold` con referencia: `cardGrid`, `flow`, `hubDiagram`. 👁 contra las refs | ✅ |
 | T5 | Plantillas `bold` sin referencia: `cover`, `statement`, `question`, `cta`. 👁 | |
 | T6 | Plantillas `bold` de datos: `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart` (datos de ejemplo). 👁 | |
 | T7 | `brand_assets`: tabla, subida con validación de tipo y tamaño, `media/`. El seed carga y enlaza los assets de Lumus | |
@@ -76,11 +76,17 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Slides sin referencia** (`statement`, `question`, `cta`, etc.): no se esperan imágenes del operador. Se diseñan en código con las reglas del preset y el operador aprueba mirando capturas del render.
 - **Frame** (`packages/slides/src/frame/`): `SlideFrame` elige el marco del preset (`presets/bold/frame.tsx`; `soft` tira error hasta la T8). Geometría y zonas seguras en `frame/geometry.ts` (`FORMAT`, `SAFE_AREA`, `EXCLUSION_ZONES`, `isInSafeZone`); las plantillas ubican su contenido en `BOLD_CONTENT_BOX` (80,150 · 920×1040). Decoraciones deterministas por `seed` (`frame/random.ts`). La portada muestra "Deslizá →" en vez del número; `glow` solo en `cover` y `cta`.
 - **Pie sin tagline** (aprobado mirando la captura con TikTok encima): la columna de botones tapaba el lema. Queda wordmark + indicador de página. El token `footer.tagline` sigue en el schema sin dibujarse (ver pendientes).
+- **Plantillas** (`packages/slides/src/presets/bold/templates/`): una por archivo, registradas en `templates/index.ts`. `SlideContent` (`src/slide-content.tsx`) elige la del preset y va dentro de `SlideFrame`; `hasTemplate` dice si existe (la preview muestra "pendiente" si no). Piezas comunes en `bold/parts.tsx` (`Title`, `Support`, `IconTile`, `boxStyle`, `ConnectorDot`, `TemplateLayout`, `fitFontSize`); geometría de los diagramas en funciones puras en `bold/layout.ts`, con tests de que nada se sale ni se pisa. Íconos por nombre con `SlideIcon` (`src/icons.tsx`): `import * as` de `lucide-react` en PascalCase cubre los 2112 nombres, alias incluidos (hay test).
+- **Ancho útil 850** debajo del título (`BOLD_CONTENT_BOX`), título a 920. Detalle en `DESIGN-SYSTEM.md` §3 y §7, con el reparto de tarjetas y chips, los tamaños de título y el ajuste de etiquetas.
+- **`flow` de 4 nodos**: tarjetas compactas (164 px de alto, 32 de separación) con ícono y etiqueta centrados y etiqueta en peso 500, como `ref-flow-2`. Con las etiquetas de la referencia quedan en 24 px; con "Disponibilidad", en 20. La estimación de ancho (0,56 em por carácter) se comparó con mediciones reales: 0,45–0,56 en minúsculas, hasta 0,62 con mayúsculas anchas.
+- **`flow` de 5 nodos**: 3 + 2 leído de izquierda a derecha con un conector de retorno entre filas (el doc decía "S"; así se lee mejor y se parece a `ref-flow-1`).
+- **Control del render a mano**: además de `pnpm capture`, la T4 midió con Playwright que ningún `data-qa="content"` invada zonas y ningún `data-qa="text"` desborde. El título lleva `padding-bottom: 0.15em` porque con interlineado 0.95 los descendentes quedaban afuera de la caja y el control lo marcaba.
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante
 
 **Fase 1:**
+- T11: en `flow` de 4 nodos una palabra de ~20 letras ("Internacionalización") no entra ni al tamaño mínimo y se corta dentro de la tarjeta (`overflow-wrap: anywhere`, último recurso). Evaluar si conviene limitar el largo de palabra de las etiquetas. También revisar el salto de 84 a 70 px en títulos de más de 48 caracteres.
 - Token `footer.tagline` de `bold`: ya no se dibuja en el pie. Decidir en la T5 (¿va en la `cta`?) o quitarlo en la T10 con una migración.
 - La captura de TikTok (`docs/references/tiktok-4x5.jpeg`, post "¿Cuánto cuesta tener una APP?") ya se superpuso en la T3 (`overlay=tiktok`) y confirmó las zonas seguras.
 - Ese post usa una tipografía condensada en el título, distinta de Inter Tight de las referencias. Por ahora se sigue con Inter Tight; si el operador la quiere, se suma a la lista curada.

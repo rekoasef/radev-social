@@ -45,6 +45,8 @@ Todas libres, auto-hospedadas en el proyecto (no se cargan de internet al render
 
 El contenido (`data-qa="content"`) no puede invadir ninguna zona. Las decoraciones sí, y también el encabezado y el pie: el pie puede quedar parcialmente tapado en TikTok, porque es firma y no información.
 
+En la práctica, las plantillas de `bold` usan un ancho de **850** (x 80–930) para todo lo que va debajo del título, así nunca tocan la columna de botones. El título puede usar los 920 del área segura: aun con 4 líneas termina muy por encima de `y = 650`.
+
 ## 4. Anatomía de una slide
 
 ```
@@ -85,7 +87,7 @@ Las slides sin referencia (`statement`, `question`, `cta` y las demás) se dise�
 
 **`flow`** — tarjetas unidas por conectores, **en orden** (un proceso, un recorrido). Refs: `ref-flow-1.png`, `ref-flow-2.png`
 - `title` (≤60) · `nodes`: 3–5 × `{ icon, label≤22 }` · `body?` (≤180) · `closing?` (≤90)
-- Hasta 4 nodos: una fila (como `ref-flow-2`). 5 nodos: dos filas en "S", 3 + 2 (como `ref-flow-1`).
+- Hasta 4 nodos: una fila (como `ref-flow-2`). 5 nodos: dos filas, 3 + 2 (como `ref-flow-1`), la segunda centrada. Las dos filas se leen de izquierda a derecha: el conector sale de abajo del tercer nodo, cruza por el espacio entre filas y entra por arriba al cuarto.
 - A diferencia de `steps`, los nodos no llevan texto propio: el recorrido se entiende de un vistazo.
 
 **`hubDiagram`** — fuentes que confluyen en un centro. Ref: `ref-hubdiagram.png`
@@ -171,6 +173,9 @@ Carousel = {
   - **Tarjeta** (`cardGrid`, `flow`, `steps`): fondo `surface`, borde 1px acento con glow, radio `radius.card`. Ícono en color `text` dentro de un cuadradito oscuro (un tono sobre `surface`, sin borde de acento). Texto debajo del ícono en `fonts.body`, en oración normal (no mayúsculas): `lead` liviano y `label` en peso 700, en color `text`. Así se logran los dos tonos de `ref-cardgrid`. Ninguna tarjeta se resalta en acento (en la referencia, la primera sí: se descarta porque superaría los 2 énfasis por slide).
   - **Chip** (nodos de `hubDiagram`): mismo borde y fondo; ícono y texto en una sola línea, sin cuadradito. El centro del hub lleva el ícono en acento.
 - Conectores de diagramas: 1–2px en acento con puntos brillantes en los extremos. En `hubDiagram` terminan en flecha hacia el centro.
+- `cardGrid` reparte las tarjetas en filas: 3 → 3 · 4 → 2+2 · 5 → 3+2 · 6 → 3+3. `hubDiagram` ubica los chips en lugares fijos según la cantidad: 3 → arriba y uno por lado · 4 → dos por lado · 5 → arriba y dos por lado (como la referencia) · 6 → como 5 más uno abajo.
+- Tamaño del título según el largo visible: hasta 24 caracteres 100 px, hasta 48 84 px, más 70 px (a calibrar en la T11).
+- Las etiquetas de un mismo diagrama comparten tamaño: se achican todas juntas hasta que entra la palabra más larga (en los chips, la etiqueta entera, que va en una línea), con un mínimo. Es una estimación por cantidad de caracteres, sin medir en el navegador.
 
 Referencias: `docs/references/radev/`. Cuando una referencia contradice estas reglas, mandan las reglas.
 
