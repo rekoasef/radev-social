@@ -2,7 +2,15 @@ import type { SlideOf } from "../../../content/slides";
 import { SlideIcon } from "../../../icons";
 import { BOLD_CONTENT_BOX } from "../frame";
 import { HUB_CHIP, hubLayout, type Point } from "../layout";
-import { boxStyle, ConnectorDot, fitFontSize, glowShadow, Support, TemplateLayout } from "../parts";
+import {
+  ArrowMarker,
+  boxStyle,
+  ConnectorDot,
+  fitFontSize,
+  glowShadow,
+  Support,
+  TemplateLayout,
+} from "../parts";
 
 const CHIP_ICON = 38;
 const CHIP_PADDING = 24;
@@ -39,18 +47,7 @@ export function HubDiagramTemplate({ slide }: { slide: SlideOf<"hubDiagram"> }) 
           style={{ position: "absolute", inset: 0, overflow: "visible" }}
         >
           <defs>
-            <marker
-              id="hub-arrow"
-              viewBox="0 0 10 10"
-              refX={9}
-              refY={5}
-              markerWidth={12}
-              markerHeight={12}
-              markerUnits="userSpaceOnUse"
-              orient="auto"
-            >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)" />
-            </marker>
+            <ArrowMarker id="hub-arrow" />
           </defs>
           {layout.chips.map(({ slot, from, to }) => (
             <g key={slot}>

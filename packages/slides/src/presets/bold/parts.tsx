@@ -13,7 +13,27 @@ export const glowShadow = (px: number) =>
 /** Text color of support copy: the text color, slightly toned down. */
 const supportColor = "color-mix(in srgb, var(--text) 82%, var(--bg))";
 
-function Rich({ text, emphasis }: { text: string; emphasis: CSSProperties }) {
+/** Emphasis style of support copy (docs/DESIGN-SYSTEM.md §7). */
+export const supportEmphasis: CSSProperties = {
+  fontWeight: 700,
+  color: "var(--accent)",
+  textTransform: "uppercase",
+};
+
+/** Uppercase spaced label, like the corner labels of the frame. */
+export function labelText(size: number): CSSProperties {
+  return {
+    fontFamily: "var(--font-label)",
+    fontWeight: "var(--weight-label)",
+    fontSize: size,
+    letterSpacing: "0.3em",
+    lineHeight: 1.5,
+    textTransform: "uppercase",
+  };
+}
+
+/** Text with `*emphasis*` rendered in the given style. */
+export function Rich({ text, emphasis }: { text: string; emphasis: CSSProperties }) {
   const parsed = parseEmphasis(text);
   // Content is validated before it gets here; show it raw rather than fail the render.
   if (!parsed.ok) return <>{text}</>;
@@ -62,19 +82,21 @@ export function titleSize(text: string): number {
   return 70;
 }
 
-export function Title({ text }: { text: string }) {
+export function Title({ text, size = titleSize(text) }: { text: string; size?: number }) {
   return (
     <h1
       data-qa="text"
       style={{
         margin: 0,
-        // With line-height 0.95 the last line's descenders spill below the box; the padding
-        // keeps them inside, so the overflow check (§9) stays meaningful.
-        paddingBottom: "0.15em",
+        // With such a tight line height the last line's descenders spill below the box; the
+        // padding keeps them inside, so the overflow check (§9) stays meaningful.
+        paddingBottom: "0.12em",
         fontFamily: "var(--font-display)",
         fontWeight: "var(--weight-display)",
-        fontSize: titleSize(text),
-        lineHeight: 0.95,
+        fontSize: size,
+        // Accented capitals (DÍA, INFORMACIÓN) reach ~1em above the baseline: below 1.06 they
+        // touch the line above.
+        lineHeight: 1.06,
         letterSpacing: "-0.02em",
         // The negative tracking also eats the spaces: give them back.
         wordSpacing: "0.12em",
@@ -115,10 +137,7 @@ export function Support({
         color: supportColor,
       }}
     >
-      <Rich
-        text={text}
-        emphasis={{ fontWeight: 700, color: "var(--accent)", textTransform: "uppercase" }}
-      />
+      <Rich text={text} emphasis={supportEmphasis} />
     </p>
   );
 }
@@ -134,8 +153,16 @@ export function boxStyle(radius = "var(--radius-card)"): CSSProperties {
   };
 }
 
-/** Icon on a small dark square, one step above the card surface. */
-export function IconTile({ name, size = 76 }: { name: string; size?: number }) {
+/** Icon on a small dark square, one step above the card surface. `accent` marks a destination. */
+export function IconTile({
+  name,
+  size = 76,
+  accent = false,
+}: {
+  name: string;
+  size?: number;
+  accent?: boolean;
+}) {
   return (
     <span
       style={{
@@ -147,7 +174,7 @@ export function IconTile({ name, size = 76 }: { name: string; size?: number }) {
         height: size,
         borderRadius: 14,
         background: "color-mix(in srgb, var(--text) 7%, var(--surface))",
-        color: "var(--text)",
+        color: accent ? "var(--accent)" : "var(--text)",
       }}
     >
       <SlideIcon name={name} size={Math.round(size * 0.5)} />
@@ -179,6 +206,24 @@ export function TemplateLayout({ title, children }: { title: string; children: R
         {children}
       </div>
     </div>
+  );
+}
+
+/** Arrowhead for connectors (`markerEnd="url(#id)"`). The id must be unique per template. */
+export function ArrowMarker({ id }: { id: string }) {
+  return (
+    <marker
+      id={id}
+      viewBox="0 0 10 10"
+      refX={9}
+      refY={5}
+      markerWidth={12}
+      markerHeight={12}
+      markerUnits="userSpaceOnUse"
+      orient="auto"
+    >
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)" />
+    </marker>
   );
 }
 

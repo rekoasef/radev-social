@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T5: plantillas `bold` sin referencia (`cover`, `statement`, `question`, `cta`).
-- **Última actualización:** 2026-09-23, al cerrar la T4 de la Fase 1
+- **Próximo paso:** T6: plantillas `bold` de datos (`comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart`) con datos de ejemplo.
+- **Última actualización:** 2026-09-23, al cerrar la T5 de la Fase 1
 
 ## Fase 1 — tareas
 
@@ -23,7 +23,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | T2 | Schemas Zod de tokens de `bold` y `soft` con valores por defecto, registro de presets. Migración de datos que reescribe los tokens de RAdev y Lumus al formato nuevo. Reemplaza `apps/web/lib/brand-tokens.ts`. Tests | ✅ |
 | T3 | `SlideFrame` 4:5 (encabezado, pie, número de página, decoraciones deterministas, zonas seguras). Ruta `/render/preview/...` protegida con `RENDER_TOKEN` (sin login). Capa de zonas seguras y superposición de la captura de TikTok. Playwright como dependencia de desarrollo para capturas. 👁 | ✅ |
 | T4 | Plantillas `bold` con referencia: `cardGrid`, `flow`, `hubDiagram`. 👁 contra las refs | ✅ |
-| T5 | Plantillas `bold` sin referencia: `cover`, `statement`, `question`, `cta`. 👁 | |
+| T5 | Plantillas `bold` sin referencia: `cover`, `statement`, `question`, `cta`. 👁 | ✅ |
 | T6 | Plantillas `bold` de datos: `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart` (datos de ejemplo). 👁 | |
 | T7 | `brand_assets`: tabla, subida con validación de tipo y tamaño, `media/`. El seed carga y enlaza los assets de Lumus | |
 | T8 | Preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus. 👁 | |
@@ -81,13 +81,15 @@ Plan aprobado el 2026-09-23. Terminada.
 - **`flow` de 4 nodos**: tarjetas compactas (164 px de alto, 32 de separación) con ícono y etiqueta centrados y etiqueta en peso 500, como `ref-flow-2`. Con las etiquetas de la referencia quedan en 24 px; con "Disponibilidad", en 20. La estimación de ancho (0,56 em por carácter) se comparó con mediciones reales: 0,45–0,56 en minúsculas, hasta 0,62 con mayúsculas anchas.
 - **`flow` de 5 nodos**: 3 + 2 leído de izquierda a derecha con un conector de retorno entre filas (el doc decía "S"; así se lee mejor y se parece a `ref-flow-1`).
 - **Control del render a mano**: además de `pnpm capture`, la T4 midió con Playwright que ningún `data-qa="content"` invada zonas y ningún `data-qa="text"` desborde. El título lleva `padding-bottom: 0.15em` porque con interlineado 0.95 los descendentes quedaban afuera de la caja y el control lo marcaba.
+- **Plantillas sin referencia (T5)**: reglas en `DESIGN-SYSTEM.md` §7. Las plantillas reciben `{ slide, tokens }` (`TemplateSet<Tokens>` en `slide-content.tsx`) para lo que no viaja en variables CSS, como el tagline.
+- **Tagline**: se muestra debajo del botón de la `cta` (resuelto el pendiente de la T3). El token `footer.tagline` queda con ese uso.
+- **Interlineado del título: 1.06** (no 0.95): con 0.95 las mayúsculas acentuadas se montan sobre la línea de arriba. Verificado con una captura ampliada; ojo, las capturas achicadas muestran marcas falsas entre líneas.
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante
 
 **Fase 1:**
 - T11: en `flow` de 4 nodos una palabra de ~20 letras ("Internacionalización") no entra ni al tamaño mínimo y se corta dentro de la tarjeta (`overflow-wrap: anywhere`, último recurso). Evaluar si conviene limitar el largo de palabra de las etiquetas. También revisar el salto de 84 a 70 px en títulos de más de 48 caracteres.
-- Token `footer.tagline` de `bold`: ya no se dibuja en el pie. Decidir en la T5 (¿va en la `cta`?) o quitarlo en la T10 con una migración.
 - La captura de TikTok (`docs/references/tiktok-4x5.jpeg`, post "¿Cuánto cuesta tener una APP?") ya se superpuso en la T3 (`overlay=tiktok`) y confirmó las zonas seguras.
 - Ese post usa una tipografía condensada en el título, distinta de Inter Tight de las referencias. Por ahora se sigue con Inter Tight; si el operador la quiere, se suma a la lista curada.
 - `heroAsset` / `logoAsset` de Lumus son nombres de archivo sin enlazar a `brand_assets`.

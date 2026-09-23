@@ -158,13 +158,13 @@ Carousel = {
 | `fonts.label` | Inter 500 | Etiquetas |
 | `radius.card` / `radius.callout` | 16 / 20 | |
 | `header.left` / `header.right` | "PROCESOS DE HOY" / "RESULTADOS DE MAÑANA" | Etiquetas de esquina |
-| `footer.tagline` | "AUTOMATIZACIÓN" / "IDEAS EN RESULTADOS" | Dos líneas. Hoy no se dibuja en el pie (lo tapan los botones de TikTok); pendiente decidir si se usa en otro lado o se quita |
+| `footer.tagline` | "AUTOMATIZACIÓN" / "IDEAS EN RESULTADOS" | Dos líneas. No va en el pie (lo tapan los botones de TikTok): se muestra debajo del botón de la `cta` |
 | `wordmark` | `{ strong: "RA", light: "dev", dot: true }` | Construido en código |
 | `logoAsset` | — | Opcional; si existe, reemplaza al wordmark |
 
 ### Comportamiento del preset (código)
 
-- Títulos en MAYÚSCULAS, interlineado 0.95, tracking -0.02em. Escala sugerida: 104 / 84 / 64 · cuerpo 36 · etiqueta 18. Se ajusta en Fase 1.
+- Títulos en MAYÚSCULAS, interlineado 1.06, tracking -0.02em con espacio entre palabras +0.12em. Con 0.95 las mayúsculas acentuadas (DÍA, INFORMACIÓN) se montan sobre la línea de arriba. Escala sugerida: 104 / 84 / 64 · cuerpo 36 · etiqueta 18. Se ajusta en Fase 1.
 - Énfasis en títulos: color de acento. En apoyo: peso 700, acento, mayúsculas.
 - Etiquetas: mayúsculas, tracking 0.3em, barra vertical fina.
 - Pie: línea divisoria, wordmark a la izquierda, indicador de página a la derecha (en la portada, "Deslizá →"). Sin tagline: la columna de botones de TikTok tapa la esquina inferior derecha.
@@ -174,6 +174,10 @@ Carousel = {
   - **Chip** (nodos de `hubDiagram`): mismo borde y fondo; ícono y texto en una sola línea, sin cuadradito. El centro del hub lleva el ícono en acento.
 - Conectores de diagramas: 1–2px en acento con puntos brillantes en los extremos. En `hubDiagram` terminan en flecha hacia el centro.
 - `cardGrid` reparte las tarjetas en filas: 3 → 3 · 4 → 2+2 · 5 → 3+2 · 6 → 3+3. `hubDiagram` ubica los chips en lugares fijos según la cantidad: 3 → arriba y uno por lado · 4 → dos por lado · 5 → arriba y dos por lado (como la referencia) · 6 → como 5 más uno abajo.
+- `cover`: kicker en acento con barrita, título más grande que en el resto (124 / 104 / 88 según el largo) arriba y a 850 de ancho, subtítulo abajo detrás de una línea corta en acento; en el medio, espacio negativo.
+- `statement`: el visual `from → to` son dos tarjetas en los extremos unidas por un conector punteado con flecha; el ícono del destino va en acento.
+- `question`: caja destacada (radio `callout`) con el ícono en acento a la izquierda y `lead` (en negrita) + `text` como un solo párrafo.
+- `cta`: botón sólido en acento con texto en el color de fondo y el ícono; debajo, el tagline de la marca (`footer.tagline`) con barrita, en `muted`.
 - Tamaño del título según el largo visible: hasta 24 caracteres 100 px, hasta 48 84 px, más 70 px (a calibrar en la T11).
 - Las etiquetas de un mismo diagrama comparten tamaño: se achican todas juntas hasta que entra la palabra más larga (en los chips, la etiqueta entera, que va en una línea), con un mínimo. Es una estimación por cantidad de caracteres, sin medir en el navegador.
 
