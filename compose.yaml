@@ -1,0 +1,23 @@
+# Stack local (fases 0 a 3). Ver docs/ARCHITECTURE.md §2.
+name: radev-social
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-radev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env (copiá .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:-radev_social}
+    ports:
+      # Solo accesible desde esta máquina. 5433 porque 5432 lo usa el Postgres nativo de WSL.
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
