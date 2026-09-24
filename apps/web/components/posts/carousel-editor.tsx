@@ -14,12 +14,14 @@ import {
   SLIDE_LABELS,
   type Slide,
   type SlideAssets,
+  type SlideLayout,
   type SlideType,
 } from "@radev/slides";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { type SaveCarouselState, saveCarouselAction } from "@/app/(panel)/posts/actions";
 import { SlidePreview } from "@/components/brands/slide-preview";
+import { LayerEditor, LayerToolbar, useLayerSelection } from "./layer-editor";
 import { Fields, ICON_LIST_ID } from "./slide-fields";
 
 const idle: SaveCarouselState = { status: "idle" };
@@ -128,6 +130,16 @@ export function CarouselEditor({
     setSelected(to);
   };
   const lastMiddle = slides.length - 2;
+  const [layer, setLayer] = useLayerSelection(`${index}:${slide.type}`);
+  const setLayout = (layout: SlideLayout | undefined) =>
+    setSlides(
+      slides.map((s, i) => {
+        if (i !== index) return s;
+        const { layout: _, ...rest } = s;
+        return (layout ? { ...rest, layout } : rest) as Slide;
+      }),
+    );
+  const previewSlide = previewable(slide) as Slide;
   const [newType, setNewType] = useState<SlideType>("statement");
 
   return (
@@ -396,10 +408,28 @@ export function CarouselEditor({
             brandName={brand.name}
             assets={assets}
             type={slide.type}
-            content={previewable(slide) as Slide}
+            content={previewSlide}
             page={{ index, total: slides.length }}
+            qaOverlap
+            overlay={(scale, frame) => (
+              <LayerEditor
+                scale={scale}
+                frame={frame}
+                layout={slide.layout}
+                redrawKey={JSON.stringify(previewSlide)}
+                selected={layer}
+                onSelect={setLayer}
+                onChange={setLayout}
+              />
+            )}
           />
         </div>
+        <LayerToolbar
+          layout={slide.layout}
+          selected={layer}
+          hasHero={theme.preset === "soft" && (slide.type === "cover" || slide.type === "cta")}
+          onChange={setLayout}
+        />
         <div className="flex flex-col gap-2">
           <button
             type="submit"

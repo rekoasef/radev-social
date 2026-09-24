@@ -69,6 +69,14 @@ En la práctica, las plantillas (de los dos presets) usan un ancho de **850** (x
 - Indicador de página ("3/7") en todas las slides salvo la portada. La portada muestra "Deslizá →".
 - Decoraciones con variación **determinista**: semilla = id del post.
 
+### Capas movibles (ADR 0013)
+
+El contenido de cada slide se arma en hasta tres capas que el operador puede arrastrar en el editor: **título** (con su etiqueta), **contenido** (todo lo demás, como un bloque) y **elemento gráfico** (`heroAsset`, solo en las plantillas que lo usan). El campo opcional `layout` de la slide guarda cuánto se corrió cada una desde donde la pone la plantilla, y el tamaño del título (0,6–1,5: agranda la letra, las líneas se reacomodan) y del elemento gráfico (0,4–2). Encabezado, pie y decoraciones no se mueven.
+
+- Las plantillas envuelven cada capa en `Layer` (`frame/layer.tsx`); `TemplateLayout` ya lo hace para título y contenido. Toda plantilla nueva tiene que tener al menos las capas título y contenido (hay test).
+- El ajuste se aplica con `transform`: no mueve a las demás capas y el control del render (§9) mide la posición real.
+- En el editor, las guías imantan al centro de la slide y a los márgenes seguros, y ninguna capa sale del área segura. La columna de TikTok no es un límite duro: si una capa queda debajo, el control del render lo marca.
+
 ## 5. Catálogo de slides
 
 La estructura (campos) es común a todos los presets. Schemas en `packages/slides/src/content/`; límites centralizados en `limits.ts`, calibrados en la Fase 1 (T11) con los casos extremos de `content/extremes.ts`: cada slide con todos sus textos al límite pasa el control del render (§9) en los dos presets. Los límites cuentan caracteres **visibles** (sin los asteriscos del énfasis). Todo texto admite énfasis (§6) salvo que se indique. **No admiten énfasis** (texto plano, `*` prohibido): las etiquetas dentro de tarjetas, chips y nodos (`label`, `lead`), el `kicker` de `cover`, `value` y `source` de `bigNumber`, `source` de `chart`, los rangos y etiquetas de `costBreakdown`, `name` de `comparison` y `button` de `cta`. Los íconos son nombres de Lucide en kebab-case y se valida que existan.
@@ -254,3 +262,4 @@ Los puntos 1 y 2 los hace `checkRender` (`packages/slides/src/qa.ts`), autoconte
 3. **Fuentes y assets cargados**: se espera `document.fonts.ready` y la carga de imágenes; si algo falla, el render falla.
 4. **Contraste mínimo** entre `text` y `bg` en el editor de identidad: advertencia (no bloquea) si queda debajo de 4,5:1 (WCAG AA; `contrastRatio` en `packages/core`).
 5. **Énfasis**: máximo 2 por slide (validado en el schema).
+6. **Capas encimadas** (solo en el editor, ADR 0013): si una capa movida a mano queda encima de otra, aviso bajo la vista previa. Mide líneas de texto, cajas con fondo o borde e imágenes sin su margen transparente. No bloquea ni hace fallar el render (`checkRender(frame, mark, { overlap: true })`).

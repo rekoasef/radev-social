@@ -54,6 +54,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] QA de render (desborde, zona segura, fuentes y assets)
 - [x] Exportar: ZIP con PNGs 4:5 + copy, y copiar el copy con un toque
 - [x] Adaptador `manual`: marcar como publicado
+- [x] Ajustes a mano por arrastre (título, contenido, elemento gráfico) con guías y límites (ADR 0013)
 
 **Terminado cuando:** armo un carrusel en la app, lo descargo y lo publico a mano en TikTok. Desde acá el sistema ya ahorra trabajo real.
 

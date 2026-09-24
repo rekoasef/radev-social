@@ -60,6 +60,15 @@ export {
 } from "./fonts/registry";
 export { formatNumber } from "./format";
 export {
+  type Box,
+  GUIDES,
+  type MoveResult,
+  moveBox,
+  resizeBox,
+  SNAP_DISTANCE,
+  scaleBox,
+} from "./frame/drag";
+export {
   EXCLUSION_ZONES,
   FORMAT,
   isInSafeZone,

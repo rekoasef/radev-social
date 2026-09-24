@@ -417,6 +417,78 @@
     opacity: 0;
     transform: scale(0.97);
   }
+  /* Drag handles on the editor's preview (components/posts/layer-editor.tsx). */
+  .layer-box {
+    position: absolute;
+    cursor: move;
+    touch-action: none;
+    border-radius: 2px;
+    outline: 1px dashed transparent;
+    outline-offset: 3px;
+    transition: outline-color 120ms ease-out;
+  }
+  .layer-box:hover,
+  .layer-box:focus-visible {
+    outline-color: color-mix(in oklab, var(--color-tally-amber) 70%, transparent);
+  }
+  .layer-box-selected,
+  .layer-box-selected:hover {
+    outline: 1.5px solid var(--color-tally-amber);
+  }
+  .layer-label {
+    position: absolute;
+    left: -3px;
+    top: -24px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    line-height: 18px;
+    white-space: nowrap;
+    color: #111;
+    background: var(--color-tally-amber);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease-out;
+  }
+  .layer-box-selected .layer-label {
+    opacity: 1;
+  }
+  .layer-box:hover .layer-label,
+  .layer-box:focus-visible .layer-label {
+    opacity: 1;
+  }
+  .layer-corner {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid var(--color-tally-amber);
+    border-radius: 2px;
+    background: #fff;
+    touch-action: none;
+  }
+  .layer-guide-v,
+  .layer-guide-h {
+    position: absolute;
+    pointer-events: none;
+    background: #ff4fd8;
+  }
+  .layer-guide-v {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+  }
+  .layer-guide-h {
+    left: 0;
+    right: 0;
+    height: 1px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .layer-box,
+    .layer-label {
+      transition: none;
+    }
+  }
+
   /* TikTok preview of the rendered slides (components/posts/rendered-strip.tsx). */
   .mockup-backdrop {
     position: fixed;

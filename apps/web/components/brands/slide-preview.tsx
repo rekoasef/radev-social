@@ -13,7 +13,7 @@ import {
   type SlideType,
 } from "@radev/slides";
 import { checkRender, describeQaIssue, type QaIssue } from "@radev/slides/qa";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 // Live preview of the identity editor: the same frame and templates the render uses, with the
 // preset's example content, scaled down to the column width.
@@ -42,6 +42,8 @@ export function SlidePreview({
   content,
   page,
   onQa,
+  qaOverlap = false,
+  overlay,
 }: {
   theme: BrandTheme;
   brandName: string;
@@ -55,6 +57,14 @@ export function SlidePreview({
   page?: { index: number; total: number };
   /** Called with the render QA after each check (the gallery counts them). */
   onQa?: (issues: QaIssue[]) => void;
+  /** Also warn about hand-moved layers on top of each other (the carousel editor). */
+  qaOverlap?: boolean;
+  /**
+   * Drawn on top of the slide, in screen pixels: gets the preview's scale and a way to find the
+   * slide frame
+   * (the carousel editor puts its drag handles here).
+   */
+  overlay?: (scale: number, frame: () => HTMLElement | null) => ReactNode;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(420);
@@ -77,21 +87,21 @@ export function SlidePreview({
     const frame = box.current?.querySelector("[data-slide-frame]");
     document.fonts.ready.then(() => {
       if (!active || !frame) return;
-      const found = checkRender(frame);
+      const found = checkRender(frame, false, { overlap: qaOverlap });
       setIssues(found);
       onQa?.(found);
     });
     return () => {
       active = false;
     };
-  }, [theme, type, extreme, width, content]);
+  }, [theme, type, extreme, width, content, qaOverlap]);
 
   const scale = width / FORMAT.width;
   const slide = content ?? (extreme ? extremeSlides : exampleSlidesByPreset[theme.preset])[type];
   return (
     <div ref={box} className="w-full">
       <div
-        className="overflow-hidden rounded-md border border-bezel"
+        className="relative overflow-hidden rounded-md border border-bezel"
         style={{ height: FORMAT.height * scale }}
       >
         <div
@@ -113,14 +123,19 @@ export function SlidePreview({
             <SlideContent theme={theme} slide={slide} datasets={exampleDatasets} assets={assets} />
           </SlideFrame>
         </div>
+        {overlay?.(
+          scale,
+          () => box.current?.querySelector<HTMLElement>("[data-slide-frame]") ?? null,
+        )}
       </div>
       {issues.length > 0 && (
         <ul
           role="status"
           className="mt-3 flex flex-col gap-1 border-l border-tally-amber pl-3 text-sm text-ink"
         >
-          {issues.map((issue) => (
-            <li key={`${issue.kind}-${issue.text}`}>{describeQaIssue(issue)}</li>
+          {/* A text and its box can report the same problem: once is enough. */}
+          {[...new Set(issues.map(describeQaIssue))].map((text) => (
+            <li key={text}>{text}</li>
           ))}
         </ul>
       )}

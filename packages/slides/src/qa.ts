@@ -184,7 +184,8 @@ export function checkRender(
             body: "Contenido",
             hero: "Elemento gráfico",
           };
-          flag(layer, "overlap", names[layer.getAttribute("data-layer") ?? ""] ?? snippet(layer));
+          const name = (el: Element) => names[el.getAttribute("data-layer") ?? ""] ?? snippet(el);
+          flag(layer, "overlap", `${name(a.layer)} y ${name(b.layer)}`);
         }
       }
     }
@@ -194,12 +195,13 @@ export function checkRender(
 
 /** Spanish description of an issue, for the panel and the capture script. */
 export function describeQaIssue(issue: QaIssue): string {
+  // For overlaps the text already names both layers ("Título y Elemento gráfico").
+  if (issue.kind === "overlap") return `${issue.text}: quedan uno encima del otro`;
   const what = {
     overflow: "El texto no entra en su caja",
     "outside-box": "El texto se sale de su tarjeta",
     "safe-area": "Queda fuera del área segura",
     tiktok: "Queda debajo de los botones de TikTok",
-    overlap: "Queda encima de otro elemento",
   }[issue.kind];
   return `${what}: “${issue.text}”`;
 }
