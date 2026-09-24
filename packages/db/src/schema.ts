@@ -1,5 +1,6 @@
 import {
   ASSET_ROLES,
+  BRAND_DOCUMENT_KINDS,
   NETWORKS,
   POST_STATUSES,
   PUBLICATION_STATUSES,
@@ -97,6 +98,30 @@ export const brandAssets = pgTable(
 );
 
 const inList = (values: readonly string[]) => sql.raw(values.map((v) => `'${v}'`).join(", "));
+
+/**
+ * Voice, pricing, cases and rules of a brand, in Markdown (docs/ARCHITECTURE.md §4). Never
+ * updated in place: every save is a new version, and the current one is the highest.
+ */
+export const brandDocuments = pgTable(
+  "brand_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: BRAND_DOCUMENT_KINDS }).notNull(),
+    /** Normalized with normalizeBrandDocument (packages/core). */
+    content: text("content").notNull(),
+    version: integer("version").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("brand_documents_brand_kind_version_unique").on(t.brandId, t.kind, t.version),
+    check("brand_documents_kind_valid", sql`${t.kind} in (${inList(BRAND_DOCUMENT_KINDS)})`),
+    check("brand_documents_version_positive", sql`${t.version} >= 1`),
+  ],
+);
 
 /** What a brand talks about, with its target share of the mix (docs/PRD.md RF-05). */
 export const contentPillars = pgTable(
@@ -252,5 +277,6 @@ export type PostVersion = typeof postVersions.$inferSelect;
 export type RenderedAsset = typeof assets.$inferSelect;
 export type Publication = typeof publications.$inferSelect;
 export type NewBrandAsset = typeof brandAssets.$inferInsert;
+export type BrandDocument = typeof brandDocuments.$inferSelect;
 
 export * from "./auth-schema";

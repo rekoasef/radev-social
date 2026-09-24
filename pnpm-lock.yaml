@@ -283,7 +283,18 @@ importers:
         specifier: 24.13.6
         version: 24.13.6
 
-  packages/ai: {}
+  packages/ai:
+    dependencies:
+      '@radev/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@radev/slides':
+        specifier: workspace:*
+        version: link:../slides
 
   packages/core: {}
 

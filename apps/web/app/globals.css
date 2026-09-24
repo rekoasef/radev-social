@@ -238,6 +238,11 @@
     background: var(--color-bezel);
     border-color: var(--color-ink-faint);
   }
+  /* A set of buttons used as tabs (brand documents): the selected one. */
+  .console-button[aria-current="page"] {
+    background: var(--color-bezel);
+    border-color: var(--color-ink);
+  }
 
   .console-button:disabled {
     opacity: 0.6;

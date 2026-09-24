@@ -12,6 +12,12 @@ export {
   setBrandAssetToken,
 } from "./queries/brand-assets";
 export {
+  listBrandDocumentVersions,
+  listCurrentBrandDocuments,
+  type SaveDocumentResult,
+  saveBrandDocument,
+} from "./queries/brand-documents";
+export {
   type BrandDetails,
   type BrandWriteResult,
   countBrandPosts,

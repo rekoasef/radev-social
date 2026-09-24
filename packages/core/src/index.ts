@@ -1,5 +1,13 @@
 // Pure domain: types, post state machine, rules. No I/O and no dependencies on other workspace packages.
 export {
+  AI_PROVIDERS,
+  AI_TASKS,
+  type AiProviderId,
+  type AiTask,
+  isAiProvider,
+  isAiTask,
+} from "./ai/tasks";
+export {
   isEmailAllowed,
   isOperator,
   type OperatorIdentity,
@@ -28,6 +36,13 @@ export {
   SLUG_PATTERN,
   slugify,
 } from "./brands/brand-rules";
+export {
+  BRAND_DOCUMENT_KINDS,
+  type BrandDocumentKind,
+  isBrandDocumentKind,
+  MAX_BRAND_DOCUMENT_CHARS,
+  normalizeBrandDocument,
+} from "./brands/documents";
 export { contrastRatio, MIN_TEXT_CONTRAST, parseColor, type Rgba } from "./colors/contrast";
 export { type CarouselRenderJob, carouselRenderKey, JOBS, QUEUE_OPTIONS } from "./jobs";
 export {

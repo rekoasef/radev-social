@@ -1,11 +1,19 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { BRAND_DOCUMENT_KINDS, isBrandDocumentKind } from "@radev/core";
 import { eq } from "drizzle-orm";
 import { createDb } from "../client";
 import { loadRootEnv } from "../load-root-env";
 import { createBrandAsset, listBrandAssets, setBrandAssetToken } from "../queries/brand-assets";
+import { listCurrentBrandDocuments, saveBrandDocument } from "../queries/brand-documents";
 import { brands, contentPillars } from "../schema";
-import { pendingSeedAssets, seedBrandAssets, seedBrands, seedPillars } from "./brands";
+import {
+  pendingSeedAssets,
+  pendingSeedDocuments,
+  seedBrandAssets,
+  seedBrands,
+  seedPillars,
+} from "./brands";
 
 loadRootEnv();
 
@@ -72,6 +80,27 @@ try {
     pillarsAdded += added.length;
   }
   console.log(`Pilares creados: ${pillarsAdded || "ninguno (ya estaban)"}`);
+
+  // Documents: version 1 of each kind with a file in seeds/brands/<slug>/, only when missing.
+  const documentsAdded: string[] = [];
+  for (const { slug } of seedBrands) {
+    const [brand] = await db.select().from(brands).where(eq(brands.slug, slug));
+    if (!brand) continue;
+    const dir = fileURLToPath(new URL(`${slug}/`, seedsDir));
+    const onDisk = (await readdir(dir))
+      .filter((file) => file.endsWith(".md"))
+      .map((file) => file.slice(0, -3))
+      .filter(isBrandDocumentKind);
+    const current = await listCurrentBrandDocuments(db, brand.id);
+    const existing = BRAND_DOCUMENT_KINDS.filter((kind) => current[kind] !== undefined);
+    for (const kind of pendingSeedDocuments(onDisk, existing)) {
+      const content = await readFile(`${dir}${kind}.md`, "utf8");
+      const saved = await saveBrandDocument(db, { brandId: brand.id, kind, content });
+      if (!saved.ok) throw new Error(`${slug}/${kind}.md: ${saved.error}`);
+      documentsAdded.push(`${slug}/${kind}`);
+    }
+  }
+  console.log(`Documentos cargados: ${documentsAdded.join(", ") || "ninguno (ya estaban)"}`);
 } finally {
   await pool.end();
 }

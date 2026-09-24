@@ -1,4 +1,4 @@
-import type { AssetRole } from "@radev/core";
+import type { AssetRole, BrandDocumentKind } from "@radev/core";
 import type { NewBrand, NewContentPillar } from "../schema";
 
 /**
@@ -110,6 +110,18 @@ export function pendingSeedAssets(
   return planned.filter(
     (asset) => tokens[asset.token] == null && !existingRoles.includes(asset.role),
   );
+}
+
+/**
+ * Brand documents to load from seeds/brands/<slug>/<kind>.md: the kinds with a file on disk
+ * that the brand doesn't have yet. Once a kind exists it belongs to the panel; the seed never
+ * adds versions on top of it.
+ */
+export function pendingSeedDocuments(
+  onDisk: readonly BrandDocumentKind[],
+  existing: readonly BrandDocumentKind[],
+): BrandDocumentKind[] {
+  return onDisk.filter((kind) => !existing.includes(kind));
 }
 
 export type SeedPillar = Pick<NewContentPillar, "key" | "name" | "description" | "targetShare">;

@@ -1,10 +1,16 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { checkAssetFile } from "@radev/core";
+import {
+  checkAssetFile,
+  isBrandDocumentKind,
+  MAX_BRAND_DOCUMENT_CHARS,
+  normalizeBrandDocument,
+} from "@radev/core";
 import { parseTheme } from "@radev/slides";
 import { describe, expect, it } from "vitest";
 import {
   pendingSeedAssets,
+  pendingSeedDocuments,
   type SeedAsset,
   seedBrandAssets,
   seedBrands,
@@ -73,4 +79,32 @@ describe("seed pillars", () => {
       expect(total).toBeCloseTo(1, 5);
     },
   );
+});
+
+describe("seed brand documents", () => {
+  const files = seedBrands.flatMap(({ slug }) => {
+    const dir = fileURLToPath(new URL(`../../../../seeds/brands/${slug}/`, import.meta.url));
+    return readdirSync(dir)
+      .filter((file) => file.endsWith(".md"))
+      .map((file) => [`${slug}/${file}`, `${dir}${file}`, file.slice(0, -3)] as const);
+  });
+
+  it("finds the documents of both brands", () => {
+    expect(files.map(([name]) => name)).toEqual(
+      expect.arrayContaining(["radev/voice.md", "radev/pricing.md", "lumus/voice.md"]),
+    );
+  });
+
+  it.each(files)("%s is a known kind, not empty and within the size limit", (_, path, kind) => {
+    expect(isBrandDocumentKind(kind)).toBe(true);
+    const content = normalizeBrandDocument(readFileSync(path, "utf8"));
+    expect(content).not.toBe("");
+    expect([...content].length).toBeLessThanOrEqual(MAX_BRAND_DOCUMENT_CHARS);
+  });
+
+  it("only loads kinds the brand doesn't have yet", () => {
+    expect(pendingSeedDocuments(["voice", "rules"], [])).toEqual(["voice", "rules"]);
+    expect(pendingSeedDocuments(["voice", "rules"], ["voice"])).toEqual(["rules"]);
+    expect(pendingSeedDocuments(["voice"], ["voice", "pricing"])).toEqual([]);
+  });
 });

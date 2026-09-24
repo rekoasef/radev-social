@@ -9,9 +9,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 3 — Generación con IA (por empezar). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T1 de la Fase 3: `packages/ai` con la interfaz de proveedores y errores tipados.
+- **Próximo paso:** T3 de la Fase 3: workspace aislado para la generación (carpeta temporal fuera del repo con el CLAUDE.md de la marca armado desde `brand_documents`).
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install`, `pnpm db:migrate` (crea `brand_documents`) y `pnpm db:seed` (carga los documentos). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
 - **Última actualización:** 2026-09-24, al cerrar la Fase 2
-- **Para retomar:** todo lo de la Fase 1 se ve en el panel (Marcas → Slides / Identidad visual / Assets) con `pnpm dev`. El control del render (`checkRender`) y los extremos son la base del QA del render de la Fase 2.
 
 ## Fase 3 — tareas
 
@@ -20,8 +20,8 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | Tarea | Qué | Estado |
 |---|---|---|
 | T0 | Prueba de `claude -p` instalado: flags reales (`--json-schema`, `--output-format`, herramientas) en una carpeta temporal fuera del repo. Sin código | ✅ |
-| T1 | `packages/ai`: interfaz `AIProvider`, errores tipados (`validation`, `rate_limited`, `provider_error`), Zod → JSON Schema. Tests con proveedor falso | |
-| T2 | Tabla `brand_documents` (voz, precios, casos, reglas, con historial), seed desde `seeds/brands/`, editor en el panel | |
+| T1 | `packages/ai`: interfaz `AIProvider`, errores tipados (`validation`, `rate_limited`, `provider_error`), Zod → JSON Schema. Tests con proveedor falso | ✅ |
+| T2 | Tabla `brand_documents` (voz, precios, casos, reglas, con historial), seed desde `seeds/brands/`, editor en el panel | ✅ |
 | T3 | Workspace aislado: carpeta temporal fuera del repo con el CLAUDE.md de la marca armado desde la base (regla 7). Tests | |
 | T4 | Proveedor `claude-code` (`claude -p`, sobre JSON, detección de límite, timeout) + Claude Code CLI en la imagen del worker (amd64 y arm64). El operador genera `CLAUDE_CODE_OAUTH_TOKEN` con `claude setup-token` | |
 | T5 | Proveedor `openrouter` (HTTP, salida estructurada, nunca datos privados). Tests con fetch simulado | |
@@ -40,6 +40,19 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Errores: clasificar por `is_error` + `terminal_reason` + `api_error_status`; `subtype` engaña.
 - En WSL, `claude` hoy es el de Windows (`/mnt/c/.../npm/claude`) y no hay credenciales en WSL ni en el `.env`. Para la T4: el worker necesita el CLI de Linux. Propuesta: `@anthropic-ai/claude-code` como dependencia fija de `packages/ai` (misma versión en desarrollo y en Docker, sin instalación global), a confirmar en la T4.
 - Probado desde PowerShell: escapar las comillas del JSON Schema es un problema de PowerShell 5.1, no del CLI.
+
+**T1 (2026-09-24)**:
+- Nombres de tareas y proveedores (`AI_TASKS`, `AI_PROVIDERS`) en `packages/core/src/ai/tasks.ts`: los usan `ai`, la base (`ai_routes`, `generation_runs`) y la web.
+- `packages/ai`: `types.ts` (`GenerationTask<T>` con `prompt`, `files` por nombre, `schema` Zod, `model`, `tools?`, `maxTurns?`, `timeoutMs?`, `signal?`; `GenerationResult<T>` = datos validados + `Usage`, o `AIError` + `Usage | null`), `errors.ts` (`validation` con `issues`, `rate_limited` con `retryAfterMs`, `provider_error` con `retryable`; `isRetryable`), `schema.ts` (`toJsonSchema` con `io: "input"` y sin `$schema`; `parseOutput` y `parseJsonText` validan con Zod y devuelven problemas como `ruta › mensaje`), `fake.ts` (proveedor de prueba que pasa por la misma validación).
+- Las reglas que el JSON Schema no expresa (portada primero, `cta` al final, máx. 2 énfasis) las hace cumplir `parseOutput`: un modelo puede devolver algo que pasa el schema y falla Zod, y eso es un error `validation`.
+- `@radev/slides` es devDependency de `ai` solo para testear con el schema real del carrusel.
+
+**T2 (2026-09-24)**:
+- Tipos de documento en `packages/core/src/brands/documents.ts` (`BRAND_DOCUMENT_KINDS`, tope `MAX_BRAND_DOCUMENT_CHARS` = 40.000, `normalizeBrandDocument`: finales de línea Unix, sin espacios al final de cada línea, un salto final). Se guarda normalizado: el mismo texto con CRLF o espacios sobrantes no crea versión.
+- Tabla `brand_documents` (migración `0006_brand_documents.sql`, renombrada desde el nombre al azar de drizzle-kit junto con su `tag` en `meta/_journal.json`). Nunca se actualiza: cada guardado es una versión nueva (`saveBrandDocument` bloquea la fila de la marca para numerar sin choques; si el texto es igual al actual devuelve `unchanged`). Vigente = versión más alta (`listCurrentBrandDocuments`).
+- Seed: carga `seeds/brands/<slug>/<tipo>.md` como versión 1 solo de los tipos que la marca no tiene (`pendingSeedDocuments`); después son del panel. Hoy: RAdev con los 4, Lumus con voz y reglas.
+- Panel: pestaña **Documentos** en cada marca (`/brands/<slug>/documents?kind=voice|pricing|cases|rules&v=N`): editor Markdown con contador, historial con Ver y Restaurar (restaurar crea otra versión). Marcas archivadas: solo lectura. `.console-button[aria-current="page"]` marca el tipo elegido.
+- Verificado contra la base en una transacción que se deshace: mismo texto → sin versión; texto editado → v2; vacío → rechazado. La página del panel no se pudo capturar (requiere login): falta mirarla.
 
 Pendiente de respuesta del operador: (1) crear cuenta gratuita de OpenRouter y su API key (sin tarjeta) antes de la T5, o posponer OpenRouter; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 
