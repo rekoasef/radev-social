@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 2 — Editor, render y exportación (empezada 2026-09-24). Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T4 de la Fase 2: versiones (ver y restaurar).
-- **Última actualización:** 2026-09-24, al cerrar la T3 de la Fase 2
+- **Próximo paso:** T5 de la Fase 2: ruta interna `/render/<versión>/<slide>` con token (por cabecera) y semilla del post; después la T6 (worker con Playwright), que saca a los posts de `rendering`.
+- **Última actualización:** 2026-09-24, al cerrar la T4 de la Fase 2
 - **Para retomar:** todo lo de la Fase 1 se ve en el panel (Marcas → Slides / Identidad visual / Assets) con `pnpm dev`. El control del render (`checkRender`) y los extremos son la base del QA del render de la Fase 2.
 
 ## Fase 2 — tareas
@@ -23,7 +23,7 @@ Plan aprobado el 2026-09-24. 👁 = termina con capturas para que el operador ap
 | T1 | Máquina de estados en `packages/core` con tests de invariantes; única vía para cambiar `posts.status` | ✅ |
 | T2 | Sección Posts: listado por marca con filtros por estado | ✅ |
 | T3 | Editor de carrusel: formulario por tipo desde los schemas, agregar/quitar/reordenar, íconos con buscador, pilar/hook/caption/hashtags, vista previa en vivo con QA, avance guardado en el navegador. 👁 | ✅ |
-| T4 | Versiones: cada guardado crea una; ver y restaurar | |
+| T4 | Versiones: cada guardado crea una; ver y restaurar | ✅ |
 | T5 | Ruta interna `/render/<versión>/<slide>` con token y semilla del post | |
 | T6 | Worker: job `carousel.render` (Playwright, QA, PNG en `media/`, registro en `assets`), idempotente; la web encola | |
 | T7 | Docker: worker con Chromium (amd64 y arm64) | |
@@ -87,6 +87,7 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Sección Posts (T2)**: `/posts`, de la marca activa del selector (como Assets en la T7), más nuevo primero; pestañas por estado con cantidades (`countPostsByStatus`) vía `?status=`. Estados en el panel: `apps/web/lib/post-status.ts` (luz y etiqueta). Fechas con `formatDateTime(fecha, zona)` en `lib/time.ts` (regla 11).
 - **Editor de carrusel (T3)**: `/posts/new` (marca activa) y `/posts/<código>/edit` (solo si el estado admite `edit`). El formulario sale de `SLIDE_FIELDS` (`packages/slides/src/content/form.ts`): campos por tipo con etiqueta, límite, énfasis, objetos (opcionales con casilla) y listas con mínimo y máximo; un test lo compara con los schemas. `emptySlide(tipo)` arma una slide nueva; el editor arranca con portada, afirmación, tarjetas, pasos y cierre vacíos, o con "Cargar el carrusel de ejemplo del estilo". Tipos ofrecidos: `EDITOR_MIDDLE_TYPES` (sin `chart`, decisión 3). Íconos: `<datalist>` con `ICON_NAMES` (2112) y vista del ícono; un nombre a medio escribir se dibuja como círculo en la vista previa. Validación en vivo con `carouselSchema` (errores por ruta, contador por slide) y otra vez en `saveCarouselAction` (regla 4, también para lo manual), que además verifica el pilar. Avance en `localStorage` (`radev-social:draft:<marca>:<código|new>`), se ofrece recuperar al volver y se borra al guardar. Mensajes del schema del carrusel en español.
 - **Detalle del post**: `/posts/<código>` con estado, versión, "Editar" (si se puede) y la tira de slides dibujada en el navegador (`PostStrip`). Mientras no exista el render (T6), los posts nuevos quedan en `rendering`, donde no se editan.
+- **Versiones (T4)**: en `/posts/<código>`, lista de versiones (número, origen, fecha, "Actual"); `?v=<número>` muestra una vieja; "Restaurar" (`restoreVersionAction`) valida otra vez el contenido con `carouselSchema` y crea una versión nueva con él vía `addPostVersion` (evento `edit`: vuelve a render y revisión). Nunca se reescribe el historial. Solo aparece si el estado admite `edit`.
 - **Token de render por cabecera**: `/render` acepta `X-Render-Token` (worker y `pnpm capture`) o `?token=` a mano (`renderTokenFrom`). Next registra la URL completa de cada pedido: con el token en la cabecera no aparece en el log. Nunca mostrar el log de `pnpm dev` sin filtrar si se usó `?token=`.
 - **Carpetas `.scratch/`** (en `.gitignore`): scripts temporales de prueba contra la base (crear/borrar posts de prueba, volver el contador a 1).
 
@@ -162,6 +163,7 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Sección Posts (T2)**: `/posts`, de la marca activa del selector (como Assets en la T7), más nuevo primero; pestañas por estado con cantidades (`countPostsByStatus`) vía `?status=`. Estados en el panel: `apps/web/lib/post-status.ts` (luz y etiqueta). Fechas con `formatDateTime(fecha, zona)` en `lib/time.ts` (regla 11).
 - **Editor de carrusel (T3)**: `/posts/new` (marca activa) y `/posts/<código>/edit` (solo si el estado admite `edit`). El formulario sale de `SLIDE_FIELDS` (`packages/slides/src/content/form.ts`): campos por tipo con etiqueta, límite, énfasis, objetos (opcionales con casilla) y listas con mínimo y máximo; un test lo compara con los schemas. `emptySlide(tipo)` arma una slide nueva; el editor arranca con portada, afirmación, tarjetas, pasos y cierre vacíos, o con "Cargar el carrusel de ejemplo del estilo". Tipos ofrecidos: `EDITOR_MIDDLE_TYPES` (sin `chart`, decisión 3). Íconos: `<datalist>` con `ICON_NAMES` (2112) y vista del ícono; un nombre a medio escribir se dibuja como círculo en la vista previa. Validación en vivo con `carouselSchema` (errores por ruta, contador por slide) y otra vez en `saveCarouselAction` (regla 4, también para lo manual), que además verifica el pilar. Avance en `localStorage` (`radev-social:draft:<marca>:<código|new>`), se ofrece recuperar al volver y se borra al guardar. Mensajes del schema del carrusel en español.
 - **Detalle del post**: `/posts/<código>` con estado, versión, "Editar" (si se puede) y la tira de slides dibujada en el navegador (`PostStrip`). Mientras no exista el render (T6), los posts nuevos quedan en `rendering`, donde no se editan.
+- **Versiones (T4)**: en `/posts/<código>`, lista de versiones (número, origen, fecha, "Actual"); `?v=<número>` muestra una vieja; "Restaurar" (`restoreVersionAction`) valida otra vez el contenido con `carouselSchema` y crea una versión nueva con él vía `addPostVersion` (evento `edit`: vuelve a render y revisión). Nunca se reescribe el historial. Solo aparece si el estado admite `edit`.
 - **Token de render por cabecera**: `/render` acepta `X-Render-Token` (worker y `pnpm capture`) o `?token=` a mano (`renderTokenFrom`). Next registra la URL completa de cada pedido: con el token en la cabecera no aparece en el log. Nunca mostrar el log de `pnpm dev` sin filtrar si se usó `?token=`.
 - **Carpetas `.scratch/`** (en `.gitignore`): scripts temporales de prueba contra la base (crear/borrar posts de prueba, volver el contador a 1).
 

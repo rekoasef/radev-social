@@ -1,6 +1,13 @@
 "use server";
 
-import { addPostVersion, createPost, getBrandById, getPostByCode, listPillars } from "@radev/db";
+import {
+  addPostVersion,
+  createPost,
+  getBrandById,
+  getPostByCode,
+  getPostVersion,
+  listPillars,
+} from "@radev/db";
 import { carouselSchema } from "@radev/slides";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -85,4 +92,33 @@ export async function saveCarouselAction(
 
   revalidatePath("/posts");
   redirect(`/posts/${publicCode}`);
+}
+
+const restoreInput = z.object({ code: z.string().min(1).max(20), versionId: z.uuid() });
+
+/**
+ * Brings back an old version: a new version with its content (history is never rewritten), so
+ * the post goes back to render and review like any edit.
+ */
+export async function restoreVersionAction(form: FormData): Promise<void> {
+  await requireOperator();
+  const { code, versionId } = restoreInput.parse(Object.fromEntries(form));
+  const post = await getPostByCode(db, code);
+  if (!post) throw new Error("Ese post ya no existe.");
+  const version = await getPostVersion(db, versionId);
+  if (!version || version.postId !== post.id) throw new Error("Esa versión no es de este post.");
+
+  // Validated again: an old version may predate a schema change (CLAUDE.md, rule 4).
+  const content = carouselSchema.safeParse(version.content);
+  if (!content.success)
+    throw new Error("Esa versión ya no cumple el formato actual: abrila en el editor.");
+
+  const result = await addPostVersion(db, {
+    postId: post.id,
+    content: content.data,
+    origin: "manual",
+  });
+  if (!result.ok) throw new Error(result.reason);
+  revalidatePath("/posts");
+  redirect(`/posts/${post.publicCode}`);
 }
