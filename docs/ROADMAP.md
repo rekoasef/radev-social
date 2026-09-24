@@ -53,7 +53,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Worker con pg-boss y job `carousel.render` (Playwright, 4:5)
 - [x] QA de render (desborde, zona segura, fuentes y assets)
 - [x] Exportar: ZIP con PNGs 4:5 + copy, y copiar el copy con un toque
-- [ ] Adaptador `manual`: marcar como publicado
+- [x] Adaptador `manual`: marcar como publicado
 
 **Terminado cuando:** armo un carrusel en la app, lo descargo y lo publico a mano en TikTok. Desde acá el sistema ya ahorra trabajo real.
 

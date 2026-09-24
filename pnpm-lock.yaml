@@ -196,6 +196,9 @@ importers:
       '@radev/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@radev/publishers':
+        specifier: workspace:*
+        version: link:../../packages/publishers
       '@radev/slides':
         specifier: workspace:*
         version: link:../../packages/slides
@@ -312,7 +315,11 @@ importers:
         specifier: 4.23.15
         version: 4.23.15
 
-  packages/publishers: {}
+  packages/publishers:
+    dependencies:
+      '@radev/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/slides:
     dependencies:

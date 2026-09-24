@@ -1,5 +1,11 @@
 import { availableEvents, canExport, postDescription } from "@radev/core";
-import { getBrandById, getPostByCode, listPostVersions, listVersionAssets } from "@radev/db";
+import {
+  getBrandById,
+  getPostByCode,
+  listPostVersions,
+  listPublications,
+  listVersionAssets,
+} from "@radev/db";
 import { carouselSchema } from "@radev/slides";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -8,6 +14,7 @@ import { Plate } from "@/components/console/plate";
 import { Tally } from "@/components/console/tally";
 import { ApproveButton } from "@/components/posts/approve-button";
 import { CopyButton } from "@/components/posts/copy-button";
+import { MarkPublishedForm } from "@/components/posts/mark-published-form";
 import { PostStrip } from "@/components/posts/post-strip";
 import { RenderedStrip } from "@/components/posts/rendered-strip";
 import { mediaUrl } from "@/lib/brand-assets";
@@ -25,9 +32,10 @@ export async function generateMetadata({ params }: PageProps<"/posts/[code]">): 
 export default async function PostPage({ params, searchParams }: PageProps<"/posts/[code]">) {
   const post = await getPostByCode(db, (await params).code);
   if (!post) notFound();
-  const [brand, versions, query] = await Promise.all([
+  const [brand, versions, publications, query] = await Promise.all([
     getBrandById(db, post.brandId),
     listPostVersions(db, post.id),
+    listPublications(db, post.id),
     searchParams,
   ]);
   if (!brand) notFound();
@@ -49,6 +57,8 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
   const canEdit = availableEvents(post.status).includes("edit");
   const canRetry = availableEvents(post.status).includes("retryRender");
   const canApprove = !viewingOld && availableEvents(post.status).includes("approve");
+  const canMarkPublished = !viewingOld && availableEvents(post.status).includes("startPublishing");
+  const published = publications.find((p) => p.status === "published");
   // Export is about the current version: hidden while looking at an older one.
   const exportable =
     !viewingOld &&
@@ -108,7 +118,26 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
         )}
         {post.status === "approved" && (
           <p className="max-w-[60ch] text-sm text-ink-dim">
-            Aprobado: descargalo y publicalo a mano. Si lo editás, vuelve a render y a revisión.
+            Aprobado: descargalo, publicalo a mano y después marcalo como publicado. Si lo editás,
+            vuelve a render y a revisión.
+          </p>
+        )}
+        {post.status === "published" && published?.publishedAt && (
+          <p className="text-sm text-ink-dim">
+            Publicado el {formatDateTime(published.publishedAt, brand.timezone)}
+            {published.url && (
+              <>
+                {" · "}
+                <a
+                  href={published.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink underline underline-offset-4 hover:text-ink-dim"
+                >
+                  ver el post
+                </a>
+              </>
+            )}
           </p>
         )}
         <div className="flex flex-wrap items-start gap-2">
@@ -140,6 +169,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
             </form>
           )}
         </div>
+        {canMarkPublished && exportable && <MarkPublishedForm code={post.publicCode} />}
       </section>
 
       <section aria-labelledby="slides-heading" className="flex flex-col gap-6">

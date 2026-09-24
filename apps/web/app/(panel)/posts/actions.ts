@@ -8,8 +8,10 @@ import {
   getPostByCode,
   getPostVersion,
   listPillars,
+  markPublishedManually,
   transitionPost,
 } from "@radev/db";
+import { confirmManualPublication } from "@radev/publishers";
 import { carouselSchema } from "@radev/slides";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -162,6 +164,36 @@ export async function approvePostAction(_: ApproveState, form: FormData): Promis
     reviewedVersionId: parsed.data.versionId,
   });
   if (!approved.ok) return { status: "error", message: approved.reason };
+  revalidatePath("/posts");
+  redirect(`/posts/${post.publicCode}`);
+}
+
+export type PublishState = { status: "idle" } | { status: "error"; message: string };
+
+const publishInput = z.object({
+  code: z.string().min(1).max(20),
+  url: z.string().max(600).optional(),
+});
+
+/**
+ * The operator posted it by hand (adapter `manual`): approved → publishing → published, with
+ * the optional link to the post.
+ */
+export async function markPublishedAction(_: PublishState, form: FormData): Promise<PublishState> {
+  await requireOperator();
+  const parsed = publishInput.safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { status: "error", message: "Datos inválidos." };
+  const post = await getPostByCode(db, parsed.data.code);
+  if (!post) return { status: "error", message: "Ese post ya no existe." };
+  const confirmed = confirmManualPublication({ url: parsed.data.url, now: new Date() });
+  if (confirmed.status === "failed") return { status: "error", message: confirmed.error };
+  if (confirmed.status !== "published") return { status: "error", message: "No se pudo marcar." };
+  const marked = await markPublishedManually(db, {
+    postId: post.id,
+    url: confirmed.url,
+    publishedAt: confirmed.publishedAt,
+  });
+  if (!marked.ok) return { status: "error", message: marked.reason };
   revalidatePath("/posts");
   redirect(`/posts/${post.publicCode}`);
 }

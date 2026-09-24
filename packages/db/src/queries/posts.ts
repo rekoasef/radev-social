@@ -16,8 +16,10 @@ import {
   contentPillars,
   type Post,
   type PostVersion,
+  type Publication,
   posts,
   postVersions,
+  publications,
   type RenderedAsset,
 } from "../schema";
 import type { Executor } from "./brand-assets";
@@ -304,4 +306,52 @@ export async function approvePost(
     if (!check.ok) return check;
     return transitionPost(tx, input.postId, "approve");
   });
+}
+
+/**
+ * The operator published an approved post by hand (adapter `manual`): approved → publishing →
+ * published and the publication recorded, in one transaction. The (post, network) key keeps a
+ * repeated click from recording twice; the state machine refuses it anyway (rule 8).
+ */
+export async function markPublishedManually(
+  db: Database,
+  input: { postId: string; url: string | null; publishedAt: Date },
+): Promise<TransitionOutcome> {
+  return db.transaction(async (tx) => {
+    const started = await transitionPost(tx, input.postId, "startPublishing");
+    if (!started.ok) return started;
+    await tx
+      .insert(publications)
+      .values({
+        postId: input.postId,
+        network: "manual",
+        status: "published",
+        url: input.url,
+        attempts: 1,
+        publishedAt: input.publishedAt,
+      })
+      .onConflictDoUpdate({
+        target: [publications.postId, publications.network],
+        set: {
+          status: "published",
+          url: input.url,
+          error: null,
+          attempts: sql`${publications.attempts} + 1`,
+          publishedAt: input.publishedAt,
+        },
+      });
+    const done = await transitionPost(tx, input.postId, "publishDone");
+    // Cannot fail right after startPublishing; if it did, roll everything back.
+    if (!done.ok) throw new Error(done.reason);
+    return { ...done, from: started.from };
+  });
+}
+
+/** Where and when a post was published, one row per network. */
+export function listPublications(db: Executor, postId: string): Promise<Publication[]> {
+  return db
+    .select()
+    .from(publications)
+    .where(eq(publications.postId, postId))
+    .orderBy(publications.createdAt);
 }
