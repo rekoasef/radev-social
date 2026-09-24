@@ -9,7 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 3 — Generación con IA (por empezar). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T3 de la Fase 3: workspace aislado para la generación (carpeta temporal fuera del repo con el CLAUDE.md de la marca armado desde `brand_documents`).
+- **Próximo paso:** T4 de la Fase 3: proveedor `claude-code` (ejecuta `claude -p` en el workspace) y Claude Code CLI en la imagen del worker. El operador tiene que generar `CLAUDE_CODE_OAUTH_TOKEN` con `claude setup-token`.
+- **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install`, `pnpm db:migrate` (crea `brand_documents`) y `pnpm db:seed` (carga los documentos). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
 - **Última actualización:** 2026-09-24, al cerrar la Fase 2
 
@@ -22,7 +23,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T0 | Prueba de `claude -p` instalado: flags reales (`--json-schema`, `--output-format`, herramientas) en una carpeta temporal fuera del repo. Sin código | ✅ |
 | T1 | `packages/ai`: interfaz `AIProvider`, errores tipados (`validation`, `rate_limited`, `provider_error`), Zod → JSON Schema. Tests con proveedor falso | ✅ |
 | T2 | Tabla `brand_documents` (voz, precios, casos, reglas, con historial), seed desde `seeds/brands/`, editor en el panel | ✅ |
-| T3 | Workspace aislado: carpeta temporal fuera del repo con el CLAUDE.md de la marca armado desde la base (regla 7). Tests | |
+| T3 | Workspace aislado: carpeta temporal fuera del repo con el CLAUDE.md de la marca armado desde la base (regla 7). Tests | ✅ |
 | T4 | Proveedor `claude-code` (`claude -p`, sobre JSON, detección de límite, timeout) + Claude Code CLI en la imagen del worker (amd64 y arm64). El operador genera `CLAUDE_CODE_OAUTH_TOKEN` con `claude setup-token` | |
 | T5 | Proveedor `openrouter` (HTTP, salida estructurada, nunca datos privados). Tests con fetch simulado | |
 | T6 | Tablas `ai_routes` y `generation_runs`; router con respaldo, backoff ante `rate_limited`, topes por marca; pantalla de ruteo. Tests obligatorios | |
@@ -53,6 +54,11 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Seed: carga `seeds/brands/<slug>/<tipo>.md` como versión 1 solo de los tipos que la marca no tiene (`pendingSeedDocuments`); después son del panel. Hoy: RAdev con los 4, Lumus con voz y reglas.
 - Panel: pestaña **Documentos** en cada marca (`/brands/<slug>/documents?kind=voice|pricing|cases|rules&v=N`): editor Markdown con contador, historial con Ver y Restaurar (restaurar crea otra versión). Marcas archivadas: solo lectura. `.console-button[aria-current="page"]` marca el tipo elegido.
 - Verificado contra la base en una transacción que se deshace: mismo texto → sin versión; texto editado → v2; vacío → rechazado. La página del panel no se pudo capturar (requiere login): falta mirarla.
+
+**T3 (2026-09-24)**:
+- `packages/ai/src/brand-instructions.ts`: `buildBrandClaudeMd({ name, documents, pillars, whatsappNumber })` arma el CLAUDE.md de la marca con datos planos (el worker los carga de `brand_documents` y `content_pillars`; `ai` no depende de `db`). Orden: reglas de trabajo (nunca inventar números, leer `task.json`, responder solo el objeto) → voz → reglas → precios → casos → pilares con `pillarKey` y porcentaje → contacto (WhatsApp sin escribir el número). Los títulos de cada documento bajan dos niveles (`#` → `###`) para quedar bajo su sección. El de RAdev real sale de ~13.000 caracteres.
+- `packages/ai/src/workspace.ts`: `createWorkspace(files, { root?, runId? })` crea `<tmp>/radev-social/runs/<uuid>/` (permisos 700, archivos 600), valida nombres (sin carpetas, `..` ni ocultos) y **se niega a crearla dentro de un proyecto**: sube por las carpetas buscando `CLAUDE.md`, `CLAUDE.local.md`, `.claude`, `.git/HEAD` o `pnpm-workspace.yaml`. `withWorkspace(files, fn, { keepIf })` la borra al terminar y la conserva si `fn` tira error o `keepIf` lo pide.
+- En WSL existe un `/tmp/.git` **vacío** (de mayo, ajeno al proyecto; no es un repo). Por eso el control mira `.git/HEAD` y no `.git`. No se tocó.
 
 Pendiente de respuesta del operador: (1) crear cuenta gratuita de OpenRouter y su API key (sin tarjeta) antes de la T5, o posponer OpenRouter; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 
