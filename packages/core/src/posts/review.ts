@@ -24,9 +24,17 @@ export function canApprove(input: ApprovalInput): RuleCheck {
       ok: false,
       reason: "El post cambió mientras lo revisabas: mirá la versión nueva antes de aprobar.",
     };
-  if (input.slideCount === 0) return { ok: false, reason: "La versión no tiene slides." };
-  const rendered = new Set(input.renderedSlides);
-  for (let index = 0; index < input.slideCount; index++) {
+  return checkRenderedSlides(input.slideCount, input.renderedSlides);
+}
+
+/** Every slide of a version has its PNG (to approve it, and to export it). */
+export function checkRenderedSlides(
+  slideCount: number,
+  renderedSlides: readonly number[],
+): RuleCheck {
+  if (slideCount === 0) return { ok: false, reason: "La versión no tiene slides." };
+  const rendered = new Set(renderedSlides);
+  for (let index = 0; index < slideCount; index++) {
     if (!rendered.has(index))
       return {
         ok: false,

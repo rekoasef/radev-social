@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 2 — Editor, render y exportación (empezada 2026-09-24). Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T9 de la Fase 2: exportar ZIP (PNG + copy) y copiar el copy.
-- **Última actualización:** 2026-09-24, al cerrar la T8 de la Fase 2
+- **Próximo paso:** T10 de la Fase 2: adaptador `manual` (marcar como publicado).
+- **Última actualización:** 2026-09-24, al cerrar la T9 de la Fase 2
 - **Para retomar:** todo lo de la Fase 1 se ve en el panel (Marcas → Slides / Identidad visual / Assets) con `pnpm dev`. El control del render (`checkRender`) y los extremos son la base del QA del render de la Fase 2.
 
 ## Fase 2 — tareas
@@ -28,7 +28,7 @@ Plan aprobado el 2026-09-24. 👁 = termina con capturas para que el operador ap
 | T6 | Worker: job `carousel.render` (Playwright, QA, PNG en `media/`, registro en `assets`), idempotente; la web encola | ✅ |
 | T7 | Docker: worker con Chromium (amd64 y arm64) | ✅ |
 | T8 | Revisión: ver los PNG, aprobar o volver a editar | ✅ |
-| T9 | Exportar ZIP (PNG + copy) y copiar el copy | |
+| T9 | Exportar ZIP (PNG + copy) y copiar el copy | ✅ |
 | T10 | Adaptador `manual`: marcar como publicado | |
 | T11 | Cierre: criterio de terminado, docs | |
 
@@ -90,6 +90,7 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Ruta de render (T5)**: `apps/web/app/render/[versionId]/[index]/page.tsx`. Valida el contenido con `carouselSchema`, usa la identidad y los archivos de la marca (`brandRenderContext`) y el id del post como semilla de las decoraciones; solo `format=4x5` (u omitido). `RenderReady` deja `__renderReady` y `__renderQa`. Sin token, token falso, formato distinto o slide inexistente: 404. `chart` se dibuja con `datasets={}` (falla, a propósito, hasta que haya datos).
 - **Render en el worker (T6)**: `apps/worker/src/jobs/carousel-render.ts`. Un Chromium compartido (`render/browser.ts`); un contexto por job con `X-Render-Token`. Por slide: abre `/render/<versión>/<i>`, espera `__renderReady`, lee `__renderQa` (el control lo corre la página; el worker no importa código de navegador), saca el PNG de `[data-render-root]` y lo guarda en `MEDIA_DIR/<marca>/<postId>/<versionId>/4x5/<i>.png` con `saveRenderedAsset` (upsert: nunca duplica). Sin problemas → `renderDone` (`in_review`); con problemas → `renderFailed` y quedan en `post_versions.render_issues` (`{ slide, kind, text }`). Solo corre para la versión actual de un post en `rendering`: un job repetido o viejo no hace nada (regla 8; la deduplicación de pg-boss por `singletonKey` no aplica a colas `standard`). Errores: pg-boss reintenta 2 veces con espera creciente; en el último intento `failRender` marca el post como fallido con el error.
 - **Revisión (T8)**: en `/posts/<código>` la tira muestra los PNG reales (`RenderedStrip`); tocar uno abre un teléfono de TikTok en una ventana emergente (`TikTokMockup`, Dialog de Base UI) con la slide, contador, puntitos, columna de botones, nombre, hook, texto con hashtags y "más"; se navega con flechas, teclado o deslizando. Las medidas salen de `docs/references/tiktok-4x5.jpeg` (pantalla 738×1600, foto desde y=227) en unidades de contenedor, así la interfaz tapa lo mismo que en la app real. Los números de me gusta y guardados son de relleno fijo: solo están para ocupar su lugar cuando la versión que se ve tiene uno por slide y no se está renderizando; si no, la vista dibujada en el navegador. La URL lleva `?v=<checksum>` porque re-renderizar una versión reescribe la misma ruta y `/media` la cachea para siempre. "Aprobar" (`ApproveButton`, `approvePostAction`) manda la versión que estaba en pantalla: `approvePost` (packages/db) bloquea el post y aplica `canApprove` (packages/core: estado que permita `approve`, que sea la versión actual y que todas las slides tengan PNG) antes de `transitionPost`. "Volver a editar" es el Editar de siempre (desde `in_review` o `approved` crea versión y vuelve a render).
+- **Exportar (T9)**: reglas en `packages/core/src/posts/export.ts`: `canExport` (solo `EXPORTABLE_STATUSES`, de `approved` en adelante, regla 3; y todas las slides con PNG, `checkRenderedSlides` compartido con `canApprove`), `exportImageName` (`LU-0001-1.png`), `postDescription` (texto + línea en blanco + hashtags con `#`) y `exportText`. La ruta `/posts/<código>/download` (route handler con `requireOperator`) arma el ZIP de la versión actual con `fflate` (`zipSync`, PNG sin recomprimir) + `texto.txt` ("Título" y "Descripción"). En el post: "Descargar ZIP", "Copiar título" y "Copiar descripción" (`CopyButton`, portapapeles: pide HTTPS o localhost), solo viendo la versión actual. Son dos textos porque TikTok pide título y descripción por separado en los posts de fotos.
 - **Cola**: nombre, datos y opciones en `packages/core/src/jobs.ts` (`JOBS`, `QUEUE_OPTIONS`); la crean el worker al arrancar y la web antes de su primer envío (idempotente). La web encola con un cliente pg-boss sin mantenimiento (`apps/web/lib/jobs.ts`, `serverExternalPackages`) al crear un post, guardar o restaurar una versión y al reintentar. Worker: `WEB_INTERNAL_URL` (por defecto `http://localhost:3000`) y `RENDER_TOKEN`.
 - **Detalle del post**: aviso mientras renderiza, lista de problemas del render y "Reintentar render" (evento `retryRender` + encolar).
 - **Probado de punta a punta**: post de Lumus → 6 PNG en ~9 s → `in_review`; un job repetido se saltea. El camino de falla (problemas del control) no se forzó con un caso real.

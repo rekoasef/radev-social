@@ -43,7 +43,15 @@ export {
   VERSION_ORIGINS,
   type VersionOrigin,
 } from "./posts/constants";
-export { type ApprovalInput, canApprove } from "./posts/review";
+export {
+  canExport,
+  EXPORTABLE_STATUSES,
+  exportImageName,
+  exportText,
+  type PostCopy,
+  postDescription,
+} from "./posts/export";
+export { type ApprovalInput, canApprove, checkRenderedSlides } from "./posts/review";
 export {
   availableEvents,
   INITIAL_STATUSES,

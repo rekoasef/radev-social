@@ -1,4 +1,4 @@
-import { availableEvents } from "@radev/core";
+import { availableEvents, canExport, postDescription } from "@radev/core";
 import { getBrandById, getPostByCode, listPostVersions, listVersionAssets } from "@radev/db";
 import { carouselSchema } from "@radev/slides";
 import type { Metadata } from "next";
@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { Plate } from "@/components/console/plate";
 import { Tally } from "@/components/console/tally";
 import { ApproveButton } from "@/components/posts/approve-button";
+import { CopyButton } from "@/components/posts/copy-button";
 import { PostStrip } from "@/components/posts/post-strip";
 import { RenderedStrip } from "@/components/posts/rendered-strip";
 import { mediaUrl } from "@/lib/brand-assets";
@@ -48,6 +49,15 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
   const canEdit = availableEvents(post.status).includes("edit");
   const canRetry = availableEvents(post.status).includes("retryRender");
   const canApprove = !viewingOld && availableEvents(post.status).includes("approve");
+  // Export is about the current version: hidden while looking at an older one.
+  const exportable =
+    !viewingOld &&
+    content?.success === true &&
+    canExport({
+      status: post.status,
+      slideCount: content.data.slides.length,
+      renderedSlides: rendered.map((asset) => asset.slideIndex),
+    }).ok;
   const renderIssues = Array.isArray(current?.renderIssues)
     ? (current.renderIssues as { slide: number; kind: string; text: string }[])
     : [];
@@ -98,11 +108,24 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
         )}
         {post.status === "approved" && (
           <p className="max-w-[60ch] text-sm text-ink-dim">
-            Aprobado. Si lo editás, vuelve a render y a revisión.
+            Aprobado: descargalo y publicalo a mano. Si lo editás, vuelve a render y a revisión.
           </p>
         )}
         <div className="flex flex-wrap items-start gap-2">
           {canApprove && current && <ApproveButton code={post.publicCode} versionId={current.id} />}
+          {exportable && content?.success && (
+            <>
+              <a
+                href={`/posts/${post.publicCode}/download`}
+                download
+                className="console-button console-button-primary"
+              >
+                Descargar ZIP
+              </a>
+              <CopyButton label="Copiar título" text={content.data.hook} />
+              <CopyButton label="Copiar descripción" text={postDescription(content.data)} />
+            </>
+          )}
           {canEdit && (
             <Link href={`/posts/${post.publicCode}/edit`} className="console-button">
               Editar
