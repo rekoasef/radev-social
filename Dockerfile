@@ -40,6 +40,9 @@ RUN chmod a+r pnpm-lock.yaml pnpm-workspace.yaml
 FROM source AS migrate
 # tsx directo (no `pnpm run`, que intenta reinstalar dependencias antes de cada script).
 WORKDIR /repo/packages/db
+# Punto de montaje de la media (./media en local; en producción, un volumen, que Docker crea
+# con el dueño de esta carpeta).
+RUN mkdir -p /data/media && chown node:node /data/media
 USER node
 CMD ["sh", "-c", "node --import tsx src/migrate.ts && node --import tsx src/seed/index.ts"]
 
@@ -64,6 +67,7 @@ ENV NODE_ENV=production \
 WORKDIR /app
 COPY --from=web-build --chown=node:node /repo/apps/web/.next/standalone ./
 COPY --from=web-build --chown=node:node /repo/apps/web/.next/static ./apps/web/.next/static
+RUN mkdir -p /data/media && chown node:node /data/media
 USER node
 EXPOSE 3000
 CMD ["node", "apps/web/server.js"]

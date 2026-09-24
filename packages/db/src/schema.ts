@@ -1,6 +1,8 @@
+import { ASSET_ROLES } from "@radev/core";
 import { sql } from "drizzle-orm";
 import {
   check,
+  index,
   integer,
   jsonb,
   pgTable,
@@ -54,6 +56,35 @@ export const brands = pgTable(
   ],
 );
 
+/**
+ * Files a brand uses in its slides (logo, hero element, decorations). The file lives in
+ * MEDIA_DIR at `path`; theme tokens point to it by id (docs/ARCHITECTURE.md §4).
+ */
+export const brandAssets = pgTable(
+  "brand_assets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ASSET_ROLES }).notNull(),
+    /** Relative to MEDIA_DIR, e.g. "lumus/brand/<file>.png". Changes when the file is replaced. */
+    path: text("path").notNull(),
+    mime: text("mime").notNull(),
+    /** Pixels; for SVG, the size it declares (null when it declares none). */
+    width: integer("width"),
+    height: integer("height"),
+    sizeBytes: integer("size_bytes").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("brand_assets_brand_id_idx").on(t.brandId),
+    uniqueIndex("brand_assets_path_unique").on(t.path),
+    check("brand_assets_role_valid", sql`${t.role} in ('logo', 'hero', 'decoration', 'other')`),
+  ],
+);
+
 /** Global key/value settings (e.g. the AI generation window). */
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
@@ -64,5 +95,7 @@ export const settings = pgTable("settings", {
 export type Brand = typeof brands.$inferSelect;
 export type NewBrand = typeof brands.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
+export type BrandAsset = typeof brandAssets.$inferSelect;
+export type NewBrandAsset = typeof brandAssets.$inferInsert;
 
 export * from "./auth-schema";

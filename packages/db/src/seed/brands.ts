@@ -1,3 +1,4 @@
+import type { AssetRole } from "@radev/core";
 import type { NewBrand } from "../schema";
 
 /**
@@ -73,10 +74,40 @@ export const seedBrands: NewBrand[] = [
       radius: { card: 12, panel: 16 },
       wordmark: { text: "LUMUS", tracking: 0.18 },
       footer: { url: "gestorlumus.site" },
-      // Ids in brand_assets. The seed links lumus-orb.png and logoLumus.png once that table
-      // exists (phase 1, T7).
+      // Ids in brand_assets: the seed links them (seedBrandAssets).
       heroAsset: null,
       logoAsset: null,
     },
   },
 ];
+
+export type SeedAsset = {
+  /** File in seeds/brands/<slug>/assets/. */
+  file: string;
+  role: AssetRole;
+  /** Top-level theme token that points to it. */
+  token: string;
+};
+
+/** Files the seed uploads for each brand and links in its tokens. */
+export const seedBrandAssets: Record<string, SeedAsset[]> = {
+  lumus: [
+    { file: "lumus-orb.png", role: "hero", token: "heroAsset" },
+    { file: "logoLumus.png", role: "logo", token: "logoAsset" },
+  ],
+};
+
+/**
+ * Seed assets still to link. Never touches what the operator set up: a token that already
+ * points somewhere, or a role the brand already has a file for, is left alone. Running the
+ * seed again adds nothing.
+ */
+export function pendingSeedAssets(
+  planned: readonly SeedAsset[],
+  tokens: Record<string, unknown>,
+  existingRoles: readonly AssetRole[],
+): SeedAsset[] {
+  return planned.filter(
+    (asset) => tokens[asset.token] == null && !existingRoles.includes(asset.role),
+  );
+}

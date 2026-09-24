@@ -3,10 +3,15 @@
 // Usage: node scripts/with-root-env.mjs <command> [...args]
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const envFile = fileURLToPath(new URL("../.env", import.meta.url));
+const root = fileURLToPath(new URL("../", import.meta.url));
+const envFile = resolve(root, ".env");
 if (existsSync(envFile)) process.loadEnvFile(envFile);
+// Uploaded files: <repo>/media by default; a relative MEDIA_DIR is relative to the repo root
+// (same rule as packages/db/src/load-root-env.ts).
+process.env.MEDIA_DIR = resolve(root, process.env.MEDIA_DIR || "media");
 
 const [command, ...args] = process.argv.slice(2);
 if (!command) {

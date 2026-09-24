@@ -107,7 +107,7 @@ seeds/brands/<slug>/        voice.md, pricing.md, cases.md, assets/ — datos in
 Nada de una marca está en el código. Una marca es:
 
 - **Identidad visual**: un `style_preset` (`bold` | `soft`) + `theme_tokens` (JSON validado con el schema Zod del preset).
-- **Assets**: archivos subidos (logo, orbe, etc.), guardados en el volumen de media y registrados en `brand_assets`.
+- **Assets**: archivos subidos (logo, orbe, etc.), guardados en `MEDIA_DIR` y registrados en `brand_assets`. Los tokens los referencian por id; no se puede borrar uno en uso. Detalle en el ADR 0012.
 - **Documentos**: voz, precios, casos y reglas, en Markdown, versionados en `brand_documents`.
 - **Configuración**: pilares, slots, zona horaria, contacto (WhatsApp), topes de IA, objetivo de posts por día.
 
@@ -268,7 +268,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | Tabla | Campos principales |
 |---|---|
 | `brands` | id, slug, name, code_prefix (ej. `RA`), style_preset, theme_tokens (jsonb), timezone, posts_per_day_target, ai_daily_limit, ai_monthly_limit, whatsapp_number, whatsapp_message_template, archived_at |
-| `brand_assets` | id, brand_id, role (`logo` \| `hero` \| `decoration` \| `other`), path, mime, width, height, created_at |
+| `brand_assets` | id, brand_id, role (`logo` \| `hero` \| `decoration` \| `other`), path (relativo a `MEDIA_DIR`), mime, width, height (null en un SVG sin tamaño), size_bytes, created_at, updated_at |
 | `brand_documents` | id, brand_id, kind (`voice` \| `pricing` \| `cases` \| `rules`), content (markdown), version, created_at — la versión vigente es la más alta |
 | `content_pillars` | id, brand_id, key, name, description, target_share (0–1), archived_at |
 | `ideas` | id, brand_id, pillar_id, title, angle, source (`manual` \| `ai` \| `research` \| `recycled` \| `series`), series_key, status (`new` \| `used` \| `discarded`), created_at |
@@ -296,7 +296,8 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 - Tokens de redes cifrados con AES-256-GCM (`TOKEN_ENCRYPTION_KEY`).
 - `/render` bloqueado en Caddy y protegido con token interno.
 - Postgres sin puertos expuestos. Firewall: 22 (llave), 80, 443.
-- Uploads de assets: validar tipo y tamaño; solo imágenes (png, jpg, webp, svg sanitizado).
+- Uploads de assets: tipo detectado por el contenido y hasta 5 MB; solo PNG, JPEG, WebP y SVG. Los SVG se sirven con `Content-Security-Policy: sandbox` y se cargan con `<img>`, así que sus scripts no corren (ADR 0012).
+- `/media` es público y de solo lectura: nombres imposibles de adivinar y nada fuera de `MEDIA_DIR`.
 - Nunca loguear secretos, tokens ni `.env`.
 
 ## 12. Variables de entorno
@@ -308,7 +309,7 @@ GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET
 CLAUDE_CODE_OAUTH_TOKEN          # o ANTHROPIC_API_KEY, nunca ambas
 OPENROUTER_API_KEY
 RENDER_INTERNAL_TOKEN, WEB_INTERNAL_URL=http://web:3000
-MEDIA_DIR, MEDIA_BASE_URL
+MEDIA_DIR, MEDIA_BASE_URL        # MEDIA_DIR vacío = <repo>/media (local)
 TOKEN_ENCRYPTION_KEY
 TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET   (F5)

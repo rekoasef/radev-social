@@ -15,3 +15,4 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0009 | Claude con suscripción + proveedores intercambiables | aceptada |
 | 0010 | Solo TikTok en la v1 | aceptada (formato ampliado por 0011) |
 | 0011 | 4:5 como formato único de la v1 | aceptada |
+| 0012 | Archivos de media en una carpeta, servidos por la web | aceptada |

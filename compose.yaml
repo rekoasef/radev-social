@@ -24,13 +24,17 @@ services:
       timeout: 3s
       retries: 10
 
-  # Corre una vez en cada `up`: aplica migraciones pendientes y agrega marcas faltantes.
+  # Corre una vez en cada `up`: aplica migraciones pendientes y agrega marcas faltantes
+  # (y sus assets, que copia a ./media).
   migrate:
     build:
       context: .
       target: migrate
     environment:
       DATABASE_URL: *database-url
+      MEDIA_DIR: /data/media
+    volumes:
+      - ./media:/data/media
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,6 +48,12 @@ services:
     environment:
       # Pisa el DATABASE_URL del .env, que apunta a localhost:5433 (fuera de Docker).
       DATABASE_URL: *database-url
+      MEDIA_DIR: /data/media
+    volumes:
+      # La misma carpeta que usa `pnpm dev`: los dos comparten la base, así que tienen que
+      # compartir también los archivos a los que apunta. El usuario `node` del contenedor
+      # (uid 1000) es el mismo que el de WSL, así que los dos pueden escribir.
+      - ./media:/data/media
     ports:
       # Mismo puerto que `pnpm dev`: la OAuth App de GitHub apunta a localhost:3000, así que
       # no se pueden usar los dos a la vez. WEB_PORT permite otro puerto solo para pruebas.

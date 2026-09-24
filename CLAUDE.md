@@ -83,6 +83,7 @@ pnpm capture "/render/preview/radev/frame?overlay=tiktok" /tmp/x.png
 
 Notas del entorno:
 - El `.env` vive en la raíz. La web y el worker lo cargan con `scripts/with-root-env.mjs`; los scripts de `packages/db`, con `load-root-env.ts`.
+- Archivos subidos: `media/` en la raíz (`MEDIA_DIR`), compartida por `pnpm dev` y Docker; la web los sirve en `/media/...`. No viajan con el repo: el seed recrea los de las marcas iniciales.
 - El puerto 5432 lo usa un Postgres nativo de WSL de otros proyectos: el nuestro va por 5433. No tocar el nativo.
 - `pnpm dev` y la web de Docker usan el puerto 3000 (lo exige la OAuth App de GitHub): frená uno antes de levantar el otro. `WEB_PORT=3001 docker compose up -d` sirve solo para probar la imagen.
 - Imágenes: un solo `Dockerfile` con destinos `web`, `worker` y `migrate`. El servicio `migrate` corre en cada `up` y termina; web y worker esperan a que salga bien.

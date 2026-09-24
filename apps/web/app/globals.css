@@ -480,3 +480,62 @@
     filter: blur(0);
   }
 }
+
+@layer components {
+  /* Brand assets: a card per file, the image on a checkerboard so transparency shows. */
+  .asset-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--color-bezel);
+    border-radius: 6px;
+    background: var(--color-panel);
+  }
+  .asset-preview {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    padding: 20px;
+    border-bottom: 1px solid var(--color-bezel);
+    background-color: #1a1e26;
+    background-image:
+      linear-gradient(45deg, #13161c 25%, transparent 25%),
+      linear-gradient(-45deg, #13161c 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #13161c 75%),
+      linear-gradient(-45deg, transparent 75%, #13161c 75%);
+    background-size: 16px 16px;
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0;
+  }
+  .asset-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .asset-file,
+  .asset-select {
+    min-height: 42px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 4px;
+    background: var(--color-panel);
+    color: var(--color-ink);
+    font-size: 14px;
+  }
+  .asset-file::file-selector-button {
+    margin-right: 12px;
+    padding: 4px 10px;
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 3px;
+    background: var(--color-panel-raised);
+    color: var(--color-ink);
+    font: inherit;
+  }
+  label.console-button[aria-disabled="true"] {
+    opacity: 0.6;
+    cursor: progress;
+  }
+}

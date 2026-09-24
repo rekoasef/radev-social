@@ -9,9 +9,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T7: `brand_assets` (tabla, subida con validación, `media/`) y el seed que enlaza los assets de Lumus.
-- **Última actualización:** 2026-09-24: `pnpm capture` ya no muestra el token en los errores (la T6 de la Fase 1 se cerró el 2026-09-23)
-- **Para retomar:** las 12 plantillas de `bold` se ven en `/render/preview/radev/<tipo>?token=…` con `pnpm dev`. La T7 toca la base (tabla nueva `brand_assets` + migración): explicarle al operador la migración antes de correrla.
+- **Próximo paso:** T8: preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus (usa el `heroAsset` que enlaza el seed).
+- **Última actualización:** 2026-09-24, al cerrar la T7 de la Fase 1
+- **Para retomar:** las 12 plantillas de `bold` se ven en `/render/preview/radev/<tipo>?token=…` con `pnpm dev`. Los assets de cada marca se gestionan en Marcas (`/brands/assets`). Las plantillas todavía no dibujan assets: el `heroAsset` de Lumus se usa por primera vez en la T8 y el `logoAsset` de `bold` sigue sin dibujarse (ver pendientes).
 
 ## Fase 1 — tareas
 
@@ -26,7 +26,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | T4 | Plantillas `bold` con referencia: `cardGrid`, `flow`, `hubDiagram`. 👁 contra las refs | ✅ |
 | T5 | Plantillas `bold` sin referencia: `cover`, `statement`, `question`, `cta`. 👁 | ✅ |
 | T6 | Plantillas `bold` de datos: `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart` (datos de ejemplo). 👁 | ✅ |
-| T7 | `brand_assets`: tabla, subida con validación de tipo y tamaño, `media/`. El seed carga y enlaza los assets de Lumus | |
+| T7 | `brand_assets`: tabla, subida con validación de tipo y tamaño, `media/`. El seed carga y enlaza los assets de Lumus | ✅ |
 | T8 | Preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus. 👁 | |
 | T9 | CRUD de marcas (borrar solo sin posts) | |
 | T10 | Editor de identidad visual: preset, formulario desde el schema, vista previa en vivo, aviso de contraste | |
@@ -89,6 +89,11 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Datasets de gráficos**: `chartDatasetSchema` y el tipo `Datasets` en `content/datasets.ts`. `SlideContent` recibe `datasets` y cada plantilla los ve (`TemplateProps`). Si falta el dataset, `chart` tira error: el render falla antes de publicar un gráfico sin datos. Para la preview, `exampleDatasets` (valores inventados solo para la forma). Los reales llegan con `data.json` (Fase 5).
 - **Formato de números**: `formatNumber` / `decimalsFor` / `withUnit` en `src/format.ts`, a mano (sin `Intl`).
 - **Geometría del gráfico**: `presets/bold/chart-layout.ts` (`niceStep`, `niceScale`, `chartLayout`), con tests.
+- **Assets de marca (T7, ADR 0012)**: tabla `brand_assets` (migración `0003`, solo agrega). Reglas puras en `packages/core/src/brands/assets.ts`: `checkAssetFile` (tipo por firma del contenido: PNG, JPEG, WebP, SVG; hasta 5 MB) y `findAssetReferences` (dónde usan los tokens un id, para cualquier preset). Archivos en `packages/db/src/media.ts` (`resolveMediaPath` rechaza todo lo que no sea `a-z0-9-/…`, escritura atómica) y operaciones en `queries/brand-assets.ts` (`createBrandAsset`, `replaceBrandAssetFile` conserva el id y cambia la ruta, `deleteBrandAsset` se niega si está en uso). Ancho y alto con `image-size` 2.0.2 (JS puro; respeta la orientación EXIF).
+- **`MEDIA_DIR`**: vacío = `<repo>/media`; relativo = desde la raíz del repo (lo resuelven `scripts/with-root-env.mjs` y `load-root-env.ts`). Docker monta **la misma** `./media` en `/data/media` (web y migrate comparten la base con `pnpm dev`, así que también los archivos). `media/.gitkeep` se versiona para que Docker no cree la carpeta como root.
+- **`/media/...`**: ruta de la web (`app/media/[...path]/route.ts`), pública (excluida del proxy de auth), caché inmutable, `nosniff` y CSP `sandbox`. Server Actions con `bodySizeLimit: "6mb"`.
+- **Panel de assets**: "Marcas" ya está activa y lleva a `/brands/assets`, que trabaja sobre la marca activa del selector. Subir (con uso: logo, protagonista, decoración, otro), reemplazar y borrar (deshabilitado si está en uso). Elegir qué asset usa cada token llega con el editor de la T10.
+- **Seed de assets**: `seedBrandAssets` en `seed/brands.ts` (Lumus: orbe → `heroAsset`, logo → `logoAsset`). `pendingSeedAssets` saltea tokens ya enlazados y roles que la marca ya tiene: correrlo de nuevo no agrega nada (probado).
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante
@@ -99,7 +104,7 @@ Plan aprobado el 2026-09-23. Terminada.
 - T11: en `flow` de 4 nodos una palabra de ~20 letras ("Internacionalización") no entra ni al tamaño mínimo y se corta dentro de la tarjeta (`overflow-wrap: anywhere`, último recurso). Evaluar si conviene limitar el largo de palabra de las etiquetas. También revisar el salto de 84 a 70 px en títulos de más de 48 caracteres.
 - La captura de TikTok (`docs/references/tiktok-4x5.jpeg`, post "¿Cuánto cuesta tener una APP?") ya se superpuso en la T3 (`overlay=tiktok`) y confirmó las zonas seguras.
 - Ese post usa una tipografía condensada en el título, distinta de Inter Tight de las referencias. Por ahora se sigue con Inter Tight; si el operador la quiere, se suma a la lista curada.
-- `heroAsset` / `logoAsset` de Lumus son nombres de archivo sin enlazar a `brand_assets`.
+- `logoAsset` de `bold`: si existe, reemplaza al wordmark (`DESIGN-SYSTEM.md` §7), pero el marco todavía no lo dibuja. Sumarlo en la T10 junto con el selector de assets del editor.
 
 ## Cómo trabajamos
 
@@ -113,4 +118,4 @@ Plan aprobado el 2026-09-23. Terminada.
 
 ## Retomar en otra máquina
 
-Seguir "Cómo levantarlo" del `README.md`. Lo que no viaja con el repo: el `.env` (copiarlo por un canal privado) y los datos de la base (cada máquina tiene la suya; el seed recrea las marcas).
+Seguir "Cómo levantarlo" del `README.md`. Lo que no viaja con el repo: el `.env` (copiarlo por un canal privado), los datos de la base y los archivos de `media/` (cada máquina tiene los suyos; el seed recrea las marcas y los assets de Lumus). `RENDER_TOKEN` puede ser distinto en cada máquina.

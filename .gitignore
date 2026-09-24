@@ -16,8 +16,10 @@ coverage/
 .env.*
 !.env.example
 
-# Media generada localmente
-media/
+# Media generada localmente. La carpeta se versiona vacía: si Docker la creara al montarla,
+# quedaría con dueño root y los contenedores no podrían escribir.
+media/*
+!media/.gitkeep
 
 # Sistema y editores
 .DS_Store

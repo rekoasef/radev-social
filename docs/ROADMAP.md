@@ -30,7 +30,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Plantillas v1: `cover`, `statement`, `question`, `cardGrid`, `flow`, `hubDiagram`, `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart`, `cta`
 - [ ] CRUD de marcas: crear, editar, archivar, borrar (solo sin posts)
 - [ ] Editor de identidad visual: elegir preset, formulario de tokens generado desde el schema, vista previa en vivo con slides de ejemplo
-- [ ] Tabla `brand_assets` y subida de assets (validación de tipo y tamaño); seed con los assets de Lumus
+- [x] Tabla `brand_assets` y subida de assets (validación de tipo y tamaño); seed con los assets de Lumus
 - [ ] Página de preview de todos los tipos de slide por marca
 - [ ] Confirmar las zonas seguras superponiendo un render real sobre la captura de TikTok
 - [ ] Calibrar límites de caracteres con casos extremos

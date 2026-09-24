@@ -14,7 +14,9 @@
     "db:seed": "tsx src/seed/index.ts"
   },
   "dependencies": {
+    "@radev/core": "workspace:*",
     "drizzle-orm": "0.45.3",
+    "image-size": "2.0.2",
     "pg": "8.23.0"
   },
   "devDependencies": {

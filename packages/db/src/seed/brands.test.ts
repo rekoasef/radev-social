@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { checkAssetFile } from "@radev/core";
 import { parseTheme } from "@radev/slides";
 import { describe, expect, it } from "vitest";
-import { seedBrands } from "./brands";
+import { pendingSeedAssets, type SeedAsset, seedBrandAssets, seedBrands } from "./brands";
 
 describe("seed brands", () => {
   it.each(seedBrands.map((brand) => [brand.slug, brand] as const))(
@@ -12,4 +15,44 @@ describe("seed brands", () => {
       expect(result.ok && result.theme.tokens).toEqual(brand.themeTokens);
     },
   );
+});
+
+describe("seed brand assets", () => {
+  const planned = Object.entries(seedBrandAssets).flatMap(([slug, assets]) =>
+    assets.map((asset) => [`${slug}/${asset.file}`, slug, asset] as const),
+  );
+
+  it.each(planned)("%s is an accepted image linked to an asset token", (_, slug, asset) => {
+    const file = new URL(`../../../../seeds/brands/${slug}/assets/${asset.file}`, import.meta.url);
+    expect(checkAssetFile(readFileSync(fileURLToPath(file))).ok).toBe(true);
+    const brand = seedBrands.find((b) => b.slug === slug);
+    expect(brand?.themeTokens).toHaveProperty(asset.token, null);
+  });
+
+  const hero: SeedAsset = { file: "orb.png", role: "hero", token: "heroAsset" };
+  const logo: SeedAsset = { file: "logo.png", role: "logo", token: "logoAsset" };
+  const id = "0b9f3c2e-4a1d-4c7b-9e2f-1a2b3c4d5e6f";
+
+  it("links everything on a fresh brand", () => {
+    expect(pendingSeedAssets([hero, logo], { heroAsset: null, logoAsset: null }, [])).toEqual([
+      hero,
+      logo,
+    ]);
+  });
+
+  it("adds nothing on a second run", () => {
+    expect(
+      pendingSeedAssets([hero, logo], { heroAsset: id, logoAsset: id }, ["hero", "logo"]),
+    ).toEqual([]);
+  });
+
+  it("keeps a token the operator already set", () => {
+    expect(pendingSeedAssets([hero, logo], { heroAsset: id, logoAsset: null }, [])).toEqual([logo]);
+  });
+
+  it("does not add a file for a role the brand already has", () => {
+    expect(pendingSeedAssets([hero, logo], { heroAsset: null, logoAsset: null }, ["logo"])).toEqual(
+      [hero],
+    );
+  });
 });
