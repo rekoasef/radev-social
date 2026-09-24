@@ -43,6 +43,7 @@ export {
   VERSION_ORIGINS,
   type VersionOrigin,
 } from "./posts/constants";
+export { type ApprovalInput, canApprove } from "./posts/review";
 export {
   availableEvents,
   INITIAL_STATUSES,

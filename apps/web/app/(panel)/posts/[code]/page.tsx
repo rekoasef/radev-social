@@ -1,12 +1,14 @@
 import { availableEvents } from "@radev/core";
-import { getBrandById, getPostByCode, listPostVersions } from "@radev/db";
+import { getBrandById, getPostByCode, listPostVersions, listVersionAssets } from "@radev/db";
 import { carouselSchema } from "@radev/slides";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plate } from "@/components/console/plate";
 import { Tally } from "@/components/console/tally";
+import { ApproveButton } from "@/components/posts/approve-button";
 import { PostStrip } from "@/components/posts/post-strip";
+import { RenderedStrip } from "@/components/posts/rendered-strip";
 import { brandRenderContext } from "@/lib/carousel";
 import { db } from "@/lib/db";
 import { STATUS_DISPLAY } from "@/lib/post-status";
@@ -31,11 +33,20 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
   // ?v=<number> shows an older version; by default, the current one.
   const version = versions.find((v) => String(v.number) === query.v) ?? current;
   const viewingOld = version !== undefined && version.id !== current?.id;
-  const render = await brandRenderContext(brand);
+  const [render, rendered] = await Promise.all([
+    brandRenderContext(brand),
+    version ? listVersionAssets(db, version.id) : [],
+  ]);
   const content = version ? carouselSchema.safeParse(version.content) : undefined;
+  // The real PNGs once every slide has one; while the current version renders (or if it failed
+  // halfway), the browser drawing.
+  const renderingNow = !viewingOld && post.status === "rendering";
+  const showRendered =
+    !renderingNow && content?.success === true && rendered.length === content.data.slides.length;
   const display = STATUS_DISPLAY[post.status];
   const canEdit = availableEvents(post.status).includes("edit");
   const canRetry = availableEvents(post.status).includes("retryRender");
+  const canApprove = !viewingOld && availableEvents(post.status).includes("approve");
   const renderIssues = Array.isArray(current?.renderIssues)
     ? (current.renderIssues as { slide: number; kind: string; text: string }[])
     : [];
@@ -78,7 +89,19 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
             </ul>
           </div>
         )}
-        <div className="flex flex-wrap gap-2">
+        {post.status === "in_review" && !viewingOld && (
+          <p className="max-w-[60ch] text-sm text-ink-dim">
+            Revisá las imágenes: son las que se publican. Si algo no va, editalo y se renderiza de
+            nuevo.
+          </p>
+        )}
+        {post.status === "approved" && (
+          <p className="max-w-[60ch] text-sm text-ink-dim">
+            Aprobado. Si lo editás, vuelve a render y a revisión.
+          </p>
+        )}
+        <div className="flex flex-wrap items-start gap-2">
+          {canApprove && current && <ApproveButton code={post.publicCode} versionId={current.id} />}
           {canEdit && (
             <Link href={`/posts/${post.publicCode}/edit`} className="console-button">
               Editar
@@ -98,11 +121,18 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
       <section aria-labelledby="slides-heading" className="flex flex-col gap-6">
         <Plate
           id="slides-heading"
-          aside={viewingOld ? `Versión ${version?.number} (no es la actual)` : undefined}
+          aside={[
+            viewingOld ? `Versión ${version?.number} (no es la actual)` : undefined,
+            showRendered ? "PNG renderizados" : "Vista previa",
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         >
           Slides
         </Plate>
-        {render.ok && content?.success ? (
+        {showRendered ? (
+          <RenderedStrip assets={rendered} />
+        ) : render.ok && content?.success ? (
           <PostStrip
             carousel={content.data}
             theme={render.theme}

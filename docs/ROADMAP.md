@@ -44,14 +44,14 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 
 ## Fase 2 — Editor, render y exportación
 
-- [ ] Tablas `posts` (con `public_code`), `post_versions`, `assets`, `content_pillars`
-- [ ] Máquina de estados en `packages/core` con tests de invariantes
-- [ ] Listado de posts por marca con filtros por estado
-- [ ] Editor de carrusel: formulario por tipo de slide, reordenar, vista previa en vivo
-- [ ] Versionado: ver y restaurar versiones
-- [ ] Ruta interna `/render/[versionId]/[index]` con token y señal `__renderReady`
+- [x] Tablas `posts` (con `public_code`), `post_versions`, `assets`, `content_pillars`
+- [x] Máquina de estados en `packages/core` con tests de invariantes
+- [x] Listado de posts por marca con filtros por estado
+- [x] Editor de carrusel: formulario por tipo de slide, reordenar, vista previa en vivo
+- [x] Versionado: ver y restaurar versiones
+- [x] Ruta interna `/render/[versionId]/[index]` con token y señal `__renderReady`
 - [x] Worker con pg-boss y job `carousel.render` (Playwright, 4:5)
-- [ ] QA de render (desborde, zona segura, fuentes y assets)
+- [x] QA de render (desborde, zona segura, fuentes y assets)
 - [ ] Exportar: ZIP con PNGs 4:5 + copy, y copiar el copy con un toque
 - [ ] Adaptador `manual`: marcar como publicado
 

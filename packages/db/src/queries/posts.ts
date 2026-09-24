@@ -1,4 +1,5 @@
 import {
+  canApprove,
   INITIAL_STATUSES,
   nextStatus,
   type PostEffect,
@@ -273,4 +274,34 @@ export async function setVersionRenderIssues(
   issues: unknown[] | null,
 ): Promise<void> {
   await db.update(postVersions).set({ renderIssues: issues }).where(eq(postVersions.id, versionId));
+}
+
+/**
+ * The operator approves the version they reviewed (state machine: `approve`). Locks the post so
+ * an edit saved at the same time cannot slip in between the check and the change.
+ */
+export async function approvePost(
+  db: Database,
+  input: { postId: string; reviewedVersionId: string },
+): Promise<TransitionOutcome> {
+  return db.transaction(async (tx) => {
+    const [post] = await tx
+      .select({ status: posts.status, currentVersionId: posts.currentVersionId })
+      .from(posts)
+      .where(eq(posts.id, input.postId))
+      .for("update");
+    if (!post) return { ok: false, reason: "Ese post no existe." };
+    const version = await getPostVersion(tx, input.reviewedVersionId);
+    const slides = (version?.content as { slides?: unknown[] } | undefined)?.slides;
+    const rendered = await listVersionAssets(tx, input.reviewedVersionId);
+    const check = canApprove({
+      status: post.status,
+      currentVersionId: post.currentVersionId,
+      reviewedVersionId: input.reviewedVersionId,
+      slideCount: Array.isArray(slides) ? slides.length : 0,
+      renderedSlides: rendered.map((asset) => asset.slideIndex),
+    });
+    if (!check.ok) return check;
+    return transitionPost(tx, input.postId, "approve");
+  });
 }

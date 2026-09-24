@@ -26,6 +26,7 @@ export {
 } from "./queries/brands";
 export {
   addPostVersion,
+  approvePost,
   type CarouselContent,
   type CreatedPost,
   countPostsByStatus,

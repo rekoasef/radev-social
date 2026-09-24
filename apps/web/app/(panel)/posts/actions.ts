@@ -2,6 +2,7 @@
 
 import {
   addPostVersion,
+  approvePost,
   createPost,
   getBrandById,
   getPostByCode,
@@ -138,6 +139,29 @@ export async function retryRenderAction(form: FormData): Promise<void> {
   const moved = await transitionPost(db, post.id, "retryRender");
   if (!moved.ok) throw new Error(moved.reason);
   await queueRender(post.currentVersionId);
+  revalidatePath("/posts");
+  redirect(`/posts/${post.publicCode}`);
+}
+
+export type ApproveState = { status: "idle" } | { status: "error"; message: string };
+
+const approveInput = z.object({ code: z.string().min(1).max(20), versionId: z.uuid() });
+
+/**
+ * Approves the version the operator reviewed (state machine: `approve`). Refused if the post
+ * changed meanwhile or a slide has no PNG: what gets approved is what was on screen.
+ */
+export async function approvePostAction(_: ApproveState, form: FormData): Promise<ApproveState> {
+  await requireOperator();
+  const parsed = approveInput.safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { status: "error", message: "Datos inválidos." };
+  const post = await getPostByCode(db, parsed.data.code);
+  if (!post) return { status: "error", message: "Ese post ya no existe." };
+  const approved = await approvePost(db, {
+    postId: post.id,
+    reviewedVersionId: parsed.data.versionId,
+  });
+  if (!approved.ok) return { status: "error", message: approved.reason };
   revalidatePath("/posts");
   redirect(`/posts/${post.publicCode}`);
 }
