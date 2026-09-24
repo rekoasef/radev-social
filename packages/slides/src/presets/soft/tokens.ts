@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { asset, color, font, range, text } from "../fields";
+import { asset, color, font, range, type TokenWidget, text } from "../fields";
 
 // Tokens of the `soft` preset (docs/DESIGN-SYSTEM.md §8). Defaults are neutral on purpose:
 // brand values live in the database (CLAUDE.md, rule 6).
@@ -47,7 +47,7 @@ export const softTokensSchema = z.object({
     )
     .max(3, { error: "Máximo 3 glows." })
     .default([{ position: "top-left", color: "rgba(125,211,252,0.08)" }])
-    .meta({ title: "Glows del fondo" }),
+    .meta({ title: "Glows del fondo", widget: "glows" satisfies TokenWidget, max: 3 }),
   fonts: z
     .object({
       display: font("Títulos", { family: "Hanken Grotesk", weight: 600 }),

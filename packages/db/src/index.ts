@@ -22,5 +22,6 @@ export {
   listBrands,
   setBrandArchived,
   updateBrand,
+  updateBrandTheme,
 } from "./queries/brands";
 export * from "./schema";

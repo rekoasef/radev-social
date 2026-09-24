@@ -73,6 +73,15 @@ export async function updateBrand(
   }
 }
 
+/** Saves a brand's visual identity. The caller validates the tokens (checkTheme). */
+export async function updateBrandTheme(
+  db: Database,
+  id: string,
+  theme: { stylePreset: string; themeTokens: Record<string, unknown> },
+): Promise<void> {
+  await db.update(brands).set(theme).where(eq(brands.id, id));
+}
+
 /** Archiving hides the brand from the panel and generation; nothing is deleted. */
 export async function setBrandArchived(db: Database, id: string, archived: boolean) {
   await db

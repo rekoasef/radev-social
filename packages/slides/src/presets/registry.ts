@@ -58,6 +58,42 @@ export function parseTheme(preset: string, tokens: unknown): ThemeResult {
   }
 }
 
+export type ThemeCheck =
+  | { ok: true; theme: BrandTheme }
+  | { ok: false; fields: Record<string, string> };
+
+/**
+ * Like parseTheme, with the problems keyed by token path ("colors.accent") for the panel's
+ * form. Only the first message of each field is kept.
+ */
+export function checkTheme(preset: string, tokens: unknown): ThemeCheck {
+  if (!isStylePreset(preset))
+    return { ok: false, fields: { "": `No existe el preset "${preset}".` } };
+  const result = presets[preset].tokens.safeParse(tokens);
+  if (result.success) {
+    return { ok: true, theme: { preset, tokens: result.data } as BrandTheme };
+  }
+  const fields: Record<string, string> = {};
+  for (const issue of result.error.issues) {
+    const key = issue.path.map(String).join(".");
+    fields[key] ??= issue.message;
+  }
+  return { ok: false, fields };
+}
+
+/**
+ * Tokens for a brand that switches preset: the new preset's defaults, keeping the assets both
+ * presets have (e.g. the logo), so uploaded files stay linked.
+ */
+export function switchPresetTokens(to: StylePreset, from: unknown): BrandTheme["tokens"] {
+  const next: Record<string, unknown> = { ...defaultTokens(to) };
+  const old = (from ?? {}) as Record<string, unknown>;
+  for (const key of Object.keys(next)) {
+    if (key.endsWith("Asset") && typeof old[key] === "string") next[key] = old[key];
+  }
+  return next as BrandTheme["tokens"];
+}
+
 /** Complete tokens for a brand that just picked the preset. */
 export function defaultTokens(preset: StylePreset): BrandTheme["tokens"] {
   return presets[preset].tokens.parse({});

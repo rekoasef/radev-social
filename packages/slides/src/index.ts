@@ -53,13 +53,24 @@ export { iconComponent, SlideIcon } from "./icons";
 export { type BoldTokens, boldTokensSchema } from "./presets/bold/tokens";
 export type { TokenWidget } from "./presets/fields";
 export {
+  getTokenValue,
+  setTokenValue,
+  type TokenField,
+  type TokenGroup,
+  type TokenPath,
+  tokenFormSpec,
+} from "./presets/form-spec";
+export {
   type BrandTheme,
+  checkTheme,
   defaultTokens,
   isStylePreset,
   parseTheme,
   presets,
   STYLE_PRESETS,
   type StylePreset,
+  switchPresetTokens,
+  type ThemeCheck,
   type ThemeResult,
 } from "./presets/registry";
 export { GLOW_POSITIONS, type SoftTokens, softTokensSchema } from "./presets/soft/tokens";

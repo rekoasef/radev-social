@@ -5,7 +5,15 @@ import { FONT_FAMILIES, type FontFamily, supportsWeight } from "../fonts/registr
 // preset) and metadata for the form the panel generates: `title` is the Spanish label and
 // `widget` the control to use.
 
-export type TokenWidget = "color" | "font" | "range" | "text" | "lines" | "toggle" | "asset";
+export type TokenWidget =
+  | "color"
+  | "font"
+  | "range"
+  | "text"
+  | "lines"
+  | "toggle"
+  | "asset"
+  | "glows";
 
 const COLOR =
   /^(#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+)\s*)?\))$/i;

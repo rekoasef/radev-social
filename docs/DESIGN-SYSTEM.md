@@ -243,5 +243,5 @@ Referencias: `docs/references/radev/`. Cuando una referencia contradice estas re
 1. **Desborde**: ningún elemento `data-qa="text"` con overflow.
 2. **Zona segura**: ningún elemento `data-qa="content"` fuera de la zona segura.
 3. **Fuentes y assets cargados**: se espera `document.fonts.ready` y la carga de imágenes; si algo falla, el render falla.
-4. **Contraste mínimo** entre `text` y `bg` al guardar tokens en el panel (advertencia si es bajo).
+4. **Contraste mínimo** entre `text` y `bg` en el editor de identidad: advertencia (no bloquea) si queda debajo de 4,5:1 (WCAG AA; `contrastRatio` en `packages/core`).
 5. **Énfasis**: máximo 2 por slide (validado en el schema).

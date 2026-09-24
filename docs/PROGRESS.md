@@ -9,9 +9,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T10: editor de identidad visual (preset, formulario generado desde el schema, vista previa en vivo, aviso de contraste, selector de assets).
-- **Última actualización:** 2026-09-24, al cerrar la T9 de la Fase 1
-- **Para retomar:** las 12 plantillas de cada preset se ven en `/render/preview/<radev|lumus>/<tipo>?token=…` con `pnpm dev`. Las marcas se gestionan en Marcas (`/brands`): lista, nueva, `/brands/<slug>` (datos generales, archivar, borrar) y `/brands/<slug>/assets`.
+- **Próximo paso:** T11: calibración de límites de caracteres con casos extremos; la preview marca desbordes.
+- **Última actualización:** 2026-09-24, al cerrar la T10 de la Fase 1
+- **Para retomar:** las 12 plantillas de cada preset se ven en `/render/preview/<radev|lumus>/<tipo>?token=…` con `pnpm dev`. Las marcas se gestionan en Marcas (`/brands`): lista, nueva, `/brands/<slug>` (datos generales, archivar, borrar), `/brands/<slug>/identity` (identidad visual) y `/brands/<slug>/assets`.
 
 ## Fase 1 — tareas
 
@@ -29,7 +29,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | T7 | `brand_assets`: tabla, subida con validación de tipo y tamaño, `media/`. El seed carga y enlaza los assets de Lumus | ✅ |
 | T8 | Preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus. 👁 | ✅ |
 | T9 | CRUD de marcas (borrar solo sin posts) | ✅ |
-| T10 | Editor de identidad visual: preset, formulario desde el schema, vista previa en vivo, aviso de contraste | |
+| T10 | Editor de identidad visual: preset, formulario desde el schema, vista previa en vivo, aviso de contraste | ✅ |
 | T11 | Calibración de límites de caracteres con casos extremos; la preview marca desbordes | |
 | T12 | Cierre: criterio de terminado, docs, comandos | |
 
@@ -104,6 +104,11 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Páginas de marcas**: `/brands` (activas y archivadas), `/brands/new` (nombre → slug y prefijo sugeridos mientras no se tocan; preset con sus tokens por defecto; zona horaria), `/brands/<slug>` (nombre, slug, prefijo, zona; archivar/desarchivar; borrar escribiendo el nombre). El preset se cambia en la T10. Crear una marca la deja activa; renombrar el slug de la marca activa actualiza la cookie. Pestañas de marca en `components/brands/brand-tabs.tsx` ("Identidad visual" apagada hasta la T10).
 - **Prefijo editable solo sin posts** (decidido con el operador): así los códigos públicos (`RA-0142`) nunca cambian.
 - **Build de producción**: `packages/db/src/media.ts` marca sus accesos a disco con `/*turbopackIgnore: true*/`; sin eso, Next metía el proyecto entero (y `media/`) en el standalone. `@radev/core` está en `transpilePackages` (lo importan componentes cliente).
+- **Editor de identidad (T10)**: `/brands/<slug>/identity`. El formulario sale de `tokenFormSpec(preset)` (`packages/slides/src/presets/form-spec.ts`): recorre el schema y lee `.meta({ title, widget, ... })`; los objetos de primer nivel son grupos y los campos sueltos (assets, glows) van en "Archivos y fondo". Un test verifica que cubre cada token de los dos presets. Widget nuevo `glows` (lista de hasta 3). Controles en `apps/web/components/brands/token-inputs.tsx` (color con selector para hex y chip sobre cuadriculado para rgba; tipografía con los pesos de su eje variable en pasos de 100).
+- **Vista previa en el navegador** (`slide-preview.tsx`): las mismas plantillas, escaladas al ancho de la columna, con los ejemplos del preset; mientras un campo es inválido muestra el último tema válido. Carga todos los íconos de Lucide en esa página (aceptado con el operador).
+- **Validación**: `checkTheme(preset, tokens)` (errores por ruta, `colors.accent`) en vivo y al guardar; la acción además verifica que los assets sean de la marca. Se guardan los tokens completos. Cambiar de preset: `switchPresetTokens` (defaults del nuevo, conserva los `*Asset`), con confirmación, aplica al guardar.
+- **Contraste**: `contrastRatio` / `parseColor` / `MIN_TEXT_CONTRAST` (4,5) en `packages/core/src/colors/contrast.ts`, WCAG, con mezcla de rgba sobre el fondo. Aviso (no bloquea) si `colors.text` sobre `colors.bg` queda debajo.
+- **Probado sin login**: una página temporal bajo `/render` con el editor y Playwright (cambiar acento, color inválido, contraste, descartar, cambiar de preset). Guardar de punta a punta lo prueba el operador.
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes y las imágenes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante
@@ -114,7 +119,7 @@ Plan aprobado el 2026-09-23. Terminada.
 - T11: en `flow` de 4 nodos una palabra de ~20 letras ("Internacionalización") no entra ni al tamaño mínimo y se corta dentro de la tarjeta (`overflow-wrap: anywhere`, último recurso). Evaluar si conviene limitar el largo de palabra de las etiquetas. También revisar el salto de 84 a 70 px en títulos de más de 48 caracteres.
 - La captura de TikTok (`docs/references/tiktok-4x5.jpeg`, post "¿Cuánto cuesta tener una APP?") ya se superpuso en la T3 (`overlay=tiktok`) y confirmó las zonas seguras.
 - Ese post usa una tipografía condensada en el título, distinta de Inter Tight de las referencias. Por ahora se sigue con Inter Tight; si el operador la quiere, se suma a la lista curada.
-- `logoAsset` de `soft`: el marco usa siempre el wordmark ("se prefiere el wordmark", §8; el logo de Lumus es de 192 px). Si se quiere usar, decidir dónde en la T10.
+- `logoAsset` de `soft`: el marco usa siempre el wordmark ("se prefiere el wordmark", §8; el logo de Lumus es de 192 px). El editor permite elegirlo, pero `soft` no lo dibuja: definir si se usa y dónde.
 - `fitFontSize` estima con 0,56 em por carácter (calibrado con Inter); con Geist Sans (`soft`) anduvo bien en los ejemplos, revisar en la T11 con casos extremos.
 
 ## Cómo trabajamos

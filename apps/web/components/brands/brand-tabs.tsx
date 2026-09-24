@@ -2,14 +2,14 @@ import type { Brand } from "@radev/db";
 import Link from "next/link";
 import { Tally } from "@/components/console/tally";
 
-type Tab = "general" | "assets";
+type Tab = "general" | "assets" | "identity";
 
 /** Header of a brand's pages: back to the list, name, status and the brand's sections. */
 export function BrandTabs({ brand, current }: { brand: Brand; current: Tab }) {
-  const tabs: { id: Tab | "identity"; label: string; href?: string }[] = [
+  const tabs: { id: Tab; label: string; href: string }[] = [
     { id: "general", label: "General", href: `/brands/${brand.slug}` },
+    { id: "identity", label: "Identidad visual", href: `/brands/${brand.slug}/identity` },
     { id: "assets", label: "Assets", href: `/brands/${brand.slug}/assets` },
-    { id: "identity", label: "Identidad visual" },
   ];
   return (
     <div className="flex flex-col gap-5">
@@ -25,20 +25,13 @@ export function BrandTabs({ brand, current }: { brand: Brand; current: Tab }) {
         <ul className="flex flex-wrap gap-1">
           {tabs.map((tab) => (
             <li key={tab.id}>
-              {tab.href ? (
-                <Link
-                  href={tab.href}
-                  className="nav-key"
-                  aria-current={tab.id === current ? "page" : undefined}
-                >
-                  {tab.label}
-                </Link>
-              ) : (
-                <span className="nav-key" aria-disabled="true" title="Llega en la T10 de la Fase 1">
-                  {tab.label}
-                  <span className="nav-phase">F1</span>
-                </span>
-              )}
+              <Link
+                href={tab.href}
+                className="nav-key"
+                aria-current={tab.id === current ? "page" : undefined}
+              >
+                {tab.label}
+              </Link>
             </li>
           ))}
         </ul>
