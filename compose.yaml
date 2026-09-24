@@ -67,12 +67,23 @@ services:
     build:
       context: .
       target: worker
+    # RENDER_TOKEN: abre las páginas internas de render de la web.
+    env_file: .env
     environment:
       DATABASE_URL: *database-url
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      MEDIA_DIR: /data/media
+      # La web por la red interna de Docker.
+      WEB_INTERNAL_URL: http://web:3000
+    volumes:
+      # Los PNG renderizados, en la misma carpeta que sirve la web.
+      - ./media:/data/media
     depends_on:
       migrate:
         condition: service_completed_successfully
+      # Renderiza a través de la web (si todavía está arrancando, el job reintenta).
+      web:
+        condition: service_started
     # Tiempo para terminar jobs en curso al apagar (el worker espera hasta 30 s).
     stop_grace_period: 40s
     restart: unless-stopped

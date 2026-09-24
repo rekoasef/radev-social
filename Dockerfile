@@ -77,10 +77,17 @@ FROM source AS worker-deploy
 RUN pnpm --filter @radev/worker deploy --prod /out
 
 # --- worker ------------------------------------------------------------------------------
+# Incluye Chromium para renderizar slides (Playwright). Pesa ~400 MB más; hay versiones para
+# amd64 y arm64. Los navegadores van a /ms-playwright, legible por el usuario `node`.
 FROM node:${NODE_VERSION}-bookworm-slim AS worker
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 WORKDIR /app
 COPY --from=worker-deploy --chown=node:node /out ./
+# --with-deps instala las librerías del sistema que Chromium necesita (apt, como root).
+RUN node node_modules/playwright/cli.js install --with-deps --only-shell chromium \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /data/media && chown node:node /data/media
 USER node
 # node directo (no pnpm/npm) para que las señales de apagado lleguen al proceso.
 CMD ["node", "--import", "tsx", "src/index.ts"]

@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 2 — Editor, render y exportación (empezada 2026-09-24). Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T7 de la Fase 2: imagen Docker del worker con Chromium (amd64 y arm64), `WEB_INTERNAL_URL` y `RENDER_TOKEN` en compose, `media/` montada en el worker.
-- **Última actualización:** 2026-09-24, al cerrar la T6 de la Fase 2
+- **Próximo paso:** T8 de la Fase 2: revisión en el panel (ver los PNG renderizados, aprobar o volver a editar).
+- **Última actualización:** 2026-09-24, al cerrar la T7 de la Fase 2
 - **Para retomar:** todo lo de la Fase 1 se ve en el panel (Marcas → Slides / Identidad visual / Assets) con `pnpm dev`. El control del render (`checkRender`) y los extremos son la base del QA del render de la Fase 2.
 
 ## Fase 2 — tareas
@@ -26,7 +26,7 @@ Plan aprobado el 2026-09-24. 👁 = termina con capturas para que el operador ap
 | T4 | Versiones: cada guardado crea una; ver y restaurar | ✅ |
 | T5 | Ruta interna `/render/<versión>/<slide>` con token y semilla del post | ✅ |
 | T6 | Worker: job `carousel.render` (Playwright, QA, PNG en `media/`, registro en `assets`), idempotente; la web encola | ✅ |
-| T7 | Docker: worker con Chromium (amd64 y arm64) | |
+| T7 | Docker: worker con Chromium (amd64 y arm64) | ✅ |
 | T8 | Revisión: ver los PNG, aprobar o volver a editar | |
 | T9 | Exportar ZIP (PNG + copy) y copiar el copy | |
 | T10 | Adaptador `manual`: marcar como publicado | |
@@ -106,6 +106,7 @@ Plan aprobado el 2026-09-23. Terminada.
 - Panel: grupo de rutas `app/(panel)/` cuyo layout llama a `requireOperator()`. Marca activa en la cookie `active-brand` (Server Action validada con Zod); la regla vive en `packages/core` (`pickActiveBrand`).
 - Worker: pg-boss 12 en el esquema `pgboss` de la misma base; logger JSON propio (`apps/worker/src/logger.ts`, sin dependencias); apagado con `stop({ graceful: true })` y 30 s de margen. Corre con `tsx` (sin compilar). Todavía no depende de `@radev/db`: se agrega cuando llegue el primer job.
 - Docker: un `Dockerfile` en la raíz con destinos `web` (Next `output: "standalone"`, `outputFileTracingRoot` en la raíz del monorepo), `worker` (`pnpm deploy --prod`, corre con `node --import tsx`) y `migrate` (migraciones + seed con tsx directo: `pnpm run` intenta reinstalar y falla sin root). Base `node:24-bookworm-slim` (amd64 + arm64), todo como usuario `node`. El build de la web usa variables de relleno solo en ese `RUN`. En compose, web y worker leen `DATABASE_URL` apuntando a `postgres:5432` (pisa la del `.env`); la web usa `env_file: .env`.
+- **Worker con Chromium (Fase 2, T7)**: la imagen `worker` instala Chrome Headless Shell con `playwright install --with-deps --only-shell chromium` (versión fija por el `playwright` del lockfile) en `/ms-playwright`; pesa ~1,25 GB. En compose el worker usa `env_file: .env` (por `RENDER_TOKEN`), `WEB_INTERNAL_URL=http://web:3000` (red interna), `MEDIA_DIR=/data/media` con la misma `./media` montada que la web, y arranca después de la web (si todavía no responde, el job reintenta). Probado de punta a punta: un post por marca pasa a `in_review` con 6 PNG y el job repetido se saltea. arm64: la imagen compila con `buildx --platform linux/arm64` y Chromium renderiza; bajo emulación QEMU solo arranca con `--single-process`, limitación de la emulación y no de la imagen (en ARM real corre nativo), así que producción no lleva esos argumentos.
 - Estilo del panel: "Sala de control", documentado en `apps/web/DESIGN.md`. Las secciones de fases futuras se ven apagadas con su fase, sin páginas vacías.
 - **Formato único 4:5** (1080×1350) para TikTok e Instagram (ADR 0011). Zonas seguras medidas sobre una captura real de TikTok: márgenes 80/80/80/100 y exclusión abajo a la derecha (`x ≥ 930`, `y ≥ 650`) por la columna de botones. Detalle en `DESIGN-SYSTEM.md` §3.
 - **Tipo de slide nuevo `flow`**: tarjetas en orden con conectores (refs `flow-1/2`); `cardGrid` queda para tarjetas sin orden.

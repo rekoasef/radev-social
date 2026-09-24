@@ -93,6 +93,7 @@ Notas del entorno:
 - El puerto 5432 lo usa un Postgres nativo de WSL de otros proyectos: el nuestro va por 5433. No tocar el nativo.
 - `pnpm dev` y la web de Docker usan el puerto 3000 (lo exige la OAuth App de GitHub): frená uno antes de levantar el otro. `WEB_PORT=3001 docker compose up -d` sirve solo para probar la imagen.
 - Imágenes: un solo `Dockerfile` con destinos `web`, `worker` y `migrate`. El servicio `migrate` corre en cada `up` y termina; web y worker esperan a que salga bien.
+- En Docker, el worker renderiza a través de la web (`http://web:3000`) con el `RENDER_TOKEN` del `.env` y escribe los PNG en la misma `media/`.
 - El worker escribe logs JSON (una línea por evento); `LOG_LEVEL=debug` muestra más. pg-boss guarda su cola en el esquema `pgboss` de la misma base.
 - pnpm bloquea scripts de instalación y versiones muy recientes: se autorizan en `pnpm-workspace.yaml`.
 
