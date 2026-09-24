@@ -9,7 +9,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 3 — Generación con IA (por empezar). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T0 de la Fase 3: probar `claude -p` headless y verificar sus flags.
+- **Próximo paso:** T1 de la Fase 3: `packages/ai` con la interfaz de proveedores y errores tipados.
 - **Última actualización:** 2026-09-24, al cerrar la Fase 2
 - **Para retomar:** todo lo de la Fase 1 se ve en el panel (Marcas → Slides / Identidad visual / Assets) con `pnpm dev`. El control del render (`checkRender`) y los extremos son la base del QA del render de la Fase 2.
 
@@ -19,7 +19,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 
 | Tarea | Qué | Estado |
 |---|---|---|
-| T0 | Prueba de `claude -p` instalado: flags reales (`--json-schema`, `--output-format`, herramientas) en una carpeta temporal fuera del repo. Sin código | |
+| T0 | Prueba de `claude -p` instalado: flags reales (`--json-schema`, `--output-format`, herramientas) en una carpeta temporal fuera del repo. Sin código | ✅ |
 | T1 | `packages/ai`: interfaz `AIProvider`, errores tipados (`validation`, `rate_limited`, `provider_error`), Zod → JSON Schema. Tests con proveedor falso | |
 | T2 | Tabla `brand_documents` (voz, precios, casos, reglas, con historial), seed desde `seeds/brands/`, editor en el panel | |
 | T3 | Workspace aislado: carpeta temporal fuera del repo con el CLAUDE.md de la marca armado desde la base (regla 7). Tests | |
@@ -33,6 +33,13 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T11 | `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor | |
 | T12 | Importar historial de posts → `winners.json` | |
 | T13 | Cierre: criterio de terminado con ambas marcas, docs | |
+
+**T0 (2026-09-24), resultados** — detalle de flags y sobre de salida en `ARCHITECTURE.md` §7:
+- Una generación chica (Sonnet, leer `task.json` + JSON Schema) tardó ~9 s y 3 turnos; el CLAUDE.md de la carpeta temporal se cargó (salió con la voz de la marca de prueba).
+- `--bare` descartado (no acepta el token de la suscripción). `--max-turns` funciona aunque no figura en `--help`.
+- Errores: clasificar por `is_error` + `terminal_reason` + `api_error_status`; `subtype` engaña.
+- En WSL, `claude` hoy es el de Windows (`/mnt/c/.../npm/claude`) y no hay credenciales en WSL ni en el `.env`. Para la T4: el worker necesita el CLI de Linux. Propuesta: `@anthropic-ai/claude-code` como dependencia fija de `packages/ai` (misma versión en desarrollo y en Docker, sin instalación global), a confirmar en la T4.
+- Probado desde PowerShell: escapar las comillas del JSON Schema es un problema de PowerShell 5.1, no del CLI.
 
 Pendiente de respuesta del operador: (1) crear cuenta gratuita de OpenRouter y su API key (sin tarjeta) antes de la T5, o posponer OpenRouter; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 

@@ -192,11 +192,19 @@ claude -p "<prompt de la tarea>" \
   --json-schema '<JSON Schema derivado de Zod>' \
   --max-turns 6 \
   --allowedTools "Read" \
-  --model <modelo configurado para la tarea>
+  --model <modelo configurado para la tarea> \
+  --no-session-persistence \
+  --setting-sources project \
+  --strict-mcp-config
 # ideas.research agrega WebSearch y WebFetch a --allowedTools
 ```
 
-> Verificar los flags contra `claude --help` de la versión instalada.
+Verificado el 2026-09-24 con Claude Code 2.1.282 (Fase 3, T0):
+- Se ejecuta con una lista de argumentos (sin shell): el JSON Schema va tal cual.
+- `--max-turns` funciona aunque no aparece en `--help`: al pasarse devuelve `subtype: "error_max_turns"`.
+- `--bare` **no sirve**: saltea el CLAUDE.md automático, pero en ese modo solo acepta `ANTHROPIC_API_KEY` (nunca lee el token OAuth de la suscripción). El aislamiento sale de ejecutar en la carpeta temporal; `--setting-sources project` y `--strict-mcp-config` evitan cargar ajustes, hooks y MCP del usuario.
+- Sobre de salida (stdout, JSON): `is_error`, `structured_output` (objeto ya validado contra el schema), `result` (texto), `session_id`, `num_turns`, `duration_ms`, `usage`, `modelUsage` (nombre canónico del modelo), `total_cost_usd` (precio de lista; con la suscripción no se cobra), `terminal_reason`, `api_error_status`.
+- **Errores**: salida con código 1 y el mismo sobre con `is_error: true`. Clasificar por `terminal_reason` y `api_error_status`, **no** por `subtype` (con un error de API queda en `"success"`). Ejemplos: modelo inválido → `terminal_reason: "api_error"`, `api_error_status: 404`; tope de turnos → `terminal_reason: "max_turns"`. El límite de uso de la suscripción se espera como `api_error_status: 429` (sin verificar: no se pudo provocar).
 
 - **Autenticación**: `CLAUDE_CODE_OAUTH_TOKEN`, generado una vez con `claude setup-token` (consume de la suscripción Pro, sin costo extra). Alternativa: `ANTHROPIC_API_KEY` (pago por uso). **Nunca ambas definidas a la vez.**
 - **Aislamiento**: por ejecución, `packages/ai/workspace.ts` crea `/tmp/radev-social/runs/<runId>/` (fuera del repo) y escribe:
