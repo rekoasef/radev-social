@@ -88,7 +88,7 @@ describe("soft templates", () => {
   it("sizes titles and big numbers by length", () => {
     expect(coverTitleSize("Corto")).toBeGreaterThan(titleSize("Corto"));
     expect(titleSize("Corto")).toBeGreaterThan(
-      titleSize("Un título bastante más largo que cuarenta y ocho"),
+      titleSize("Información organización presupuesto mantenimiento comunicac"),
     );
     expect(bigNumberSize("12")).toBe(220);
     expect(bigNumberSize("USD 1.250.000")).toBeLessThan(120);

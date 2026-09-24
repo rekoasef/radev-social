@@ -79,6 +79,10 @@ pnpm --filter @radev/slides icons:sync   # regenerar la lista de íconos tras ac
 pnpm capture "/render/preview/radev/frame?overlay=tiktok" /tmp/x.png
                     # captura de una slide con Playwright (web levantada + RENDER_TOKEN en .env)
                     # overlay=safe muestra zonas seguras; overlay=tiktok superpone la UI de TikTok
+                    # variant=extreme: textos al límite; qa=1: marca desbordes y zonas invadidas
+pnpm capture --check "/render/preview/lumus/flow?variant=extreme" -
+                    # control del render (desbordes, zonas seguras); falla si hay problemas.
+                    # "-" como salida no guarda captura
 ```
 
 Notas del entorno:

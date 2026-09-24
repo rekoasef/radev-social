@@ -2,6 +2,7 @@ import { getBrandBySlug, listBrandAssets } from "@radev/db";
 import {
   exampleDatasets,
   exampleSlidesByPreset,
+  extremeSlides,
   FORMAT,
   hasTemplate,
   parseTheme,
@@ -22,6 +23,8 @@ import { isValidRenderToken } from "@/lib/render-token";
 // Internal page: one slide of a brand at its exact size, with sample content, for previews and
 // captures (pnpm capture). No login: it requires ?token=RENDER_TOKEN.
 //   /render/preview/<brand>/<slide>?token=…&page=3&total=7&seed=post-1&overlay=safe|tiktok
+//     &variant=extreme (worst-case content, every text at its limit)
+//     &qa=1 (outline and list the render QA issues)
 // <slide> is a slide type, or "frame" for the frame alone.
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -61,7 +64,10 @@ export default async function PreviewSlidePage({
       { url: mediaUrl(a.path), width: a.width, height: a.height },
     ]),
   );
-  const examples = exampleSlidesByPreset[parsed.theme.preset];
+  const examples =
+    single(query.variant) === "extreme"
+      ? extremeSlides
+      : exampleSlidesByPreset[parsed.theme.preset];
   const total = positiveInt(single(query.total), 7);
   const pageNumber = Math.min(positiveInt(single(query.page), 1), total);
   const overlay = single(query.overlay);
@@ -100,7 +106,7 @@ export default async function PreviewSlidePage({
       </SlideFrame>
       {overlay === "safe" && <SafeZoneOverlay />}
       {overlay === "tiktok" && <TikTokOverlay />}
-      <RenderReady />
+      <RenderReady showQa={single(query.qa) === "1"} />
       {/* Next's dev-tools badge would end up in the captures. */}
       <style>{"nextjs-portal{display:none!important}"}</style>
     </main>

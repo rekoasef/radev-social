@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T11: calibración de límites de caracteres con casos extremos; la preview marca desbordes.
-- **Última actualización:** 2026-09-24, al cerrar la T10 de la Fase 1
+- **Próximo paso:** T12: cierre de la Fase 1 (criterio de terminado, docs, comandos).
+- **Última actualización:** 2026-09-24, al cerrar la T11 de la Fase 1
 - **Para retomar:** las 12 plantillas de cada preset se ven en `/render/preview/<radev|lumus>/<tipo>?token=…` con `pnpm dev`. Las marcas se gestionan en Marcas (`/brands`): lista, nueva, `/brands/<slug>` (datos generales, archivar, borrar), `/brands/<slug>/identity` (identidad visual) y `/brands/<slug>/assets`.
 
 ## Fase 1 — tareas
@@ -30,7 +30,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | T8 | Preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus. 👁 | ✅ |
 | T9 | CRUD de marcas (borrar solo sin posts) | ✅ |
 | T10 | Editor de identidad visual: preset, formulario desde el schema, vista previa en vivo, aviso de contraste | ✅ |
-| T11 | Calibración de límites de caracteres con casos extremos; la preview marca desbordes | |
+| T11 | Calibración de límites de caracteres con casos extremos; la preview marca desbordes | ✅ |
 | T12 | Cierre: criterio de terminado, docs, comandos | |
 
 Decisiones aprobadas con el plan: (1) ruta `/render/preview/...` con token interno en vez de login, para poder capturarla; (2) Playwright como dependencia de desarrollo desde la Fase 1 (el job de render sigue siendo de la Fase 2); (3) migración de datos para los tokens de las marcas existentes.
@@ -109,18 +109,22 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Validación**: `checkTheme(preset, tokens)` (errores por ruta, `colors.accent`) en vivo y al guardar; la acción además verifica que los assets sean de la marca. Se guardan los tokens completos. Cambiar de preset: `switchPresetTokens` (defaults del nuevo, conserva los `*Asset`), con confirmación, aplica al guardar.
 - **Contraste**: `contrastRatio` / `parseColor` / `MIN_TEXT_CONTRAST` (4,5) en `packages/core/src/colors/contrast.ts`, WCAG, con mezcla de rgba sobre el fondo. Aviso (no bloquea) si `colors.text` sobre `colors.bg` queda debajo.
 - **Probado sin login**: una página temporal bajo `/render` con el editor y Playwright (cambiar acento, color inválido, contraste, descartar, cambiar de preset). Guardar de punta a punta lo prueba el operador.
+- **Control del render (T11)**: `checkRender(frame, mark?)` en `packages/slides/src/qa.ts` (desborde, texto fuera de su caja, contenido o texto fuera del área segura o bajo los botones de TikTok). Autocontenida (sin imports; un test compara sus números con `frame/geometry.ts`) para pasarla a Playwright en la Fase 2. Se importa de `@radev/slides/qa` (fuera del índice: usa tipos del DOM, y `packages/db` importa el paquete sin ellos). `RenderReady` la corre antes de marcar la página lista y deja el resultado en `window.__renderQa`; `?qa=1` la muestra. `pnpm capture --check` recorre páginas y falla si hay problemas.
+- **Casos extremos**: `extremeSlides` y `fillText` en `content/extremes.ts` (cada texto al límite exacto con palabras largas reales, máximo de tarjetas y nodos; `flow` con 4 nodos, el peor caso de ancho). Los tests los validan contra los schemas. Preview: `variant=extreme`. Las 48 combinaciones (12 tipos × 2 presets × ejemplo/extremo) pasan el control.
+- **Títulos por líneas estimadas**: `countLines` / `fitTextSize` en `presets/shared/fit.ts` simulan el corte entre palabras con anchos medidos en el navegador (`TITLE_GLYPHS` de cada preset). Máximo 3 líneas (portadas 4). Reemplazó los tamaños por cantidad de caracteres.
+- **Límites calibrados** (aprobados con el operador): `cardGrid` bajada 14 y etiqueta 24 (antes 16 y 28); `comparison` hasta 4 puntos por lado (antes 5); etiquetas de `flow` con palabras de hasta 16 letras (`plainText(max, { maxWord })`). Se sacó `overflow-wrap: anywhere` de `flow`: una palabra que no entra ahora falla en el control en vez de cortarse.
+- **Hero de `soft` elástico**: se achica con el espacio que dejan título y subtítulo.
+- **Editor de identidad**: la vista previa corre el control y lista los problemas; "Probar con textos al límite" muestra los extremos con la identidad que se está editando.
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes y las imágenes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante
 
 **Fase 1:**
-- T11: el control de zonas seguras y desbordes de las T4–T6 se hizo con un script de Playwright temporal (no está en el repo): recorre `[data-qa="content"]` contra el área segura y la columna de TikTok, y `[data-qa="text"]` buscando `scrollWidth/scrollHeight` mayores que la caja o texto que se sale de su contenedor. Conviene sumarlo al repo (por ejemplo `pnpm capture --check`) para calibrar límites en la T11; en la Fase 2 es la base del QA del render (§9).
-- Las plantillas se prueban con variantes (3–6 nodos, textos largos) armando una página temporal en `apps/web/app/render/tmp-variants/` que se borra antes del commit. En la T11 esas variantes pueden pasar a ser ejemplos permanentes de casos extremos.
-- T11: en `flow` de 4 nodos una palabra de ~20 letras ("Internacionalización") no entra ni al tamaño mínimo y se corta dentro de la tarjeta (`overflow-wrap: anywhere`, último recurso). Evaluar si conviene limitar el largo de palabra de las etiquetas. También revisar el salto de 84 a 70 px en títulos de más de 48 caracteres.
+- Los extremos cubren un caso por tipo. Variantes intermedias (3 nodos en `hubDiagram`, 5 en `flow`, 4 tarjetas) se revisaron en T4–T6; si se toca la geometría, conviene sumar variantes a `extremes.ts`.
 - La captura de TikTok (`docs/references/tiktok-4x5.jpeg`, post "¿Cuánto cuesta tener una APP?") ya se superpuso en la T3 (`overlay=tiktok`) y confirmó las zonas seguras.
 - Ese post usa una tipografía condensada en el título, distinta de Inter Tight de las referencias. Por ahora se sigue con Inter Tight; si el operador la quiere, se suma a la lista curada.
 - `logoAsset` de `soft`: el marco usa siempre el wordmark ("se prefiere el wordmark", §8; el logo de Lumus es de 192 px). El editor permite elegirlo, pero `soft` no lo dibuja: definir si se usa y dónde.
-- `fitFontSize` estima con 0,56 em por carácter (calibrado con Inter); con Geist Sans (`soft`) anduvo bien en los ejemplos, revisar en la T11 con casos extremos.
+- `fitFontSize` (etiquetas) sigue estimando con 0,56 em por carácter; medido en el navegador: Inter 400 0,49, Geist 0,41, así que tiene margen. Los extremos pasan en los dos presets.
 
 ## Cómo trabajamos
 

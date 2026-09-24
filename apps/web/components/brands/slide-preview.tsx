@@ -4,12 +4,14 @@ import {
   type BrandTheme,
   exampleDatasets,
   exampleSlidesByPreset,
+  extremeSlides,
   FORMAT,
   type SlideAssets,
   SlideContent,
   SlideFrame,
   type SlideType,
 } from "@radev/slides";
+import { checkRender, describeQaIssue, type QaIssue } from "@radev/slides/qa";
 import { useEffect, useRef, useState } from "react";
 
 // Live preview of the identity editor: the same frame and templates the render uses, with the
@@ -35,14 +37,18 @@ export function SlidePreview({
   brandName,
   assets,
   type,
+  extreme = false,
 }: {
   theme: BrandTheme;
   brandName: string;
   assets: SlideAssets;
   type: SlideType;
+  /** Worst-case content (every text at its limit) instead of the preset's examples. */
+  extreme?: boolean;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(420);
+  const [issues, setIssues] = useState<QaIssue[]>([]);
 
   useEffect(() => {
     const element = box.current;
@@ -54,8 +60,21 @@ export function SlidePreview({
     return () => observer.disconnect();
   }, []);
 
+  // Render QA after every change, once the fonts are in (a new font changes every size).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-check whenever what is drawn changes
+  useEffect(() => {
+    let active = true;
+    const frame = box.current?.querySelector("[data-slide-frame]");
+    document.fonts.ready.then(() => {
+      if (active && frame) setIssues(checkRender(frame));
+    });
+    return () => {
+      active = false;
+    };
+  }, [theme, type, extreme, width]);
+
   const scale = width / FORMAT.width;
-  const slide = exampleSlidesByPreset[theme.preset][type];
+  const slide = (extreme ? extremeSlides : exampleSlidesByPreset[theme.preset])[type];
   return (
     <div ref={box} className="w-full">
       <div
@@ -82,6 +101,16 @@ export function SlidePreview({
           </SlideFrame>
         </div>
       </div>
+      {issues.length > 0 && (
+        <ul
+          role="status"
+          className="mt-3 flex flex-col gap-1 border-l border-tally-amber pl-3 text-sm text-ink"
+        >
+          {issues.map((issue) => (
+            <li key={`${issue.kind}-${issue.text}`}>{describeQaIssue(issue)}</li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

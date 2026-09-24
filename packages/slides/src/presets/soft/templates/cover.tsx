@@ -1,20 +1,21 @@
-import { parseEmphasis } from "../../../content/emphasis";
 import type { SlideOf } from "../../../content/slides";
 import { resolveAsset, type SlideAssets } from "../../../frame/types";
+import { fitTextSize } from "../../shared/fit";
 import { SOFT_CONTENT_BOX } from "../frame";
-import { Hero, labelText, Support, Title } from "../parts";
+import { Hero, labelText, plainOf, Support, TITLE_GLYPHS, Title } from "../parts";
 import type { SoftTokens } from "../tokens";
 
 // `cover`: the hook. Kicker and title on top, the brand's hero element in the middle, the
 // subtitle at the bottom. Without a hero asset, the middle stays as negative space.
 
-/** Cover titles run bigger than the rest (calibrated in T11). */
+/** Cover titles run bigger than the rest, up to 4 lines at 850 (calibrated in T11). */
 export function coverTitleSize(text: string): number {
-  const parsed = parseEmphasis(text);
-  const length = [...(parsed.ok ? parsed.plain : text)].length;
-  if (length <= 20) return 108;
-  if (length <= 40) return 92;
-  return 80;
+  return fitTextSize(plainOf(text), {
+    width: SOFT_CONTENT_BOX.width,
+    sizes: [108, 92, 80, 70, 62],
+    maxLines: 4,
+    glyphs: TITLE_GLYPHS,
+  });
 }
 
 const HERO_SIZE = 400;
@@ -52,9 +53,11 @@ export function CoverTemplate({
       <div
         style={{
           flex: 1,
+          minHeight: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          padding: "24px 0",
           // Centered on the slide, not on the content box (which stops at x = 930).
           transform: `translateX(${(1080 - 2 * SOFT_CONTENT_BOX.x - SOFT_CONTENT_BOX.width) / 2}px)`,
         }}

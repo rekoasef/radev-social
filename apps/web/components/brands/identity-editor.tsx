@@ -41,6 +41,7 @@ export function IdentityEditor({
   const [preset, setPreset] = useState(initial.preset);
   const [tokens, setTokens] = useState<unknown>(initial.tokens);
   const [slide, setSlide] = useState<SlideType>("cover");
+  const [extreme, setExtreme] = useState(false);
   const [state, action, pending] = useActionState(saveIdentityAction, idle);
 
   const check = useMemo(() => checkTheme(preset, tokens), [preset, tokens]);
@@ -199,9 +200,26 @@ export function IdentityEditor({
               ))}
             </select>
           </label>
-          <SlidePreview theme={theme} brandName={brand.name} assets={previewAssets} type={slide} />
+          <SlidePreview
+            theme={theme}
+            brandName={brand.name}
+            assets={previewAssets}
+            type={slide}
+            extreme={extreme}
+          />
+          <label className="flex items-center gap-2 text-sm text-ink-dim">
+            <input
+              type="checkbox"
+              checked={extreme}
+              onChange={(event) => setExtreme(event.target.checked)}
+              className="size-4 accent-[var(--color-ink)]"
+            />
+            Probar con textos al límite
+          </label>
           <p className="text-xs text-ink-faint">
-            Textos de ejemplo. Los cambios se ven al instante.
+            {extreme
+              ? "Cada texto con la cantidad máxima de caracteres: si algo no entra, aparece arriba."
+              : "Textos de ejemplo. Los cambios se ven al instante."}
           </p>
         </div>
       </aside>

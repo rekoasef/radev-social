@@ -3,9 +3,13 @@ import { parseEmphasis } from "../../content/emphasis";
 import { SAFE_AREA } from "../../frame/geometry";
 import type { SlideAsset } from "../../frame/types";
 import { SlideIcon } from "../../icons";
+import { fitTextSize, type GlyphWidths } from "../shared/fit";
 
 // Building blocks shared by the `soft` templates (docs/DESIGN-SYSTEM.md §8). Colors and fonts
 // come from the CSS variables set by SoftFrame; nothing here is brand-specific.
+
+/** The title may take the full safe width (920); everything below it stays at 850. */
+export const TITLE_WIDTH = SAFE_AREA.width;
 
 /** Emphasis in `soft` is color only: calmer than `bold`. */
 export const emphasisStyle: CSSProperties = { color: "var(--accent)" };
@@ -54,13 +58,29 @@ export function labelText(size: number): CSSProperties {
   };
 }
 
-/** Title size by visible length. A notch below `bold`: `soft` leaves more air. */
-export function titleSize(text: string): number {
+/**
+ * Hanken Grotesk (sentence case) with the title's tracking (-0.01em), measured in the browser
+ * on long Spanish words (T11), with ~5% margin.
+ */
+export const TITLE_GLYPHS: GlyphWidths = { char: 0.47, space: 0.25 };
+
+/** Visible text of a title (without emphasis marks). */
+export const plainOf = (text: string) => {
   const parsed = parseEmphasis(text);
-  const length = [...(parsed.ok ? parsed.plain : text)].length;
-  if (length <= 24) return 92;
-  if (length <= 48) return 78;
-  return 66;
+  return parsed.ok ? parsed.plain : text;
+};
+
+/**
+ * Title size: the biggest that keeps the title in 3 lines at its width. A notch below `bold`:
+ * `soft` leaves more air (calibrated in T11).
+ */
+export function titleSize(text: string, width = TITLE_WIDTH): number {
+  return fitTextSize(plainOf(text), {
+    width,
+    sizes: [92, 78, 66, 58],
+    maxLines: 3,
+    glyphs: TITLE_GLYPHS,
+  });
 }
 
 export function Title({
@@ -169,8 +189,19 @@ export function IconBadge({
 
 /** The brand's hero element (e.g. Lumus's orb), with a soft glow behind it. */
 export function Hero({ asset, size }: { asset: SlideAsset; size: number }) {
+  // Square, `size` at most: it shrinks with the space its container leaves (a long title or
+  // subtitle), instead of pushing them out of the safe area.
   return (
-    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+    <div
+      style={{
+        position: "relative",
+        height: "100%",
+        maxHeight: size,
+        aspectRatio: "1",
+        flexShrink: 1,
+        minHeight: 0,
+      }}
+    >
       <div
         aria-hidden="true"
         style={{
@@ -195,8 +226,6 @@ export function Hero({ asset, size }: { asset: SlideAsset; size: number }) {
     </div>
   );
 }
-
-export const TITLE_WIDTH = SAFE_AREA.width;
 
 /** Vertical layout shared by the templates: title on top, the rest centered below it. */
 export function TemplateLayout({ title, children }: { title: string; children: ReactNode }) {

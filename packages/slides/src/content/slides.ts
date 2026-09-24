@@ -55,7 +55,15 @@ export const cardGridSlide = z.object({
 export const flowSlide = z.object({
   type: z.literal("flow"),
   title: richText(L.flow.title),
-  nodes: z.array(iconLabel(L.flow.nodeLabel)).min(L.flow.nodes.min).max(L.flow.nodes.max),
+  nodes: z
+    .array(
+      z.object({
+        icon: iconName,
+        label: plainText(L.flow.nodeLabel, { maxWord: L.flow.nodeWord }),
+      }),
+    )
+    .min(L.flow.nodes.min)
+    .max(L.flow.nodes.max),
   body: richText(L.flow.body).optional(),
   closing: richText(L.flow.closing).optional(),
 });

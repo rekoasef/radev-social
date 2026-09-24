@@ -1,18 +1,19 @@
-import { parseEmphasis } from "../../../content/emphasis";
 import type { SlideOf } from "../../../content/slides";
+import { fitTextSize } from "../../shared/fit";
 import { BOLD_CONTENT_BOX } from "../frame";
-import { glowShadow, labelText, Support, Title } from "../parts";
+import { glowShadow, labelText, plainOf, Support, TITLE_GLYPHS, Title } from "../parts";
 
 // `cover`: the hook. Kicker and a big title on top, subtitle at the bottom after a short accent
 // line; lots of negative space in between. The frame adds the glow and "Deslizá →".
 
-/** Cover titles run bigger than the rest (calibrated in T11). */
+/** Cover titles run bigger than the rest, up to 4 lines at 850 (calibrated in T11). */
 export function coverTitleSize(text: string): number {
-  const parsed = parseEmphasis(text);
-  const length = [...(parsed.ok ? parsed.plain : text)].length;
-  if (length <= 20) return 124;
-  if (length <= 40) return 104;
-  return 88;
+  return fitTextSize(plainOf(text), {
+    width: BOLD_CONTENT_BOX.width,
+    sizes: [124, 104, 88, 76, 66],
+    maxLines: 4,
+    glyphs: TITLE_GLYPHS,
+  });
 }
 
 export function CoverTemplate({ slide }: { slide: SlideOf<"cover"> }) {

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
+import { parseEmphasis } from "./emphasis";
 import { exampleSlides, exampleSlidesByPreset } from "./examples";
+import { extremeSlides, fillText } from "./extremes";
 import { iconName, plainText, richText } from "./fields";
 import { SLIDE_TYPES, slideSchema } from "./slides";
 
@@ -88,5 +90,36 @@ describe("slideSchema", () => {
     nodes[2] = { icon: "calendar", label: "Una etiqueta demasiado larga" };
     const result = slideSchema.safeParse({ ...exampleSlides.flow, nodes });
     expect(result.error?.issues[0]?.path).toEqual(["nodes", 2, "label"]);
+  });
+});
+
+const visibleLength = (text: string) => {
+  const parsed = parseEmphasis(text);
+  return [...(parsed.ok ? parsed.plain : text)].length;
+};
+
+describe("extreme examples", () => {
+  it.each(SLIDE_TYPES)("the %s worst case is valid", (type) => {
+    expect(issues(slideSchema.safeParse(extremeSlides[type]))).toEqual([]);
+  });
+
+  it("fills texts to exactly their limit", () => {
+    for (const max of [8, 16, 22, 60, 160]) {
+      expect(visibleLength(fillText(max)), String(max)).toBe(max);
+      expect(visibleLength(fillText(max, 3, { emphasis: true })), String(max)).toBe(max);
+    }
+    expect(visibleLength(extremeSlides.cover.title)).toBe(60);
+    expect(extremeSlides.cardGrid.cards).toHaveLength(6);
+  });
+});
+
+describe("flow labels", () => {
+  it("reject a word too long for the card", () => {
+    const nodes = [...exampleSlides.flow.nodes];
+    nodes[0] = { icon: "clock", label: "Internacionalización" };
+    const result = slideSchema.safeParse({ ...exampleSlides.flow, nodes });
+    expect(issues(result).join(" ")).toContain("hasta 16 letras");
+    nodes[0] = { icon: "clock", label: "Comercialización" };
+    expect(slideSchema.safeParse({ ...exampleSlides.flow, nodes }).success).toBe(true);
   });
 });

@@ -80,9 +80,6 @@ export function FlowTemplate({ slide }: { slide: SlideOf<"flow"> }) {
                   lineHeight: 1.15,
                   color: "var(--text)",
                   textWrap: "balance",
-                  // Last resort for a word too long even at the minimum size: break it rather
-                  // than let it leave the card.
-                  overflowWrap: "anywhere",
                   alignSelf: "stretch",
                 }}
               >

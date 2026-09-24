@@ -33,8 +33,11 @@ export function richText(max: number) {
     .describe(`Hasta ${max} caracteres visibles. Admite *énfasis*.`);
 }
 
-/** Text without emphasis: asterisks are rejected. */
-export function plainText(max: number) {
+/**
+ * Text without emphasis: asterisks are rejected. `maxWord` caps the length of each word, for
+ * labels in narrow boxes where a long word cannot wrap (flow cards).
+ */
+export function plainText(max: number, { maxWord }: { maxWord?: number } = {}) {
   return z
     .string()
     .superRefine((value, ctx) => {
@@ -52,8 +55,21 @@ export function plainText(max: number) {
           message: `Tiene ${length} caracteres; el máximo es ${max}.`,
         });
       }
+      const long = maxWord
+        ? value.split(/\s+/).find((word) => visibleLength(word) > maxWord)
+        : undefined;
+      if (long) {
+        ctx.addIssue({
+          code: "custom",
+          message: `"${long}" es muy larga para la tarjeta: cada palabra puede tener hasta ${maxWord} letras.`,
+        });
+      }
     })
-    .describe(`Hasta ${max} caracteres. Sin énfasis.`);
+    .describe(
+      maxWord
+        ? `Hasta ${max} caracteres, palabras de hasta ${maxWord} letras. Sin énfasis.`
+        : `Hasta ${max} caracteres. Sin énfasis.`,
+    );
 }
 
 /** Name of a Lucide icon in kebab-case. */

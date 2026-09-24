@@ -3,10 +3,15 @@ import { parseEmphasis } from "../../content/emphasis";
 import { SAFE_AREA } from "../../frame/geometry";
 import { SlideIcon } from "../../icons";
 
+import { fitTextSize, type GlyphWidths } from "../shared/fit";
+
 export { fitFontSize } from "../shared/fit";
 
 // Building blocks shared by the `bold` templates (docs/DESIGN-SYSTEM.md §7). Colors and fonts
 // come from the CSS variables set by BoldFrame; nothing here is brand-specific.
+
+/** The title may take the full safe width (920); everything below it stays at 850. */
+export const TITLE_WIDTH = SAFE_AREA.width;
 
 /** Glow around cards and connector points, scaled by the brand's glow intensity. */
 export const glowShadow = (px: number) =>
@@ -55,13 +60,29 @@ export function Rich({ text, emphasis }: { text: string; emphasis: CSSProperties
   );
 }
 
-/** Title size by visible length: short hooks get the biggest size (calibrated in T11). */
-export function titleSize(text: string): number {
+/**
+ * Inter Tight 900 in capitals with the title's tracking (-0.02em letters, +0.12em spaces),
+ * measured in the browser on long Spanish words (T11), with ~5% margin.
+ */
+export const TITLE_GLYPHS: GlyphWidths = { char: 0.64, space: 0.37 };
+
+/** Visible text of a title (without emphasis marks). */
+export const plainOf = (text: string) => {
   const parsed = parseEmphasis(text);
-  const length = [...(parsed.ok ? parsed.plain : text)].length;
-  if (length <= 24) return 100;
-  if (length <= 48) return 84;
-  return 70;
+  return parsed.ok ? parsed.plain : text;
+};
+
+/**
+ * Title size: the biggest that keeps the title in 3 lines at its width (calibrated in T11). Long
+ * words weigh more than the character count: "MANTENIMIENTO" takes a line of its own.
+ */
+export function titleSize(text: string, width = TITLE_WIDTH): number {
+  return fitTextSize(plainOf(text), {
+    width,
+    sizes: [100, 84, 70, 60],
+    maxLines: 3,
+    glyphs: TITLE_GLYPHS,
+  });
 }
 
 export function Title({ text, size = titleSize(text) }: { text: string; size?: number }) {
@@ -163,8 +184,6 @@ export function IconTile({
     </span>
   );
 }
-
-export const TITLE_WIDTH = SAFE_AREA.width;
 
 /** Vertical layout shared by the templates: title on top, the rest centered below it. */
 export function TemplateLayout({ title, children }: { title: string; children: ReactNode }) {

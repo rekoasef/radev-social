@@ -19,6 +19,7 @@ export {
   exampleSlides,
   exampleSlidesByPreset,
 } from "./content/examples";
+export { extremeSlides, fillText } from "./content/extremes";
 export { limits } from "./content/limits";
 export {
   SLIDE_TYPES,

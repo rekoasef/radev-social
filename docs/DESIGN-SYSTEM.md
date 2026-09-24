@@ -68,7 +68,7 @@ En la práctica, las plantillas (de los dos presets) usan un ancho de **850** (x
 
 ## 5. Catálogo de slides
 
-La estructura (campos) es común a todos los presets. Schemas en `packages/slides/src/content/`; límites centralizados en `limits.ts`, a calibrar en Fase 1 con casos extremos. Los límites cuentan caracteres **visibles** (sin los asteriscos del énfasis). Todo texto admite énfasis (§6) salvo que se indique. **No admiten énfasis** (texto plano, `*` prohibido): las etiquetas dentro de tarjetas, chips y nodos (`label`, `lead`), el `kicker` de `cover`, `value` y `source` de `bigNumber`, `source` de `chart`, los rangos y etiquetas de `costBreakdown`, `name` de `comparison` y `button` de `cta`. Los íconos son nombres de Lucide en kebab-case y se valida que existan.
+La estructura (campos) es común a todos los presets. Schemas en `packages/slides/src/content/`; límites centralizados en `limits.ts`, calibrados en la Fase 1 (T11) con los casos extremos de `content/extremes.ts`: cada slide con todos sus textos al límite pasa el control del render (§9) en los dos presets. Los límites cuentan caracteres **visibles** (sin los asteriscos del énfasis). Todo texto admite énfasis (§6) salvo que se indique. **No admiten énfasis** (texto plano, `*` prohibido): las etiquetas dentro de tarjetas, chips y nodos (`label`, `lead`), el `kicker` de `cover`, `value` y `source` de `bigNumber`, `source` de `chart`, los rangos y etiquetas de `costBreakdown`, `name` de `comparison` y `button` de `cta`. Los íconos son nombres de Lucide en kebab-case y se valida que existan.
 
 ### v1
 
@@ -84,11 +84,12 @@ Las slides sin referencia (`statement`, `question`, `cta` y las demás) se dise�
 - `title` (≤80) · `callout`: `{ icon, lead≤30, text≤80 }`
 
 **`cardGrid`** — grilla de tarjetas con ícono, **sin orden** entre ellas (opciones, ejemplos). Ref: `ref-cardgrid.png`
-- `title` (≤60) · `intro?` (≤40) · `cards`: 3–6 × `{ icon, lead?≤16, label≤28 }` · `footer?` (≤80)
+- `title` (≤60) · `intro?` (≤40) · `cards`: 3–6 × `{ icon, lead?≤14, label≤24 }` · `footer?` (≤80)
 - `lead` es la línea liviana sobre la etiqueta ("una" → "automatización"): da los dos tonos de la referencia sin gastar énfasis.
 
 **`flow`** — tarjetas unidas por conectores, **en orden** (un proceso, un recorrido). Refs: `ref-flow-1.png`, `ref-flow-2.png`
-- `title` (≤60) · `nodes`: 3–5 × `{ icon, label≤22 }` · `body?` (≤180) · `closing?` (≤90)
+- `title` (≤60) · `nodes`: 3–5 × `{ icon, label≤22, palabras de hasta 16 letras }` · `body?` (≤180) · `closing?` (≤90)
+- Las etiquetas no cortan palabras: con 4 nodos las tarjetas dejan ~164 px, y una palabra de más de 16 letras ("Internacionalización") no entra ni al tamaño mínimo. La validación la rechaza.
 - Hasta 4 nodos: una fila (como `ref-flow-2`). 5 nodos: dos filas, 3 + 2 (como `ref-flow-1`), la segunda centrada. Las dos filas se leen de izquierda a derecha: el conector sale de abajo del tercer nodo, cruza por el espacio entre filas y entra por arriba al cuarto.
 - A diferencia de `steps`, los nodos no llevan texto propio: el recorrido se entiende de un vistazo.
 
@@ -96,7 +97,7 @@ Las slides sin referencia (`statement`, `question`, `cta` y las demás) se dise�
 - `title` (≤60) · `nodes`: 3–6 × `{ icon, label≤16 }` · `center`: `{ icon }` · `body?` (≤180) · `closing?` (≤70)
 
 **`comparison`** — X contra Y.
-- `title` (≤60) · `left` / `right`: `{ name≤18, icon?, points: 2–5 × ≤40 }` · `verdict` (≤90)
+- `title` (≤60) · `left` / `right`: `{ name≤18, icon?, points: 2–4 × ≤40 }` · `verdict` (≤90)
 - `right` es la opción hacia la que se inclina el veredicto: el preset la destaca. Si ninguna gana, el veredicto lo dice igual; va a la derecha la que se recomienda en la mayoría de los casos.
 
 **`costBreakdown`** — desglose de costos (serie "¿Cuánto cuesta realmente...?").
@@ -188,7 +189,7 @@ Carousel = {
 - `bigNumber`: la cifra enorme en acento con brillo, en una línea (el tamaño se ajusta al largo, hasta 260 px); etiqueta en 600, contexto y fuente.
 - `chart`: SVG propio. Grilla punteada en `line`, ejes en `muted`. Línea en acento con brillo y área con degradado; barras en acento al 42 % salvo la última, sólida. El último valor va en una etiqueta en acento. Con ≤ 8 puntos se rotulan todos; si hay más, el primero, el del medio y el último.
 - Toda slide con datos (`bigNumber`, `chart`) muestra "Fuente: …" en `muted`.
-- Tamaño del título según el largo visible: hasta 24 caracteres 100 px, hasta 48 84 px, más 70 px (a calibrar en la T11).
+- Tamaño del título: el más grande de 100 / 84 / 70 / 60 con el que entra en 3 líneas a 920 de ancho (portada: 124 / 104 / 88 / 76 / 66 en 4 líneas a 850). Se estima simulando el corte entre palabras con anchos de letra medidos en el navegador (Inter Tight 900 en mayúsculas: 0,64 em por letra con margen), así una palabra larga pesa más que la cuenta de caracteres. Una palabra que no entra en la línea obliga a bajar el tamaño.
 - Las etiquetas de un mismo diagrama comparten tamaño: se achican todas juntas hasta que entra la palabra más larga (en los chips, la etiqueta entera, que va en una línea), con un mínimo. Es una estimación por cantidad de caracteres, sin medir en el navegador.
 
 Referencias: `docs/references/radev/`. Cuando una referencia contradice estas reglas, mandan las reglas.
@@ -225,7 +226,8 @@ Referencias: `docs/references/radev/`. Cuando una referencia contradice estas re
 
 ### Comportamiento del preset (código)
 
-- Títulos en oración normal (no mayúsculas), tracking -0.01em, interlineado 1.08, `balance`. Escala: 92 / 78 / 66 según el largo (hasta 24 y 48 caracteres); portada 108 / 92 / 80.
+- Títulos en oración normal (no mayúsculas), tracking -0.01em, interlineado 1.08, `balance`. Tamaño: el más grande de 92 / 78 / 66 / 58 que entra en 3 líneas (portada: 108 / 92 / 80 / 70 / 62 en 4 líneas), con la misma estimación que `bold` (Hanken Grotesk: 0,47 em por letra).
+- El hero se achica (hasta 400 px en la portada, 260 en el cierre) cuando título y subtítulo ocupan mucho, en vez de empujarlos fuera del área segura.
 - Énfasis más medido que en `bold`: solo color de acento. En títulos, un énfasis de hasta 20 caracteres no se parte en dos líneas ("Tu plata, / por fin clara.").
 - Etiquetas: mayúsculas, tracking 0.18em, color `muted`.
 - Marco: wordmark arriba a la izquierda (`colors.wordmark`, tracking del token); abajo, `footer.url` a la izquierda y el indicador de página ("03 / 07", o "Deslizá →" en lavanda en la portada), en `fonts.numeric`. Sin líneas ni etiquetas de esquina.
@@ -240,8 +242,10 @@ Referencias: `docs/references/radev/`. Cuando una referencia contradice estas re
 
 ## 9. Control de calidad del render
 
-1. **Desborde**: ningún elemento `data-qa="text"` con overflow.
-2. **Zona segura**: ningún elemento `data-qa="content"` fuera de la zona segura.
+1. **Desborde**: ningún `data-qa="text"` con overflow ni fuera de su caja (`data-qa="content"`).
+2. **Zona segura**: ningún `data-qa="content"` ni `data-qa="text"` fuera del área segura o debajo de la columna de botones de TikTok.
+
+Los puntos 1 y 2 los hace `checkRender` (`packages/slides/src/qa.ts`), autocontenida para poder pasarla a Playwright tal cual. La usan la preview (`?qa=1` marca y lista los problemas), `pnpm capture --check`, el editor de identidad (aviso bajo la vista previa, con la opción de probar textos al límite) y, desde la Fase 2, el render del worker.
 3. **Fuentes y assets cargados**: se espera `document.fonts.ready` y la carga de imágenes; si algo falla, el render falla.
 4. **Contraste mínimo** entre `text` y `bg` en el editor de identidad: advertencia (no bloquea) si queda debajo de 4,5:1 (WCAG AA; `contrastRatio` en `packages/core`).
 5. **Énfasis**: máximo 2 por slide (validado en el schema).

@@ -142,12 +142,16 @@ describe("bold templates", () => {
 });
 
 describe("titleSize", () => {
-  it("shrinks as the title gets longer, ignoring emphasis marks", () => {
+  it("keeps short hooks big and ignores emphasis marks", () => {
     expect(titleSize("Corto")).toBe(100);
     expect(titleSize("*Corto*")).toBe(100);
-    expect(titleSize("Respondés las *mismas preguntas* una y otra vez.")).toBe(84); // 47 chars
-    expect(titleSize("El *seguimiento* depende de que alguien se acuerde.")).toBe(70); // 49
-    expect(titleSize("No necesitás una app gigante")).toBe(84);
+  });
+
+  it("shrinks until the title fits in 3 lines, long words weighing more", () => {
+    const words = "Información organización presupuesto mantenimiento comunicac";
+    const plain = "No necesitás una app gigante para mejorar esto hoy";
+    expect(titleSize(words)).toBeLessThan(titleSize(plain));
+    expect(titleSize(words)).toBeLessThanOrEqual(70);
   });
 });
 

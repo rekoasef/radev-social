@@ -3,7 +3,7 @@ import { FORMAT } from "../../../frame/geometry";
 import { resolveAsset, type SlideAssets } from "../../../frame/types";
 import { SlideIcon } from "../../../icons";
 import { SOFT_CONTENT_BOX } from "../frame";
-import { Hero, Support, Title } from "../parts";
+import { Hero, Support, Title, titleSize } from "../parts";
 import type { SoftTokens } from "../tokens";
 
 // `cta`: the closing, centered on the slide. The hero element on top, title and subtitle, and a
@@ -37,12 +37,24 @@ export function CtaTemplate({
         paddingBottom: 30,
       }}
     >
-      {hero && <Hero asset={hero} size={260} />}
+      {hero && (
+        <div
+          style={{
+            height: 260,
+            minHeight: 120,
+            flexShrink: 1,
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <Hero asset={hero} size={260} />
+        </div>
+      )}
       <div
         data-qa="content"
         style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}
       >
-        <Title text={slide.title} align="center" />
+        <Title text={slide.title} size={titleSize(slide.title, COLUMN_WIDTH)} align="center" />
         {slide.subtitle && <Support text={slide.subtitle} size={34} align="center" />}
       </div>
       <div

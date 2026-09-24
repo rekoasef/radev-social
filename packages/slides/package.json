@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./fonts": "./src/fonts/load.ts"
+    "./fonts": "./src/fonts/load.ts",
+    "./qa": "./src/qa.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
