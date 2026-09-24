@@ -9,6 +9,7 @@ import { Tally } from "@/components/console/tally";
 import { ApproveButton } from "@/components/posts/approve-button";
 import { PostStrip } from "@/components/posts/post-strip";
 import { RenderedStrip } from "@/components/posts/rendered-strip";
+import { mediaUrl } from "@/lib/brand-assets";
 import { brandRenderContext } from "@/lib/carousel";
 import { db } from "@/lib/db";
 import { STATUS_DISPLAY } from "@/lib/post-status";
@@ -130,8 +131,23 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
         >
           Slides
         </Plate>
-        {showRendered ? (
-          <RenderedStrip assets={rendered} />
+        {showRendered && content?.success ? (
+          <RenderedStrip
+            slides={rendered.map((asset) => ({
+              // Re-rendering a version rewrites the same path, which /media caches forever: the
+              // checksum gives each render its own URL.
+              url: `${mediaUrl(asset.path)}?v=${asset.checksum.slice(0, 12)}`,
+              label: `Slide ${asset.slideIndex + 1}`,
+              width: asset.width,
+              height: asset.height,
+            }))}
+            post={{
+              brandName: brand.name,
+              hook: content.data.hook,
+              caption: content.data.caption,
+              hashtags: content.data.hashtags,
+            }}
+          />
         ) : render.ok && content?.success ? (
           <PostStrip
             carousel={content.data}
