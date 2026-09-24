@@ -7,6 +7,7 @@ import {
   listVersionAssets,
 } from "@radev/db";
 import { carouselSchema } from "@radev/slides";
+import { describeQaIssue, QA_KINDS, type QaIssue } from "@radev/slides/qa";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -16,6 +17,7 @@ import { ApproveButton } from "@/components/posts/approve-button";
 import { CopyButton } from "@/components/posts/copy-button";
 import { MarkPublishedForm } from "@/components/posts/mark-published-form";
 import { PostStrip } from "@/components/posts/post-strip";
+import { RenderProgress } from "@/components/posts/render-progress";
 import { RenderedStrip } from "@/components/posts/rendered-strip";
 import { mediaUrl } from "@/lib/brand-assets";
 import { brandRenderContext } from "@/lib/carousel";
@@ -68,9 +70,21 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
       slideCount: content.data.slides.length,
       renderedSlides: rendered.map((asset) => asset.slideIndex),
     }).ok;
-  const renderIssues = Array.isArray(current?.renderIssues)
-    ? (current.renderIssues as { slide: number; kind: string; text: string }[])
-    : [];
+  // The same problem can be reported by a text and by its box: shown once, described.
+  const renderIssues = [
+    ...new Map(
+      (Array.isArray(current?.renderIssues)
+        ? (current.renderIssues as { slide: number; kind: string; text: string }[])
+        : []
+      ).map((issue) => {
+        const text = (QA_KINDS as readonly string[]).includes(issue.kind)
+          ? describeQaIssue(issue as QaIssue)
+          : issue.text || "Error al renderizar.";
+        return [`${issue.slide}|${text}`, { slide: issue.slide, text }];
+      }),
+    ).values(),
+  ];
+  const currentSlides = (current?.content as { slides?: unknown[] } | undefined)?.slides;
 
   return (
     <>
@@ -90,9 +104,11 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
           {formatDateTime(post.updatedAt, brand.timezone)}
         </p>
         {post.status === "rendering" && (
-          <p role="status" className="text-sm text-ink-dim">
-            El worker está generando los PNG. Recargá en unos segundos.
-          </p>
+          <RenderProgress
+            code={post.publicCode}
+            slides={Array.isArray(currentSlides) ? currentSlides.length : 0}
+            initial={current?.renderProgress ?? null}
+          />
         )}
         {renderIssues.length > 0 && (
           <div
@@ -102,7 +118,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
             <span>El render encontró problemas:</span>
             <ul className="list-disc pl-5 text-ink-dim">
               {renderIssues.map((issue) => (
-                <li key={`${issue.slide}-${issue.kind}-${issue.text}`}>
+                <li key={`${issue.slide}-${issue.text}`}>
                   {issue.slide >= 0 ? `Slide ${issue.slide + 1}: ` : ""}
                   {issue.text}
                 </li>

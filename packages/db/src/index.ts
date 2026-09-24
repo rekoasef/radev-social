@@ -44,6 +44,7 @@ export {
   type PostSummary,
   saveRenderedAsset,
   setVersionRenderIssues,
+  setVersionRenderProgress,
   type TransitionOutcome,
   transitionPost,
 } from "./queries/posts";

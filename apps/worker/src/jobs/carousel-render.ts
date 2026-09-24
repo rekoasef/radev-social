@@ -7,6 +7,7 @@ import {
   getPostVersion,
   saveRenderedAsset,
   setVersionRenderIssues,
+  setVersionRenderProgress,
   transitionPost,
   writeMediaFile,
 } from "@radev/db";
@@ -57,6 +58,8 @@ export async function renderCarousel(
 
   const started = Date.now();
   const issues: RenderIssue[] = [];
+  // The panel shows how far it got (0–100), slide by slide.
+  await setVersionRenderProgress(db, version.id, 0);
   const browser = await getBrowser();
   // The token goes in a header: in the URL it would end up in the web server's log.
   const context = await browser.newContext({
@@ -94,12 +97,18 @@ export async function renderCarousel(
         ...SIZE,
         checksum: createHash("sha256").update(png).digest("hex"),
       });
+      await setVersionRenderProgress(
+        db,
+        version.id,
+        Math.round(((index + 1) / slides.length) * 100),
+      );
     }
   } finally {
     await context.close();
   }
 
   await setVersionRenderIssues(db, version.id, issues.length > 0 ? issues : null);
+  await setVersionRenderProgress(db, version.id, null);
   const moved = await transitionPost(
     db,
     post.id,
@@ -123,5 +132,6 @@ export async function failRender(db: Database, versionId: string, error: unknown
     return;
   const text = error instanceof Error ? error.message : String(error);
   await setVersionRenderIssues(db, version.id, [{ slide: -1, kind: "error", text }]);
+  await setVersionRenderProgress(db, version.id, null);
   await transitionPost(db, post.id, "renderFailed");
 }

@@ -355,3 +355,15 @@ export function listPublications(db: Executor, postId: string): Promise<Publicat
     .where(eq(publications.postId, postId))
     .orderBy(publications.createdAt);
 }
+
+/** How far the render of a version got (0–100), or null when it is not rendering. */
+export async function setVersionRenderProgress(
+  db: Executor,
+  versionId: string,
+  progress: number | null,
+): Promise<void> {
+  await db
+    .update(postVersions)
+    .set({ renderProgress: progress })
+    .where(eq(postVersions.id, versionId));
+}

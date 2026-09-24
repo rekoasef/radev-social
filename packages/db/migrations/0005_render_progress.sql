@@ -1,0 +1,1 @@
+ALTER TABLE "post_versions" ADD COLUMN "render_progress" integer;

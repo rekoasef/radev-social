@@ -173,6 +173,8 @@ export const postVersions = pgTable(
     origin: text("origin", { enum: VERSION_ORIGINS }).notNull(),
     /** Render QA problems of this version (docs/ARCHITECTURE.md §8), null when it rendered fine. */
     renderIssues: jsonb("render_issues").$type<unknown[]>(),
+    /** 0–100 while the worker renders this version (slides done); null otherwise. */
+    renderProgress: integer("render_progress"),
     createdAt: createdAt(),
   },
   (t) => [
