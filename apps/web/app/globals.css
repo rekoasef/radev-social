@@ -685,3 +685,42 @@
       -5px 0;
   }
 }
+
+@layer components {
+  /* Small square keys for list items (move up, move down, remove). */
+  .icon-key {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 4px;
+    background: var(--color-panel-raised);
+    color: var(--color-ink-dim);
+  }
+  .icon-key:hover:not(:disabled) {
+    color: var(--color-ink);
+    border-color: var(--color-ink-faint);
+  }
+  .icon-key:disabled {
+    opacity: 0.35;
+  }
+}
+
+@layer components {
+  .slide-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+  }
+  .slide-row:hover {
+    background: var(--color-panel);
+  }
+  .slide-row-current {
+    border-color: var(--color-bezel-strong);
+    background: var(--color-panel-raised);
+  }
+}

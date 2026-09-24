@@ -29,6 +29,9 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 
+# Scripts de prueba temporales de Claude Code (datos de prueba, limpieza)
+**/.scratch/
+
 # Logs
 *.log
 npm-debug.log*

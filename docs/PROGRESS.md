@@ -9,8 +9,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 2 — Editor, render y exportación (empezada 2026-09-24). Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T2 de la Fase 2: sección Posts con el listado por marca y filtros por estado.
-- **Última actualización:** 2026-09-24, al cerrar la T1 de la Fase 2
+- **Próximo paso:** T4 de la Fase 2: versiones (ver y restaurar).
+- **Última actualización:** 2026-09-24, al cerrar la T3 de la Fase 2
 - **Para retomar:** todo lo de la Fase 1 se ve en el panel (Marcas → Slides / Identidad visual / Assets) con `pnpm dev`. El control del render (`checkRender`) y los extremos son la base del QA del render de la Fase 2.
 
 ## Fase 2 — tareas
@@ -21,8 +21,8 @@ Plan aprobado el 2026-09-24. 👁 = termina con capturas para que el operador ap
 |---|---|---|
 | T0 | Tablas `content_pillars` (seed con los pilares de cada `voice.md`), `posts` (código público con contador por marca), `post_versions`, `assets`, `publications` | ✅ |
 | T1 | Máquina de estados en `packages/core` con tests de invariantes; única vía para cambiar `posts.status` | ✅ |
-| T2 | Sección Posts: listado por marca con filtros por estado | |
-| T3 | Editor de carrusel: formulario por tipo desde los schemas, agregar/quitar/reordenar, íconos con buscador, pilar/hook/caption/hashtags, vista previa en vivo con QA, avance guardado en el navegador. 👁 | |
+| T2 | Sección Posts: listado por marca con filtros por estado | ✅ |
+| T3 | Editor de carrusel: formulario por tipo desde los schemas, agregar/quitar/reordenar, íconos con buscador, pilar/hook/caption/hashtags, vista previa en vivo con QA, avance guardado en el navegador. 👁 | ✅ |
 | T4 | Versiones: cada guardado crea una; ver y restaurar | |
 | T5 | Ruta interna `/render/<versión>/<slide>` con token y semilla del post | |
 | T6 | Worker: job `carousel.render` (Playwright, QA, PNG en `media/`, registro en `assets`), idempotente; la web encola | |
@@ -83,6 +83,12 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Tablas (T0, migración `0004`, solo agrega)**: `content_pillars` (clave única por marca, `target_share` 0–1; el seed carga los 5 pilares de cada `voice.md` con nombre en español y solo agrega los que faltan), `posts` (`public_code` = prefijo + número de 4 cifras, `publicCode` en core; número tomado de `brands.next_post_number` dentro de la transacción que crea el post, así un error no quema códigos; `brand_id` con `restrict`: una marca con posts no se borra), `post_versions` (número por post, `content` jsonb, `origin`, `render_issues`), `assets` (PNG renderizados; único por versión + formato + slide), `publications` (única por post y red). Estados, orígenes, formatos y redes en `packages/core/src/posts/constants.ts`; la base los valida con `check`. `hook_type` sin `check` (lo valida el schema del carrusel). `countBrandPosts` ya cuenta posts reales.
 - **Máquina de estados (T1)**: `packages/core/src/posts/state-machine.ts`: `TRANSITIONS` (evento → desde, hacia, efectos), `nextStatus`, `availableEvents`, `statusLabel`, `INITIAL_STATUSES` (`manual` nace en `rendering`, `ai` en `generating`). `edit` vale desde `in_review`, `approved`, `scheduled`, `rejected` y `failed`; efecto `cancel_publish_job` solo si el post estaba programado. Publicación manual: `startPublishing` desde `approved` o `scheduled`. `published` y `archived` son finales. Tests: la invariante de `approved` se prueba recorriendo el grafo sin pasar por ese estado.
 - **Regla 2 en código**: `transitionPost` (`packages/db/src/queries/posts.ts`) es lo único que escribe `posts.status`: bloquea la fila, aplica `nextStatus` y guarda. Un test recorre `apps/` y `packages/` y falla si otro archivo actualiza el estado. `createPost` (código + versión 1 en una transacción) y `addPostVersion` (evento `edit` + versión nueva) viven ahí. El contenido se valida con el schema del carrusel **antes** de llegar a `packages/db` (regla 4), que lo guarda tal cual.
+
+- **Sección Posts (T2)**: `/posts`, de la marca activa del selector (como Assets en la T7), más nuevo primero; pestañas por estado con cantidades (`countPostsByStatus`) vía `?status=`. Estados en el panel: `apps/web/lib/post-status.ts` (luz y etiqueta). Fechas con `formatDateTime(fecha, zona)` en `lib/time.ts` (regla 11).
+- **Editor de carrusel (T3)**: `/posts/new` (marca activa) y `/posts/<código>/edit` (solo si el estado admite `edit`). El formulario sale de `SLIDE_FIELDS` (`packages/slides/src/content/form.ts`): campos por tipo con etiqueta, límite, énfasis, objetos (opcionales con casilla) y listas con mínimo y máximo; un test lo compara con los schemas. `emptySlide(tipo)` arma una slide nueva; el editor arranca con portada, afirmación, tarjetas, pasos y cierre vacíos, o con "Cargar el carrusel de ejemplo del estilo". Tipos ofrecidos: `EDITOR_MIDDLE_TYPES` (sin `chart`, decisión 3). Íconos: `<datalist>` con `ICON_NAMES` (2112) y vista del ícono; un nombre a medio escribir se dibuja como círculo en la vista previa. Validación en vivo con `carouselSchema` (errores por ruta, contador por slide) y otra vez en `saveCarouselAction` (regla 4, también para lo manual), que además verifica el pilar. Avance en `localStorage` (`radev-social:draft:<marca>:<código|new>`), se ofrece recuperar al volver y se borra al guardar. Mensajes del schema del carrusel en español.
+- **Detalle del post**: `/posts/<código>` con estado, versión, "Editar" (si se puede) y la tira de slides dibujada en el navegador (`PostStrip`). Mientras no exista el render (T6), los posts nuevos quedan en `rendering`, donde no se editan.
+- **Token de render por cabecera**: `/render` acepta `X-Render-Token` (worker y `pnpm capture`) o `?token=` a mano (`renderTokenFrom`). Next registra la URL completa de cada pedido: con el token en la cabecera no aparece en el log. Nunca mostrar el log de `pnpm dev` sin filtrar si se usó `?token=`.
+- **Carpetas `.scratch/`** (en `.gitignore`): scripts temporales de prueba contra la base (crear/borrar posts de prueba, volver el contador a 1).
 
 **Fase 1:**
 
@@ -152,6 +158,12 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes y las imágenes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante
+
+- **Sección Posts (T2)**: `/posts`, de la marca activa del selector (como Assets en la T7), más nuevo primero; pestañas por estado con cantidades (`countPostsByStatus`) vía `?status=`. Estados en el panel: `apps/web/lib/post-status.ts` (luz y etiqueta). Fechas con `formatDateTime(fecha, zona)` en `lib/time.ts` (regla 11).
+- **Editor de carrusel (T3)**: `/posts/new` (marca activa) y `/posts/<código>/edit` (solo si el estado admite `edit`). El formulario sale de `SLIDE_FIELDS` (`packages/slides/src/content/form.ts`): campos por tipo con etiqueta, límite, énfasis, objetos (opcionales con casilla) y listas con mínimo y máximo; un test lo compara con los schemas. `emptySlide(tipo)` arma una slide nueva; el editor arranca con portada, afirmación, tarjetas, pasos y cierre vacíos, o con "Cargar el carrusel de ejemplo del estilo". Tipos ofrecidos: `EDITOR_MIDDLE_TYPES` (sin `chart`, decisión 3). Íconos: `<datalist>` con `ICON_NAMES` (2112) y vista del ícono; un nombre a medio escribir se dibuja como círculo en la vista previa. Validación en vivo con `carouselSchema` (errores por ruta, contador por slide) y otra vez en `saveCarouselAction` (regla 4, también para lo manual), que además verifica el pilar. Avance en `localStorage` (`radev-social:draft:<marca>:<código|new>`), se ofrece recuperar al volver y se borra al guardar. Mensajes del schema del carrusel en español.
+- **Detalle del post**: `/posts/<código>` con estado, versión, "Editar" (si se puede) y la tira de slides dibujada en el navegador (`PostStrip`). Mientras no exista el render (T6), los posts nuevos quedan en `rendering`, donde no se editan.
+- **Token de render por cabecera**: `/render` acepta `X-Render-Token` (worker y `pnpm capture`) o `?token=` a mano (`renderTokenFrom`). Next registra la URL completa de cada pedido: con el token en la cabecera no aparece en el log. Nunca mostrar el log de `pnpm dev` sin filtrar si se usó `?token=`.
+- **Carpetas `.scratch/`** (en `.gitignore`): scripts temporales de prueba contra la base (crear/borrar posts de prueba, volver el contador a 1).
 
 **Fase 1:**
 - Los extremos cubren un caso por tipo. Variantes intermedias (3 nodos en `hubDiagram`, 5 en `flow`, 4 tarjetas) se revisaron en T4–T6; si se toca la geometría, conviene sumar variantes a `extremes.ts`.

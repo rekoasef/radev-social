@@ -1,0 +1,443 @@
+"use client";
+
+import {
+  type BrandTheme,
+  type Carousel,
+  carouselSchema,
+  EDITOR_MIDDLE_TYPES,
+  emptySlide,
+  exampleCarouselByPreset,
+  HOOK_TYPES,
+  ICON_NAMES,
+  limits,
+  SLIDE_FIELDS,
+  SLIDE_LABELS,
+  type Slide,
+  type SlideAssets,
+  type SlideType,
+} from "@radev/slides";
+import { ArrowDown, ArrowUp, X } from "lucide-react";
+import { useActionState, useEffect, useMemo, useState } from "react";
+import { type SaveCarouselState, saveCarouselAction } from "@/app/(panel)/posts/actions";
+import { SlidePreview } from "@/components/brands/slide-preview";
+import { Fields, ICON_LIST_ID } from "./slide-fields";
+
+const idle: SaveCarouselState = { status: "idle" };
+const ICONS: ReadonlySet<string> = new Set(ICON_NAMES);
+
+const HOOK_LABELS: Record<(typeof HOOK_TYPES)[number], string> = {
+  cost: "Costo",
+  warning: "Advertencia",
+  myth: "Mito",
+  comparison: "Comparación",
+  question: "Pregunta",
+  data: "Dato",
+  story: "Historia",
+  howto: "Cómo hacer",
+};
+
+export type EditorPillar = { key: string; name: string };
+
+/** Unknown icon names (half typed) would break the preview: draw a circle instead. */
+function previewable(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(previewable);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [
+        k,
+        k === "icon" && typeof v === "string" && !ICONS.has(v) ? "circle" : previewable(v),
+      ]),
+    );
+  }
+  return value;
+}
+
+function readDraft(key: string): { carousel: Carousel; savedAt: number } | undefined {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function CarouselEditor({
+  brand,
+  theme,
+  assets,
+  pillars,
+  initial,
+  post,
+}: {
+  brand: { id: string; slug: string; name: string };
+  theme: BrandTheme;
+  assets: SlideAssets;
+  pillars: EditorPillar[];
+  initial: Carousel;
+  /** The post being edited; absent for a new one. */
+  post?: { code: string; version: number };
+}) {
+  const draftKey = `radev-social:draft:${brand.slug}:${post?.code ?? "new"}`;
+  const [carousel, setCarousel] = useState<Carousel>(initial);
+  const [selected, setSelected] = useState(0);
+  const [recovered, setRecovered] = useState<number | null>(null);
+  const [state, action, pending] = useActionState(saveCarouselAction, idle);
+
+  // Unsaved work lives in this browser (no draft status: phase 2 decision). Offer it back once.
+  useEffect(() => {
+    const draft = readDraft(draftKey);
+    if (draft && JSON.stringify(draft.carousel) !== JSON.stringify(initial)) {
+      setCarousel(draft.carousel);
+      setRecovered(draft.savedAt);
+    }
+  }, [draftKey, initial]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        if (JSON.stringify(carousel) === JSON.stringify(initial)) localStorage.removeItem(draftKey);
+        else localStorage.setItem(draftKey, JSON.stringify({ carousel, savedAt: Date.now() }));
+      } catch {
+        // Private mode or storage full: the editor still works, only without a local draft.
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [carousel, draftKey, initial]);
+
+  const check = useMemo(() => carouselSchema.safeParse(carousel), [carousel]);
+  const errors: Record<string, string> = {};
+  if (!check.success) {
+    for (const issue of check.error.issues)
+      errors[issue.path.map(String).join(".")] ??= issue.message;
+  }
+  if (state.status === "error") Object.assign(errors, state.fields ?? {});
+  const slideErrors = (i: number) =>
+    Object.keys(errors).filter((k) => k === `slides.${i}` || k.startsWith(`slides.${i}.`)).length;
+
+  const slides = carousel.slides;
+  const index = Math.min(selected, slides.length - 1);
+  const slide = slides[index] as Slide;
+  const setSlides = (next: Slide[]) => setCarousel((c) => ({ ...c, slides: next }));
+  const updateSlide = (value: Record<string, unknown>) =>
+    setSlides(slides.map((s, i) => (i === index ? ({ ...value, type: s.type } as Slide) : s)));
+  const moveSlide = (from: number, to: number) => {
+    const next = [...slides];
+    const [item] = next.splice(from, 1);
+    if (item) next.splice(to, 0, item);
+    setSlides(next);
+    setSelected(to);
+  };
+  const lastMiddle = slides.length - 2;
+  const [newType, setNewType] = useState<SlideType>("statement");
+
+  return (
+    <form
+      action={action}
+      onSubmit={() => {
+        try {
+          localStorage.removeItem(draftKey);
+        } catch {}
+      }}
+      className="grid gap-8 xl:grid-cols-[300px_minmax(0,1fr)_minmax(300px,400px)]"
+    >
+      <input type="hidden" name="brandId" value={brand.id} />
+      {post && <input type="hidden" name="code" value={post.code} />}
+      <input type="hidden" name="content" value={JSON.stringify(carousel)} />
+      <datalist id={ICON_LIST_ID}>
+        {ICON_NAMES.map((name) => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>
+
+      {/* Left: the carousel's data and its slides. */}
+      <div className="flex flex-col gap-6">
+        {recovered && (
+          <div
+            role="status"
+            className="flex flex-col gap-2 border-l border-tally-amber pl-3 text-sm text-ink"
+          >
+            Recuperamos tus cambios sin guardar.
+            <button
+              type="button"
+              className="w-fit text-ink-dim underline underline-offset-2"
+              onClick={() => {
+                setCarousel(initial);
+                setRecovered(null);
+              }}
+            >
+              Descartarlos
+            </button>
+          </div>
+        )}
+        <label className="flex flex-col gap-1.5 text-sm text-ink-dim">
+          <span className="flex justify-between">
+            Hook (idea en una frase)
+            <span className="timecode text-xs text-ink-faint">
+              {[...carousel.hook].length}/{limits.carousel.hook}
+            </span>
+          </span>
+          <input
+            value={carousel.hook}
+            onChange={(e) => setCarousel((c) => ({ ...c, hook: e.target.value }))}
+            className="console-field"
+            aria-invalid={errors.hook ? true : undefined}
+          />
+          {errors.hook && <span className="text-tally-red">{errors.hook}</span>}
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex flex-col gap-1.5 text-sm text-ink-dim">
+            Pilar
+            <select
+              value={carousel.pillarKey}
+              onChange={(e) => setCarousel((c) => ({ ...c, pillarKey: e.target.value }))}
+              className="console-field"
+            >
+              {pillars.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm text-ink-dim">
+            Tipo de hook
+            <select
+              value={carousel.hookType}
+              onChange={(e) =>
+                setCarousel((c) => ({ ...c, hookType: e.target.value as Carousel["hookType"] }))
+              }
+              className="console-field"
+            >
+              {HOOK_TYPES.map((h) => (
+                <option key={h} value={h}>
+                  {HOOK_LABELS[h]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="flex justify-between text-sm text-ink-dim">
+            Slides
+            <span className="timecode text-xs text-ink-faint">
+              {slides.length} · de {limits.carousel.slides.min} a {limits.carousel.slides.max}
+            </span>
+          </span>
+          <ol className="flex flex-col gap-1">
+            {slides.map((s, i) => {
+              const middle = i > 0 && i < slides.length - 1;
+              const problems = slideErrors(i);
+              // A short line to recognize the slide: its title, or the figure of a bigNumber.
+              const line = "title" in s ? s.title : "value" in s ? s.value : "";
+              const title = typeof line === "string" ? line.replaceAll("*", "") : "";
+              return (
+                // biome-ignore lint/suspicious/noArrayIndexKey: slides have no identity besides their order
+                <li key={i} className={`slide-row ${i === index ? "slide-row-current" : ""}`}>
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 flex-col items-start text-left"
+                    onClick={() => setSelected(i)}
+                  >
+                    <span className="flex items-center gap-2 text-sm text-ink">
+                      <span className="timecode text-ink-faint">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      {SLIDE_LABELS[s.type]}
+                      {problems > 0 && <span className="text-xs text-tally-red">· {problems}</span>}
+                    </span>
+                    <span className="w-full truncate text-xs text-ink-faint">
+                      {title || "Sin título"}
+                    </span>
+                  </button>
+                  {middle && (
+                    <span className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        className="icon-key"
+                        disabled={i <= 1}
+                        onClick={() => moveSlide(i, i - 1)}
+                        aria-label={`Subir slide ${i + 1}`}
+                      >
+                        <ArrowUp className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-key"
+                        disabled={i >= lastMiddle}
+                        onClick={() => moveSlide(i, i + 1)}
+                        aria-label={`Bajar slide ${i + 1}`}
+                      >
+                        <ArrowDown className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-key"
+                        disabled={slides.length <= 3}
+                        onClick={() => {
+                          setSlides(slides.filter((_, j) => j !== i));
+                          setSelected(Math.max(0, i - 1));
+                        }}
+                        aria-label={`Quitar slide ${i + 1}`}
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+          {slides.length < limits.carousel.slides.max && (
+            <div className="flex gap-2">
+              <select
+                value={newType}
+                onChange={(e) => setNewType(e.target.value as SlideType)}
+                className="console-field min-w-0 flex-1"
+              >
+                {EDITOR_MIDDLE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {SLIDE_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="console-button"
+                onClick={() => {
+                  const at = slides.length - 1;
+                  setSlides([...slides.slice(0, at), emptySlide(newType), ...slides.slice(at)]);
+                  setSelected(at);
+                }}
+              >
+                Agregar
+              </button>
+            </div>
+          )}
+          {errors.slides && <p className="text-sm text-tally-red">{errors.slides}</p>}
+        </div>
+
+        <label className="flex flex-col gap-1.5 text-sm text-ink-dim">
+          <span className="flex justify-between">
+            Texto del post
+            <span className="timecode text-xs text-ink-faint">
+              {[...carousel.caption].length}/{limits.carousel.caption}
+            </span>
+          </span>
+          <textarea
+            rows={5}
+            value={carousel.caption}
+            onChange={(e) => setCarousel((c) => ({ ...c, caption: e.target.value }))}
+            className="console-field"
+            aria-invalid={errors.caption ? true : undefined}
+          />
+          {errors.caption && <span className="text-tally-red">{errors.caption}</span>}
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm text-ink-dim">
+          Hashtags (sin #, separados por espacios; hasta {limits.carousel.hashtags})
+          <input
+            value={carousel.hashtags.join(" ")}
+            onChange={(e) =>
+              setCarousel((c) => ({
+                ...c,
+                hashtags: e.target.value
+                  .replaceAll("#", "")
+                  .split(/[\s,]+/)
+                  .filter(Boolean),
+              }))
+            }
+            className="console-field"
+            aria-invalid={
+              Object.keys(errors).some((k) => k.startsWith("hashtags")) ? true : undefined
+            }
+          />
+          {Object.entries(errors)
+            .filter(([k]) => k.startsWith("hashtags"))
+            .slice(0, 1)
+            .map(([k, m]) => (
+              <span key={k} className="text-tally-red">
+                {m}
+              </span>
+            ))}
+        </label>
+      </div>
+
+      {/* Middle: the selected slide. */}
+      <section aria-label={`Slide ${index + 1}`} className="flex min-w-0 flex-col gap-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="plate">
+            {String(index + 1).padStart(2, "0")} · {SLIDE_LABELS[slide.type]}
+          </h2>
+          <span className="text-xs text-ink-faint">
+            Usá *asteriscos* para destacar (hasta 2 por slide)
+          </span>
+        </div>
+        {errors[`slides.${index}`] && (
+          <p className="text-sm text-tally-red">{errors[`slides.${index}`]}</p>
+        )}
+        <Fields
+          fields={SLIDE_FIELDS[slide.type]}
+          value={slide as unknown as Record<string, unknown>}
+          onChange={updateSlide}
+          errors={errors}
+          path={["slides", String(index)]}
+          icons={ICONS}
+        />
+      </section>
+
+      {/* Right: preview and save. */}
+      <aside
+        aria-label="Vista previa"
+        className="flex flex-col gap-4 xl:sticky xl:top-24 xl:self-start"
+      >
+        <div className="mx-auto w-full max-w-[400px]">
+          <SlidePreview
+            theme={theme}
+            brandName={brand.name}
+            assets={assets}
+            type={slide.type}
+            content={previewable(slide) as Slide}
+            page={{ index, total: slides.length }}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            type="submit"
+            className="console-button console-button-primary"
+            disabled={pending || !check.success}
+          >
+            {pending
+              ? "Guardando…"
+              : post
+                ? `Guardar versión ${post.version + 1}`
+                : "Guardar y renderizar"}
+          </button>
+          {!check.success && (
+            <p className="text-sm text-ink-dim">
+              Faltan {Object.keys(errors).length}{" "}
+              {Object.keys(errors).length === 1 ? "cosa" : "cosas"} para poder guardar.
+            </p>
+          )}
+          {state.status === "error" && (
+            <p role="alert" className="text-sm text-tally-red">
+              {state.message}
+            </p>
+          )}
+          {!post && (
+            <button
+              type="button"
+              className="w-fit text-sm text-ink-dim underline underline-offset-2"
+              onClick={() => {
+                const example = exampleCarouselByPreset[theme.preset];
+                setCarousel({ ...example, pillarKey: carousel.pillarKey });
+                setSelected(0);
+              }}
+            >
+              Cargar el carrusel de ejemplo del estilo
+            </button>
+          )}
+        </div>
+      </aside>
+    </form>
+  );
+}

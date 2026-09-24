@@ -36,11 +36,14 @@ const KIND = {
 let failed = 0;
 const browser = await chromium.launch();
 try {
-  const page = await browser.newPage({ viewport: { width: 1080, height: 1350 } });
+  // The token goes in a header: in the URL it would end up in the web server's log.
+  const page = await browser.newPage({
+    viewport: { width: 1080, height: 1350 },
+    extraHTTPHeaders: { "X-Render-Token": token },
+  });
   for (let i = 0; i < args.length; i += 2) {
     const [path, out] = [args[i], args[i + 1]];
     const url = new URL(path, base);
-    url.searchParams.set("token", token);
     const response = await page.goto(url.href);
     if (!response?.ok()) throw new Error(`${path} respondió ${response?.status()}`);
     await page.waitForFunction(() => window.__renderReady === true, null, { timeout: 15_000 });

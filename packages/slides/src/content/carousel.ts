@@ -21,13 +21,22 @@ export const carouselSchema = z
     hook: plainText(L.carousel.hook),
     pillarKey: key,
     hookType: z.enum(HOOK_TYPES),
-    slides: z.array(slideSchema).min(L.carousel.slides.min).max(L.carousel.slides.max),
-    caption: z.string().trim().min(1).max(L.carousel.caption),
+    slides: z
+      .array(slideSchema)
+      .min(L.carousel.slides.min, {
+        error: `El carrusel necesita al menos ${L.carousel.slides.min} slides.`,
+      })
+      .max(L.carousel.slides.max, { error: `Hasta ${L.carousel.slides.max} slides.` }),
+    caption: z
+      .string()
+      .trim()
+      .min(1, { error: "Escribí el texto del post." })
+      .max(L.carousel.caption, { error: `Máximo ${L.carousel.caption} caracteres.` }),
     hashtags: z
       .array(z.string().regex(/^[\p{L}\p{N}_]+$/u, { error: "Sin #, espacios ni signos." }))
-      .max(L.carousel.hashtags),
+      .max(L.carousel.hashtags, { error: `Hasta ${L.carousel.hashtags} hashtags.` }),
     /** One per slide. */
-    altTexts: z.array(z.string().trim().min(1)).optional(),
+    altTexts: z.array(z.string().trim().min(1, { error: "No puede estar vacío." })).optional(),
   })
   .superRefine((carousel, ctx) => {
     const last = carousel.slides.length - 1;

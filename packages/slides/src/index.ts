@@ -20,6 +20,15 @@ export {
   exampleSlidesByPreset,
 } from "./content/examples";
 export { extremeSlides, fillText } from "./content/extremes";
+export {
+  EDITOR_MIDDLE_TYPES,
+  emptyField,
+  emptySlide,
+  type FieldSpec,
+  SLIDE_FIELDS,
+  SLIDE_LABELS,
+} from "./content/form";
+export { default as ICON_NAMES } from "./content/icon-names.json";
 export { limits } from "./content/limits";
 export {
   SLIDE_TYPES,

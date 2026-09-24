@@ -18,10 +18,11 @@ import { RenderReady } from "@/components/render/render-ready";
 import { TikTokOverlay } from "@/components/render/tiktok-overlay";
 import { mediaUrl } from "@/lib/brand-assets";
 import { db } from "@/lib/db";
-import { isValidRenderToken } from "@/lib/render-token";
+import { isValidRenderToken, renderTokenFrom } from "@/lib/render-token";
 
 // Internal page: one slide of a brand at its exact size, with sample content, for previews and
-// captures (pnpm capture). No login: it requires ?token=RENDER_TOKEN.
+// captures (pnpm capture). No login: it requires RENDER_TOKEN, in the X-Render-Token header
+// (pnpm capture, the worker) or as ?token= when opened by hand.
 //   /render/preview/<brand>/<slide>?token=…&page=3&total=7&seed=post-1&overlay=safe|tiktok
 //     &variant=extreme (worst-case content, every text at its limit)
 //     &qa=1 (outline and list the render QA issues)
@@ -43,7 +44,7 @@ export default async function PreviewSlidePage({
   searchParams,
 }: PageProps<"/render/preview/[brand]/[slide]">) {
   const [{ brand: slug, slide }, query] = await Promise.all([params, searchParams]);
-  if (!isValidRenderToken(query.token)) notFound();
+  if (!isValidRenderToken(await renderTokenFrom(query))) notFound();
   const type = SLIDE_TYPES.find((t) => t === slide);
   if (slide !== "frame" && !type) notFound();
 
