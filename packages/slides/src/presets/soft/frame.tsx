@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { fontStack } from "../../fonts/registry";
+import { fontStack, widthScale } from "../../fonts/registry";
 import { FORMAT, type Rect } from "../../frame/geometry";
 import type { FrameProps } from "../../frame/types";
 import type { SoftTokens } from "./tokens";
@@ -40,6 +40,8 @@ function cssVars(t: SoftTokens): CSSProperties {
     "--weight-numeric": t.fonts.numeric.weight,
     "--radius-card": `${t.radius.card}px`,
     "--radius-panel": `${t.radius.panel}px`,
+    // Titles are sized for Hanken Grotesk 600 (T11): a wider font shrinks to match.
+    "--title-scale": widthScale(t.fonts.display, { family: "Hanken Grotesk", weight: 600 }),
   } as CSSProperties;
 }
 

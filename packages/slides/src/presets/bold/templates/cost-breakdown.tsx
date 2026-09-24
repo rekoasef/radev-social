@@ -13,6 +13,8 @@ const rangeStyle = {
 } as const;
 
 export function CostBreakdownTemplate({ slide }: { slide: SlideOf<"costBreakdown"> }) {
+  // Five or six rows get a smaller size, so each row keeps to one line with wide fonts too.
+  const rowSize = slide.items.length >= 5 ? 26 : 30;
   return (
     <TemplateLayout title={slide.title}>
       <div
@@ -27,7 +29,9 @@ export function CostBreakdownTemplate({ slide }: { slide: SlideOf<"costBreakdown
                 alignItems: "baseline",
                 justifyContent: "space-between",
                 gap: 24,
-                padding: "20px 4px",
+                // Five or six rows: tighter, so rows that wrap (wide fonts) still leave room
+                // for the total and the note.
+                padding: slide.items.length >= 5 ? "13px 4px" : "20px 4px",
                 borderTop: i === 0 ? "none" : "1px solid var(--line)",
               }}
             >
@@ -36,13 +40,16 @@ export function CostBreakdownTemplate({ slide }: { slide: SlideOf<"costBreakdown
                 style={{
                   fontFamily: "var(--font-body)",
                   fontWeight: 400,
-                  fontSize: 30,
+                  fontSize: rowSize,
                   color: "var(--text)",
                 }}
               >
                 {item.label}
               </span>
-              <span data-qa="text" style={{ ...rangeStyle, fontSize: 30, color: "var(--text)" }}>
+              <span
+                data-qa="text"
+                style={{ ...rangeStyle, fontSize: rowSize, color: "var(--text)" }}
+              >
                 {item.range}
               </span>
             </div>

@@ -61,8 +61,9 @@ export function Rich({ text, emphasis }: { text: string; emphasis: CSSProperties
 }
 
 /**
- * Inter Tight 900 in capitals with the title's tracking (-0.02em letters, +0.12em spaces),
- * measured in the browser on long Spanish words (T11), with ~5% margin.
+ * Inter Tight 900 in capitals: 0.649 em per letter in src/fonts/metrics.json, minus the title's
+ * tracking (-0.02em), plus ~2% margin (capitals vary less than lowercase); spaces get the
+ * +0.12em word spacing. Other fonts are scaled to this width by --title-scale.
  */
 export const TITLE_GLYPHS: GlyphWidths = { char: 0.64, space: 0.37 };
 
@@ -96,7 +97,8 @@ export function Title({ text, size = titleSize(text) }: { text: string; size?: n
         paddingBottom: "0.12em",
         fontFamily: "var(--font-display)",
         fontWeight: "var(--weight-display)",
-        fontSize: size,
+        // --title-scale (set by the frame) shrinks wider fonts to the width `size` was fit for.
+        fontSize: `calc(${size}px * var(--title-scale, 1))`,
         // Accented capitals (DÍA, INFORMACIÓN) reach ~1em above the baseline: below 1.06 they
         // touch the line above.
         lineHeight: 1.06,

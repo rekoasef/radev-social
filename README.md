@@ -37,10 +37,13 @@ El `.env` tiene claves y **nunca se sube a git**. Si ya tenés uno de otra máqu
 cp .env.example .env
 openssl rand -hex 24         # → POSTGRES_PASSWORD (y reemplazalo también dentro de DATABASE_URL)
 openssl rand -base64 32      # → BETTER_AUTH_SECRET
+openssl rand -hex 24         # → RENDER_TOKEN
 ```
 
 - `ALLOWED_EMAILS`: tu email verificado de GitHub (los que no estén en la lista no pueden entrar).
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`: de una OAuth App en github.com/settings/developers → *New OAuth App*, con homepage `http://localhost:3000` y callback `http://localhost:3000/api/auth/callback/github`.
+- `RENDER_TOKEN`: clave de las páginas internas `/render` (preview y capturas de slides). Cada máquina puede tener la suya.
+- `MEDIA_DIR`: dejalo vacío. Los archivos subidos (logos, orbe) van a `media/` en la raíz del repo, compartida por `pnpm dev` y Docker. No viajan con git: el seed recrea los de RAdev y Lumus.
 
 ### 4. Levantar
 
@@ -69,5 +72,15 @@ docker compose down          # los datos quedan guardados en el volumen de Docke
 ```
 
 `docker compose down -v` **borra la base de datos**: no lo uses salvo que quieras empezar de cero.
+
+### 6. Ver las slides
+
+- En el panel: **Marcas** → una marca → **Slides** muestra los 12 tipos con su identidad y el carrusel de ejemplo; **Identidad visual** edita colores, tipografías y archivos con vista previa en vivo.
+- Capturas con Playwright (la primera vez: `pnpm exec playwright install chromium`):
+
+```bash
+pnpm capture "/render/preview/lumus/cover" /tmp/cover.png
+pnpm capture --check "/render/preview/lumus/flow?variant=extreme" -   # control de desbordes
+```
 
 Todos los comandos están en la sección "Comandos" de `CLAUDE.md`.

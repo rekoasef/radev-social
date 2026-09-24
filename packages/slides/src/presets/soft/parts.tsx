@@ -59,10 +59,11 @@ export function labelText(size: number): CSSProperties {
 }
 
 /**
- * Hanken Grotesk (sentence case) with the title's tracking (-0.01em), measured in the browser
- * on long Spanish words (T11), with ~5% margin.
+ * Hanken Grotesk 600 (sentence case): 0.492 em per letter in src/fonts/metrics.json, minus the
+ * title's tracking (-0.01em), plus ~7% margin: lines of long words with m and n run wider than
+ * the average. Other fonts are scaled to this width by --title-scale.
  */
-export const TITLE_GLYPHS: GlyphWidths = { char: 0.47, space: 0.25 };
+export const TITLE_GLYPHS: GlyphWidths = { char: 0.52, space: 0.26 };
 
 /** Visible text of a title (without emphasis marks). */
 export const plainOf = (text: string) => {
@@ -100,7 +101,8 @@ export function Title({
         paddingBottom: "0.1em",
         fontFamily: "var(--font-display)",
         fontWeight: "var(--weight-display)",
-        fontSize: size,
+        // --title-scale (set by the frame) shrinks wider fonts to the width `size` was fit for.
+        fontSize: `calc(${size}px * var(--title-scale, 1))`,
         lineHeight: 1.08,
         letterSpacing: "-0.01em",
         textWrap: "balance",

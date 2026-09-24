@@ -8,14 +8,16 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T12: cierre de la Fase 1 (criterio de terminado, docs, comandos).
-- **Última actualización:** 2026-09-24, al cerrar la T11 de la Fase 1
-- **Para retomar:** las 12 plantillas de cada preset se ven en `/render/preview/<radev|lumus>/<tipo>?token=…` con `pnpm dev`. Las marcas se gestionan en Marcas (`/brands`): lista, nueva, `/brands/<slug>` (datos generales, archivar, borrar), `/brands/<slug>/identity` (identidad visual) y `/brands/<slug>/assets`.
+- **Fase:** 2 — Posts, versiones, editor y render (por empezar). Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** proponer el plan de la Fase 2 (`docs/ROADMAP.md`) y aprobarlo con el operador antes de codear.
+- **Última actualización:** 2026-09-24, al cerrar la Fase 1
+- **Para retomar:** todo lo de la Fase 1 se ve en el panel (Marcas → Slides / Identidad visual / Assets) con `pnpm dev`. El control del render (`checkRender`) y los extremos son la base del QA del render de la Fase 2.
 
 ## Fase 1 — tareas
 
-Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador apruebe el diseño.
+Plan aprobado el 2026-09-23. Terminada el 2026-09-24. 👁 = termina con capturas para que el operador apruebe el diseño.
+
+**Criterio de terminado, recorrido en la T12:** referencias de RAdev aprobadas (T4); slides sin referencia (T5) y carrusel de Lumus (T8) aprobados; una tercera marca de prueba creada, con colores, tipografías (las 9) y logo cambiados, vista en el render y borrada (T12). Clon limpio con base vacía (Postgres aparte, puerto 5434): migraciones y seed crean RAdev y Lumus con sus assets en `media/`; el seed corrido dos veces no duplica.
 
 | Tarea | Qué | Estado |
 |---|---|---|
@@ -31,7 +33,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | T9 | CRUD de marcas (borrar solo sin posts) | ✅ |
 | T10 | Editor de identidad visual: preset, formulario desde el schema, vista previa en vivo, aviso de contraste | ✅ |
 | T11 | Calibración de límites de caracteres con casos extremos; la preview marca desbordes | ✅ |
-| T12 | Cierre: criterio de terminado, docs, comandos | |
+| T12 | Cierre: criterio de terminado, docs, comandos | ✅ |
 
 Decisiones aprobadas con el plan: (1) ruta `/render/preview/...` con token interno en vez de login, para poder capturarla; (2) Playwright como dependencia de desarrollo desde la Fase 1 (el job de render sigue siendo de la Fase 2); (3) migración de datos para los tokens de las marcas existentes.
 
@@ -115,6 +117,10 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Límites calibrados** (aprobados con el operador): `cardGrid` bajada 14 y etiqueta 24 (antes 16 y 28); `comparison` hasta 4 puntos por lado (antes 5); etiquetas de `flow` con palabras de hasta 16 letras (`plainText(max, { maxWord })`). Se sacó `overflow-wrap: anywhere` de `flow`: una palabra que no entra ahora falla en el control en vez de cortarse.
 - **Hero de `soft` elástico**: se achica con el espacio que dejan título y subtítulo.
 - **Editor de identidad**: la vista previa corre el control y lista los problemas; "Probar con textos al límite" muestra los extremos con la identidad que se está editando.
+- **Pestaña Slides (T12)**: `/brands/<slug>/slides`, los 12 tipos con la identidad guardada (control del render en cada uno y resumen arriba), casilla "Textos al límite" y el carrusel de ejemplo del preset. `SlidePreview` acepta `content`, `page` y `onQa` para reusarse ahí.
+- **Métricas de tipografías (T12)**: `src/fonts/metrics.json` (familia → peso → ancho medio de letra en minúsculas y mayúsculas, em), generado por `pnpm --filter @radev/slides fonts:measure` (Playwright carga los woff2 del repo; mide solo letras: con espacios el promedio salía bajo, así se descubrió que la medición de la T11 subestimaba Hanken Grotesk). `letterWidth` / `widthScale` en `fonts/registry.ts`; los marcos ponen `--title-scale` y `Title` lo aplica. `TITLE_GLYPHS` derivados de la tabla: `bold` 0,64 (~2 % de margen), `soft` 0,52 (~7 %).
+- **Control del render, tolerancia vertical**: media altura de letra (la caja de fuentes como Manrope pasaba el interlineado sin cortar nada y daba falsos desbordes); a lo ancho, estricto.
+- **Barrido de tipografías (T12)**: las 9 × 2 presets × 12 tipos × normal/extremo. Pasan todas salvo las monoespaciadas como texto (en `flow` y en extremos de `steps`): documentadas como no recomendadas; el editor avisa.
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes y las imágenes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante

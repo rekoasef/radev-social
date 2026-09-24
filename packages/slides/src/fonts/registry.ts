@@ -1,3 +1,5 @@
+import metricsJson from "./metrics.json";
+
 /**
  * Curated typefaces for slides (docs/DESIGN-SYSTEM.md §2). The files ship with the project
  * through @fontsource-variable packages: nothing is fetched from the internet at build or
@@ -104,4 +106,33 @@ export function fontStack(family: FontFamily): string {
 export function supportsWeight(family: FontFamily, weight: number): boolean {
   const { min, max } = fonts[family].weights;
   return weight >= min && weight <= max;
+}
+
+/** Measured letter widths (scripts/measure-fonts.mjs): family → weight → [lowercase, uppercase] em. */
+const metrics: Record<string, Record<string, number[]>> = metricsJson;
+
+/** Average letter width of a family at a weight, in em (closest measured weight). */
+export function letterWidth(family: FontFamily, weight: number, caps = false): number {
+  const byWeight = metrics[family];
+  if (!byWeight) return caps ? 0.6 : 0.5;
+  const closest = Object.keys(byWeight)
+    .map(Number)
+    .reduce((best, w) => (Math.abs(w - weight) < Math.abs(best - weight) ? w : best));
+  const [lower = 0.5, upper = 0.6] = byWeight[String(closest)] ?? [];
+  return caps ? upper : lower;
+}
+
+/**
+ * How much to shrink a text set in `font` so it is no wider than in the preset's reference
+ * font: layouts are calibrated with the reference (T11). Never enlarges; never below 0.7.
+ */
+export function widthScale(
+  font: { family: FontFamily; weight: number },
+  reference: { family: FontFamily; weight: number },
+  caps = false,
+): number {
+  const ratio =
+    letterWidth(reference.family, reference.weight, caps) /
+    letterWidth(font.family, font.weight, caps);
+  return Math.round(Math.min(1, Math.max(0.7, ratio)) * 1000) / 1000;
 }

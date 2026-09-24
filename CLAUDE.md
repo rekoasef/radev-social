@@ -76,6 +76,7 @@ pnpm db:studio      # ver y editar la base
 
 # Slides
 pnpm --filter @radev/slides icons:sync   # regenerar la lista de íconos tras actualizar lucide-react
+pnpm --filter @radev/slides fonts:measure # medir el ancho de las tipografías (tras sumar una)
 pnpm capture "/render/preview/radev/frame?overlay=tiktok" /tmp/x.png
                     # captura de una slide con Playwright (web levantada + RENDER_TOKEN en .env)
                     # overlay=safe muestra zonas seguras; overlay=tiktok superpone la UI de TikTok

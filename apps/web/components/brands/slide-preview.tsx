@@ -6,6 +6,7 @@ import {
   exampleSlidesByPreset,
   extremeSlides,
   FORMAT,
+  type Slide,
   type SlideAssets,
   SlideContent,
   SlideFrame,
@@ -38,6 +39,9 @@ export function SlidePreview({
   assets,
   type,
   extreme = false,
+  content,
+  page,
+  onQa,
 }: {
   theme: BrandTheme;
   brandName: string;
@@ -45,6 +49,12 @@ export function SlidePreview({
   type: SlideType;
   /** Worst-case content (every text at its limit) instead of the preset's examples. */
   extreme?: boolean;
+  /** A specific slide (e.g. from the example carousel) instead of the example of `type`. */
+  content?: Slide;
+  /** Position in a carousel; by default the cover is first and the rest is page 3 of 7. */
+  page?: { index: number; total: number };
+  /** Called with the render QA after each check (the gallery counts them). */
+  onQa?: (issues: QaIssue[]) => void;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(420);
@@ -66,15 +76,18 @@ export function SlidePreview({
     let active = true;
     const frame = box.current?.querySelector("[data-slide-frame]");
     document.fonts.ready.then(() => {
-      if (active && frame) setIssues(checkRender(frame));
+      if (!active || !frame) return;
+      const found = checkRender(frame);
+      setIssues(found);
+      onQa?.(found);
     });
     return () => {
       active = false;
     };
-  }, [theme, type, extreme, width]);
+  }, [theme, type, extreme, width, content]);
 
   const scale = width / FORMAT.width;
-  const slide = (extreme ? extremeSlides : exampleSlidesByPreset[theme.preset])[type];
+  const slide = content ?? (extreme ? extremeSlides : exampleSlidesByPreset[theme.preset])[type];
   return (
     <div ref={box} className="w-full">
       <div
@@ -92,7 +105,7 @@ export function SlidePreview({
           <SlideFrame
             theme={theme}
             brandName={brandName}
-            page={{ index: type === "cover" ? 0 : 2, total: 7 }}
+            page={page ?? { index: type === "cover" ? 0 : 2, total: 7 }}
             seed="preview"
             glow={type === "cover" || type === "cta"}
             assets={assets}

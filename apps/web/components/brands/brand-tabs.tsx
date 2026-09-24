@@ -2,13 +2,14 @@ import type { Brand } from "@radev/db";
 import Link from "next/link";
 import { Tally } from "@/components/console/tally";
 
-type Tab = "general" | "assets" | "identity";
+type Tab = "general" | "identity" | "slides" | "assets";
 
 /** Header of a brand's pages: back to the list, name, status and the brand's sections. */
 export function BrandTabs({ brand, current }: { brand: Brand; current: Tab }) {
   const tabs: { id: Tab; label: string; href: string }[] = [
     { id: "general", label: "General", href: `/brands/${brand.slug}` },
     { id: "identity", label: "Identidad visual", href: `/brands/${brand.slug}/identity` },
+    { id: "slides", label: "Slides", href: `/brands/${brand.slug}/slides` },
     { id: "assets", label: "Assets", href: `/brands/${brand.slug}/assets` },
   ];
   return (

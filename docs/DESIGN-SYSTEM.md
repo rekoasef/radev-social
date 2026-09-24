@@ -23,7 +23,10 @@ Una identidad visual = **preset de estilo** (código) + **tokens** (datos editab
 - **Marca nueva = elegir preset + cargar tokens y assets. Cero código.** Un estilo visual completamente distinto = un preset nuevo (código), que queda disponible para todas las marcas.
 
 ### Tipografías disponibles (lista curada)
-Todas libres, auto-hospedadas en el proyecto (no se cargan de internet al renderizar): Inter, Inter Tight, Hanken Grotesk, Geist Sans, Geist Mono, Space Grotesk, Manrope, DM Sans, JetBrains Mono. Vienen de paquetes `@fontsource-variable` (fuentes variables). Para sumar una: instalar su paquete en `packages/slides` y registrarla en `src/fonts/registry.ts` y `src/fonts/load.ts`.
+Todas libres, auto-hospedadas en el proyecto (no se cargan de internet al renderizar): Inter, Inter Tight, Hanken Grotesk, Geist Sans, Geist Mono, Space Grotesk, Manrope, DM Sans, JetBrains Mono. Vienen de paquetes `@fontsource-variable` (fuentes variables). Para sumar una: instalar su paquete en `packages/slides`, registrarla en `src/fonts/registry.ts` y `src/fonts/load.ts`, y correr `pnpm --filter @radev/slides fonts:measure` (mide el ancho de sus letras en cada peso: `src/fonts/metrics.json`).
+
+- **Ancho de las tipografías**: los títulos se calculan con la tipografía de referencia de cada preset (Inter Tight 900 en `bold`, Hanken Grotesk 600 en `soft`). Si la marca elige una más ancha, el título se achica en la misma proporción (`--title-scale`, entre 0,7 y 1), así ocupa las líneas previstas. Probado con las 9 tipografías en los dos presets y los 12 tipos, con textos normales y al límite (T12).
+- **Monoespaciadas (Geist Mono, JetBrains Mono) como texto: no recomendadas.** Son un 20–25 % más anchas: en `flow` con 4 nodos las etiquetas no entran ni al tamaño mínimo, y en algunos extremos el texto no entra. El editor de identidad lo avisa ("Probar con textos al límite"). Para cifras (`fonts.numeric` de `soft`) sí se usan.
 
 ### Presets de la v1
 
@@ -184,7 +187,7 @@ Carousel = {
 - `question`: caja destacada (radio `callout`) con el ícono en acento a la izquierda y `lead` (en negrita) + `text` como un solo párrafo.
 - `cta`: botón sólido en acento con texto en el color de fondo y el ícono; debajo, el tagline de la marca (`footer.tagline`) con barrita, en `muted`.
 - `comparison`: dos columnas; la izquierda neutra (borde `line`, sin brillo), la derecha en acento (borde, brillo, viñetas e ícono). Veredicto abajo.
-- `costBreakdown`: filas concepto / rango separadas por líneas finas, rangos en `fonts.label` 700 con números tabulares; el total en una caja destacada (radio `callout`) con el rango grande en acento. La nota, chica abajo.
+- `costBreakdown`: con 5 o 6 filas, letra y espaciado más chicos, para que cada fila siga en una línea con tipografías anchas. Filas concepto / rango separadas por líneas finas, rangos en `fonts.label` 700 con números tabulares; el total en una caja destacada (radio `callout`) con el rango grande en acento. La nota, chica abajo.
 - `steps`: badges cuadrados "01", "02"… en acento, unidos por un riel vertical; título del paso en 700 y texto en apoyo.
 - `bigNumber`: la cifra enorme en acento con brillo, en una línea (el tamaño se ajusta al largo, hasta 260 px); etiqueta en 600, contexto y fuente.
 - `chart`: SVG propio. Grilla punteada en `line`, ejes en `muted`. Línea en acento con brillo y área con degradado; barras en acento al 42 % salvo la última, sólida. El último valor va en una etiqueta en acento. Con ≤ 8 puntos se rotulan todos; si hay más, el primero, el del medio y el último.
@@ -244,6 +247,8 @@ Referencias: `docs/references/radev/`. Cuando una referencia contradice estas re
 
 1. **Desborde**: ningún `data-qa="text"` con overflow ni fuera de su caja (`data-qa="content"`).
 2. **Zona segura**: ningún `data-qa="content"` ni `data-qa="text"` fuera del área segura o debajo de la columna de botones de TikTok.
+
+Hacia abajo se toleran hasta media altura de letra: la caja de algunas fuentes (Manrope, DM Sans) pasa unos píxeles el interlineado sin cortar nada; una línea de más sí es un desborde. A lo ancho, cualquier píxel cuenta.
 
 Los puntos 1 y 2 los hace `checkRender` (`packages/slides/src/qa.ts`), autocontenida para poder pasarla a Playwright tal cual. La usan la preview (`?qa=1` marca y lista los problemas), `pnpm capture --check`, el editor de identidad (aviso bajo la vista previa, con la opción de probar textos al límite) y, desde la Fase 2, el render del worker.
 3. **Fuentes y assets cargados**: se espera `document.fonts.ready` y la carga de imágenes; si algo falla, el render falla.

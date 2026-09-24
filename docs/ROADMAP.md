@@ -31,10 +31,12 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] CRUD de marcas: crear, editar, archivar, borrar (solo sin posts)
 - [x] Editor de identidad visual: elegir preset, formulario de tokens generado desde el schema, vista previa en vivo con slides de ejemplo
 - [x] Tabla `brand_assets` y subida de assets (validación de tipo y tamaño); seed con los assets de Lumus
-- [ ] Página de preview de todos los tipos de slide por marca
-- [ ] Confirmar las zonas seguras superponiendo un render real sobre la captura de TikTok
+- [x] Página de preview de todos los tipos de slide por marca
+- [x] Confirmar las zonas seguras superponiendo un render real sobre la captura de TikTok
 - [x] Calibrar límites de caracteres con casos extremos
 - [x] Tests de schemas de contenido y de tokens
+
+**Terminada el 2026-09-24.**
 
 **Terminado cuando:** la app reproduce fielmente las cuatro referencias de RAdev (con las reglas unificadas del preset), apruebo las slides sin referencia y un carrusel de ejemplo de Lumus, y puedo crear una tercera marca de prueba desde el panel, cambiarle colores, tipografías y logo, y ver el resultado sin tocar código.
 

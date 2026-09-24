@@ -78,9 +78,13 @@ export function checkRender(frame: Element, mark = false): QaIssue[] {
       flag(el, "tiktok");
       continue;
     }
+    // Vertically, a font's glyph box may run a few pixels past a tight line height (Manrope,
+    // DM Sans…) without anything being cut: only half a line or more is a real overflow (an
+    // extra line that does not fit). Horizontally, any pixel counts.
+    const fontSize = Number.parseFloat(getComputedStyle(el).fontSize) || 16;
     if (
       el.scrollWidth > el.clientWidth + TOLERANCE ||
-      el.scrollHeight > el.clientHeight + TOLERANCE
+      el.scrollHeight > el.clientHeight + fontSize * 0.5
     ) {
       flag(el, "overflow");
       continue;

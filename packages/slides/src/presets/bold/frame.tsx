@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { fontStack } from "../../fonts/registry";
+import { fontStack, widthScale } from "../../fonts/registry";
 import { FORMAT, type Rect } from "../../frame/geometry";
 import { type FrameProps, resolveAsset, type SlideAsset } from "../../frame/types";
 import { BoldDecorations } from "./decorations";
@@ -36,6 +36,8 @@ function cssVars(t: BoldTokens): CSSProperties {
     "--weight-label": t.fonts.label.weight,
     "--radius-card": `${t.radius.card}px`,
     "--radius-callout": `${t.radius.callout}px`,
+    // Titles are sized for Inter Tight 900 in capitals (T11): a wider font shrinks to match.
+    "--title-scale": widthScale(t.fonts.display, { family: "Inter Tight", weight: 900 }, true),
   } as CSSProperties;
 }
 

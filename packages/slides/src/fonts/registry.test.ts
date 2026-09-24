@@ -1,7 +1,15 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
-import { FONT_FAMILIES, fontStack, fonts, isFontFamily, supportsWeight } from "./registry";
+import {
+  FONT_FAMILIES,
+  fontStack,
+  fonts,
+  isFontFamily,
+  letterWidth,
+  supportsWeight,
+  widthScale,
+} from "./registry";
 
 const require = createRequire(import.meta.url);
 
@@ -35,5 +43,27 @@ describe("font registry", () => {
     expect(supportsWeight("Inter Tight", 900)).toBe(true);
     expect(supportsWeight("Space Grotesk", 900)).toBe(false);
     expect(supportsWeight("Manrope", 100)).toBe(false);
+  });
+});
+
+describe("font metrics", () => {
+  it("measure every curated family at every weight it offers", async () => {
+    const { default: metrics } = await import("./metrics.json");
+    for (const family of FONT_FAMILIES) {
+      const byWeight = (metrics as Record<string, Record<string, number[]>>)[family];
+      expect(byWeight, family).toBeDefined();
+      const { min, max } = fonts[family].weights;
+      for (let w = Math.ceil(min / 100) * 100; w <= Math.min(max, 900); w += 100) {
+        expect(byWeight?.[String(w)], `${family} ${w}`).toHaveLength(2);
+      }
+    }
+  });
+
+  it("shrink wider fonts and never enlarge narrower ones", () => {
+    const hanken = { family: "Hanken Grotesk", weight: 600 } as const;
+    expect(widthScale(hanken, hanken)).toBe(1);
+    expect(widthScale({ family: "JetBrains Mono", weight: 400 }, hanken)).toBeLessThan(0.85);
+    expect(widthScale({ family: "Inter Tight", weight: 400 }, hanken)).toBe(1);
+    expect(letterWidth("Geist Mono", 400)).toBeCloseTo(0.6, 2);
   });
 });
