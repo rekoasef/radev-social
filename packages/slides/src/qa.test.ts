@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { LAYER_LABELS } from "./content/layout";
 import { EXCLUSION_ZONES, FORMAT, SAFE_MARGINS } from "./frame/geometry";
 
 describe("checkRender", () => {
@@ -13,5 +14,11 @@ describe("checkRender", () => {
     const zone = EXCLUSION_ZONES[0];
     expect(EXCLUSION_ZONES).toHaveLength(1);
     expect(source).toContain(`const TIKTOK = { left: ${zone?.x}, top: ${zone?.y} };`);
+  });
+
+  it("names layers like content/layout.ts", () => {
+    const source = readFileSync(new URL("./qa.ts", import.meta.url), "utf8");
+    for (const [layer, label] of Object.entries(LAYER_LABELS))
+      expect(source).toContain(`${layer}: "${label}"`);
   });
 });

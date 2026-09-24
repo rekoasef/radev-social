@@ -29,6 +29,18 @@ export {
   SLIDE_LABELS,
 } from "./content/form";
 export { default as ICON_NAMES } from "./content/icon-names.json";
+export {
+  isMoved,
+  LAYER_LABELS,
+  LAYER_LIMITS,
+  LAYERS,
+  type LayerAdjust,
+  type LayerName,
+  layerAdjust,
+  type SlideLayout,
+  slideLayoutSchema,
+  withLayer,
+} from "./content/layout";
 export { limits } from "./content/limits";
 export {
   SLIDE_TYPES,

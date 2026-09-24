@@ -11,7 +11,7 @@ export function StepsTemplate({ slide }: { slide: SlideOf<"steps"> }) {
   const count = slide.steps.length;
   const gap = count >= 5 ? 26 : 36;
   return (
-    <TemplateLayout title={slide.title}>
+    <TemplateLayout title={slide.title} layout={slide.layout}>
       <ol
         style={{
           position: "relative",

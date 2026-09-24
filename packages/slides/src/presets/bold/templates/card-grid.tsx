@@ -54,7 +54,7 @@ export function CardGridTemplate({ slide }: { slide: SlideOf<"cardGrid"> }) {
   }
 
   return (
-    <TemplateLayout title={slide.title}>
+    <TemplateLayout title={slide.title} layout={slide.layout}>
       {slide.intro && <Support text={slide.intro} />}
       <div
         style={{

@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import { parseEmphasis } from "../../content/emphasis";
+import type { SlideLayout } from "../../content/layout";
 import { SAFE_AREA } from "../../frame/geometry";
+import { Layer } from "../../frame/layer";
 import type { SlideAsset } from "../../frame/types";
 import { SlideIcon } from "../../icons";
 import { fitTextSize, type GlyphWidths } from "../shared/fit";
@@ -102,7 +104,7 @@ export function Title({
         fontFamily: "var(--font-display)",
         fontWeight: "var(--weight-display)",
         // --title-scale (set by the frame) shrinks wider fonts to the width `size` was fit for.
-        fontSize: `calc(${size}px * var(--title-scale, 1))`,
+        fontSize: `calc(${size}px * var(--title-scale, 1) * var(--title-adjust, 1))`,
         lineHeight: 1.08,
         letterSpacing: "-0.01em",
         textWrap: "balance",
@@ -230,13 +232,26 @@ export function Hero({ asset, size }: { asset: SlideAsset; size: number }) {
 }
 
 /** Vertical layout shared by the templates: title on top, the rest centered below it. */
-export function TemplateLayout({ title, children }: { title: string; children: ReactNode }) {
+export function TemplateLayout({
+  title,
+  layout,
+  children,
+}: {
+  title: string;
+  /** The slide's hand adjustments: the title and the rest move as layers (ADR 0013). */
+  layout?: SlideLayout;
+  children: ReactNode;
+}) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div data-qa="content" style={{ paddingTop: 30, width: TITLE_WIDTH }}>
-        <Title text={title} />
-      </div>
-      <div
+      <Layer name="title" layout={layout}>
+        <div data-qa="content" style={{ paddingTop: 30, width: TITLE_WIDTH }}>
+          <Title text={title} />
+        </div>
+      </Layer>
+      <Layer
+        name="body"
+        layout={layout}
         style={{
           flex: 1,
           display: "flex",
@@ -247,7 +262,7 @@ export function TemplateLayout({ title, children }: { title: string; children: R
         }}
       >
         {children}
-      </div>
+      </Layer>
     </div>
   );
 }

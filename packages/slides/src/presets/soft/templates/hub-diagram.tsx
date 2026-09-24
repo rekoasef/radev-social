@@ -37,7 +37,7 @@ export function HubDiagramTemplate({ slide }: { slide: SlideOf<"hubDiagram"> }) 
   );
 
   return (
-    <TemplateLayout title={slide.title}>
+    <TemplateLayout title={slide.title} layout={slide.layout}>
       <div style={{ position: "relative", width: layout.width, height: layout.height }}>
         <svg
           aria-hidden="true"

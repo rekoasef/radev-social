@@ -31,6 +31,7 @@ const KIND = {
   "outside-box": "se sale de su tarjeta",
   "safe-area": "fuera del área segura",
   tiktok: "debajo de los botones de TikTok",
+  overlap: "encima de otro elemento",
 };
 
 let failed = 0;

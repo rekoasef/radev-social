@@ -90,7 +90,7 @@ function Column({ side, favored }: { side: Side; favored: boolean }) {
 
 export function ComparisonTemplate({ slide }: { slide: SlideOf<"comparison"> }) {
   return (
-    <TemplateLayout title={slide.title}>
+    <TemplateLayout title={slide.title} layout={slide.layout}>
       <div
         style={{ display: "flex", alignItems: "stretch", gap: GAP, width: SOFT_CONTENT_BOX.width }}
       >

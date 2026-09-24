@@ -1,4 +1,5 @@
 import type { SlideOf } from "../../../content/slides";
+import { Layer } from "../../../frame/layer";
 import { fitTextSize } from "../../shared/fit";
 import { BOLD_CONTENT_BOX } from "../frame";
 import { glowShadow, labelText, plainOf, Support, TITLE_GLYPHS, Title } from "../parts";
@@ -28,45 +29,49 @@ export function CoverTemplate({ slide }: { slide: SlideOf<"cover"> }) {
         width: BOLD_CONTENT_BOX.width,
       }}
     >
-      <div
-        data-qa="content"
-        style={{ paddingTop: 40, display: "flex", flexDirection: "column", gap: 36 }}
-      >
-        {slide.kicker && (
-          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-            <span
-              style={{
-                width: 3,
-                height: 30,
-                background: "var(--accent)",
-                boxShadow: glowShadow(16),
-              }}
-            />
-            <span data-qa="text" style={{ ...labelText(20), color: "var(--accent)" }}>
-              {slide.kicker}
-            </span>
-          </div>
-        )}
-        <Title text={slide.title} size={coverTitleSize(slide.title)} />
-      </div>
-      {slide.subtitle && (
+      <Layer name="title" layout={slide.layout}>
         <div
           data-qa="content"
-          style={{ display: "flex", flexDirection: "column", gap: 28, paddingBottom: 20 }}
+          style={{ paddingTop: 40, display: "flex", flexDirection: "column", gap: 36 }}
         >
-          <span
-            style={{
-              width: 72,
-              height: 4,
-              borderRadius: 2,
-              background: "var(--accent)",
-              boxShadow: glowShadow(18),
-            }}
-          />
-          <div style={{ maxWidth: 720 }}>
-            <Support text={slide.subtitle} size={38} />
-          </div>
+          {slide.kicker && (
+            <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+              <span
+                style={{
+                  width: 3,
+                  height: 30,
+                  background: "var(--accent)",
+                  boxShadow: glowShadow(16),
+                }}
+              />
+              <span data-qa="text" style={{ ...labelText(20), color: "var(--accent)" }}>
+                {slide.kicker}
+              </span>
+            </div>
+          )}
+          <Title text={slide.title} size={coverTitleSize(slide.title)} />
         </div>
+      </Layer>
+      {slide.subtitle && (
+        <Layer name="body" layout={slide.layout}>
+          <div
+            data-qa="content"
+            style={{ display: "flex", flexDirection: "column", gap: 28, paddingBottom: 20 }}
+          >
+            <span
+              style={{
+                width: 72,
+                height: 4,
+                borderRadius: 2,
+                background: "var(--accent)",
+                boxShadow: glowShadow(18),
+              }}
+            />
+            <div style={{ maxWidth: 720 }}>
+              <Support text={slide.subtitle} size={38} />
+            </div>
+          </div>
+        </Layer>
       )}
     </div>
   );

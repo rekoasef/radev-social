@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import { parseEmphasis } from "../../content/emphasis";
+import type { SlideLayout } from "../../content/layout";
 import { SAFE_AREA } from "../../frame/geometry";
+import { Layer } from "../../frame/layer";
 import { SlideIcon } from "../../icons";
 
 import { fitTextSize, type GlyphWidths } from "../shared/fit";
@@ -98,7 +100,7 @@ export function Title({ text, size = titleSize(text) }: { text: string; size?: n
         fontFamily: "var(--font-display)",
         fontWeight: "var(--weight-display)",
         // --title-scale (set by the frame) shrinks wider fonts to the width `size` was fit for.
-        fontSize: `calc(${size}px * var(--title-scale, 1))`,
+        fontSize: `calc(${size}px * var(--title-scale, 1) * var(--title-adjust, 1))`,
         // Accented capitals (DÍA, INFORMACIÓN) reach ~1em above the baseline: below 1.06 they
         // touch the line above.
         lineHeight: 1.06,
@@ -188,15 +190,28 @@ export function IconTile({
 }
 
 /** Vertical layout shared by the templates: title on top, the rest centered below it. */
-export function TemplateLayout({ title, children }: { title: string; children: ReactNode }) {
+export function TemplateLayout({
+  title,
+  layout,
+  children,
+}: {
+  title: string;
+  /** The slide's hand adjustments: the title and the rest move as layers (ADR 0013). */
+  layout?: SlideLayout;
+  children: ReactNode;
+}) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* The title may take the full safe width (920): even at 4 lines it ends well above
           y = 650, where TikTok's button column starts. Everything below it stays at 850. */}
-      <div data-qa="content" style={{ paddingTop: 30, width: TITLE_WIDTH }}>
-        <Title text={title} />
-      </div>
-      <div
+      <Layer name="title" layout={layout}>
+        <div data-qa="content" style={{ paddingTop: 30, width: TITLE_WIDTH }}>
+          <Title text={title} />
+        </div>
+      </Layer>
+      <Layer
+        name="body"
+        layout={layout}
         style={{
           flex: 1,
           display: "flex",
@@ -207,7 +222,7 @@ export function TemplateLayout({ title, children }: { title: string; children: R
         }}
       >
         {children}
-      </div>
+      </Layer>
     </div>
   );
 }

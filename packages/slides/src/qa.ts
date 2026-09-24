@@ -10,8 +10,10 @@
 // as is with page.evaluate(checkRender). Keep the numbers in sync with frame/geometry.ts (a test
 // checks it).
 
+export const QA_KINDS = ["overflow", "outside-box", "safe-area", "tiktok", "overlap"] as const;
+
 export type QaIssue = {
-  kind: "overflow" | "outside-box" | "safe-area" | "tiktok";
+  kind: (typeof QA_KINDS)[number];
   /** Start of the offending text, to find it. */
   text: string;
 };
@@ -21,7 +23,11 @@ export type QaIssue = {
  * preview too: positions are measured relative to the frame and divided by its scale. With
  * `mark`, offending elements get a red outline.
  */
-export function checkRender(frame: Element, mark = false): QaIssue[] {
+export function checkRender(
+  frame: Element,
+  mark = false,
+  options: { overlap?: boolean } = {},
+): QaIssue[] {
   const WIDTH = 1080;
   const SAFE = { left: 80, top: 80, right: 1080 - 80, bottom: 1350 - 100 };
   const TIKTOK = { left: 930, top: 650 };
@@ -40,8 +46,8 @@ export function checkRender(frame: Element, mark = false): QaIssue[] {
   };
   const snippet = (el: Element) => (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 40);
   const issues: QaIssue[] = [];
-  const flag = (el: Element, kind: QaIssue["kind"]) => {
-    issues.push({ kind, text: snippet(el) });
+  const flag = (el: Element, kind: QaIssue["kind"], text = snippet(el)) => {
+    issues.push({ kind, text });
     if (mark && el instanceof HTMLElement) {
       el.style.outline = "3px solid #ff3b30";
       el.style.outlineOffset = "2px";
@@ -102,6 +108,87 @@ export function checkRender(frame: Element, mark = false): QaIssue[] {
       flag(el, "outside-box");
     }
   }
+
+  // Layers moved by hand (ADR 0013) landing on each other: the title over the hero, the body
+  // over the title. Only with `overlap` (the editor): it is a warning for the operator, who sees
+  // the result, and never fails a render. Measured on what is drawn: text line boxes, content
+  // boxes with a visible surface, and images without their usual transparent margin. Untouched
+  // templates are not checked: their layout already keeps layers apart.
+  if (options.overlap) {
+    const OVERLAP_DEPTH = 12;
+    /** Transparent margin around a brand's artwork, as a share of the image. */
+    const IMAGE_INSET = 0.15;
+    /** A line box runs past the letters (the font's ascent and descent): trimmed top and bottom. */
+    const LINE_TRIM = 0.15;
+    const drawn = (layer: Element) => {
+      const rects: ReturnType<typeof local>[] = [];
+      for (const el of layer.querySelectorAll("[data-qa=text]")) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        for (const line of range.getClientRects()) {
+          const trim = line.height * LINE_TRIM;
+          rects.push({
+            left: (line.left - box.left) / scale,
+            top: (line.top + trim - box.top) / scale,
+            right: (line.right - box.left) / scale,
+            bottom: (line.bottom - trim - box.top) / scale,
+          });
+        }
+      }
+      for (const el of layer.querySelectorAll("[data-qa=content]")) {
+        const style = getComputedStyle(el);
+        const surface =
+          !/^(transparent|rgba\(0, 0, 0, 0\))$/.test(style.backgroundColor) ||
+          Number.parseFloat(style.borderTopWidth) > 0;
+        if (surface) rects.push(local(el));
+      }
+      for (const el of layer.querySelectorAll("img")) {
+        // Drawn with object-fit: contain, the picture is centered in its box at its own ratio.
+        const r = local(el);
+        const image = el as HTMLImageElement;
+        const w = r.right - r.left;
+        const h = r.bottom - r.top;
+        const ratio =
+          image.naturalWidth && image.naturalHeight
+            ? image.naturalWidth / image.naturalHeight
+            : w / h;
+        const drawnW = Math.min(w, h * ratio);
+        const drawnH = drawnW / ratio;
+        const dx = (w - drawnW) / 2 + drawnW * IMAGE_INSET;
+        const dy = (h - drawnH) / 2 + drawnH * IMAGE_INSET;
+        rects.push({
+          left: r.left + dx,
+          top: r.top + dy,
+          right: r.right - dx,
+          bottom: r.bottom - dy,
+        });
+      }
+      return rects;
+    };
+    const layers = [...frame.querySelectorAll("[data-layer]")].map((layer) => ({
+      layer,
+      moved: layer.hasAttribute("data-moved"),
+      rects: drawn(layer),
+    }));
+    const hit = (a: ReturnType<typeof local>, b: ReturnType<typeof local>) =>
+      Math.min(a.right, b.right) - Math.max(a.left, b.left) > OVERLAP_DEPTH &&
+      Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > OVERLAP_DEPTH;
+    for (const [i, a] of layers.entries()) {
+      for (const b of layers.slice(i + 1)) {
+        if (!a.moved && !b.moved) continue;
+        if (a.rects.some((ra) => b.rects.some((rb) => hit(ra, rb)))) {
+          const layer = a.moved ? a.layer : b.layer;
+          // Same names as LAYER_LABELS (content/layout.ts); this file imports nothing.
+          const names: Record<string, string> = {
+            title: "Título",
+            body: "Contenido",
+            hero: "Elemento gráfico",
+          };
+          flag(layer, "overlap", names[layer.getAttribute("data-layer") ?? ""] ?? snippet(layer));
+        }
+      }
+    }
+  }
   return issues;
 }
 
@@ -112,6 +199,7 @@ export function describeQaIssue(issue: QaIssue): string {
     "outside-box": "El texto se sale de su tarjeta",
     "safe-area": "Queda fuera del área segura",
     tiktok: "Queda debajo de los botones de TikTok",
+    overlap: "Queda encima de otro elemento",
   }[issue.kind];
   return `${what}: “${issue.text}”`;
 }

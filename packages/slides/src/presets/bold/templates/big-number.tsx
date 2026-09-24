@@ -1,4 +1,5 @@
 import type { SlideOf } from "../../../content/slides";
+import { Layer } from "../../../frame/layer";
 import { BOLD_CONTENT_BOX } from "../frame";
 import { labelText, Rich, Source, Support, supportEmphasis } from "../parts";
 
@@ -26,52 +27,61 @@ export function BigNumberTemplate({ slide }: { slide: SlideOf<"bigNumber"> }) {
         gap: 40,
       }}
     >
-      <div data-qa="content" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        {slide.kicker && (
-          <span data-qa="text" style={{ ...labelText(20), color: "var(--accent)" }}>
-            <Rich text={slide.kicker} emphasis={{ color: "var(--text)" }} />
+      {/* The figure is this slide's title layer; context and source move as the body. */}
+      <Layer name="title" layout={slide.layout}>
+        <div data-qa="content" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {slide.kicker && (
+            <span data-qa="text" style={{ ...labelText(20), color: "var(--accent)" }}>
+              <Rich text={slide.kicker} emphasis={{ color: "var(--text)" }} />
+            </span>
+          )}
+          <span
+            data-qa="text"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: "var(--weight-display)",
+              fontSize: bigNumberSize(slide.value),
+              lineHeight: 1.12,
+              // The digits' ink runs ~0.05em past the line box (see Title in parts.tsx).
+              paddingBottom: "0.06em",
+              letterSpacing: "-0.03em",
+              whiteSpace: "nowrap",
+              color: "var(--accent)",
+              fontVariantNumeric: "tabular-nums",
+              textShadow:
+                "0 0 calc(var(--glow) * 60px) color-mix(in srgb, var(--accent) 40%, transparent)",
+            }}
+          >
+            {slide.value}
           </span>
-        )}
-        <span
-          data-qa="text"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: "var(--weight-display)",
-            fontSize: bigNumberSize(slide.value),
-            lineHeight: 1.12,
-            // The digits' ink runs ~0.05em past the line box (see Title in parts.tsx).
-            paddingBottom: "0.06em",
-            letterSpacing: "-0.03em",
-            whiteSpace: "nowrap",
-            color: "var(--accent)",
-            fontVariantNumeric: "tabular-nums",
-            textShadow:
-              "0 0 calc(var(--glow) * 60px) color-mix(in srgb, var(--accent) 40%, transparent)",
-          }}
-        >
-          {slide.value}
-        </span>
-        <p
-          data-qa="text"
-          style={{
-            margin: 0,
-            fontFamily: "var(--font-body)",
-            fontWeight: 600,
-            fontSize: 42,
-            lineHeight: 1.2,
-            color: "var(--text)",
-            textWrap: "balance",
-          }}
-        >
-          <Rich text={slide.label} emphasis={supportEmphasis} />
-        </p>
-      </div>
-      {slide.context && (
-        <div style={{ maxWidth: 760 }}>
-          <Support text={slide.context} size={30} />
+          <p
+            data-qa="text"
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-body)",
+              fontWeight: 600,
+              fontSize: 42,
+              lineHeight: 1.2,
+              color: "var(--text)",
+              textWrap: "balance",
+            }}
+          >
+            <Rich text={slide.label} emphasis={supportEmphasis} />
+          </p>
         </div>
-      )}
-      <Source text={slide.source} />
+      </Layer>
+      <Layer
+        name="body"
+        layout={slide.layout}
+        style={{ display: "flex", flexDirection: "column", gap: 40 }}
+      >
+        {slide.context && (
+          <div style={{ maxWidth: 760 }}>
+            <Support text={slide.context} size={30} />
+          </div>
+        )}
+        <Source text={slide.source} />
+      </Layer>
     </div>
   );
 }

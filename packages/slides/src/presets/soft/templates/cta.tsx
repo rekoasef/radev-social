@@ -1,5 +1,6 @@
 import type { SlideOf } from "../../../content/slides";
 import { FORMAT } from "../../../frame/geometry";
+import { Layer } from "../../../frame/layer";
 import { resolveAsset, type SlideAssets } from "../../../frame/types";
 import { SlideIcon } from "../../../icons";
 import { SOFT_CONTENT_BOX } from "../frame";
@@ -38,7 +39,9 @@ export function CtaTemplate({
       }}
     >
       {hero && (
-        <div
+        <Layer
+          name="hero"
+          layout={slide.layout}
           style={{
             height: 260,
             minHeight: 120,
@@ -48,49 +51,53 @@ export function CtaTemplate({
           }}
         >
           <Hero asset={hero} size={260} />
-        </div>
+        </Layer>
       )}
-      <div
-        data-qa="content"
-        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}
-      >
-        <Title text={slide.title} size={titleSize(slide.title, COLUMN_WIDTH)} align="center" />
-        {slide.subtitle && <Support text={slide.subtitle} size={34} align="center" />}
-      </div>
-      <div
-        data-qa="content"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 16,
-          maxWidth: COLUMN_WIDTH,
-          boxSizing: "border-box",
-          padding: "26px 48px",
-          borderRadius: 999,
-          background: "var(--text)",
-          color: "var(--bg)",
-          boxShadow: "0 0 32px color-mix(in srgb, var(--accent) 28%, transparent)",
-        }}
-      >
-        {slide.icon && (
-          <span style={{ display: "inline-flex", flexShrink: 0 }}>
-            <SlideIcon name={slide.icon} size={34} strokeWidth={2} />
-          </span>
-        )}
-        <span
-          data-qa="text"
+      <Layer name="title" layout={slide.layout}>
+        <div
+          data-qa="content"
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}
+        >
+          <Title text={slide.title} size={titleSize(slide.title, COLUMN_WIDTH)} align="center" />
+          {slide.subtitle && <Support text={slide.subtitle} size={34} align="center" />}
+        </div>
+      </Layer>
+      <Layer name="body" layout={slide.layout}>
+        <div
+          data-qa="content"
           style={{
-            fontFamily: "var(--font-body)",
-            fontWeight: 600,
-            fontSize: 32,
-            lineHeight: 1.15,
-            textWrap: "balance",
-            textAlign: "center",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 16,
+            maxWidth: COLUMN_WIDTH,
+            boxSizing: "border-box",
+            padding: "26px 48px",
+            borderRadius: 999,
+            background: "var(--text)",
+            color: "var(--bg)",
+            boxShadow: "0 0 32px color-mix(in srgb, var(--accent) 28%, transparent)",
           }}
         >
-          {slide.button}
-        </span>
-      </div>
+          {slide.icon && (
+            <span style={{ display: "inline-flex", flexShrink: 0 }}>
+              <SlideIcon name={slide.icon} size={34} strokeWidth={2} />
+            </span>
+          )}
+          <span
+            data-qa="text"
+            style={{
+              fontFamily: "var(--font-body)",
+              fontWeight: 600,
+              fontSize: 32,
+              lineHeight: 1.15,
+              textWrap: "balance",
+              textAlign: "center",
+            }}
+          >
+            {slide.button}
+          </span>
+        </div>
+      </Layer>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export function CostBreakdownTemplate({ slide }: { slide: SlideOf<"costBreakdown
   // Five or six rows get a smaller size, so each row keeps to one line with wide fonts too.
   const rowSize = slide.items.length >= 5 ? 26 : 30;
   return (
-    <TemplateLayout title={slide.title}>
+    <TemplateLayout title={slide.title} layout={slide.layout}>
       <div
         style={{ width: BOLD_CONTENT_BOX.width, display: "flex", flexDirection: "column", gap: 28 }}
       >

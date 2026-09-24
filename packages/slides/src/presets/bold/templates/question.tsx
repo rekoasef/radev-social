@@ -8,7 +8,7 @@ import { boxStyle, glowShadow, IconTile, Rich, supportEmphasis, TemplateLayout }
 export function QuestionTemplate({ slide }: { slide: SlideOf<"question"> }) {
   const { callout } = slide;
   return (
-    <TemplateLayout title={slide.title}>
+    <TemplateLayout title={slide.title} layout={slide.layout}>
       <div
         data-qa="content"
         style={{

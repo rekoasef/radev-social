@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { countEmphasis, MAX_EMPHASIS_PER_SLIDE } from "./emphasis";
 import { iconName, key, plainText, richText } from "./fields";
+import { slideLayoutSchema } from "./layout";
 import { limits as L } from "./limits";
 
 // Slide catalog (docs/DESIGN-SYSTEM.md §5). The fields are shared by every preset. Labels inside
@@ -10,6 +11,7 @@ const iconLabel = (max: number) => z.object({ icon: iconName, label: plainText(m
 
 export const coverSlide = z.object({
   type: z.literal("cover"),
+  layout: slideLayoutSchema.optional(),
   kicker: plainText(L.cover.kicker).optional(),
   title: richText(L.cover.title),
   subtitle: richText(L.cover.subtitle).optional(),
@@ -17,6 +19,7 @@ export const coverSlide = z.object({
 
 export const statementSlide = z.object({
   type: z.literal("statement"),
+  layout: slideLayoutSchema.optional(),
   title: richText(L.statement.title),
   body: richText(L.statement.body).optional(),
   visual: z
@@ -26,6 +29,7 @@ export const statementSlide = z.object({
 
 export const questionSlide = z.object({
   type: z.literal("question"),
+  layout: slideLayoutSchema.optional(),
   title: richText(L.question.title),
   callout: z.object({
     icon: iconName,
@@ -36,6 +40,7 @@ export const questionSlide = z.object({
 
 export const cardGridSlide = z.object({
   type: z.literal("cardGrid"),
+  layout: slideLayoutSchema.optional(),
   title: richText(L.cardGrid.title),
   intro: richText(L.cardGrid.intro).optional(),
   cards: z
@@ -54,6 +59,7 @@ export const cardGridSlide = z.object({
 
 export const flowSlide = z.object({
   type: z.literal("flow"),
+  layout: slideLayoutSchema.optional(),
   title: richText(L.flow.title),
   nodes: z
     .array(
@@ -70,6 +76,7 @@ export const flowSlide = z.object({
 
 export const hubDiagramSlide = z.object({
   type: z.literal("hubDiagram"),
+  layout: slideLayoutSchema.optional(),
   title: richText(L.hubDiagram.title),
   nodes: z
     .array(iconLabel(L.hubDiagram.nodeLabel))
@@ -91,6 +98,7 @@ const comparisonSide = z.object({
 
 export const comparisonSlide = z.object({
   type: z.literal("comparison"),
+  layout: slideLayoutSchema.optional(),
   title: richText(L.comparison.title),
   left: comparisonSide,
   right: comparisonSide,
@@ -99,6 +107,7 @@ export const comparisonSlide = z.object({
 
 export const costBreakdownSlide = z.object({
   type: z.literal("costBreakdown"),
+  layout: slideLayoutSchema.optional(),
   title: richText(L.costBreakdown.title),
   /** Ranges come only from the brand's pricing document. */
   items: z
@@ -119,6 +128,7 @@ export const costBreakdownSlide = z.object({
 
 export const stepsSlide = z.object({
   type: z.literal("steps"),
+  layout: slideLayoutSchema.optional(),
   title: richText(L.steps.title),
   steps: z
     .array(z.object({ title: richText(L.steps.stepTitle), text: richText(L.steps.stepText) }))
@@ -128,6 +138,7 @@ export const stepsSlide = z.object({
 
 export const bigNumberSlide = z.object({
   type: z.literal("bigNumber"),
+  layout: slideLayoutSchema.optional(),
   kicker: richText(L.bigNumber.kicker).optional(),
   /** Must exist in the brand's data; never made up. */
   value: plainText(L.bigNumber.value),
@@ -138,6 +149,7 @@ export const bigNumberSlide = z.object({
 
 export const chartSlide = z.object({
   type: z.literal("chart"),
+  layout: slideLayoutSchema.optional(),
   title: richText(L.chart.title),
   kind: z.enum(["line", "bar"]),
   /** The AI picks the dataset; the code injects the points. */
@@ -148,6 +160,7 @@ export const chartSlide = z.object({
 
 export const ctaSlide = z.object({
   type: z.literal("cta"),
+  layout: slideLayoutSchema.optional(),
   title: richText(L.cta.title),
   subtitle: richText(L.cta.subtitle).optional(),
   button: plainText(L.cta.button),

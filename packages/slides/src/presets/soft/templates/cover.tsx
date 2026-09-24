@@ -1,4 +1,5 @@
 import type { SlideOf } from "../../../content/slides";
+import { Layer } from "../../../frame/layer";
 import { resolveAsset, type SlideAssets } from "../../../frame/types";
 import { fitTextSize } from "../../shared/fit";
 import { SOFT_CONTENT_BOX } from "../frame";
@@ -39,18 +40,24 @@ export function CoverTemplate({
         width: SOFT_CONTENT_BOX.width,
       }}
     >
-      <div
-        data-qa="content"
-        style={{ paddingTop: 40, display: "flex", flexDirection: "column", gap: 28 }}
-      >
-        {slide.kicker && (
-          <span data-qa="text" style={{ ...labelText(20), color: "var(--accent)" }}>
-            {slide.kicker}
-          </span>
-        )}
-        <Title text={slide.title} size={coverTitleSize(slide.title)} />
-      </div>
-      <div
+      <Layer name="title" layout={slide.layout}>
+        <div
+          data-qa="content"
+          style={{ paddingTop: 40, display: "flex", flexDirection: "column", gap: 28 }}
+        >
+          {slide.kicker && (
+            <span data-qa="text" style={{ ...labelText(20), color: "var(--accent)" }}>
+              {slide.kicker}
+            </span>
+          )}
+          <Title text={slide.title} size={coverTitleSize(slide.title)} />
+        </div>
+      </Layer>
+      <Layer
+        name="hero"
+        layout={slide.layout}
+        // Centered on the slide, not on the content box (which stops at x = 930).
+        baseTransform={`translateX(${(1080 - 2 * SOFT_CONTENT_BOX.x - SOFT_CONTENT_BOX.width) / 2}px)`}
         style={{
           flex: 1,
           minHeight: 0,
@@ -58,16 +65,16 @@ export function CoverTemplate({
           alignItems: "center",
           justifyContent: "center",
           padding: "24px 0",
-          // Centered on the slide, not on the content box (which stops at x = 930).
-          transform: `translateX(${(1080 - 2 * SOFT_CONTENT_BOX.x - SOFT_CONTENT_BOX.width) / 2}px)`,
         }}
       >
         {hero && <Hero asset={hero} size={HERO_SIZE} />}
-      </div>
+      </Layer>
       {slide.subtitle && (
-        <div data-qa="content" style={{ paddingBottom: 20, maxWidth: 720 }}>
-          <Support text={slide.subtitle} size={36} />
-        </div>
+        <Layer name="body" layout={slide.layout}>
+          <div data-qa="content" style={{ paddingBottom: 20, maxWidth: 720 }}>
+            <Support text={slide.subtitle} size={36} />
+          </div>
+        </Layer>
       )}
     </div>
   );

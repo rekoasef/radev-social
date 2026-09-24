@@ -11,7 +11,7 @@ import type { BoldTokens } from "../tokens";
 export function CtaTemplate({ slide, tokens }: { slide: SlideOf<"cta">; tokens: BoldTokens }) {
   const tagline = tokens.footer.tagline;
   return (
-    <TemplateLayout title={slide.title}>
+    <TemplateLayout title={slide.title} layout={slide.layout}>
       {slide.subtitle && (
         <div style={{ maxWidth: 760 }}>
           <Support text={slide.subtitle} size={36} />

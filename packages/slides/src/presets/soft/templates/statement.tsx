@@ -82,7 +82,7 @@ function FromTo({ visual }: { visual: Visual }) {
 
 export function StatementTemplate({ slide }: { slide: SlideOf<"statement"> }) {
   return (
-    <TemplateLayout title={slide.title}>
+    <TemplateLayout title={slide.title} layout={slide.layout}>
       {slide.visual && <FromTo visual={slide.visual} />}
       {slide.body && <Support text={slide.body} size={34} />}
     </TemplateLayout>

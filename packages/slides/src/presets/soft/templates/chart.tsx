@@ -61,7 +61,7 @@ export function ChartTemplate({
     : "";
 
   return (
-    <TemplateLayout title={slide.title}>
+    <TemplateLayout title={slide.title} layout={slide.layout}>
       <div data-qa="content" style={{ width: W, height: H }}>
         <svg aria-hidden="true" width={W} height={H} style={{ overflow: "visible" }}>
           <defs>
