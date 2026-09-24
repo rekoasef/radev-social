@@ -58,6 +58,8 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 
 **Terminado cuando:** armo un carrusel en la app, lo descargo y lo publico a mano en TikTok. Desde acá el sistema ya ahorra trabajo real.
 
+> Cerrada el 2026-09-24 con todo lo de arriba hecho, pero **sin la publicación real**: queda pendiente para el primer post de verdad (ver `PROGRESS.md`).
+
 ---
 
 ## Fase 3 — Generación con IA

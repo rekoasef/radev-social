@@ -8,10 +8,33 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 2 — Editor, render y exportación (empezada 2026-09-24). Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T12 de la Fase 2: cierre (prueba de punta a punta con un post real publicado en TikTok, limpieza de posts de prueba, docs).
-- **Última actualización:** 2026-09-24, al cerrar la T11 de la Fase 2
+- **Fase:** 3 — Generación con IA (por empezar). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T0 de la Fase 3: probar `claude -p` headless y verificar sus flags.
+- **Última actualización:** 2026-09-24, al cerrar la Fase 2
 - **Para retomar:** todo lo de la Fase 1 se ve en el panel (Marcas → Slides / Identidad visual / Assets) con `pnpm dev`. El control del render (`checkRender`) y los extremos son la base del QA del render de la Fase 2.
+
+## Fase 3 — tareas
+
+Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel renderizado"; ideas, investigación y datos después. 👁 = termina con capturas para aprobar.
+
+| Tarea | Qué | Estado |
+|---|---|---|
+| T0 | Prueba de `claude -p` instalado: flags reales (`--json-schema`, `--output-format`, herramientas) en una carpeta temporal fuera del repo. Sin código | |
+| T1 | `packages/ai`: interfaz `AIProvider`, errores tipados (`validation`, `rate_limited`, `provider_error`), Zod → JSON Schema. Tests con proveedor falso | |
+| T2 | Tabla `brand_documents` (voz, precios, casos, reglas, con historial), seed desde `seeds/brands/`, editor en el panel | |
+| T3 | Workspace aislado: carpeta temporal fuera del repo con el CLAUDE.md de la marca armado desde la base (regla 7). Tests | |
+| T4 | Proveedor `claude-code` (`claude -p`, sobre JSON, detección de límite, timeout) + Claude Code CLI en la imagen del worker (amd64 y arm64). El operador genera `CLAUDE_CODE_OAUTH_TOKEN` con `claude setup-token` | |
+| T5 | Proveedor `openrouter` (HTTP, salida estructurada, nunca datos privados). Tests con fetch simulado | |
+| T6 | Tablas `ai_routes` y `generation_runs`; router con respaldo, backoff ante `rate_limited`, topes por marca; pantalla de ruteo. Tests obligatorios | |
+| T7 | Job `carousel.generate`: "Generar" → JSON validado → versión `ai` → render; el panel muestra proveedor y modelo. 👁 | |
+| T8 | Rechazo con feedback → regeneración; regeneración automática por QA (máx. 2) | |
+| T9 | Banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca | |
+| T10 | `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web), serie "¿Cuánto cuesta realmente…?" | |
+| T11 | `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor | |
+| T12 | Importar historial de posts → `winners.json` | |
+| T13 | Cierre: criterio de terminado con ambas marcas, docs | |
+
+Pendiente de respuesta del operador: (1) crear cuenta gratuita de OpenRouter y su API key (sin tarjeta) antes de la T5, o posponer OpenRouter; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 
 ## Fase 2 — tareas
 
@@ -31,7 +54,7 @@ Plan aprobado el 2026-09-24. 👁 = termina con capturas para que el operador ap
 | T9 | Exportar ZIP (PNG + copy) y copiar el copy | ✅ |
 | T10 | Adaptador `manual`: marcar como publicado | ✅ |
 | T11 | Ajustes por arrastre estilo Canva (ADR 0013, aprobado el 2026-09-24): capas título, contenido y elemento gráfico; mover y cambiar tamaño en el editor con guías y límites. 👁 | ✅ |
-| T12 | Cierre: criterio de terminado, docs | |
+| T12 | Cierre: criterio de terminado, docs | ✅ parcial: el operador decidió no hacer la publicación real ahora |
 
 Decisiones aprobadas con el plan: (1) sin estado `draft`: el editor guarda el avance en el navegador y el post nace al guardar un carrusel válido; (2) publicación manual sin calendario: `approved → publishing → published` con "Marcar como publicado" (el calendario es de la Fase 4); (3) `chart` fuera del editor hasta que haya datos (Fases 3 y 5); `bigNumber` sí, la cifra la carga el operador con fuente obligatoria; (4) rechazar con feedback queda para la Fase 3 (sirve para regenerar); (5) la web encola jobs con pg-boss; nombres y payloads de jobs en `packages/core`; (6) imagen del worker con Chromium (~400 MB más); (7) ZIP con `fflate`.
 
@@ -171,6 +194,10 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes y las imágenes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante
+
+**Pendiente de la Fase 2 (criterio de terminado):**
+- Nunca se publicó un post real de punta a punta: armar un carrusel → Guardar y renderizar → Aprobar → Descargar ZIP → publicar a mano en TikTok → Marcar como publicado. El operador lo pospuso el 2026-09-24 ("alta paja hacerlo a mano"); hacerlo con el primer post real y confirmar en la base que pasó por `approved → publishing → published`. Requiere `pnpm dev` con web **y** worker arriba.
+- Posts de prueba de la T0–T11: quedaron en la base de la otra máquina del operador (cada máquina tiene la suya). La app no tiene forma de borrar posts: limpiarlos es un `DELETE` en esa base, con confirmación del operador.
 
 **Fase 1:**
 - Los extremos cubren un caso por tipo. Variantes intermedias (3 nodos en `hubDiagram`, 5 en `flow`, 4 tarjetas) se revisaron en T4–T6; si se toca la geometría, conviene sumar variantes a `extremes.ts`.
