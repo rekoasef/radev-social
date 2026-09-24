@@ -203,6 +203,11 @@ export async function countPostsByStatus(
   return Object.fromEntries(rows.map((r) => [r.status, r.n]));
 }
 
+export async function getPostById(db: Executor, id: string): Promise<Post | undefined> {
+  const [post] = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
+  return post;
+}
+
 export async function getPostByCode(db: Database, code: string): Promise<Post | undefined> {
   const [post] = await db.select().from(posts).where(eq(posts.publicCode, code)).limit(1);
   return post;

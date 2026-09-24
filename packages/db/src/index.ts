@@ -31,6 +31,7 @@ export {
   countPostsByStatus,
   createPost,
   getPostByCode,
+  getPostById,
   getPostVersion,
   listPillars,
   listPosts,
