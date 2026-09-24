@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isInSafeZone, type Rect } from "../../frame/geometry";
-import { BOLD_CONTENT_BOX } from "./frame";
+import { BOLD_CONTENT_BOX } from "../bold/frame";
 import { cardGridRows, flowLayout, hubLayout } from "./layout";
 
 const W = BOLD_CONTENT_BOX.width;

@@ -1,7 +1,8 @@
 import type { Rect } from "../../frame/geometry";
 
-// Geometry of the `bold` diagrams, as pure functions so tests can check that nothing leaves the
-// content box. Coordinates are relative to the diagram's own box, which is `width` wide.
+// Geometry of the diagrams (`cardGrid`, `flow`, `hubDiagram`), shared by the presets, as pure
+// functions so tests can check that nothing leaves the content box. Coordinates are relative to
+// the diagram's own box, which is `width` wide. Both presets use an 850-wide content box.
 
 /** Cards per row in `cardGrid`: 3 → 3 · 4 → 2+2 · 5 → 3+2 · 6 → 3+3. */
 export function cardGridRows(count: number): number[] {

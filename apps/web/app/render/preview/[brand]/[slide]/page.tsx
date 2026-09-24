@@ -1,12 +1,13 @@
-import { getBrandBySlug } from "@radev/db";
+import { getBrandBySlug, listBrandAssets } from "@radev/db";
 import {
   exampleDatasets,
-  exampleSlides,
+  exampleSlidesByPreset,
   FORMAT,
   hasTemplate,
   parseTheme,
   SafeZoneOverlay,
   SLIDE_TYPES,
+  type SlideAssets,
   SlideContent,
   SlideFrame,
 } from "@radev/slides";
@@ -14,6 +15,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RenderReady } from "@/components/render/render-ready";
 import { TikTokOverlay } from "@/components/render/tiktok-overlay";
+import { mediaUrl } from "@/lib/brand-assets";
 import { db } from "@/lib/db";
 import { isValidRenderToken } from "@/lib/render-token";
 
@@ -53,6 +55,13 @@ export default async function PreviewSlidePage({
     );
   }
 
+  const assets: SlideAssets = Object.fromEntries(
+    (await listBrandAssets(db, brand.id)).map((a) => [
+      a.id,
+      { url: mediaUrl(a.path), width: a.width, height: a.height },
+    ]),
+  );
+  const examples = exampleSlidesByPreset[parsed.theme.preset];
   const total = positiveInt(single(query.total), 7);
   const pageNumber = Math.min(positiveInt(single(query.page), 1), total);
   const overlay = single(query.overlay);
@@ -73,13 +82,15 @@ export default async function PreviewSlidePage({
         page={{ index: pageNumber - 1, total }}
         seed={single(query.seed) ?? "preview"}
         glow={slide === "cover" || slide === "cta"}
+        assets={assets}
       >
         {type &&
           (hasTemplate(parsed.theme.preset, type) ? (
             <SlideContent
               theme={parsed.theme}
-              slide={exampleSlides[type]}
+              slide={examples[type]}
               datasets={exampleDatasets}
+              assets={assets}
             />
           ) : (
             <p style={{ margin: "auto", fontSize: 28, opacity: 0.5 }}>

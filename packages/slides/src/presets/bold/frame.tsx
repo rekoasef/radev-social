@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { fontStack } from "../../fonts/registry";
 import { FORMAT, type Rect } from "../../frame/geometry";
-import type { FrameProps } from "../../frame/types";
+import { type FrameProps, resolveAsset, type SlideAsset } from "../../frame/types";
 import { BoldDecorations } from "./decorations";
 import type { BoldTokens } from "./tokens";
 
@@ -16,6 +16,8 @@ import type { BoldTokens } from "./tokens";
 export const BOLD_CONTENT_BOX: Rect = { x: 80, y: 150, width: 850, height: 1040 };
 
 const FOOTER_TOP = 1228;
+/** The page indicator ends at x = 930, where TikTok's button column starts. */
+const FOOTER_RIGHT = FORMAT.width - 930;
 
 function cssVars(t: BoldTokens): CSSProperties {
   return {
@@ -66,6 +68,13 @@ function CornerLabel({ text, side }: { text: string; side: "left" | "right" }) {
         {text}
       </span>
     </div>
+  );
+}
+
+/** The brand's logo replaces the wordmark when there is one (docs/DESIGN-SYSTEM.md §7). */
+function Logo({ logo, brandName }: { logo: SlideAsset; brandName: string }) {
+  return (
+    <img src={logo.url} alt={brandName} style={{ display: "block", height: 44, width: "auto" }} />
   );
 }
 
@@ -123,8 +132,10 @@ export function BoldFrame({
   page,
   seed,
   glow = false,
+  assets = {},
   children,
 }: FrameProps<BoldTokens> & { children?: ReactNode }) {
+  const logo = resolveAsset(assets, tokens.logoAsset);
   const id = `f${page.index}-${seed.replace(/[^a-zA-Z0-9]/g, "").slice(0, 12)}`;
   const background = glow
     ? `radial-gradient(900px 700px at 78% 18%, color-mix(in srgb, var(--accent) ${Math.round(
@@ -178,14 +189,19 @@ export function BoldFrame({
         style={{
           position: "absolute",
           left: 80,
-          right: 80,
+          // Ends left of TikTok's button column: "Deslizá →" must stay visible.
+          right: FOOTER_RIGHT,
           top: FOOTER_TOP + 22,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
       >
-        <Wordmark tokens={tokens.wordmark} brandName={brandName} />
+        {logo ? (
+          <Logo logo={logo} brandName={brandName} />
+        ) : (
+          <Wordmark tokens={tokens.wordmark} brandName={brandName} />
+        )}
         <PageIndicator index={page.index} total={page.total} />
       </div>
     </div>

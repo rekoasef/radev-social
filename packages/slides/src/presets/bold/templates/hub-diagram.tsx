@@ -1,7 +1,7 @@
 import type { SlideOf } from "../../../content/slides";
 import { SlideIcon } from "../../../icons";
+import { HUB_CHIP, hubLayout, type Point } from "../../shared/layout";
 import { BOLD_CONTENT_BOX } from "../frame";
-import { HUB_CHIP, hubLayout, type Point } from "../layout";
 import {
   ArrowMarker,
   boxStyle,

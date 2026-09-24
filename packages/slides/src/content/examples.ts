@@ -137,6 +137,131 @@ export const exampleSlides: { [T in SlideType]: SlideOf<T> } = {
 };
 
 /**
+ * Sample content for the `soft` preset, on personal money (the topics of its first brand). Only
+ * the types that differ; `bigNumber` and `chart` (the dollar) reuse `exampleSlides`. Same rule:
+ * no real figures.
+ */
+const softOverrides: { [T in SlideType]?: SlideOf<T> } = {
+  cover: {
+    type: "cover",
+    kicker: "Serie · Tu plata",
+    title: "Ahorraste en pesos. ¿Cuánto ahorraste *de verdad*?",
+    subtitle: "Lo que queda quieto pierde valor, aunque el número no cambie.",
+  },
+  statement: {
+    type: "statement",
+    title: "Tu sueldo no bajó. *Rinde menos.*",
+    body: "Cuando los precios suben más rápido que tu sueldo, cobrás lo mismo pero comprás menos. Mirarlo en dólares ayuda a verlo claro.",
+    visual: {
+      from: { icon: "wallet", label: "Tu sueldo" },
+      to: { icon: "shopping-cart", label: "Lo que comprás" },
+    },
+  },
+  question: {
+    type: "question",
+    title: "¿Sabés en qué se te fue la plata *el mes pasado*?",
+    callout: {
+      icon: "receipt",
+      lead: "Hacé la prueba:",
+      text: "anotá de memoria tus gastos y compará con el resumen de la tarjeta.",
+    },
+  },
+  cardGrid: {
+    type: "cardGrid",
+    title: "Los gastos que *no ves* también suman",
+    intro: "Los más comunes:",
+    cards: [
+      { icon: "coffee", lead: "el", label: "café de todos los días" },
+      { icon: "tv", lead: "las", label: "suscripciones olvidadas" },
+      { icon: "bike", lead: "el", label: "delivery del finde" },
+      { icon: "credit-card", lead: "las", label: "cuotas chicas" },
+    ],
+    footer: "Chicos por separado, *grandes a fin de mes.*",
+  },
+  flow: {
+    type: "flow",
+    title: "Cómo se arma *tu informe del mes*",
+    nodes: [
+      { icon: "pencil", label: "Cargás tus gastos" },
+      { icon: "calculator", label: "Lumus hace las cuentas" },
+      { icon: "sparkles", label: "La IA te lo explica" },
+      { icon: "file-text", label: "Recibís el informe" },
+    ],
+    body: "Las cuentas las hace Lumus. La IA solo las explica: *nunca inventa una cifra*.",
+  },
+  hubDiagram: {
+    type: "hubDiagram",
+    title: "Tu plata está en *varios lados*",
+    nodes: [
+      { icon: "wallet", label: "Efectivo" },
+      { icon: "landmark", label: "Cuenta sueldo" },
+      { icon: "smartphone", label: "App de pagos" },
+      { icon: "dollar-sign", label: "Dólares" },
+      { icon: "credit-card", label: "Tarjeta" },
+    ],
+    center: { icon: "chart-pie" },
+    body: "Cuando cada cosa está en un lugar distinto, es difícil saber cuánto tenés de verdad.",
+    closing: "*Verlo junto* es el primer paso.",
+  },
+  comparison: {
+    type: "comparison",
+    title: "¿Planilla o *app de gastos*?",
+    left: {
+      name: "Planilla",
+      icon: "sheet",
+      points: ["La armás a tu medida", "Cargar lleva tiempo", "Las cuentas las hacés vos"],
+    },
+    right: {
+      name: "App de gastos",
+      icon: "smartphone",
+      points: ["Cargás en segundos", "Te avisa si te pasás", "Hace las cuentas por vos"],
+    },
+    verdict: "La planilla sirve si sos constante. Si no, *una app te ahorra el esfuerzo*.",
+  },
+  costBreakdown: {
+    type: "costBreakdown",
+    title: "¿Cuánto te cuestan *los gastos fijos*?",
+    items: [
+      { label: "Alquiler", range: "$ 000.000" },
+      { label: "Servicios", range: "$ 00.000" },
+      { label: "Transporte", range: "$ 00.000" },
+      { label: "Suscripciones", range: "$ 00.000" },
+    ],
+    total: { label: "Total del mes", range: "$ 000.000" },
+    note: "Valores de ejemplo: los reales salen de tus datos.",
+  },
+  steps: {
+    type: "steps",
+    title: "Armá tu presupuesto *en 3 pasos*",
+    steps: [
+      {
+        title: "Anotá lo que entra",
+        text: "Sueldo, changas y cualquier ingreso del mes, en pesos y en dólares.",
+      },
+      { title: "Separá los fijos", text: "Alquiler, servicios y cuotas: lo que pagás sí o sí." },
+      {
+        title: "Poné un tope al resto",
+        text: "Lo que queda se reparte con un límite por categoría, y te avisa si te pasás.",
+      },
+    ],
+  },
+  cta: {
+    type: "cta",
+    title: "Tu plata, *por fin clara.*",
+    subtitle:
+      "Cargá tus gastos en segundos y cada mes recibí un informe que te explica en qué se fue.",
+    button: "Probalo gratis 30 días",
+    icon: "arrow-right",
+  },
+};
+
+/** Example slides for each preset, one per slide type. */
+export const exampleSlidesByPreset = {
+  bold: exampleSlides,
+  soft: { ...exampleSlides, ...softOverrides } as typeof exampleSlides,
+};
+
+/**
  * Datasets for the example `chart`. Made-up values that only give the chart a shape: the real
  * ones come from the brand's data.
  */
@@ -166,3 +291,24 @@ export const exampleCarousel: Carousel = {
   caption: "A veces la solución es más chica de lo que pensás. ¿Cuál de estas te sirve?",
   hashtags: ["automatizacion", "pymes", "procesos"],
 };
+
+/** Example carousel of the `soft` preset (personal money). */
+export const softExampleCarousel: Carousel = {
+  hook: "Tu plata está en varios lados y así es difícil saber cuánto tenés",
+  pillarKey: "money-habits",
+  hookType: "howto",
+  slides: [
+    exampleSlidesByPreset.soft.cover,
+    exampleSlidesByPreset.soft.hubDiagram,
+    exampleSlidesByPreset.soft.cardGrid,
+    exampleSlidesByPreset.soft.steps,
+    exampleSlidesByPreset.soft.bigNumber,
+    exampleSlidesByPreset.soft.cta,
+  ],
+  caption:
+    "Antes de ahorrar, hay que saber dónde está la plata. ¿Cuál de estos gastos te pasa a vos?",
+  hashtags: ["finanzaspersonales", "ahorro", "presupuesto"],
+};
+
+/** Example carousel for each preset. */
+export const exampleCarouselByPreset = { bold: exampleCarousel, soft: softExampleCarousel };

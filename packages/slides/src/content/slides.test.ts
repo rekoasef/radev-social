@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
-import { exampleSlides } from "./examples";
+import { exampleSlides, exampleSlidesByPreset } from "./examples";
 import { iconName, plainText, richText } from "./fields";
 import { SLIDE_TYPES, slideSchema } from "./slides";
 
@@ -45,9 +45,11 @@ describe("slideSchema", () => {
     expect(SLIDE_TYPES).toHaveLength(12);
   });
 
-  it.each(SLIDE_TYPES)("accepts the %s example", (type) => {
-    const result = slideSchema.safeParse(exampleSlides[type]);
-    expect(issues(result)).toEqual([]);
+  const presetExamples = Object.entries(exampleSlidesByPreset).flatMap(([preset, examples]) =>
+    SLIDE_TYPES.map((type) => [preset, type, examples[type]] as const),
+  );
+  it.each(presetExamples)("accepts the %s %s example", (_, __, slide) => {
+    expect(issues(slideSchema.safeParse(slide))).toEqual([]);
   });
 
   it("rejects an unknown type", () => {

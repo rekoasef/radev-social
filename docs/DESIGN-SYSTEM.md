@@ -45,7 +45,9 @@ Todas libres, auto-hospedadas en el proyecto (no se cargan de internet al render
 
 El contenido (`data-qa="content"`) no puede invadir ninguna zona. Las decoraciones sí, y también el encabezado y el pie: el pie puede quedar parcialmente tapado en TikTok, porque es firma y no información.
 
-En la práctica, las plantillas de `bold` usan un ancho de **850** (x 80–930) para todo lo que va debajo del título, así nunca tocan la columna de botones. El título puede usar los 920 del área segura: aun con 4 líneas termina muy por encima de `y = 650`.
+**Pie**: en todos los presets, el indicador de página y el "Deslizá →" terminan en `x = 930`, a la izquierda de la columna de botones (con ella encima quedaban tapados por el contador de comentarios).
+
+En la práctica, las plantillas (de los dos presets) usan un ancho de **850** (x 80–930) para todo lo que va debajo del título, así nunca tocan la columna de botones. El título puede usar los 920 del área segura: aun con 4 líneas termina muy por encima de `y = 650`.
 
 ## 4. Anatomía de una slide
 
@@ -169,7 +171,7 @@ Carousel = {
 - Títulos en MAYÚSCULAS, interlineado 1.06, tracking -0.02em con espacio entre palabras +0.12em. Con 0.95 las mayúsculas acentuadas (DÍA, INFORMACIÓN) se montan sobre la línea de arriba. Escala sugerida: 104 / 84 / 64 · cuerpo 36 · etiqueta 18. Se ajusta en Fase 1.
 - Énfasis en títulos: color de acento. En apoyo: peso 700, acento, mayúsculas.
 - Etiquetas: mayúsculas, tracking 0.3em, barra vertical fina.
-- Pie: línea divisoria, wordmark a la izquierda, indicador de página a la derecha (en la portada, "Deslizá →"). Sin tagline: la columna de botones de TikTok tapa la esquina inferior derecha.
+- Pie: línea divisoria, wordmark a la izquierda (o el logo, si la marca tiene `logoAsset`), indicador de página a la derecha (en la portada, "Deslizá →"), terminando en `x = 930` para que la columna de botones de TikTok no lo tape. Sin tagline.
 - Decoraciones: líneas curvas finas en esquinas terminadas en punto brillante, grillas de puntos, línea punteada vertical izquierda, glow radial suave (solo portada y `cta`).
 - Contenedores: dos formas y no más. Las referencias usan cuatro variantes distintas; estas reglas las unifican:
   - **Tarjeta** (`cardGrid`, `flow`, `steps`): fondo `surface`, borde 1px acento con glow, radio `radius.card`. Ícono en color `text` dentro de un cuadradito oscuro (un tono sobre `surface`, sin borde de acento). Texto debajo del ícono en `fonts.body`, en oración normal (no mayúsculas): `lead` liviano y `label` en peso 700, en color `text`. Así se logran los dos tonos de `ref-cardgrid`. Ninguna tarjeta se resalta en acento (en la referencia, la primera sí: se descarta porque superaría los 2 énfasis por slide).
@@ -223,12 +225,17 @@ Referencias: `docs/references/radev/`. Cuando una referencia contradice estas re
 
 ### Comportamiento del preset (código)
 
-- Títulos en oración normal (no mayúsculas), tracking -0.01em.
-- Énfasis más medido que en `bold`: solo color de acento.
+- Títulos en oración normal (no mayúsculas), tracking -0.01em, interlineado 1.08, `balance`. Escala: 92 / 78 / 66 según el largo (hasta 24 y 48 caracteres); portada 108 / 92 / 80.
+- Énfasis más medido que en `bold`: solo color de acento. En títulos, un énfasis de hasta 20 caracteres no se parte en dos líneas ("Tu plata, / por fin clara.").
 - Etiquetas: mayúsculas, tracking 0.18em, color `muted`.
-- Decoraciones: glows radiales, grilla sutil `rgba(255,255,255,0.025)`, hero asset en portada y cierre (nunca en slides de datos densos).
-- Tarjetas y paneles con estilo `glass`. Botón de `cta`: pill con fondo `text` y texto `bg`.
-- Gráficos: línea en acento, área con degradado suave, ejes en `line`, valores en `fonts.numeric`.
+- Marco: wordmark arriba a la izquierda (`colors.wordmark`, tracking del token); abajo, `footer.url` a la izquierda y el indicador de página ("03 / 07", o "Deslizá →" en lavanda en la portada), en `fonts.numeric`. Sin líneas ni etiquetas de esquina.
+- Decoraciones: glows radiales de los tokens, grilla sutil `rgba(255,255,255,0.025)` que se desvanece hacia abajo, hero asset en portada y cierre (nunca en slides de datos). Si la marca no tiene hero, ese espacio queda vacío.
+- `cover`: kicker en acento, título, el hero (400 px) centrado en la slide con un halo de acento y el subtítulo abajo. `cta`: columna centrada en la slide (760 de ancho, dentro de `x < 930`): hero (260 px), título, subtítulo y botón.
+- Tarjetas y paneles con estilo `glass` (sin brillo en los bordes). Las cajas destacadas (callout de `question`, total de `costBreakdown`, centro de `hubDiagram`) usan `elevated`. Íconos sobre un cuadrado redondeado con un tinte suave; en acento los de destino o destacados. Botón de `cta`: pill con fondo `text` y texto `bg`.
+- Conectores de diagramas: 1,5 px en acento al 55 %, puntitos chicos en los extremos y flecha abierta. Misma geometría que `bold` (`presets/shared/layout.ts`).
+- `comparison`: la columna derecha con borde teñido de acento y viñetas en acento. `steps`: números en círculos con tinte de acento, unidos por una línea fina en `line`.
+- Cifras: tablas y gráficos en `fonts.numeric`; la cifra enorme de `bigNumber`, en `fonts.display` con dígitos tabulares (Geist Mono tacha el cero y a ese tamaño domina la slide).
+- Gráficos: línea en acento, área con degradado suave, grilla en `line`, valores en `fonts.numeric`, último valor en una pill `elevated`.
 - Toda slide con datos muestra su `source` en `muted`.
 
 ## 9. Control de calidad del render

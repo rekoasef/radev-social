@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { carouselSchema } from "./carousel";
-import { exampleCarousel, exampleSlides } from "./examples";
+import { exampleCarousel, exampleCarouselByPreset, exampleSlides } from "./examples";
 
 function messages(value: unknown): string[] {
   return carouselSchema.safeParse(value).error?.issues.map((issue) => issue.message) ?? [];
@@ -9,7 +9,9 @@ function messages(value: unknown): string[] {
 
 describe("carouselSchema", () => {
   it("accepts the example carousel", () => {
-    expect(messages(exampleCarousel)).toEqual([]);
+    for (const carousel of Object.values(exampleCarouselByPreset)) {
+      expect(messages(carousel)).toEqual([]);
+    }
   });
 
   it("requires 5 to 8 slides", () => {

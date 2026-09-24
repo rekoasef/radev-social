@@ -1,7 +1,7 @@
 import type { Datasets } from "../../../content/datasets";
 import type { SlideOf } from "../../../content/slides";
 import { decimalsFor, formatNumber, withUnit } from "../../../format";
-import { chartLayout } from "../chart-layout";
+import { chartLayout } from "../../shared/chart-layout";
 import { BOLD_CONTENT_BOX } from "../frame";
 import { ConnectorDot, Source, Support, TemplateLayout } from "../parts";
 

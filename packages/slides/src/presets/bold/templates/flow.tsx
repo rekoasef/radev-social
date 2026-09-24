@@ -1,6 +1,6 @@
 import type { SlideOf } from "../../../content/slides";
+import { flowLayout, isCompactFlow } from "../../shared/layout";
 import { BOLD_CONTENT_BOX } from "../frame";
-import { flowLayout, isCompactFlow } from "../layout";
 import { boxStyle, ConnectorDot, fitFontSize, IconTile, Support, TemplateLayout } from "../parts";
 
 // `flow` (ref-flow-1, ref-flow-2): cards in order, joined by accent connectors with glowing

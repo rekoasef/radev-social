@@ -1,6 +1,6 @@
 import type { SlideOf } from "../../../content/slides";
+import { cardGridRows } from "../../shared/layout";
 import { BOLD_CONTENT_BOX } from "../frame";
-import { cardGridRows } from "../layout";
 import { boxStyle, IconTile, Support, TemplateLayout } from "../parts";
 
 // `cardGrid` (ref-cardgrid): cards without order. Icon on its tile, light lead and bold label

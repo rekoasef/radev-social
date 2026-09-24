@@ -21,7 +21,6 @@ const count = (html: string, needle: string) => html.split(needle).length - 1;
 describe("bold templates", () => {
   it("exist for every slide type", () => {
     for (const type of SLIDE_TYPES) expect(hasTemplate("bold", type), type).toBe(true);
-    expect(hasTemplate("soft", "cardGrid")).toBe(false);
   });
 
   it("render every example without emphasis marks", () => {
@@ -139,14 +138,6 @@ describe("bold templates", () => {
       exampleSlides.flow.nodes.length + 1,
     );
     expect(html).toContain('data-qa="text"');
-  });
-
-  it("fails loudly for a preset without templates", () => {
-    const soft = parseTheme("soft", defaultTokens("soft"));
-    if (!soft.ok) throw new Error("tokens inválidos");
-    expect(() =>
-      renderToStaticMarkup(<SlideContent theme={soft.theme} slide={exampleSlides.flow} />),
-    ).toThrow(/soft/);
   });
 });
 

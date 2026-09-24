@@ -12,7 +12,13 @@ export {
   parseEmphasis,
   type TextSegment,
 } from "./content/emphasis";
-export { exampleCarousel, exampleDatasets, exampleSlides } from "./content/examples";
+export {
+  exampleCarousel,
+  exampleCarouselByPreset,
+  exampleDatasets,
+  exampleSlides,
+  exampleSlidesByPreset,
+} from "./content/examples";
 export { limits } from "./content/limits";
 export {
   SLIDE_TYPES,
@@ -42,6 +48,7 @@ export {
 export { createRandom, type Random } from "./frame/random";
 export { SafeZoneOverlay } from "./frame/safe-zone-overlay";
 export { SlideFrame, type SlideFrameProps } from "./frame/slide-frame";
+export { resolveAsset, type SlideAsset, type SlideAssets } from "./frame/types";
 export { iconComponent, SlideIcon } from "./icons";
 export { type BoldTokens, boldTokensSchema } from "./presets/bold/tokens";
 export type { TokenWidget } from "./presets/fields";

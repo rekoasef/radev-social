@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { BoldFrame } from "../presets/bold/frame";
 import type { BrandTheme } from "../presets/registry";
+import { SoftFrame } from "../presets/soft/frame";
 import type { FrameProps } from "./types";
 
 export type SlideFrameProps = Omit<FrameProps<unknown>, "tokens"> & {
@@ -18,7 +19,10 @@ export function SlideFrame({ theme, children, ...props }: SlideFrameProps) {
         </BoldFrame>
       );
     case "soft":
-      // Phase 1, T8.
-      throw new Error("El preset soft todavía no tiene marco.");
+      return (
+        <SoftFrame tokens={theme.tokens} {...props}>
+          {children}
+        </SoftFrame>
+      );
   }
 }

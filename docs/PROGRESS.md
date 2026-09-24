@@ -9,9 +9,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T8: preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus (usa el `heroAsset` que enlaza el seed).
-- **Última actualización:** 2026-09-24, al cerrar la T7 de la Fase 1
-- **Para retomar:** las 12 plantillas de `bold` se ven en `/render/preview/radev/<tipo>?token=…` con `pnpm dev`. Los assets de cada marca se gestionan en Marcas (`/brands/assets`). Las plantillas todavía no dibujan assets: el `heroAsset` de Lumus se usa por primera vez en la T8 y el `logoAsset` de `bold` sigue sin dibujarse (ver pendientes).
+- **Próximo paso:** T9: CRUD de marcas (crear, editar, archivar; borrar solo sin posts).
+- **Última actualización:** 2026-09-24, al cerrar la T8 de la Fase 1
+- **Para retomar:** las 12 plantillas de cada preset se ven en `/render/preview/<radev|lumus>/<tipo>?token=…` con `pnpm dev`. Los assets de cada marca se gestionan en Marcas (`/brands/assets`).
 
 ## Fase 1 — tareas
 
@@ -27,7 +27,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | T5 | Plantillas `bold` sin referencia: `cover`, `statement`, `question`, `cta`. 👁 | ✅ |
 | T6 | Plantillas `bold` de datos: `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart` (datos de ejemplo). 👁 | ✅ |
 | T7 | `brand_assets`: tabla, subida con validación de tipo y tamaño, `media/`. El seed carga y enlaza los assets de Lumus | ✅ |
-| T8 | Preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus. 👁 | |
+| T8 | Preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus. 👁 | ✅ |
 | T9 | CRUD de marcas (borrar solo sin posts) | |
 | T10 | Editor de identidad visual: preset, formulario desde el schema, vista previa en vivo, aviso de contraste | |
 | T11 | Calibración de límites de caracteres con casos extremos; la preview marca desbordes | |
@@ -75,7 +75,7 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Tokens** (`packages/slides/src/presets/`): un schema por preset armado con `color`, `font`, `range`, `text`, `lines`, `toggle` y `asset` (`presets/fields.ts`). Cada campo tiene un valor por defecto y `.meta({ title, widget, ... })` para el formulario de la T10. Los objetos anidados usan `.prefault({})` (en Zod 4, `.default` no aplica los defaults internos). Los valores por defecto son neutros, no los de RAdev ni Lumus (regla 6). `parseTheme(preset, tokens)` valida y completa, y devuelve los problemas como `ruta › mensaje`; `defaultTokens(preset)` da una identidad completa. Los assets son ids de `brand_assets` (uuid) o `null`. `wordmark.tracking` de `soft` es un número en em.
 - **Tokens guardados**: la migración `0002_lumus_tokens_phase1.sql` (idempotente) pasó el tracking de Lumus a número y dejó en `null` sus assets (antes nombres de archivo). El seed de la T7 los vuelve a enlazar. `packages/db` tiene `@radev/slides` como devDependency solo para el test que valida los tokens del seed.
 - **Slides sin referencia** (`statement`, `question`, `cta`, etc.): no se esperan imágenes del operador. Se diseñan en código con las reglas del preset y el operador aprueba mirando capturas del render.
-- **Frame** (`packages/slides/src/frame/`): `SlideFrame` elige el marco del preset (`presets/bold/frame.tsx`; `soft` tira error hasta la T8). Geometría y zonas seguras en `frame/geometry.ts` (`FORMAT`, `SAFE_AREA`, `EXCLUSION_ZONES`, `isInSafeZone`); las plantillas ubican su contenido en `BOLD_CONTENT_BOX` (80,150 · 920×1040). Decoraciones deterministas por `seed` (`frame/random.ts`). La portada muestra "Deslizá →" en vez del número; `glow` solo en `cover` y `cta`.
+- **Frame** (`packages/slides/src/frame/`): `SlideFrame` elige el marco del preset (`presets/bold/frame.tsx` o `presets/soft/frame.tsx`). Geometría y zonas seguras en `frame/geometry.ts` (`FORMAT`, `SAFE_AREA`, `EXCLUSION_ZONES`, `isInSafeZone`); las plantillas ubican su contenido en `BOLD_CONTENT_BOX` (80,150 · 920×1040). Decoraciones deterministas por `seed` (`frame/random.ts`). La portada muestra "Deslizá →" en vez del número; `glow` solo en `cover` y `cta`.
 - **Pie sin tagline** (aprobado mirando la captura con TikTok encima): la columna de botones tapaba el lema. Queda wordmark + indicador de página. El token `footer.tagline` sigue en el schema sin dibujarse (ver pendientes).
 - **Plantillas** (`packages/slides/src/presets/bold/templates/`): una por archivo, registradas en `templates/index.ts`. `SlideContent` (`src/slide-content.tsx`) elige la del preset y va dentro de `SlideFrame`; `hasTemplate` dice si existe (la preview muestra "pendiente" si no). Piezas comunes en `bold/parts.tsx` (`Title`, `Support`, `IconTile`, `boxStyle`, `ConnectorDot`, `TemplateLayout`, `fitFontSize`); geometría de los diagramas en funciones puras en `bold/layout.ts`, con tests de que nada se sale ni se pisa. Íconos por nombre con `SlideIcon` (`src/icons.tsx`): `import * as` de `lucide-react` en PascalCase cubre los 2112 nombres, alias incluidos (hay test).
 - **Ancho útil 850** debajo del título (`BOLD_CONTENT_BOX`), título a 920. Detalle en `DESIGN-SYSTEM.md` §3 y §7, con el reparto de tarjetas y chips, los tamaños de título y el ajuste de etiquetas.
@@ -94,7 +94,13 @@ Plan aprobado el 2026-09-23. Terminada.
 - **`/media/...`**: ruta de la web (`app/media/[...path]/route.ts`), pública (excluida del proxy de auth), caché inmutable, `nosniff` y CSP `sandbox`. Server Actions con `bodySizeLimit: "6mb"`.
 - **Panel de assets**: "Marcas" ya está activa y lleva a `/brands/assets`, que trabaja sobre la marca activa del selector. Subir (con uso: logo, protagonista, decoración, otro), reemplazar y borrar (deshabilitado si está en uso). Elegir qué asset usa cada token llega con el editor de la T10.
 - **Seed de assets**: `seedBrandAssets` en `seed/brands.ts` (Lumus: orbe → `heroAsset`, logo → `logoAsset`). `pendingSeedAssets` saltea tokens ya enlazados y roles que la marca ya tiene: correrlo de nuevo no agrega nada (probado).
-- **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
+- **Preset `soft` (T8)**: marco en `presets/soft/frame.tsx` (`SOFT_CONTENT_BOX` igual al de `bold`), piezas en `soft/parts.tsx` (`Title`, `Support`, `Rich` con `keepTogether`, `glassStyle`, `IconBadge`, `Hero`, `ConnectorDot`, `ArrowMarker`, `numericText`), una plantilla por archivo en `soft/templates/`. Reglas en `DESIGN-SYSTEM.md` §8. Aprobado en dos tandas mirando capturas (look general con `cover`, `statement` y `cta`; después el resto).
+- **Geometría compartida**: `presets/shared/layout.ts` (filas de `cardGrid`, `flowLayout`, `hubLayout`), `shared/chart-layout.ts` y `shared/fit.ts` (`fitFontSize`), con sus tests. Los dos presets los usan; `bold/parts.tsx` re-exporta `fitFontSize`.
+- **Assets en el render**: `SlideFrame` y `SlideContent` reciben `assets` (`SlideAssets`: id de `brand_assets` → `{ url, width, height }`, en `frame/types.ts`, con `resolveAsset`). La preview lo arma con `listBrandAssets` + `mediaUrl`. Token sin archivo = la slide sale sin él, no falla. `bold` muestra el logo en lugar del wordmark cuando la marca tiene `logoAsset`. `RenderReady` también espera a que decodifiquen las imágenes.
+- **Ejemplos por preset**: `exampleSlidesByPreset` (`soft` con temas de plata personal, cifras de relleno; `bigNumber` y `chart` compartidos) y `exampleCarouselByPreset`. Los tests validan los ejemplos y carruseles de los dos presets contra los schemas.
+- **Superposición de TikTok** (`overlay=tiktok`): muestra solo la interfaz (columna de botones, contador de arriba, puntitos de abajo) con máscara y `mix-blend-mode: lighten`; antes pegaba la captura entera, con el post de RAdev encima de cualquier slide.
+- **Pie a la izquierda de TikTok**: el indicador de página y el "Deslizá →" terminan en `x = 930` en los dos presets (con la superposición limpia se vio que el contador de comentarios los tapaba).
+- **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes y las imágenes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante
 
@@ -104,7 +110,8 @@ Plan aprobado el 2026-09-23. Terminada.
 - T11: en `flow` de 4 nodos una palabra de ~20 letras ("Internacionalización") no entra ni al tamaño mínimo y se corta dentro de la tarjeta (`overflow-wrap: anywhere`, último recurso). Evaluar si conviene limitar el largo de palabra de las etiquetas. También revisar el salto de 84 a 70 px en títulos de más de 48 caracteres.
 - La captura de TikTok (`docs/references/tiktok-4x5.jpeg`, post "¿Cuánto cuesta tener una APP?") ya se superpuso en la T3 (`overlay=tiktok`) y confirmó las zonas seguras.
 - Ese post usa una tipografía condensada en el título, distinta de Inter Tight de las referencias. Por ahora se sigue con Inter Tight; si el operador la quiere, se suma a la lista curada.
-- `logoAsset` de `bold`: si existe, reemplaza al wordmark (`DESIGN-SYSTEM.md` §7), pero el marco todavía no lo dibuja. Sumarlo en la T10 junto con el selector de assets del editor.
+- `logoAsset` de `soft`: el marco usa siempre el wordmark ("se prefiere el wordmark", §8; el logo de Lumus es de 192 px). Si se quiere usar, decidir dónde en la T10.
+- `fitFontSize` estima con 0,56 em por carácter (calibrado con Inter); con Geist Sans (`soft`) anduvo bien en los ejemplos, revisar en la T11 con casos extremos.
 
 ## Cómo trabajamos
 
