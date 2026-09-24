@@ -24,4 +24,20 @@ export {
   updateBrand,
   updateBrandTheme,
 } from "./queries/brands";
+export {
+  addPostVersion,
+  type CarouselContent,
+  type CreatedPost,
+  countPostsByStatus,
+  createPost,
+  getPostByCode,
+  getPostVersion,
+  listPillars,
+  listPosts,
+  listPostVersions,
+  type NewVersionResult,
+  type PostSummary,
+  type TransitionOutcome,
+  transitionPost,
+} from "./queries/posts";
 export * from "./schema";

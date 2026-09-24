@@ -1,5 +1,5 @@
 import type { AssetRole } from "@radev/core";
-import type { NewBrand } from "../schema";
+import type { NewBrand, NewContentPillar } from "../schema";
 
 /**
  * Initial brands. Values come from docs/DESIGN-SYSTEM.md §7 (RAdev, preset "bold") and
@@ -111,3 +111,76 @@ export function pendingSeedAssets(
     (asset) => tokens[asset.token] == null && !existingRoles.includes(asset.role),
   );
 }
+
+export type SeedPillar = Pick<NewContentPillar, "key" | "name" | "description" | "targetShare">;
+
+/**
+ * Content pillars from each brand's voice document (seeds/brands/<slug>/voice.md, "Pilares y
+ * mezcla"). Proposed mix, to validate; edited from the panel in phase 3.
+ */
+export const seedPillars: Record<string, SeedPillar[]> = {
+  radev: [
+    {
+      key: "business-problems",
+      name: "Problemas de negocio",
+      description: "Dolores típicos de negocios y cómo se resuelven con procesos y software",
+      targetShare: 0.4,
+    },
+    {
+      key: "built-by-radev",
+      name: "Hecho por RAdev",
+      description: "Casos reales, antes y después, proyectos terminados (solo de la sección Casos)",
+      targetShare: 0.2,
+    },
+    {
+      key: "build-in-public",
+      name: "Construcción en público",
+      description: "Detrás de escena de construir Lumus y otros proyectos, con la parte técnica",
+      targetShare: 0.15,
+    },
+    {
+      key: "programming-explained",
+      name: "Programación explicada",
+      description: "Conceptos técnicos contados en simple, siempre ligados a un problema real",
+      targetShare: 0.15,
+    },
+    {
+      key: "call-to-action",
+      name: "Llamado a la acción",
+      description: "Servicios, contacto, y promoción de Lumus",
+      targetShare: 0.1,
+    },
+  ],
+  lumus: [
+    {
+      key: "peso-vs-dollar",
+      name: "Peso vs. dólar",
+      description: 'Datos reales de devaluación y poder de compra ("tus 100 mil de 2020, hoy")',
+      targetShare: 0.35,
+    },
+    {
+      key: "money-habits",
+      name: "Hábitos con la plata",
+      description: "Ordenar gastos, presupuestos, cuotas, gastos hormiga, vencimientos",
+      targetShare: 0.3,
+    },
+    {
+      key: "money-myths",
+      name: "Mitos de la plata",
+      description: "Creencias comunes sobre la plata diaria, desmentidas con claridad",
+      targetShare: 0.15,
+    },
+    {
+      key: "inside-lumus",
+      name: "Lumus por dentro",
+      description: "Qué hace Lumus y cómo, mostrando funciones concretas",
+      targetShare: 0.1,
+    },
+    {
+      key: "try-lumus",
+      name: "Probá Lumus",
+      description: "Invitación a la prueba gratis",
+      targetShare: 0.1,
+    },
+  ],
+};

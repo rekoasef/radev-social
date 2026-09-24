@@ -3,7 +3,13 @@ import { fileURLToPath } from "node:url";
 import { checkAssetFile } from "@radev/core";
 import { parseTheme } from "@radev/slides";
 import { describe, expect, it } from "vitest";
-import { pendingSeedAssets, type SeedAsset, seedBrandAssets, seedBrands } from "./brands";
+import {
+  pendingSeedAssets,
+  type SeedAsset,
+  seedBrandAssets,
+  seedBrands,
+  seedPillars,
+} from "./brands";
 
 describe("seed brands", () => {
   it.each(seedBrands.map((brand) => [brand.slug, brand] as const))(
@@ -55,4 +61,16 @@ describe("seed brand assets", () => {
       [hero],
     );
   });
+});
+
+describe("seed pillars", () => {
+  it.each(Object.entries(seedPillars))(
+    "%s: valid keys and a mix that adds up to 100%%",
+    (slug, pillars) => {
+      expect(seedBrands.some((b) => b.slug === slug)).toBe(true);
+      for (const p of pillars) expect(p.key).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+      const total = pillars.reduce((sum, p) => sum + (p.targetShare ?? 0), 0);
+      expect(total).toBeCloseTo(1, 5);
+    },
+  );
 });

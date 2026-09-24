@@ -1,7 +1,7 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, count, eq } from "drizzle-orm";
 import type { Database } from "../client";
 import { removeMediaFile } from "../media";
-import { type Brand, brandAssets, brands, type NewBrand } from "../schema";
+import { type Brand, brandAssets, brands, type NewBrand, posts } from "../schema";
 
 /** All brands, archived included, in creation order (name breaks ties). */
 export function listBrands(db: Database): Promise<Brand[]> {
@@ -18,12 +18,10 @@ export async function getBrandById(db: Database, id: string): Promise<Brand | un
   return brand;
 }
 
-/**
- * Posts of a brand. The posts table arrives in phase 2; until then there are none, so every
- * brand can be deleted and its code prefix changed. Replace with a real count then.
- */
-export async function countBrandPosts(_db: Database, _brandId: string): Promise<number> {
-  return 0;
+/** Posts of a brand, any status: deleting and changing the code prefix need none. */
+export async function countBrandPosts(db: Database, brandId: string): Promise<number> {
+  const [row] = await db.select({ value: count() }).from(posts).where(eq(posts.brandId, brandId));
+  return row?.value ?? 0;
 }
 
 export type BrandWriteResult =

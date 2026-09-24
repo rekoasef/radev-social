@@ -8,10 +8,31 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 2 — Posts, versiones, editor y render (por empezar). Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** proponer el plan de la Fase 2 (`docs/ROADMAP.md`) y aprobarlo con el operador antes de codear.
-- **Última actualización:** 2026-09-24, al cerrar la Fase 1
+- **Fase:** 2 — Editor, render y exportación (empezada 2026-09-24). Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T2 de la Fase 2: sección Posts con el listado por marca y filtros por estado.
+- **Última actualización:** 2026-09-24, al cerrar la T1 de la Fase 2
 - **Para retomar:** todo lo de la Fase 1 se ve en el panel (Marcas → Slides / Identidad visual / Assets) con `pnpm dev`. El control del render (`checkRender`) y los extremos son la base del QA del render de la Fase 2.
+
+## Fase 2 — tareas
+
+Plan aprobado el 2026-09-24. 👁 = termina con capturas para que el operador apruebe el diseño.
+
+| Tarea | Qué | Estado |
+|---|---|---|
+| T0 | Tablas `content_pillars` (seed con los pilares de cada `voice.md`), `posts` (código público con contador por marca), `post_versions`, `assets`, `publications` | ✅ |
+| T1 | Máquina de estados en `packages/core` con tests de invariantes; única vía para cambiar `posts.status` | ✅ |
+| T2 | Sección Posts: listado por marca con filtros por estado | |
+| T3 | Editor de carrusel: formulario por tipo desde los schemas, agregar/quitar/reordenar, íconos con buscador, pilar/hook/caption/hashtags, vista previa en vivo con QA, avance guardado en el navegador. 👁 | |
+| T4 | Versiones: cada guardado crea una; ver y restaurar | |
+| T5 | Ruta interna `/render/<versión>/<slide>` con token y semilla del post | |
+| T6 | Worker: job `carousel.render` (Playwright, QA, PNG en `media/`, registro en `assets`), idempotente; la web encola | |
+| T7 | Docker: worker con Chromium (amd64 y arm64) | |
+| T8 | Revisión: ver los PNG, aprobar o volver a editar | |
+| T9 | Exportar ZIP (PNG + copy) y copiar el copy | |
+| T10 | Adaptador `manual`: marcar como publicado | |
+| T11 | Cierre: criterio de terminado, docs | |
+
+Decisiones aprobadas con el plan: (1) sin estado `draft`: el editor guarda el avance en el navegador y el post nace al guardar un carrusel válido; (2) publicación manual sin calendario: `approved → publishing → published` con "Marcar como publicado" (el calendario es de la Fase 4); (3) `chart` fuera del editor hasta que haya datos (Fases 3 y 5); `bigNumber` sí, la cifra la carga el operador con fuente obligatoria; (4) rechazar con feedback queda para la Fase 3 (sirve para regenerar); (5) la web encola jobs con pg-boss; nombres y payloads de jobs en `packages/core`; (6) imagen del worker con Chromium (~400 MB más); (7) ZIP con `fflate`.
 
 ## Fase 1 — tareas
 
@@ -57,6 +78,13 @@ Plan aprobado el 2026-09-23. Terminada.
 | T11 | Cierre: sección Comandos del CLAUDE.md completa, ROADMAP marcado, README "cómo levantar", recorrer el criterio de terminado de la fase (probado desde un clon limpio con base vacía) | ✅ |
 
 ## Decisiones tomadas (no re-discutir)
+
+**Fase 2:**
+- **Tablas (T0, migración `0004`, solo agrega)**: `content_pillars` (clave única por marca, `target_share` 0–1; el seed carga los 5 pilares de cada `voice.md` con nombre en español y solo agrega los que faltan), `posts` (`public_code` = prefijo + número de 4 cifras, `publicCode` en core; número tomado de `brands.next_post_number` dentro de la transacción que crea el post, así un error no quema códigos; `brand_id` con `restrict`: una marca con posts no se borra), `post_versions` (número por post, `content` jsonb, `origin`, `render_issues`), `assets` (PNG renderizados; único por versión + formato + slide), `publications` (única por post y red). Estados, orígenes, formatos y redes en `packages/core/src/posts/constants.ts`; la base los valida con `check`. `hook_type` sin `check` (lo valida el schema del carrusel). `countBrandPosts` ya cuenta posts reales.
+- **Máquina de estados (T1)**: `packages/core/src/posts/state-machine.ts`: `TRANSITIONS` (evento → desde, hacia, efectos), `nextStatus`, `availableEvents`, `statusLabel`, `INITIAL_STATUSES` (`manual` nace en `rendering`, `ai` en `generating`). `edit` vale desde `in_review`, `approved`, `scheduled`, `rejected` y `failed`; efecto `cancel_publish_job` solo si el post estaba programado. Publicación manual: `startPublishing` desde `approved` o `scheduled`. `published` y `archived` son finales. Tests: la invariante de `approved` se prueba recorriendo el grafo sin pasar por ese estado.
+- **Regla 2 en código**: `transitionPost` (`packages/db/src/queries/posts.ts`) es lo único que escribe `posts.status`: bloquea la fila, aplica `nextStatus` y guarda. Un test recorre `apps/` y `packages/` y falla si otro archivo actualiza el estado. `createPost` (código + versión 1 en una transacción) y `addPostVersion` (evento `edit` + versión nueva) viven ahí. El contenido se valida con el schema del carrusel **antes** de llegar a `packages/db` (regla 4), que lo guarda tal cual.
+
+**Fase 1:**
 
 - Node 24 con nvm (`.nvmrc`); pnpm 12.5.1 (`packageManager`).
 - TypeScript 6.0.3 (no 7). Tailwind v4.

@@ -4,8 +4,8 @@ import { eq } from "drizzle-orm";
 import { createDb } from "../client";
 import { loadRootEnv } from "../load-root-env";
 import { createBrandAsset, listBrandAssets, setBrandAssetToken } from "../queries/brand-assets";
-import { brands } from "../schema";
-import { pendingSeedAssets, seedBrandAssets, seedBrands } from "./brands";
+import { brands, contentPillars } from "../schema";
+import { pendingSeedAssets, seedBrandAssets, seedBrands, seedPillars } from "./brands";
 
 loadRootEnv();
 
@@ -58,6 +58,20 @@ try {
     });
   }
   console.log(`Assets enlazados: ${linked.join(", ") || "ninguno (ya estaban)"}`);
+
+  // Pillars: only the missing keys; never overwrites what was edited from the panel.
+  let pillarsAdded = 0;
+  for (const [slug, pillars] of Object.entries(seedPillars)) {
+    const [brand] = await db.select().from(brands).where(eq(brands.slug, slug));
+    if (!brand) continue;
+    const added = await db
+      .insert(contentPillars)
+      .values(pillars.map((pillar) => ({ ...pillar, brandId: brand.id })))
+      .onConflictDoNothing({ target: [contentPillars.brandId, contentPillars.key] })
+      .returning({ key: contentPillars.key });
+    pillarsAdded += added.length;
+  }
+  console.log(`Pilares creados: ${pillarsAdded || "ninguno (ya estaban)"}`);
 } finally {
   await pool.end();
 }
