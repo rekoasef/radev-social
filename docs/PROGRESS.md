@@ -9,9 +9,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
-- **Próximo paso:** T9: CRUD de marcas (crear, editar, archivar; borrar solo sin posts).
-- **Última actualización:** 2026-09-24, al cerrar la T8 de la Fase 1
-- **Para retomar:** las 12 plantillas de cada preset se ven en `/render/preview/<radev|lumus>/<tipo>?token=…` con `pnpm dev`. Los assets de cada marca se gestionan en Marcas (`/brands/assets`).
+- **Próximo paso:** T10: editor de identidad visual (preset, formulario generado desde el schema, vista previa en vivo, aviso de contraste, selector de assets).
+- **Última actualización:** 2026-09-24, al cerrar la T9 de la Fase 1
+- **Para retomar:** las 12 plantillas de cada preset se ven en `/render/preview/<radev|lumus>/<tipo>?token=…` con `pnpm dev`. Las marcas se gestionan en Marcas (`/brands`): lista, nueva, `/brands/<slug>` (datos generales, archivar, borrar) y `/brands/<slug>/assets`.
 
 ## Fase 1 — tareas
 
@@ -28,7 +28,7 @@ Plan aprobado el 2026-09-23. 👁 = termina con capturas para que el operador ap
 | T6 | Plantillas `bold` de datos: `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart` (datos de ejemplo). 👁 | ✅ |
 | T7 | `brand_assets`: tabla, subida con validación de tipo y tamaño, `media/`. El seed carga y enlaza los assets de Lumus | ✅ |
 | T8 | Preset `soft` con las 12 plantillas + carrusel de ejemplo de Lumus. 👁 | ✅ |
-| T9 | CRUD de marcas (borrar solo sin posts) | |
+| T9 | CRUD de marcas (borrar solo sin posts) | ✅ |
 | T10 | Editor de identidad visual: preset, formulario desde el schema, vista previa en vivo, aviso de contraste | |
 | T11 | Calibración de límites de caracteres con casos extremos; la preview marca desbordes | |
 | T12 | Cierre: criterio de terminado, docs, comandos | |
@@ -92,7 +92,7 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Assets de marca (T7, ADR 0012)**: tabla `brand_assets` (migración `0003`, solo agrega). Reglas puras en `packages/core/src/brands/assets.ts`: `checkAssetFile` (tipo por firma del contenido: PNG, JPEG, WebP, SVG; hasta 5 MB) y `findAssetReferences` (dónde usan los tokens un id, para cualquier preset). Archivos en `packages/db/src/media.ts` (`resolveMediaPath` rechaza todo lo que no sea `a-z0-9-/…`, escritura atómica) y operaciones en `queries/brand-assets.ts` (`createBrandAsset`, `replaceBrandAssetFile` conserva el id y cambia la ruta, `deleteBrandAsset` se niega si está en uso). Ancho y alto con `image-size` 2.0.2 (JS puro; respeta la orientación EXIF).
 - **`MEDIA_DIR`**: vacío = `<repo>/media`; relativo = desde la raíz del repo (lo resuelven `scripts/with-root-env.mjs` y `load-root-env.ts`). Docker monta **la misma** `./media` en `/data/media` (web y migrate comparten la base con `pnpm dev`, así que también los archivos). `media/.gitkeep` se versiona para que Docker no cree la carpeta como root.
 - **`/media/...`**: ruta de la web (`app/media/[...path]/route.ts`), pública (excluida del proxy de auth), caché inmutable, `nosniff` y CSP `sandbox`. Server Actions con `bodySizeLimit: "6mb"`.
-- **Panel de assets**: "Marcas" ya está activa y lleva a `/brands/assets`, que trabaja sobre la marca activa del selector. Subir (con uso: logo, protagonista, decoración, otro), reemplazar y borrar (deshabilitado si está en uso). Elegir qué asset usa cada token llega con el editor de la T10.
+- **Panel de assets**: en `/brands/<slug>/assets` (en la T7 era `/brands/assets` con la marca activa; pasó a ir por slug con la T9). Subir (con uso: logo, protagonista, decoración, otro), reemplazar y borrar (deshabilitado si está en uso). Elegir qué asset usa cada token llega con el editor de la T10.
 - **Seed de assets**: `seedBrandAssets` en `seed/brands.ts` (Lumus: orbe → `heroAsset`, logo → `logoAsset`). `pendingSeedAssets` saltea tokens ya enlazados y roles que la marca ya tiene: correrlo de nuevo no agrega nada (probado).
 - **Preset `soft` (T8)**: marco en `presets/soft/frame.tsx` (`SOFT_CONTENT_BOX` igual al de `bold`), piezas en `soft/parts.tsx` (`Title`, `Support`, `Rich` con `keepTogether`, `glassStyle`, `IconBadge`, `Hero`, `ConnectorDot`, `ArrowMarker`, `numericText`), una plantilla por archivo en `soft/templates/`. Reglas en `DESIGN-SYSTEM.md` §8. Aprobado en dos tandas mirando capturas (look general con `cover`, `statement` y `cta`; después el resto).
 - **Geometría compartida**: `presets/shared/layout.ts` (filas de `cardGrid`, `flowLayout`, `hubLayout`), `shared/chart-layout.ts` y `shared/fit.ts` (`fitFontSize`), con sus tests. Los dos presets los usan; `bold/parts.tsx` re-exporta `fitFontSize`.
@@ -100,6 +100,10 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Ejemplos por preset**: `exampleSlidesByPreset` (`soft` con temas de plata personal, cifras de relleno; `bigNumber` y `chart` compartidos) y `exampleCarouselByPreset`. Los tests validan los ejemplos y carruseles de los dos presets contra los schemas.
 - **Superposición de TikTok** (`overlay=tiktok`): muestra solo la interfaz (columna de botones, contador de arriba, puntitos de abajo) con máscara y `mix-blend-mode: lighten`; antes pegaba la captura entera, con el post de RAdev encima de cualquier slide.
 - **Pie a la izquierda de TikTok**: el indicador de página y el "Deslizá →" terminan en `x = 930` en los dos presets (con la superposición limpia se vio que el contador de comentarios los tapaba).
+- **CRUD de marcas (T9)**: reglas puras en `packages/core/src/brands/brand-rules.ts` (`slugify`, `SLUG_PATTERN`, `CODE_PREFIX_PATTERN`, `RESERVED_SLUGS` = `new`, `canDeleteBrand`, `canChangeCodePrefix`), con tests. Consultas en `packages/db/src/queries/brands.ts`: `createBrand` / `updateBrand` devuelven el campo y el mensaje si el slug o el prefijo ya existen (violación única 23505), `setBrandArchived`, `deleteBrand` (filas en cascada y después los archivos). `countBrandPosts` devuelve 0 hasta que exista la tabla `posts` (Fase 2): **conectarlo ahí**. Validación Zod en `apps/web/lib/brand-form.ts` (zona horaria contra `Intl.supportedValuesOf`). Server Actions en `app/(panel)/brands/actions.ts`.
+- **Páginas de marcas**: `/brands` (activas y archivadas), `/brands/new` (nombre → slug y prefijo sugeridos mientras no se tocan; preset con sus tokens por defecto; zona horaria), `/brands/<slug>` (nombre, slug, prefijo, zona; archivar/desarchivar; borrar escribiendo el nombre). El preset se cambia en la T10. Crear una marca la deja activa; renombrar el slug de la marca activa actualiza la cookie. Pestañas de marca en `components/brands/brand-tabs.tsx` ("Identidad visual" apagada hasta la T10).
+- **Prefijo editable solo sin posts** (decidido con el operador): así los códigos públicos (`RA-0142`) nunca cambian.
+- **Build de producción**: `packages/db/src/media.ts` marca sus accesos a disco con `/*turbopackIgnore: true*/`; sin eso, Next metía el proyecto entero (y `media/`) en el standalone. `@radev/core` está en `transpilePackages` (lo importan componentes cliente).
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes y las imágenes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
 ## Anotado para más adelante

@@ -1,0 +1,53 @@
+import { canChangeCodePrefix, canDeleteBrand } from "@radev/core";
+import { countBrandPosts, getBrandBySlug } from "@radev/db";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { BrandDangerZone } from "@/components/brands/brand-danger-zone";
+import { BrandForm } from "@/components/brands/brand-form";
+import { BrandTabs } from "@/components/brands/brand-tabs";
+import { Plate } from "@/components/console/plate";
+import { timezoneOptions } from "@/lib/brand-form";
+import { db } from "@/lib/db";
+
+export const metadata: Metadata = { title: "Marca · RAdev Social" };
+
+export default async function BrandPage({ params }: PageProps<"/brands/[slug]">) {
+  const brand = await getBrandBySlug(db, (await params).slug);
+  if (!brand) notFound();
+  const posts = await countBrandPosts(db, brand.id);
+  const prefixRule = canChangeCodePrefix(posts);
+  const deleteRule = canDeleteBrand(posts);
+
+  return (
+    <>
+      <BrandTabs brand={brand} current="general" />
+      <section aria-labelledby="general-heading" className="flex flex-col gap-6">
+        <Plate as="h1" id="general-heading">
+          General
+        </Plate>
+        <BrandForm
+          // A new key after saving a new slug resets the form to the stored values.
+          key={brand.updatedAt.toISOString()}
+          values={{
+            id: brand.id,
+            name: brand.name,
+            slug: brand.slug,
+            codePrefix: brand.codePrefix,
+            timezone: brand.timezone,
+          }}
+          timezones={timezoneOptions()}
+          prefixLocked={prefixRule.ok ? undefined : prefixRule.reason}
+        />
+      </section>
+      <section aria-labelledby="danger-heading" className="flex flex-col gap-6">
+        <Plate id="danger-heading">Archivar o borrar</Plate>
+        <BrandDangerZone
+          id={brand.id}
+          name={brand.name}
+          archived={brand.archivedAt !== null}
+          deleteBlocked={deleteRule.ok ? undefined : deleteRule.reason}
+        />
+      </section>
+    </>
+  );
+}

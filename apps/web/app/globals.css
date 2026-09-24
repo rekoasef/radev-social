@@ -539,3 +539,69 @@
     cursor: progress;
   }
 }
+
+@layer components {
+  /* Brand pages: list cards, form fields, preset choice. */
+  .brand-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--color-bezel);
+    border-radius: 6px;
+    background: var(--color-panel);
+    transition: border-color 160ms ease-out;
+  }
+  .brand-card:hover {
+    border-color: var(--color-bezel-strong);
+  }
+  .console-field {
+    min-height: 42px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 4px;
+    background: var(--color-panel);
+    color: var(--color-ink);
+    font-size: 14px;
+  }
+  .console-field:focus-visible {
+    outline: 2px solid var(--color-ink-dim);
+    outline-offset: 1px;
+  }
+  .console-field[aria-invalid="true"] {
+    border-color: var(--color-tally-red);
+  }
+  .console-field[readonly] {
+    color: var(--color-ink-dim);
+  }
+  .preset-option {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border: 1px solid var(--color-bezel);
+    border-radius: 6px;
+    background: var(--color-panel);
+    cursor: pointer;
+  }
+  .preset-option:has(input:checked) {
+    border-color: var(--color-ink);
+    background: var(--color-panel-raised);
+  }
+  .preset-option:has(input:focus-visible) {
+    outline: 2px solid var(--color-ink-dim);
+    outline-offset: 2px;
+  }
+  .console-button-danger {
+    color: var(--color-tally-red);
+    border-color: color-mix(in oklab, var(--color-tally-red) 50%, var(--color-bezel-strong));
+  }
+  .console-button-danger:hover {
+    background: color-mix(in oklab, var(--color-tally-red) 12%, var(--color-panel-raised));
+    border-color: var(--color-tally-red);
+  }
+  .console-button-danger:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}

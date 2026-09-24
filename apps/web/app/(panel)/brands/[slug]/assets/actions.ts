@@ -59,7 +59,7 @@ export async function uploadAsset(_: AssetFormState, form: FormData): Promise<As
   });
   if (!result.ok) return failed(result.error);
 
-  revalidatePath("/brands/assets");
+  revalidatePath(`/brands/${brand.slug}/assets`);
   return { status: "ok", message: "Archivo subido." };
 }
 
@@ -80,7 +80,7 @@ export async function replaceAsset(_: AssetFormState, form: FormData): Promise<A
   });
   if (!result.ok) return failed(result.error);
 
-  revalidatePath("/brands/assets");
+  revalidatePath(`/brands/${brand.slug}/assets`);
   return { status: "ok", message: "Archivo reemplazado." };
 }
 
@@ -100,6 +100,6 @@ export async function deleteAsset(_: AssetFormState, form: FormData): Promise<As
     return failed(`Está en uso en la identidad visual (${where}). Cambialo ahí antes de borrarlo.`);
   }
 
-  revalidatePath("/brands/assets");
+  revalidatePath(`/brands/${brand.slug}/assets`);
   return { status: "ok", message: "Archivo borrado." };
 }

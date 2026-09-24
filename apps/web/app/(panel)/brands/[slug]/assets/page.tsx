@@ -1,32 +1,27 @@
 import { findAssetReferences } from "@radev/core";
-import { listBrandAssets } from "@radev/db";
+import { getBrandBySlug, listBrandAssets } from "@radev/db";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { AssetActions, AssetUploadForm } from "@/components/brands/asset-forms";
+import { BrandTabs } from "@/components/brands/brand-tabs";
 import { Plate } from "@/components/console/plate";
 import { Tally } from "@/components/console/tally";
-import { getBrandContext } from "@/lib/active-brand";
 import { formatBytes, mediaUrl, ROLE_LABELS, tokenLabel } from "@/lib/brand-assets";
 import { db } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Assets · RAdev Social" };
 
-// Files of the brand the panel is tuned to (brand switcher). Which token uses each file is
-// chosen in the visual identity editor (phase 1, T10); the seed links Lumus's orb and logo.
-export default async function BrandAssetsPage() {
-  const { activeBrand: brand } = await getBrandContext();
-  if (!brand) {
-    return (
-      <section>
-        <Plate as="h1">Assets</Plate>
-        <p className="mt-6 text-sm text-ink-dim">No hay marcas activas.</p>
-      </section>
-    );
-  }
+// Files of one brand. Which token uses each file is chosen in the visual identity editor
+// (phase 1, T10); the seed links Lumus's orb and logo.
+export default async function BrandAssetsPage({ params }: PageProps<"/brands/[slug]/assets">) {
+  const brand = await getBrandBySlug(db, (await params).slug);
+  if (!brand) notFound();
 
   const assets = await listBrandAssets(db, brand.id);
 
   return (
     <>
+      <BrandTabs brand={brand} current="assets" />
       <section aria-labelledby="upload-heading" className="flex flex-col gap-6">
         <Plate as="h1" id="upload-heading" aside={brand.name}>
           Assets

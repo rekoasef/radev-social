@@ -28,7 +28,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Preset `bold` y preset `soft`, cada uno con su schema Zod de tokens
 - [x] `SlideFrame` en formato `4x5` (único, ADR 0011), zonas seguras con la interfaz de TikTok, indicador de página
 - [x] Plantillas v1: `cover`, `statement`, `question`, `cardGrid`, `flow`, `hubDiagram`, `comparison`, `costBreakdown`, `steps`, `bigNumber`, `chart`, `cta`
-- [ ] CRUD de marcas: crear, editar, archivar, borrar (solo sin posts)
+- [x] CRUD de marcas: crear, editar, archivar, borrar (solo sin posts)
 - [ ] Editor de identidad visual: elegir preset, formulario de tokens generado desde el schema, vista previa en vivo con slides de ejemplo
 - [x] Tabla `brand_assets` y subida de assets (validación de tipo y tamaño); seed con los assets de Lumus
 - [ ] Página de preview de todos los tipos de slide por marca

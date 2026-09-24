@@ -7,7 +7,7 @@ import {
   deleteAsset,
   replaceAsset,
   uploadAsset,
-} from "@/app/(panel)/brands/assets/actions";
+} from "@/app/(panel)/brands/[slug]/assets/actions";
 
 const idle: AssetFormState = { status: "idle" };
 const ACCEPT = "image/png,image/jpeg,image/webp,image/svg+xml";

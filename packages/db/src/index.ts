@@ -11,5 +11,16 @@ export {
   replaceBrandAssetFile,
   setBrandAssetToken,
 } from "./queries/brand-assets";
-export { getBrandBySlug, listBrands } from "./queries/brands";
+export {
+  type BrandDetails,
+  type BrandWriteResult,
+  countBrandPosts,
+  createBrand,
+  deleteBrand,
+  getBrandById,
+  getBrandBySlug,
+  listBrands,
+  setBrandArchived,
+  updateBrand,
+} from "./queries/brands";
 export * from "./schema";
