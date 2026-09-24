@@ -29,6 +29,7 @@ export {
   slugify,
 } from "./brands/brand-rules";
 export { contrastRatio, MIN_TEXT_CONTRAST, parseColor, type Rgba } from "./colors/contrast";
+export { type CarouselRenderJob, carouselRenderKey, JOBS, QUEUE_OPTIONS } from "./jobs";
 export {
   NETWORKS,
   type Network,

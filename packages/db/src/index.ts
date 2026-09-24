@@ -1,6 +1,6 @@
 // Drizzle schema, migrations, queries and seed.
 export { createDb, type Database } from "./client";
-export { readMediaFile } from "./media";
+export { readMediaFile, removeMediaFile, writeMediaFile } from "./media";
 export {
   type AssetResult,
   createBrandAsset,
@@ -36,8 +36,11 @@ export {
   listPillars,
   listPosts,
   listPostVersions,
+  listVersionAssets,
   type NewVersionResult,
   type PostSummary,
+  saveRenderedAsset,
+  setVersionRenderIssues,
   type TransitionOutcome,
   transitionPost,
 } from "./queries/posts";

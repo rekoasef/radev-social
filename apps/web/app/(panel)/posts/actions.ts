@@ -7,12 +7,14 @@ import {
   getPostByCode,
   getPostVersion,
   listPillars,
+  transitionPost,
 } from "@radev/db";
 import { carouselSchema } from "@radev/slides";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { queueRender } from "@/lib/jobs";
 import { requireOperator } from "@/lib/session";
 
 export type SaveCarouselState =
@@ -79,16 +81,17 @@ export async function saveCarouselAction(
       origin: "manual",
     });
     if (!result.ok) return { status: "error", message: result.reason };
+    await queueRender(result.version.id);
     publicCode = post.publicCode;
   } else {
-    const { post } = await createPost(db, {
+    const { post, version } = await createPost(db, {
       brandId: brand.id,
       content: carousel.data,
       origin: "manual",
     });
+    await queueRender(version.id);
     publicCode = post.publicCode;
   }
-  // Rendering is queued from here once the worker job exists (phase 2, T6).
 
   revalidatePath("/posts");
   redirect(`/posts/${publicCode}`);
@@ -119,6 +122,22 @@ export async function restoreVersionAction(form: FormData): Promise<void> {
     origin: "manual",
   });
   if (!result.ok) throw new Error(result.reason);
+  await queueRender(result.version.id);
+  revalidatePath("/posts");
+  redirect(`/posts/${post.publicCode}`);
+}
+
+const retryInput = z.object({ code: z.string().min(1).max(20) });
+
+/** A failed render, again: back to `rendering` and queued (state machine: `retryRender`). */
+export async function retryRenderAction(form: FormData): Promise<void> {
+  await requireOperator();
+  const { code } = retryInput.parse(Object.fromEntries(form));
+  const post = await getPostByCode(db, code);
+  if (!post?.currentVersionId) throw new Error("Ese post ya no existe.");
+  const moved = await transitionPost(db, post.id, "retryRender");
+  if (!moved.ok) throw new Error(moved.reason);
+  await queueRender(post.currentVersionId);
   revalidatePath("/posts");
   redirect(`/posts/${post.publicCode}`);
 }

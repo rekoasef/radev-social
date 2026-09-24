@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: fileURLToPath(new URL("../../", import.meta.url)),
   // Workspace packages export TypeScript source; Next compiles them.
   transpilePackages: ["@radev/core", "@radev/db", "@radev/slides"],
+  // Loaded from node_modules at runtime rather than bundled (it talks to Postgres through pg).
+  serverExternalPackages: ["pg-boss"],
   experimental: {
     // Brand assets go up to 5 MB (packages/core, MAX_ASSET_BYTES) plus the rest of the form.
     serverActions: { bodySizeLimit: "6mb" },

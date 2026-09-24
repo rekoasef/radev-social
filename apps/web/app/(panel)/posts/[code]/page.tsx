@@ -11,7 +11,7 @@ import { brandRenderContext } from "@/lib/carousel";
 import { db } from "@/lib/db";
 import { STATUS_DISPLAY } from "@/lib/post-status";
 import { formatDateTime } from "@/lib/time";
-import { restoreVersionAction } from "../actions";
+import { restoreVersionAction, retryRenderAction } from "../actions";
 
 export async function generateMetadata({ params }: PageProps<"/posts/[code]">): Promise<Metadata> {
   return { title: `${(await params).code} · RAdev Social` };
@@ -35,6 +35,10 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
   const content = version ? carouselSchema.safeParse(version.content) : undefined;
   const display = STATUS_DISPLAY[post.status];
   const canEdit = availableEvents(post.status).includes("edit");
+  const canRetry = availableEvents(post.status).includes("retryRender");
+  const renderIssues = Array.isArray(current?.renderIssues)
+    ? (current.renderIssues as { slide: number; kind: string; text: string }[])
+    : [];
 
   return (
     <>
@@ -53,13 +57,42 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
           {brand.name} · versión {version?.number ?? "—"} ·{" "}
           {formatDateTime(post.updatedAt, brand.timezone)}
         </p>
-        {canEdit && (
-          <div>
+        {post.status === "rendering" && (
+          <p role="status" className="text-sm text-ink-dim">
+            El worker está generando los PNG. Recargá en unos segundos.
+          </p>
+        )}
+        {renderIssues.length > 0 && (
+          <div
+            role="alert"
+            className="flex flex-col gap-1 border-l border-tally-red pl-3 text-sm text-ink"
+          >
+            <span>El render encontró problemas:</span>
+            <ul className="list-disc pl-5 text-ink-dim">
+              {renderIssues.map((issue) => (
+                <li key={`${issue.slide}-${issue.kind}-${issue.text}`}>
+                  {issue.slide >= 0 ? `Slide ${issue.slide + 1}: ` : ""}
+                  {issue.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {canEdit && (
             <Link href={`/posts/${post.publicCode}/edit`} className="console-button">
               Editar
             </Link>
-          </div>
-        )}
+          )}
+          {canRetry && (
+            <form action={retryRenderAction}>
+              <input type="hidden" name="code" value={post.publicCode} />
+              <button type="submit" className="console-button">
+                Reintentar render
+              </button>
+            </form>
+          )}
+        </div>
       </section>
 
       <section aria-labelledby="slides-heading" className="flex flex-col gap-6">

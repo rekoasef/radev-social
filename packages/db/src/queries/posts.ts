@@ -10,12 +10,14 @@ import {
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { Database } from "../client";
 import {
+  assets,
   brands,
   contentPillars,
   type Post,
   type PostVersion,
   posts,
   postVersions,
+  type RenderedAsset,
 } from "../schema";
 import type { Executor } from "./brand-assets";
 
@@ -234,4 +236,41 @@ export function listPillars(db: Database, brandId: string) {
     .from(contentPillars)
     .where(and(eq(contentPillars.brandId, brandId), sql`${contentPillars.archivedAt} is null`))
     .orderBy(desc(contentPillars.targetShare), contentPillars.name);
+}
+
+/** Stores (or replaces) the PNG of one slide: rendering twice never duplicates (rule 8). */
+export async function saveRenderedAsset(
+  db: Executor,
+  values: Omit<RenderedAsset, "id" | "createdAt">,
+): Promise<void> {
+  await db
+    .insert(assets)
+    .values(values)
+    .onConflictDoUpdate({
+      target: [assets.postVersionId, assets.format, assets.slideIndex],
+      set: {
+        path: values.path,
+        width: values.width,
+        height: values.height,
+        checksum: values.checksum,
+      },
+    });
+}
+
+/** Rendered PNGs of a version, in slide order. */
+export function listVersionAssets(db: Executor, versionId: string): Promise<RenderedAsset[]> {
+  return db
+    .select()
+    .from(assets)
+    .where(eq(assets.postVersionId, versionId))
+    .orderBy(assets.slideIndex);
+}
+
+/** Render QA problems of a version (null when it rendered fine). */
+export async function setVersionRenderIssues(
+  db: Executor,
+  versionId: string,
+  issues: unknown[] | null,
+): Promise<void> {
+  await db.update(postVersions).set({ renderIssues: issues }).where(eq(postVersions.id, versionId));
 }
