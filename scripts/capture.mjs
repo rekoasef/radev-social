@@ -33,6 +33,11 @@ try {
     await page.locator("[data-render-root]").screenshot({ path: args[i + 1] });
     console.log(`${args[i]} → ${args[i + 1]}`);
   }
+} catch (error) {
+  // Playwright errors include the full URL: never print the token.
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(message.replaceAll(token, "***"));
+  process.exitCode = 1;
 } finally {
   await browser.close();
 }

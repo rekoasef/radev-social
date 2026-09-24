@@ -10,7 +10,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 - **Fase:** 1 — Design system, presets y gestión de marcas (empezada 2026-09-23). Fase 0 terminada el 2026-09-23 en 1 día.
 - **Próximo paso:** T7: `brand_assets` (tabla, subida con validación, `media/`) y el seed que enlaza los assets de Lumus.
-- **Última actualización:** 2026-09-23, al cerrar la T6 de la Fase 1
+- **Última actualización:** 2026-09-24: `pnpm capture` ya no muestra el token en los errores (la T6 de la Fase 1 se cerró el 2026-09-23)
 - **Para retomar:** las 12 plantillas de `bold` se ven en `/render/preview/radev/<tipo>?token=…` con `pnpm dev`. La T7 toca la base (tabla nueva `brand_assets` + migración): explicarle al operador la migración antes de correrla.
 
 ## Fase 1 — tareas
