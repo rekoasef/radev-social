@@ -1,11 +1,17 @@
+import { postsPerWeek } from "@radev/core";
+import { listScheduleSlots } from "@radev/db";
 import { ChannelMonitor } from "@/components/console/channel-monitor";
 import { Plate } from "@/components/console/plate";
 import { Rundown } from "@/components/console/rundown";
 import { getBrandContext } from "@/lib/active-brand";
+import { db } from "@/lib/db";
 
 export default async function Home() {
   const { brands: channels, activeBrand } = await getBrandContext();
   const onAir = channels.filter((brand) => brand.archivedAt === null).length;
+  const perWeek = await Promise.all(
+    channels.map(async (brand) => postsPerWeek(await listScheduleSlots(db, brand.id))),
+  );
 
   return (
     <>
@@ -25,6 +31,7 @@ export default async function Home() {
                 key={brand.id}
                 brand={brand}
                 index={index}
+                postsPerWeek={perWeek[index] ?? 0}
                 selected={brand.id === activeBrand?.id}
               />
             ))}

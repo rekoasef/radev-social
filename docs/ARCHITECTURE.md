@@ -81,7 +81,7 @@ apps/
 packages/
   core/                     dominio puro (sin I/O)
     state-machine.ts        estados y transiciones de posts
-    scheduling.ts           slots, zonas horarias, mezcla de pilares
+    scheduling/             slots (`upcomingSlots`), zonas horarias (`zonedToUtc`), mezcla de pilares
   db/                       schema Drizzle, migraciones, queries, seed (lee seeds/brands)
   slides/
     schema/                 Zod: Slide, Carousel, ThemeTokens por preset
@@ -314,7 +314,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 
 | Tabla | Campos principales |
 |---|---|
-| `brands` | id, slug, name, code_prefix (ej. `RA`), style_preset, theme_tokens (jsonb), timezone, posts_per_day_target, ai_daily_limit, ai_monthly_limit, whatsapp_number, whatsapp_message_template, data_sources (text[]: fuentes de datos que usa su contenido, ej. `bluelytics`), archived_at |
+| `brands` | id, slug, name, code_prefix (ej. `RA`), style_preset, theme_tokens (jsonb), timezone, posts_per_day_target (sin uso desde la F4: la cantidad sale de los horarios), ai_daily_limit, ai_monthly_limit, whatsapp_number, whatsapp_message_template, data_sources (text[]: fuentes de datos que usa su contenido, ej. `bluelytics`), archived_at |
 | `brand_assets` | id, brand_id, role (`logo` \| `hero` \| `decoration` \| `other`), path (relativo a `MEDIA_DIR`), mime, width, height (null en un SVG sin tamaño), size_bytes, created_at, updated_at |
 | `brand_documents` | id, brand_id, kind (`voice` \| `pricing` \| `cases` \| `rules`), content (markdown), version, created_at — la versión vigente es la más alta |
 | `content_pillars` | id, brand_id, key, name, description, target_share (0–1), archived_at |
@@ -324,7 +324,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `posts` | id, brand_id, public_code, idea_id, pillar_id, hook_type, status, current_version_id, scheduled_at, slot_id, rejection_feedback, created_at, updated_at |
 | `post_versions` | id, post_id, number, content (jsonb `Carousel`), schema_version, origin (`ai` \| `manual`), generation_run_id, datasets (jsonb: puntos de sus `chart` por `datasetRef`, congelados al guardarla), created_at |
 | `assets` | id, post_version_id, format (`4x5`; enum ampliable), slide_index, path, width, height, checksum |
-| `schedule_slots` | id, brand_id, weekday (0–6), local_time, active |
+| `schedule_slots` | id, brand_id, weekday (0 = domingo … 6), local_time (`time`, hora de pared en la zona de la marca), active, created_at. Única por marca, día y hora |
 | `social_accounts` | id, brand_id, network, external_id, handle, access_token_enc, refresh_token_enc, expires_at, status |
 | `publications` | id, post_id, social_account_id, network, status, external_id, url, error, attempts, published_at |
 | `ai_routes` | id, task, brand_id (nullable = global), provider, model, fallback_provider, fallback_model. Única por tarea y marca, con una sola global por tarea (`NULLS NOT DISTINCT`) |

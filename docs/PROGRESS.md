@@ -8,16 +8,17 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 4 — Producción y piloto automático (plan aprobado el 2026-09-25, sin empezar). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T1 de la Fase 4: horarios por marca (`schedule_slots`).
+- **Fase:** 4 — Producción y piloto automático (en curso, T1 hecha). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T2 de la Fase 4: programar (estado `scheduled`, `post.publish`).
+- **Para el operador (T1):** mirar con login Marcas → Horarios (también desde el celular). A las dos marcas se les cargó el horario de arranque (todos los días 19:00): cambialo ahí si querés otro. En la otra máquina, `pnpm db:migrate` (hasta `0013_schedule_slots`) y cargar los horarios desde el panel (el seed solo los pone en marcas nuevas).
 - **Para el operador (Fase 4, ya):** crear la cuenta de Oracle Cloud (pide tarjeta para verificar identidad; Always Free no cobra). Crear la instancia puede requerir reintentos por falta de capacidad: arrancar ahora, en paralelo al bloque local.
 - **Para el operador (T13):** mirar RA-0004 (prueba del criterio de RAdev, en revisión). Completar Precios y Casos de RAdev cuando puedas: siguen siendo el borrador del seed (con `[completar]`, y eso le llega a la IA).
 - **Para el operador (T11):** (1) mirar LU-0004 y LU-0005 (posts de prueba de Lumus con gráficos y cifras del dólar, en revisión) y Ajustes → Datos reales. (2) En la otra máquina, tildar Bluelytics en Marcas → Lumus → General → Fuentes de datos: el seed no toca marcas que ya existen.
 - **Para el operador (T10):** (1) en Ajustes → Ruteo de IA, cambiar (el seed ya trae el nuevo desde la T13, pero no pisa rutas existentes) `nex-agi/nex-n2.5-pro:free` (ya no existe en OpenRouter) por `nvidia/nemotron-3-super-120b-a12b:free` en `ideas.generate` (principal) y `carousel.generate` (respaldo). (2) Completar Precios de RAdev: sin rangos, los posts de la serie "¿Cuánto cuesta realmente…?" fallan a propósito (no inventan precios). (3) La serie está repetida en el documento de voz de RAdev: se puede sacar de ahí. (4) Mirar con login /ideas (pedidos a la IA) y Marcas → Series.
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
-- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0012_data_snapshots`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la Fase 3 (T13)
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0013_schedule_slots`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
+- **Última actualización:** 2026-09-25, al cerrar la T1 de la Fase 4
 
 ## Fase 4 — tareas
 
@@ -27,7 +28,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 
 | Tarea | Qué | Estado |
 |---|---|---|
-| T1 | Horarios por marca: `schedule_slots`, pestaña Marcas → Horarios (arranque: 1 post/día en la franja 14–21 h); lógica de horarios con zona explícita y tests | |
+| T1 | Horarios por marca: `schedule_slots`, pestaña Marcas → Horarios (arranque: 1 post/día en la franja 14–21 h); lógica de horarios con zona explícita y tests | ✅ |
 | T2 | Programar: estado `scheduled`, programar / des-programar / re-programar, job `post.publish` a la hora del slot (adaptador manual: queda `publishing` hasta "Marcar como publicado"); idempotente | |
 | T3 | Calendario por marca: semana con slots y posts, arrastrar entre slots. 👁 | |
 | T4 | Ventana de generación (Ajustes, 02:00–07:00) + `slots.fill`: 7 días, pilar según la mezcla, idea del banco o pedida a la IA, respeta topes. Tests | |
@@ -41,6 +42,14 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | |
 | T13 | Mudanza: base local y `media/` al servidor | |
 | T14 | Cierre: unos días corriendo, criterio de terminado, y la prueba de publicación real pendiente de la Fase 2 | |
+
+**T1 (2026-09-25)**:
+- `packages/core/src/scheduling/`: `zoned.ts` (`wallClock`, `zoneOffsetMs` —movidos desde `ai/limits.ts`— y `zonedToUtc`: una hora que el cambio de horario saltea se corre hacia adelante; una repetida toma la primera) y `slots.ts` (`WEEKDAYS` 0 = domingo como `getUTCDay`, `WEEK_ORDER` lunes primero, `parseLocalTime` / `normalizeLocalTime` "HH:MM", `upcomingSlots(slots, { from, days, timeZone })`: horarios activos de los próximos N días calendario de la marca contando hoy, solo los posteriores a `from`, en UTC; `postsPerWeek`). Los horarios se guardan como hora de pared: un cambio de horario nunca los corre.
+- Tabla `schedule_slots` (migración `0013_schedule_slots`, solo agrega). Queries en `packages/db/src/queries/schedule.ts`; `addScheduleSlots` es idempotente (ignora día + hora repetidos).
+- Seed: `seedSlots` (todos los días 19:00) **solo para marcas que crea en esa corrida**; una marca existente conserva lo que se editó, aunque sea nada.
+- Panel: pestaña **Marcas → Horarios** (grilla lunes a domingo; en celular, lista), alta de una hora en varios días a la vez, Pausar / Activar, Borrar, y "Próximos 7 días". Canales (inicio) muestra "Por semana" desde los horarios en lugar de `posts_per_day_target`, que queda sin uso (no se borró la columna: sería una migración destructiva).
+- Tests: 566 en total (11 nuevos), con Buenos Aires y los dos cambios de horario de Madrid.
+- Probado contra la base: alta de 19:00 todos los días en las dos marcas (la segunda vez no agrega), pausa, próximos 7 días (19:00 → 22:00 UTC). Pantalla capturada sin login con una ruta temporal bajo `/render` (borrada), en escritorio y 390 px de ancho: sin scroll horizontal. Las acciones del formulario piden login: las prueba el operador.
 
 ## Fase 3 — tareas
 

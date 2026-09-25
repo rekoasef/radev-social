@@ -18,9 +18,12 @@ export function ChannelMonitor({
   brand,
   index,
   selected,
+  postsPerWeek,
 }: {
   brand: Brand;
   index: number;
+  /** Active publishing slots of a week (Marcas → Horarios). */
+  postsPerWeek: number;
   /** The brand the panel is tuned to (brand switcher). */
   selected: boolean;
 }) {
@@ -122,8 +125,12 @@ export function ChannelMonitor({
           {cityOf(brand.timezone)}{" "}
           <span className="timecode text-ink-dim">{offsetOf(brand.timezone)}</span>
         </Row>
-        <Row label="Posts por día">
-          <span className="timecode">{brand.postsPerDayTarget}</span>
+        <Row label="Por semana">
+          {postsPerWeek > 0 ? (
+            <span className="timecode">{postsPerWeek}</span>
+          ) : (
+            <span className="text-ink-faint">Sin horarios</span>
+          )}
         </Row>
         <Row label="WhatsApp">
           {brand.whatsappNumber ? (

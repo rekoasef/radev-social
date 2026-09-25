@@ -6,6 +6,7 @@ import { createDb } from "../client";
 import { loadRootEnv } from "../load-root-env";
 import { createBrandAsset, listBrandAssets, setBrandAssetToken } from "../queries/brand-assets";
 import { listCurrentBrandDocuments, saveBrandDocument } from "../queries/brand-documents";
+import { addScheduleSlots } from "../queries/schedule";
 import { aiRoutes, brands, contentPillars, contentSeries } from "../schema";
 import { seedAiRoutes } from "./ai-routes";
 import {
@@ -15,6 +16,7 @@ import {
   seedBrands,
   seedPillars,
   seedSeries,
+  seedSlots,
 } from "./brands";
 
 loadRootEnv();
@@ -82,6 +84,17 @@ try {
     pillarsAdded += added.length;
   }
   console.log(`Pilares creados: ${pillarsAdded || "ninguno (ya estaban)"}`);
+
+  // Slots: only for the brands created just now (see seedSlots).
+  let slotsAdded = 0;
+  for (const { slug } of inserted) {
+    const [brand] = await db.select().from(brands).where(eq(brands.slug, slug));
+    if (!brand) continue;
+    for (const slots of seedSlots[slug] ?? []) {
+      slotsAdded += await addScheduleSlots(db, { brandId: brand.id, ...slots });
+    }
+  }
+  console.log(`Horarios creados: ${slotsAdded || "ninguno (solo en marcas nuevas)"}`);
 
   // Series: only the missing keys, with their brief from seeds/brands/<slug>/series/<key>.md.
   const seriesAdded: string[] = [];

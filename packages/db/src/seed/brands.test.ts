@@ -5,6 +5,7 @@ import {
   isBrandDocumentKind,
   MAX_BRAND_DOCUMENT_CHARS,
   normalizeBrandDocument,
+  normalizeLocalTime,
   SERIES_BRIEF_MAX,
   SERIES_BRIEF_MIN,
   SERIES_REQUIRED_SLIDES_MAX,
@@ -19,6 +20,7 @@ import {
   seedBrands,
   seedPillars,
   seedSeries,
+  seedSlots,
 } from "./brands";
 
 describe("seed brands", () => {
@@ -134,5 +136,19 @@ describe("seed brand documents", () => {
     expect(pendingSeedDocuments(["voice", "rules"], [])).toEqual(["voice", "rules"]);
     expect(pendingSeedDocuments(["voice", "rules"], ["voice"])).toEqual(["rules"]);
     expect(pendingSeedDocuments(["voice"], ["voice", "pricing"])).toEqual([]);
+  });
+});
+
+describe("seed slots", () => {
+  it("only for seed brands, with valid times and at least one active day", () => {
+    const slugs = seedBrands.map((brand) => brand.slug);
+    for (const [slug, slots] of Object.entries(seedSlots)) {
+      expect(slugs).toContain(slug);
+      expect(slots.length).toBeGreaterThan(0);
+      for (const slot of slots) {
+        expect(normalizeLocalTime(slot.localTime)).toBe(slot.localTime);
+        expect(slot.weekdays.length).toBeGreaterThan(0);
+      }
+    }
   });
 });

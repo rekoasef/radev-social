@@ -197,6 +197,21 @@ export {
   type TransitionResult,
 } from "./posts/state-machine";
 export {
+  isWeekday,
+  normalizeLocalTime,
+  parseLocalTime,
+  postsPerWeek,
+  type Slot,
+  type SlotOccurrence,
+  upcomingSlots,
+  WEEK_ORDER,
+  WEEKDAY_LABELS,
+  WEEKDAY_SHORT,
+  WEEKDAYS,
+  type Weekday,
+} from "./scheduling/slots";
+export { type WallClock, wallClock, zonedToUtc, zoneOffsetMs } from "./scheduling/zoned";
+export {
   canDeleteSeries,
   missingSeriesSlides,
   SERIES_BRIEF_MAX,

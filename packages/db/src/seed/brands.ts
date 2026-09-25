@@ -1,4 +1,4 @@
-import type { AssetRole, BrandDocumentKind } from "@radev/core";
+import { type AssetRole, type BrandDocumentKind, WEEKDAYS, type Weekday } from "@radev/core";
 import type { NewBrand, NewContentPillar } from "../schema";
 
 /**
@@ -211,6 +211,16 @@ export type SeedSeries = {
  * Recurring series of each brand (docs/PRD.md RF-12); edited from the panel afterwards. The brief
  * of each one is seeds/brands/<slug>/series/<key>.md.
  */
+/**
+ * Publishing slots of a brand the seed creates (docs/ROADMAP.md, phase 4: start with 1 post a day
+ * between 14 and 21 h). Only for brands created in that same run: a brand that already exists keeps
+ * the slots edited from the panel, even none.
+ */
+export const seedSlots: Record<string, { weekdays: Weekday[]; localTime: string }[]> = {
+  radev: [{ weekdays: [...WEEKDAYS], localTime: "19:00" }],
+  lumus: [{ weekdays: [...WEEKDAYS], localTime: "19:00" }],
+};
+
 export const seedSeries: Record<string, SeedSeries[]> = {
   radev: [
     {

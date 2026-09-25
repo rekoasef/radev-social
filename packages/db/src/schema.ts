@@ -22,6 +22,7 @@ import {
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
+  boolean,
   check,
   date,
   index,
@@ -29,7 +30,9 @@ import {
   jsonb,
   pgTable,
   real,
+  smallint,
   text,
+  time,
   timestamp,
   unique,
   uniqueIndex,
@@ -165,6 +168,31 @@ export const contentPillars = pgTable(
     uniqueIndex("content_pillars_brand_key_unique").on(t.brandId, t.key),
     check("content_pillars_key_format", sql`${t.key} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     check("content_pillars_share_range", sql`${t.targetShare} >= 0 and ${t.targetShare} <= 1`),
+  ],
+);
+
+/**
+ * When a brand publishes (docs/PRD.md RF-06): a weekday and a wall-clock time in the brand's time
+ * zone. Turned into UTC instants only for a given week (packages/core, `upcomingSlots`).
+ */
+export const scheduleSlots = pgTable(
+  "schedule_slots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    /** 0 = Sunday … 6 = Saturday. */
+    weekday: smallint("weekday").notNull(),
+    /** Local time in the brand's zone, e.g. "19:00:00". */
+    localTime: time("local_time").notNull(),
+    /** A paused slot stays configured but gets no posts. */
+    active: boolean("active").notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("schedule_slots_brand_weekday_time_unique").on(t.brandId, t.weekday, t.localTime),
+    check("schedule_slots_weekday_range", sql`${t.weekday} between 0 and 6`),
   ],
 );
 
@@ -497,6 +525,7 @@ export type NewBrand = typeof brands.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type BrandAsset = typeof brandAssets.$inferSelect;
 export type ContentPillar = typeof contentPillars.$inferSelect;
+export type ScheduleSlot = typeof scheduleSlots.$inferSelect;
 export type NewContentPillar = typeof contentPillars.$inferInsert;
 export type Idea = typeof ideas.$inferSelect;
 export type ContentSeries = typeof contentSeries.$inferSelect;

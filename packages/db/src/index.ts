@@ -122,6 +122,12 @@ export {
   type VersionDatasets,
 } from "./queries/posts";
 export {
+  addScheduleSlots,
+  deleteScheduleSlot,
+  listScheduleSlots,
+  setScheduleSlotActive,
+} from "./queries/schedule";
+export {
   createSeries,
   deleteSeries,
   getSeries,

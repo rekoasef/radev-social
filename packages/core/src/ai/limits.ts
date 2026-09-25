@@ -1,5 +1,6 @@
 // Usage limits of AI generation (docs/ARCHITECTURE.md §7, "Límites de uso"): each brand's own
 // caps per day and per month, and the backoff when a provider hits its limit.
+import { wallClock, zoneOffsetMs } from "../scheduling/zoned";
 
 export type AiQuota = {
   /** Successful generations per day in the brand's time zone. Null: no cap. */
@@ -18,36 +19,6 @@ export function checkAiQuota(quota: AiQuota, used: { today: number; month: numbe
     return { ok: false, period: "month", limit: quota.monthly };
   }
   return { ok: true };
-}
-
-/** Wall-clock fields of an instant in a time zone. */
-function wallClock(at: Date, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-    hourCycle: "h23",
-  }).formatToParts(at);
-  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value);
-  return {
-    year: get("year"),
-    month: get("month"),
-    day: get("day"),
-    hour: get("hour"),
-    minute: get("minute"),
-    second: get("second"),
-  };
-}
-
-/** Offset of a time zone at an instant, in ms (local wall clock minus UTC). */
-function zoneOffsetMs(at: Date, timeZone: string): number {
-  const w = wallClock(at, timeZone);
-  const asUtc = Date.UTC(w.year, w.month - 1, w.day, w.hour, w.minute, w.second);
-  return asUtc - Math.floor(at.getTime() / 1000) * 1000;
 }
 
 /**
