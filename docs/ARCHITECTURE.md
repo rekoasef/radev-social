@@ -115,6 +115,10 @@ El **seed** (`pnpm db:seed`) crea RAdev y Lumus a partir de `seeds/brands/`. Des
 
 **Archivar vs. borrar**: marcas y pilares con posts se archivan (`archived_at`); desaparecen del panel y dejan de generar, pero conservan historial y métricas. El borrado definitivo solo se permite sin posts asociados.
 
+**Pilares** (Marcas → Pilares, Fase 3, T9): el panel edita porcentajes enteros y la base guarda `target_share` de 0 a 1. **Los pilares activos suman siempre 100 %** (`checkPillarMix`, `packages/core/src/brands/pillars.ts`): la mezcla se guarda entera de una vez; un pilar nuevo entra con 0 %; un pilar sale (archivado o borrado) solo con 0 % y vuelve con 0 %. La `key` sale del nombre al crearlo y no cambia (la usan el contenido de los posts y la IA).
+
+**Contacto** (Marcas → General, T9): `whatsapp_number` en formato internacional sin `+` (solo dígitos, 8 a 15, como lo toma `wa.me`) y `whatsapp_message_template`, que si existe tiene que llevar `{code}` (el código del post, para atribuir leads, RF-41) y ninguna otra variable. Reglas y armado del enlace en `packages/core/src/brands/contact.ts`.
+
 ## 5. Ciclo de vida de un post
 
 La máquina de estados vive en `packages/core/state-machine.ts` y es la **única** forma de cambiar `posts.status`.
@@ -260,6 +264,8 @@ Router (`packages/ai/src/router.ts`): prueba el principal y pasa al respaldo ant
 
 "Generar con IA" (Nuevo post) crea el post en `generating` sin versión, con el pedido en `posts.generation_request`, y encola `carousel.generate`. El worker arma el workspace (`CLAUDE.md` de la marca, `task.json`, `slides.md` con la guía de plantillas, `recent-posts.json`), pasa por la ruta de `carousel.generate`, registra cada intento y valida con `aiCarouselSchema` (pilares de la marca; sin `chart` ni `bigNumber` hasta tener `data.json`). OK → versión `ai` con su `generation_run_id`, `generationDone` y render. Respuesta mal armada → un reintento con los problemas como feedback. Límite → reprogramación con backoff (`generation_retry_at`). Error reintentable → reintento de pg-boss (2). Lo demás → `generationFailed`; el panel muestra los errores y "Reintentar generación".
 
+Desde el **banco de ideas** (`/ideas`, T9), "Generar" abre Nuevo post con `?idea=<id>`: el formulario viene con el título y el ángulo (`ideaPrompt`) y el pilar de la idea. Al crear el post, la idea pasa a `used` en la misma transacción (`createGeneratingPost` con `ideaId`, que queda en `posts.idea_id`); si ya no estaba `new`, no se crea nada. Estados de una idea: `new` → `used` | `discarded`, y `discarded` → `new` (`packages/core/src/ideas/ideas.ts`); las descartadas no se borran.
+
 ### Regeneración (Fase 3, T8)
 
 - **Rechazo con feedback**: en la página de un post de IA en `in_review`, "Rechazar" pide qué cambiar (10 a 1.000 caracteres) y, en una transacción (`rejectAndRegenerate`), hace `reject` → `regenerate`, guarda `posts.rejection_feedback`, pone `posts.qa_regenerations` en 0 y encola `carousel.generate`. Mismo control de topes que "Generar con IA". Los posts armados a mano no se rechazan: se editan.
@@ -305,7 +311,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `brand_assets` | id, brand_id, role (`logo` \| `hero` \| `decoration` \| `other`), path (relativo a `MEDIA_DIR`), mime, width, height (null en un SVG sin tamaño), size_bytes, created_at, updated_at |
 | `brand_documents` | id, brand_id, kind (`voice` \| `pricing` \| `cases` \| `rules`), content (markdown), version, created_at — la versión vigente es la más alta |
 | `content_pillars` | id, brand_id, key, name, description, target_share (0–1), archived_at |
-| `ideas` | id, brand_id, pillar_id, title, angle, source (`manual` \| `ai` \| `research` \| `recycled` \| `series`), series_key, status (`new` \| `used` \| `discarded`), created_at |
+| `ideas` | id, brand_id, pillar_id (null: elige la IA), title, angle, source (`manual` \| `ai` \| `research` \| `recycled` \| `series`), series_key, status (`new` \| `used` \| `discarded`), created_at, updated_at |
 | `posts` | id, brand_id, public_code, idea_id, pillar_id, hook_type, status, current_version_id, scheduled_at, slot_id, rejection_feedback, created_at, updated_at |
 | `post_versions` | id, post_id, number, content (jsonb `Carousel`), schema_version, origin (`ai` \| `manual`), generation_run_id, created_at |
 | `assets` | id, post_version_id, format (`4x5`; enum ampliable), slide_index, path, width, height, checksum |

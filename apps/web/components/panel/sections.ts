@@ -24,7 +24,7 @@ export type PanelSection = {
 export const panelSections: readonly PanelSection[] = [
   { label: "Inicio", short: "Inicio", icon: House, href: "/" },
   { label: "Posts", short: "Posts", icon: Layers, href: "/posts" },
-  { label: "Ideas", short: "Ideas", icon: Lightbulb, phase: 3 },
+  { label: "Ideas", short: "Ideas", icon: Lightbulb, href: "/ideas" },
   { label: "Calendario", short: "Agenda", icon: CalendarDays, phase: 4 },
   { label: "Marcas", short: "Marcas", icon: Palette, href: "/brands" },
   { label: "Ajustes", short: "Ajustes", icon: Settings, href: "/settings" },

@@ -101,3 +101,12 @@ export async function deleteBrand(db: Database, id: string): Promise<void> {
   // After the rows are gone: a file left behind is harmless, a row without its file is not.
   for (const { path } of files) await removeMediaFile(path);
 }
+
+/** The brand's WhatsApp and prefilled message (already normalized by packages/core). */
+export async function setBrandContact(
+  db: Database,
+  brandId: string,
+  contact: { whatsappNumber: string | null; whatsappMessageTemplate: string | null },
+): Promise<void> {
+  await db.update(brands).set(contact).where(eq(brands.id, brandId));
+}

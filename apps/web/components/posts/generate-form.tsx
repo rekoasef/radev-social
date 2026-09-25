@@ -7,22 +7,28 @@ import { HOOK_LABELS } from "@/lib/hooks";
 
 const idle: GenerateState = { status: "idle" };
 
-/** "Generar con IA": an idea, and optionally the pillar and hook. The worker writes the rest. */
+/**
+ * "Generar con IA": an idea, and optionally the pillar and hook. The worker writes the rest.
+ * From the idea bank it comes filled in, and the bank idea turns used when the post is created.
+ */
 export function GenerateForm({
   brand,
   pillars,
+  fromIdea,
 }: {
   brand: { id: string; name: string };
   pillars: { key: string; name: string }[];
+  fromIdea?: { id: string; text: string; pillarKey: string | null };
 }) {
   const [state, action, pending] = useActionState(generateCarouselAction, idle);
-  const [idea, setIdea] = useState("");
+  const [idea, setIdea] = useState(fromIdea?.text ?? "");
   const ids = { idea: useId(), pillar: useId(), hook: useId() };
   const length = idea.trim().length;
 
   return (
     <form action={action} className="flex max-w-3xl flex-col gap-5">
       <input type="hidden" name="brandId" value={brand.id} />
+      {fromIdea && <input type="hidden" name="ideaId" value={fromIdea.id} />}
       <div className="flex flex-col gap-2">
         <label
           htmlFor={ids.idea}
@@ -57,7 +63,12 @@ export function GenerateForm({
           <label htmlFor={ids.pillar} className="plate-text text-ink-faint">
             Pilar
           </label>
-          <select id={ids.pillar} name="pillarKey" defaultValue="" className="console-field">
+          <select
+            id={ids.pillar}
+            name="pillarKey"
+            defaultValue={fromIdea?.pillarKey ?? ""}
+            className="console-field"
+          >
             <option value="">Que elija la IA</option>
             {pillars.map((pillar) => (
               <option key={pillar.key} value={pillar.key}>

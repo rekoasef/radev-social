@@ -71,8 +71,8 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Manejo de `rate_limited`: respaldo o reprogramación con backoff, y aviso
 - [x] Tabla `generation_runs`; topes diarios y mensuales por marca
 - [x] Tabla `brand_documents` y editor de voz, precios, casos y reglas con historial; seed desde `seeds/brands/`
-- [ ] Pilares con porcentajes (CRUD) y WhatsApp de la marca
-- [ ] Banco de ideas: carga rápida (mobile), listado, descarte
+- [x] Pilares con porcentajes (CRUD) y WhatsApp de la marca
+- [x] Banco de ideas: carga rápida (mobile), listado, descarte
 - [ ] Jobs `ideas.generate` (modelo gratuito) e `ideas.research` (Claude con búsqueda web)
 - [ ] Series recurrentes, empezando por "¿Cuánto cuesta realmente...?"
 - [x] Job `carousel.generate` → versión nueva → `carousel.render`

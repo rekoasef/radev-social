@@ -1,4 +1,5 @@
-import { listPillars } from "@radev/db";
+import { ideaPrompt } from "@radev/core";
+import { getIdea, listPillars } from "@radev/db";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
@@ -10,9 +11,10 @@ import { db } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Nuevo post · RAdev Social" };
 
-// A new carousel for the brand the panel is tuned to.
-export default async function NewPostPage() {
-  const { activeBrand: brand } = await getBrandContext();
+// A new carousel for the brand the panel is tuned to. `?idea=<id>` comes from the idea bank:
+// "Generar con IA" opens filled in with it (only a new idea of this brand).
+export default async function NewPostPage({ searchParams }: PageProps<"/posts/new">) {
+  const [{ activeBrand: brand }, query] = await Promise.all([getBrandContext(), searchParams]);
   if (!brand) {
     return (
       <section>
@@ -21,15 +23,29 @@ export default async function NewPostPage() {
       </section>
     );
   }
-  const [render, pillars] = await Promise.all([
+  const ideaId = typeof query.idea === "string" ? query.idea : undefined;
+  const [render, pillars, bankIdea] = await Promise.all([
     brandRenderContext(brand),
     listPillars(db, brand.id),
+    ideaId && /^[0-9a-f-]{36}$/i.test(ideaId) ? getIdea(db, ideaId) : undefined,
   ]);
+  const fromIdea =
+    bankIdea && bankIdea.brandId === brand.id && bankIdea.status === "new"
+      ? {
+          id: bankIdea.id,
+          text: ideaPrompt(bankIdea),
+          // Only a pillar that can still take posts.
+          pillarKey: pillars.some((p) => p.key === bankIdea.pillarKey) ? bankIdea.pillarKey : null,
+        }
+      : undefined;
 
   return (
     <section aria-labelledby="new-post-heading" className="flex flex-col gap-6">
-      <Link href="/posts" className="plate-text w-fit text-ink-faint hover:text-ink">
-        ← Posts
+      <Link
+        href={ideaId ? "/ideas" : "/posts"}
+        className="plate-text w-fit text-ink-faint hover:text-ink"
+      >
+        {ideaId ? "← Ideas" : "← Posts"}
       </Link>
       <Plate as="h1" id="new-post-heading" aside={brand.name}>
         Nuevo post
@@ -48,9 +64,15 @@ export default async function NewPostPage() {
             <Plate id="generate-heading" aside="IA">
               Generar con IA
             </Plate>
+            {ideaId && !fromIdea && (
+              <p role="alert" className="border-l border-tally-amber pl-3 text-sm text-ink">
+                Esa idea ya se usó, se descartó o es de otra marca.
+              </p>
+            )}
             <GenerateForm
               brand={{ id: brand.id, name: brand.name }}
               pillars={pillars.map((p) => ({ key: p.key, name: p.name }))}
+              fromIdea={fromIdea}
             />
           </section>
           <section aria-labelledby="manual-heading" className="flex flex-col gap-5">

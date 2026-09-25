@@ -2,7 +2,7 @@ import type { Brand } from "@radev/db";
 import Link from "next/link";
 import { Tally } from "@/components/console/tally";
 
-type Tab = "general" | "identity" | "slides" | "assets" | "documents";
+type Tab = "general" | "identity" | "slides" | "assets" | "documents" | "pillars";
 
 /** Header of a brand's pages: back to the list, name, status and the brand's sections. */
 export function BrandTabs({ brand, current }: { brand: Brand; current: Tab }) {
@@ -12,6 +12,7 @@ export function BrandTabs({ brand, current }: { brand: Brand; current: Tab }) {
     { id: "slides", label: "Slides", href: `/brands/${brand.slug}/slides` },
     { id: "assets", label: "Assets", href: `/brands/${brand.slug}/assets` },
     { id: "documents", label: "Documentos", href: `/brands/${brand.slug}/documents` },
+    { id: "pillars", label: "Pilares", href: `/brands/${brand.slug}/pillars` },
   ];
   return (
     <div className="flex flex-col gap-5">

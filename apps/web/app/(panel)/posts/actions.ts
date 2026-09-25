@@ -9,6 +9,7 @@ import {
   createGeneratingPost,
   createPost,
   getBrandById,
+  getIdea,
   getPostByCode,
   getPostVersion,
   listPillars,
@@ -224,6 +225,11 @@ const generateInput = z.object({
     .optional()
     .default(""),
   confirmOverLimit: z.literal("on").optional(),
+  /** The bank idea it comes from, if any: it turns used with the post. */
+  ideaId: z
+    .union([z.uuid(), z.literal("")])
+    .optional()
+    .default(""),
 });
 
 /**
@@ -239,7 +245,7 @@ export async function generateCarouselAction(
   if (!parsed.success) {
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
-  const { brandId, idea, pillarKey, hookType, confirmOverLimit } = parsed.data;
+  const { brandId, idea, pillarKey, hookType, confirmOverLimit, ideaId } = parsed.data;
   const brand = await getBrandById(db, brandId);
   if (!brand || brand.archivedAt)
     return { status: "error", message: "Esa marca no existe o está archivada." };
@@ -250,12 +256,20 @@ export async function generateCarouselAction(
   if (pillarKey && !pillars.some((p) => p.key === pillarKey))
     return { status: "error", message: "Elegí un pilar de la marca." };
 
+  if (ideaId) {
+    const bankIdea = await getIdea(db, ideaId);
+    if (!bankIdea || bankIdea.brandId !== brand.id || bankIdea.status !== "new") {
+      return { status: "error", message: "Esa idea ya se usó, se descartó o es de otra marca." };
+    }
+  }
+
   const overLimit = await quotaWarning(brand);
   if (overLimit && !confirmOverLimit) return { status: "limit", message: overLimit };
 
   const post = await createGeneratingPost(db, {
     brandId: brand.id,
     request: { idea, pillarKey: pillarKey || null, hookType: hookType || null },
+    ideaId: ideaId || null,
   });
   await queueGenerate(post.id);
   revalidatePath("/posts");

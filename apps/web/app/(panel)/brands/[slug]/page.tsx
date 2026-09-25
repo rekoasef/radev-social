@@ -6,6 +6,7 @@ import { AiLimitsForm } from "@/components/brands/ai-limits-form";
 import { BrandDangerZone } from "@/components/brands/brand-danger-zone";
 import { BrandForm } from "@/components/brands/brand-form";
 import { BrandTabs } from "@/components/brands/brand-tabs";
+import { ContactForm } from "@/components/brands/contact-form";
 import { Plate } from "@/components/console/plate";
 import { timezoneOptions } from "@/lib/brand-form";
 import { db } from "@/lib/db";
@@ -41,6 +42,17 @@ export default async function BrandPage({ params }: PageProps<"/brands/[slug]">)
           }}
           timezones={timezoneOptions()}
           prefixLocked={prefixRule.ok ? undefined : prefixRule.reason}
+        />
+      </section>
+      <section aria-labelledby="contact-heading" className="flex flex-col gap-6">
+        <Plate id="contact-heading">Contacto</Plate>
+        <ContactForm
+          key={brand.updatedAt.toISOString()}
+          id={brand.id}
+          codePrefix={brand.codePrefix}
+          number={brand.whatsappNumber}
+          message={brand.whatsappMessageTemplate}
+          readOnly={brand.archivedAt !== null}
         />
       </section>
       <section aria-labelledby="ai-limits-heading" className="flex flex-col gap-6">

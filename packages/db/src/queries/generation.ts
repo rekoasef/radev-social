@@ -11,6 +11,7 @@ import {
   postVersions,
 } from "../schema";
 import type { Executor } from "./brand-assets";
+import { transitionIdea } from "./ideas";
 import {
   type CarouselContent,
   pillarId,
@@ -22,12 +23,23 @@ import {
 // AI generation of a post (phase 3, T7): the post is born `generating` with no version; the
 // worker's carousel.generate adds the first version and moves it on through the state machine.
 
-/** A post the AI will write. It gets its public code now; its content comes with the job. */
+/**
+ * A post the AI will write. It gets its public code now; its content comes with the job. From a
+ * bank idea, the idea turns `used` in the same transaction (it has to be `new`).
+ */
 export async function createGeneratingPost(
   db: Database,
-  input: { brandId: string; request: GenerationRequest },
+  input: { brandId: string; request: GenerationRequest; ideaId?: string | null },
 ): Promise<Post> {
   return db.transaction(async (tx) => {
+    if (input.ideaId) {
+      const used = await transitionIdea(tx, {
+        id: input.ideaId,
+        brandId: input.brandId,
+        event: "use",
+      });
+      if (!used) throw new Error("Esa idea ya se usó o se descartó.");
+    }
     const { number, code } = await takePostNumber(tx, input.brandId);
     const [post] = await tx
       .insert(posts)
@@ -39,6 +51,7 @@ export async function createGeneratingPost(
           ? await pillarId(tx, input.brandId, input.request.pillarKey)
           : null,
         hookType: input.request.hookType,
+        ideaId: input.ideaId ?? null,
         status: INITIAL_STATUSES.ai,
         generationRequest: input.request,
       })

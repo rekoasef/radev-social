@@ -39,6 +39,7 @@ export {
   getBrandBySlug,
   listBrands,
   setBrandArchived,
+  setBrandContact,
   updateBrand,
   updateBrandTheme,
 } from "./queries/brands";
@@ -55,6 +56,25 @@ export {
   retryGeneration,
   setGenerationRetryAt,
 } from "./queries/generation";
+export {
+  countIdeasByStatus,
+  createIdea,
+  getIdea,
+  type IdeaSummary,
+  listIdeas,
+  transitionIdea,
+} from "./queries/ideas";
+export {
+  createPillar,
+  deletePillar,
+  getPillar,
+  listBrandPillars,
+  type PillarMixRow,
+  type PillarWithPosts,
+  type PillarWriteResult,
+  savePillarMix,
+  setPillarArchived,
+} from "./queries/pillars";
 export {
   addPostVersion,
   approvePost,

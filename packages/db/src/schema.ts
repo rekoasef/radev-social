@@ -5,6 +5,8 @@ import {
   BRAND_DOCUMENT_KINDS,
   GENERATION_RUN_STATUSES,
   type GenerationRequest,
+  IDEA_SOURCES,
+  IDEA_STATUSES,
   NETWORKS,
   POST_STATUSES,
   PUBLICATION_STATUSES,
@@ -155,6 +157,35 @@ export const contentPillars = pgTable(
 );
 
 /**
+ * The brand's idea bank (docs/PRD.md RF-09). An idea is never deleted: discarded ones stay so they
+ * can come back and the AI does not propose them again. Status rules: packages/core (ideas.ts).
+ */
+export const ideas = pgTable(
+  "ideas",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    /** Null: the AI picks the pillar when the idea is generated. */
+    pillarId: uuid("pillar_id").references(() => contentPillars.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    angle: text("angle").notNull().default(""),
+    source: text("source", { enum: IDEA_SOURCES }).notNull(),
+    /** The recurring series it belongs to (T10), e.g. "real-cost". */
+    seriesKey: text("series_key"),
+    status: text("status", { enum: IDEA_STATUSES }).notNull().default("new"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("ideas_brand_status_created_idx").on(t.brandId, t.status, t.createdAt),
+    check("ideas_source_valid", sql`${t.source} in (${inList(IDEA_SOURCES)})`),
+    check("ideas_status_valid", sql`${t.status} in (${inList(IDEA_STATUSES)})`),
+  ],
+);
+
+/**
  * A carousel of a brand. Its status only changes through the state machine in packages/core
  * (CLAUDE.md, rule 2); its content lives in versions.
  */
@@ -170,6 +201,8 @@ export const posts = pgTable(
     publicCode: text("public_code").notNull(),
     number: integer("number").notNull(),
     pillarId: uuid("pillar_id").references(() => contentPillars.id, { onDelete: "restrict" }),
+    /** The bank idea it was generated from, if any. */
+    ideaId: uuid("idea_id").references(() => ideas.id, { onDelete: "set null" }),
     /** Copied from the current version, for filters. Validated by the carousel schema. */
     hookType: text("hook_type"),
     status: text("status", { enum: POST_STATUSES }).notNull(),
@@ -362,6 +395,7 @@ export type Setting = typeof settings.$inferSelect;
 export type BrandAsset = typeof brandAssets.$inferSelect;
 export type ContentPillar = typeof contentPillars.$inferSelect;
 export type NewContentPillar = typeof contentPillars.$inferInsert;
+export type Idea = typeof ideas.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type PostVersion = typeof postVersions.$inferSelect;
 export type RenderedAsset = typeof assets.$inferSelect;

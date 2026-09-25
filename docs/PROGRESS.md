@@ -8,11 +8,12 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 3 — Generación con IA (en curso, T1–T8 hechas). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T9 de la Fase 3: banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca.
+- **Fase:** 3 — Generación con IA (en curso, T1–T9 hechas). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T10 de la Fase 3: `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web) y la serie "¿Cuánto cuesta realmente…?".
+- **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
-- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0009_qa_regenerations`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T8 de la Fase 3
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0010_ideas`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
+- **Última actualización:** 2026-09-25, al cerrar la T9 de la Fase 3
 
 ## Fase 3 — tareas
 
@@ -29,7 +30,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T6 | Tablas `ai_routes` y `generation_runs`; router con respaldo, backoff ante `rate_limited`, topes por marca; pantalla de ruteo. Tests obligatorios | ✅ |
 | T7 | Job `carousel.generate`: "Generar" → JSON validado → versión `ai` → render; el panel muestra proveedor y modelo. 👁 | ✅ |
 | T8 | Rechazo con feedback → regeneración; regeneración automática por QA (máx. 2) | ✅ |
-| T9 | Banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca | |
+| T9 | Banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca | ✅ |
 | T10 | `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web), serie "¿Cuánto cuesta realmente…?" | |
 | T11 | `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor | |
 | T12 | Importar historial de posts → `winners.json` | |
@@ -108,6 +109,14 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Panel: **Rechazar** en posts de IA en revisión (se despliega con el campo "¿Qué cambiarías?" y "Rechazar y regenerar"; pide "Generar igual" si se pasó el tope). La página muestra el último rechazo, "la IA la está corrigiendo (intento N de 2)" durante una regeneración por QA y, si llega a revisión con problemas, que la IA no los pudo corregir.
 - Tests: 449 en total. `next build` OK. Migración aplicada en la base local.
 - **Prueba real: pendiente (la hace el operador más adelante).** Tras la caída de Docker Desktop se rehízo el `docker compose up -d --build`: migraciones hasta la `0009` aplicadas, web y worker arriba con el código de la T8. Falta: rechazar un post de IA con feedback y ver la v2; la regeneración por QA solo se ve si la IA escribe un texto que no entra.
+
+**T9 (2026-09-25)**, decisiones aprobadas por el operador:
+- (1) El post guarda de qué idea salió (`posts.idea_id`, ya previsto en ARCHITECTURE §10). (2) Los pilares activos tienen que sumar **exactamente 100 %** para guardar. (3) Descartar no borra: la idea pasa a "Descartadas" y se puede recuperar (le sirve a `ideas.generate` para no repetir).
+- Para que el 100 % no trabe: la mezcla se edita y se guarda entera; un pilar nuevo entra con 0 %; archivar o borrar solo con 0 % (el botón aparece recién ahí) y al recuperarlo vuelve con 0 %. La clave del pilar sale del nombre y no cambia.
+- `packages/core`: `ideas/ideas.ts` (estados y transiciones, `ideaPrompt`: título + ángulo, entra en los 600 caracteres de "Generar con IA"), `brands/pillars.ts` (`checkPillarMix`, `canRemovePillar`, `canDeletePillar`), `brands/contact.ts` (número normalizado a dígitos, mensaje con `{code}` obligatorio, `whatsappLink`). Tests: 38 nuevos, 487 en total.
+- Migración `0010_ideas` (solo agrega): tabla `ideas` y `posts.idea_id`. Queries `queries/ideas.ts` (cada cambio de estado es un `UPDATE` condicionado al estado de partida) y `queries/pillars.ts` (`savePillarMix` exige cubrir justo los pilares activos).
+- Panel: **Ideas** encendida en la navegación (`/ideas`, marca activa): una línea + Enter para guardar, ángulo y pilar plegados; pestañas Nuevas / Usadas / Descartadas; "Generar" abre Nuevo post con la idea cargada. **Marcas → Pilares** (mezcla con total en vivo, nuevo pilar, archivados). **Marcas → General → Contacto** (WhatsApp, mensaje con vista previa y "Probar enlace").
+- Verificado contra la base local en una transacción que se deshace: pilar duplicado rechazado, mezcla incompleta rechazada, descartar/recuperar, post desde idea (`used` + `idea_id`), segundo uso de la misma idea rechazado. Las pantallas no se pudieron capturar (requieren login): falta que el operador las mire.
 
 Pendiente de respuesta del operador: (1) ~~cuenta de OpenRouter~~ hecha en la T5; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 

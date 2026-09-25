@@ -1,6 +1,11 @@
 "use server";
 
-import { canChangeCodePrefix, canDeleteBrand } from "@radev/core";
+import {
+  canChangeCodePrefix,
+  canDeleteBrand,
+  normalizeWhatsappMessage,
+  normalizeWhatsappNumber,
+} from "@radev/core";
 import {
   countBrandPosts,
   createBrand,
@@ -8,6 +13,7 @@ import {
   getBrandById,
   setBrandAiLimits,
   setBrandArchived,
+  setBrandContact,
   updateBrand,
 } from "@radev/db";
 import { defaultTokens } from "@radev/slides";
@@ -149,4 +155,49 @@ export async function saveAiLimitsAction(
   await setBrandAiLimits(db, id, { daily, monthly });
   revalidatePath(`/brands/${brand.slug}`);
   return { status: "ok", message: "Topes guardados." };
+}
+
+export type ContactFormState =
+  | { status: "idle" }
+  | { status: "ok"; message: string }
+  | { status: "error"; field?: "number" | "message"; message: string };
+
+const contactInput = z.object({
+  id: z.uuid(),
+  number: z.string().max(40, { error: "Ese número es demasiado largo." }),
+  message: z.string().max(1000, { error: "El mensaje es demasiado largo." }),
+});
+
+/** The WhatsApp the calls to action point to and its prefilled message (docs/PRD.md RF-07). */
+export async function saveContactAction(
+  _: ContactFormState,
+  form: FormData,
+): Promise<ContactFormState> {
+  await requireOperator();
+  const parsed = contactInput.safeParse(Object.fromEntries(form));
+  if (!parsed.success) {
+    return { status: "error", message: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+  const brand = await getBrandById(db, parsed.data.id);
+  if (!brand || brand.archivedAt !== null) {
+    return { status: "error", message: "Esa marca no existe o está archivada." };
+  }
+  const number = normalizeWhatsappNumber(parsed.data.number);
+  if (!number.ok) return { status: "error", field: "number", message: number.reason };
+  const message = normalizeWhatsappMessage(parsed.data.message);
+  if (!message.ok) return { status: "error", field: "message", message: message.reason };
+  if (message.value && !number.value) {
+    return {
+      status: "error",
+      field: "number",
+      message: "Poné el número: el mensaje precargado solo sirve con un WhatsApp.",
+    };
+  }
+
+  await setBrandContact(db, brand.id, {
+    whatsappNumber: number.value,
+    whatsappMessageTemplate: message.value,
+  });
+  revalidatePath(`/brands/${brand.slug}`);
+  return { status: "ok", message: "Contacto guardado." };
 }
