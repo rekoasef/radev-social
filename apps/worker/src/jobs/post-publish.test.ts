@@ -9,14 +9,29 @@ vi.mock("@radev/db", () => ({ startScheduledPublishing: (...args: unknown[]) => 
 const job = { postId: "p1", scheduledAt: "2026-09-28T22:00:00.000Z" };
 const log = createLogger({}, "error");
 const deps = (publisher?: PublisherAdapter) => ({ db: {} as never, log, publisher });
+const started = {
+  started: true,
+  postId: "p1",
+  publicCode: "LU-0001",
+  brandId: "b",
+  brandName: "Lumus",
+  hook: "Tu plata",
+  scheduledAt: new Date(job.scheduledAt),
+};
 
 describe("post.publish", () => {
   beforeEach(() => start.mockReset());
 
   it("leaves a due post waiting for the operator (manual)", async () => {
-    start.mockResolvedValue({ started: true, postId: "p1", publicCode: "LU-0001", brandId: "b" });
-    expect(await publishPost(deps(), job)).toBe("waiting");
+    start.mockResolvedValue(started);
+    const notify = vi.fn(async () => {});
+    expect(await publishPost({ ...deps(), notify, appUrl: "https://app" }, job)).toBe("waiting");
     expect(start).toHaveBeenCalledWith({}, { job, network: "manual" });
+    // The reminder, with sound even at night.
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({ key: `publish:p1:${job.scheduledAt}`, kind: "publish" }),
+      { urgent: true },
+    );
   });
 
   it("does nothing for a stale job, without asking the adapter (rules 3 and 8)", async () => {
@@ -27,7 +42,7 @@ describe("post.publish", () => {
   });
 
   it("fails loudly if the adapter fails, so pg-boss retries", async () => {
-    start.mockResolvedValue({ started: true, postId: "p1", publicCode: "LU-0001", brandId: "b" });
+    start.mockResolvedValue(started);
     const publisher: PublisherAdapter = {
       network: "manual",
       publish: async () => ({ status: "failed", error: "sin red" }),

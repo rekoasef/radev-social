@@ -14,6 +14,7 @@
     "@radev/db": "workspace:*",
     "@radev/publishers": "workspace:*",
     "@radev/slides": "workspace:*",
+    "grammy": "^1.46.0",
     "pg-boss": "^12.33.5",
     "playwright": "1.63.0",
     "tsx": "4.23.15",

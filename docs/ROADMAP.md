@@ -99,7 +99,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Ventana de generación (por defecto 02:00–07:00) y job `slots.fill` respetando la mezcla de pilares
 - [x] `ideas.research` semanal automática (viene de la Fase 3: hoy es a mano desde /ideas)
 - [ ] Cola de revisión optimizada para celular
-- [ ] Bot de Telegram (grammY): revisar, recordatorio de publicación manual, errores, límites de IA
+- [x] Bot de Telegram (grammY): revisar, recordatorio de publicación manual, errores, límites de IA
 - [ ] Vista de jobs (pendientes, fallidos, reintentos)
 
 **Terminado cuando:** el sistema corre en el servidor, llena la semana solo durante la madrugada, y mi único trabajo es aprobar desde el celular y publicar con el recordatorio.

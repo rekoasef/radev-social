@@ -16,6 +16,10 @@ export const JOBS = {
   postPublish: "post.publish",
   /** Every 15 min: inside the generation window, give free slots a post for the AI (phase 4, T4). */
   slotsFill: "slots.fill",
+  /** Tell the operator the posts that got to review, in one Telegram message (phase 4, T6). */
+  reviewNotify: "review.notify",
+  /** Send one stored notification to Telegram (retried apart from the job that raised it). */
+  notifySend: "notify.send",
 } as const;
 
 export type CarouselRenderJob = { versionId: string };
@@ -81,6 +85,9 @@ export const QUEUE_OPTIONS = {
   [JOBS.postPublish]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
   // Only database work and queueing; the next run (15 min) is the retry.
   [JOBS.slotsFill]: { retryLimit: 0, expireInSeconds: 10 * 60 },
+  [JOBS.reviewNotify]: { retryLimit: 2, retryDelay: 60 },
+  // Telegram down for a while: keep trying for about an hour.
+  [JOBS.notifySend]: { retryLimit: 6, retryDelay: 60, retryBackoff: true },
 } as const;
 
 /**
@@ -110,3 +117,8 @@ export const dataRefreshKey = (source: string) => `data:${source}`;
  * it; the job also checks the post's planned time, so a stale copy never publishes (rule 8).
  */
 export const postPublishKey = (postId: string) => `publish:${postId}`;
+
+export type NotifySendJob = { notificationId: string };
+
+/** One review notice waiting at a time: more posts reaching review join it. */
+export const REVIEW_NOTIFY_KEY = "review-notify";

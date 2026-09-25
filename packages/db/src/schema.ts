@@ -13,6 +13,7 @@ import {
   IDEA_STATUSES,
   type IdeaRequestParams,
   NETWORKS,
+  NOTIFICATION_KINDS,
   POST_STATUSES,
   PUBLICATION_STATUSES,
   RENDER_FORMATS,
@@ -372,6 +373,8 @@ export const postVersions = pgTable(
      * T11): a new render always draws the numbers the text was written with.
      */
     datasets: jsonb("datasets").$type<Record<string, DataSeries>>(),
+    /** When the operator was told this version is waiting for review (Telegram, phase 4 T6). */
+    reviewNotifiedAt: timestamp("review_notified_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -525,6 +528,30 @@ export const dataSnapshots = pgTable(
   ],
 );
 
+/**
+ * Messages to the operator (Telegram, phase 4 T6). `key` says what it is about (e.g.
+ * "publish:<post>:<time>"): the same key is never stored, nor sent, twice (rule 8).
+ */
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    key: text("key").notNull(),
+    kind: text("kind", { enum: NOTIFICATION_KINDS }).notNull(),
+    text: text("text").notNull(),
+    /** Sent without sound (inside the generation window). */
+    silent: boolean("silent").notNull().default(false),
+    createdAt: createdAt(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    /** Last sending error (never the token). */
+    error: text("error"),
+  },
+  (t) => [
+    uniqueIndex("notifications_key_unique").on(t.key),
+    check("notifications_kind_valid", sql`${t.kind} in (${inList(NOTIFICATION_KINDS)})`),
+  ],
+);
+
 /** Global key/value settings (e.g. the AI generation window). */
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
@@ -538,6 +565,7 @@ export type Setting = typeof settings.$inferSelect;
 export type BrandAsset = typeof brandAssets.$inferSelect;
 export type ContentPillar = typeof contentPillars.$inferSelect;
 export type ScheduleSlot = typeof scheduleSlots.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
 export type NewContentPillar = typeof contentPillars.$inferInsert;
 export type Idea = typeof ideas.$inferSelect;
 export type ContentSeries = typeof contentSeries.$inferSelect;

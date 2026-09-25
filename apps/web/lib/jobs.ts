@@ -8,6 +8,7 @@ import {
   type IdeaRequestTask,
   ideaRequestKey,
   JOBS,
+  type NotifySendJob,
   type PostEffect,
   type PostPublishJob,
   postPublishKey,
@@ -39,6 +40,7 @@ function boss(): Promise<PgBoss> {
     for (const task of IDEA_REQUEST_TASKS) await client.createQueue(task, QUEUE_OPTIONS[task]);
     await client.createQueue(JOBS.dataRefresh, QUEUE_OPTIONS[JOBS.dataRefresh]);
     await client.createQueue(JOBS.postPublish, QUEUE_OPTIONS[JOBS.postPublish]);
+    await client.createQueue(JOBS.notifySend, QUEUE_OPTIONS[JOBS.notifySend]);
     return client;
   })();
   return globalForBoss.radevBoss;
@@ -103,4 +105,10 @@ export async function queuePublish(postId: string, at: Date): Promise<void> {
 /** What a transition asks the queue to undo (state machine effects). */
 export async function applyPostEffects(postId: string, effects: readonly PostEffect[]) {
   if (effects.includes("cancel_publish_job")) await cancelPublish(postId);
+}
+
+/** Hands a stored notification to the worker, which sends it to Telegram (phase 4, T6). */
+export async function queueNotification(notificationId: string): Promise<void> {
+  const data: NotifySendJob = { notificationId };
+  await (await boss()).send(JOBS.notifySend, data, { singletonKey: `notify:${notificationId}` });
 }

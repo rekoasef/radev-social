@@ -8,20 +8,21 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 4 — Producción y piloto automático (en curso, T1–T5 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T6 de la Fase 4: bot de Telegram (grammY). El operador crea el bot con @BotFather.
+- **Fase:** 4 — Producción y piloto automático (en curso, T1–T6 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T7 de la Fase 4: cola de revisión para el celular. 👁
+- **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
 - **Para el operador (T4):** en Ajustes → Generación automática, activarla cuando quieras que llene la semana sola (viene apagada: en la notebook generaría de madrugada con tu suscripción). Lumus tiene el banco de ideas vacío: la primera pasada pide ideas y la siguiente llena.
 - **Para el operador (T3) 👁:** aprobar el diseño del calendario (capturas en la conversación del 2026-09-25) y probarlo con login: arrastrar con el mouse, y en el celular "Mover" → tocar un horario libre.
 - **Para el operador (T2):** probar con login en un post aprobado: Programar (horario de la marca u otra fecha), Reprogramar, Desprogramar; y un post que llegue a su hora (queda "Publicando" hasta Marcar como publicado). Confirmar la decisión (1) de la T2.
-- **Para el operador (T1):** mirar con login Marcas → Horarios (también desde el celular). A las dos marcas se les cargó el horario de arranque (todos los días 19:00): cambialo ahí si querés otro. En la otra máquina, `pnpm db:migrate` (hasta `0014_post_scheduling`) y cargar los horarios desde el panel (el seed solo los pone en marcas nuevas).
+- **Para el operador (T1):** mirar con login Marcas → Horarios (también desde el celular). A las dos marcas se les cargó el horario de arranque (todos los días 19:00): cambialo ahí si querés otro. En la otra máquina, `pnpm db:migrate` (hasta `0015_notifications`) y cargar los horarios desde el panel (el seed solo los pone en marcas nuevas).
 - **Oracle Cloud:** cuenta creada por el operador el 2026-09-25, región principal **sa-santiago-1** (Santiago de Chile; no se puede cambiar). La instancia se crea en la T9.
 - **Para el operador (T13):** mirar RA-0004 (prueba del criterio de RAdev, en revisión). Completar Precios y Casos de RAdev cuando puedas: siguen siendo el borrador del seed (con `[completar]`, y eso le llega a la IA).
 - **Para el operador (T11):** (1) mirar LU-0004 y LU-0005 (posts de prueba de Lumus con gráficos y cifras del dólar, en revisión) y Ajustes → Datos reales. (2) En la otra máquina, tildar Bluelytics en Marcas → Lumus → General → Fuentes de datos: el seed no toca marcas que ya existen.
 - **Para el operador (T10):** (1) en Ajustes → Ruteo de IA, cambiar (el seed ya trae el nuevo desde la T13, pero no pisa rutas existentes) `nex-agi/nex-n2.5-pro:free` (ya no existe en OpenRouter) por `nvidia/nemotron-3-super-120b-a12b:free` en `ideas.generate` (principal) y `carousel.generate` (respaldo). (2) Completar Precios de RAdev: sin rangos, los posts de la serie "¿Cuánto cuesta realmente…?" fallan a propósito (no inventan precios). (3) La serie está repetida en el documento de voz de RAdev: se puede sacar de ahí. (4) Mirar con login /ideas (pedidos a la IA) y Marcas → Series.
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
-- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0014_post_scheduling`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T5 de la Fase 4
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
+- **Última actualización:** 2026-09-25, al cerrar la T6 de la Fase 4
 
 ## Fase 4 — tareas
 
@@ -36,7 +37,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T3 | Calendario por marca: semana con slots y posts, arrastrar entre slots. 👁 | ✅ (falta el OK del diseño) |
 | T4 | Ventana de generación (Ajustes, 02:00–07:00) + `slots.fill`: 7 días, pilar según la mezcla, idea del banco o pedida a la IA, respeta topes. Tests | ✅ |
 | T5 | `ideas.research` semanal automática | ✅ |
-| T6 | Bot de Telegram (grammY): posts para revisar (agrupado), recordatorio de publicación con descarga, errores, límites de IA y aviso si comprometen un post programado | |
+| T6 | Bot de Telegram (grammY): posts para revisar (agrupado), recordatorio de publicación con descarga, errores, límites de IA y aviso si comprometen un post programado | ✅ |
 | T7 | Cola de revisión para el celular: ver, editar lo básico, aprobar o rechazar con feedback. 👁 | |
 | T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | |
 | T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | |
@@ -84,6 +85,16 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - Core `researchDue({ ok, any }, now)`: toca si no hubo una `ideas.research` que haya funcionado o siga abierta en `RESEARCH_EVERY_DAYS` (7) y ningún intento en `RESEARCH_RETRY_HOURS` (24; una fallida no se reintenta cada 15 min). Query `lastIdeaRequestTimes`. El pedido: 5 ideas, sin pilar ni foco (la IA reparte), vía `createIdeaRequest` (uno abierto por marca y tarea). `FillReport` suma `researched`; Ajustes lo muestra.
 - Tests: 596 en total (3 nuevos).
 - Prueba contra la base en transacción deshecha: Lumus (nunca investigó) → pedido `ideas.research`; RAdev (investigó en la T10, hace menos de una semana) → no; segunda pasada → nada.
+
+**T6 (2026-09-25)**:
+- Solo **envío** (el bot no lee mensajes): `grammy` (`Api.sendMessage`, texto plano, sin vista previa de links) en el worker. Links al panel con `BETTER_AUTH_URL` (en local, `localhost:3000`: en el celular solo andan en producción).
+- Tabla `notifications` (clave única; migración `0015_notifications`, solo agrega, más `post_versions.review_notified_at`). Todo aviso se guarda y lo manda el job `notify.send` (6 reintentos; si Telegram no está configurado, queda guardado con el error). Así un problema de Telegram nunca rompe la generación, el render ni la publicación. Errores sin el token (`telegramSender` lo tapa).
+- Avisos (textos en `packages/core/src/notifications/messages.ts`): **para revisar** (`review.notify`, uno solo con todos los posts nuevos en revisión: 5 min después del primero, o al terminar la ventana si se generaron de madrugada); **hora de publicar** (en `post.publish`, con el ZIP y el post; siempre con sonido); **fallas** definitivas de generación, render (también el control de calidad de una versión manual), publicación y pedidos de ideas; **límite de IA** (a lo sumo uno por hora) y **riesgo** si el reintento queda a menos de 2 h de la hora planeada del post; **tope** de una marca en el llenado (uno por día). Dentro de la ventana de generación llegan **sin sonido** (salvo la hora de publicar).
+- Worker: `notify/telegram.ts`, `notify/notifier.ts` (`notify`, `reviewSoon`), `notify/events.ts` (arma los avisos de fallas y límites; si falla, solo lo registra en el log), `jobs/notify.ts`. `renderCarousel` y `generateCarousel` ganaron ganchos opcionales (`onReview`, `onFailed`, `onRateLimit`).
+- Ajustes → **Telegram**: si está configurado (sin mostrar valores), "Enviar prueba" y los últimos avisos con su estado. `.env.example` suma las dos variables.
+- Tests: 608 en total (15 nuevos).
+- **Prueba real** (Docker): llegaron la prueba, un solo aviso con los 5 posts que esperaban revisión y, a su hora, "Es hora de publicar LU-0007" (post de prueba, programado a 2 min: quedó `publishing`). El operador confirmó que le llegaron.
+
 
 
 

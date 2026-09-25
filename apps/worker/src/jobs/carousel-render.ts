@@ -40,6 +40,10 @@ export type RenderDeps = {
   env: RenderEnv;
   /** Queues a regeneration of the post (render QA of an AI version, phase 3 T8). */
   queueGenerate: (postId: string) => Promise<void>;
+  /** A post got to review: tell the operator (grouped, phase 4 T6). */
+  onReview?: () => Promise<void>;
+  /** The render left the post failed (render QA of a manual version). */
+  onFailed?: (input: { postId: string; versionId: string; error: string }) => Promise<void>;
 };
 
 export async function renderCarousel(
@@ -130,6 +134,14 @@ export async function renderCarousel(
       : await transitionPost(db, post.id, outcome === "done" ? "renderDone" : "renderFailed");
   // The AI writes it again with the problems, which stay on this version for it to read.
   if (outcome === "regenerate" && moved.ok) await deps.queueGenerate(post.id);
+  if (outcome === "done" && moved.ok) await deps.onReview?.();
+  if (outcome !== "done" && outcome !== "regenerate" && moved.ok && moved.to === "failed") {
+    await deps.onFailed?.({
+      postId: post.id,
+      versionId: version.id,
+      error: `El control del render encontró ${issues.length} ${issues.length === 1 ? "problema" : "problemas"}.`,
+    });
+  }
   log.info("render finished", {
     post: post.publicCode,
     version: version.number,

@@ -8,7 +8,7 @@ import {
 } from "@radev/core";
 import { and, desc, eq, gte, isNull, lt, ne, or, sql } from "drizzle-orm";
 import type { Database } from "../client";
-import { posts, postVersions, publications } from "../schema";
+import { brands, posts, postVersions, publications } from "../schema";
 import type { Executor } from "./brand-assets";
 import { type TransitionOutcome, transitionPost } from "./posts";
 
@@ -112,7 +112,15 @@ export async function unschedulePost(db: Database, postId: string): Promise<Tran
 }
 
 export type PublishStart =
-  | { started: true; postId: string; publicCode: string; brandId: string }
+  | {
+      started: true;
+      postId: string;
+      publicCode: string;
+      brandId: string;
+      brandName: string;
+      hook: string;
+      scheduledAt: Date;
+    }
   | { started: false; reason: "stale" | "missing" };
 
 /**
@@ -131,10 +139,14 @@ export async function startScheduledPublishing(
         scheduledAt: posts.scheduledAt,
         publicCode: posts.publicCode,
         brandId: posts.brandId,
+        brandName: brands.name,
+        hook: sql<string | null>`${postVersions.content} ->> 'hook'`,
       })
       .from(posts)
+      .innerJoin(brands, eq(brands.id, posts.brandId))
+      .leftJoin(postVersions, eq(postVersions.id, posts.currentVersionId))
       .where(eq(posts.id, input.job.postId))
-      .for("update");
+      .for("update", { of: posts });
     if (!post) return { started: false, reason: "missing" };
     if (!isPublishJobCurrent(post, input.job)) return { started: false, reason: "stale" };
     const moved = await transitionPost(tx, input.job.postId, "startPublishing");
@@ -151,6 +163,9 @@ export async function startScheduledPublishing(
       postId: input.job.postId,
       publicCode: post.publicCode,
       brandId: post.brandId,
+      brandName: post.brandName,
+      hook: post.hook ?? "",
+      scheduledAt: new Date(input.job.scheduledAt),
     };
   });
 }

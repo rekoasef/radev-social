@@ -171,7 +171,8 @@ Todos idempotentes (clave `singletonKey` derivada del objetivo), con reintentos 
 | `ideas.research` | cron semanal por marca | investiga temas del nicho con búsqueda web (Claude) |
 | `carousel.generate` | manual, `slots.fill`, rechazo | idea → JSON validado → nueva versión |
 | `carousel.render` | tras generar o editar | Playwright renderiza cada slide en 4:5, QA, guarda assets |
-| `review.notify` | post entra a `in_review` | aviso agrupado por Telegram |
+| `review.notify` | post entra a `in_review` (clave única, 5 min después o al terminar la ventana de generación) | un solo aviso por Telegram con los posts nuevos para revisar |
+| `notify.send` | cualquier aviso guardado | envía una fila de `notifications` a Telegram (6 reintentos); una enviada no se reenvía |
 | `post.publish` | `startAfter = scheduled_at`, clave `publish:<post>` | publica vía adaptador si el post sigue `scheduled` para esa hora (si no, se saltea) |
 | `slots.fill` | cron cada 15 min; actúa solo **dentro de la ventana de generación** | llena los slots libres de los próximos 7 días respetando la mezcla (ver §7) |
 | `data.refresh` | cron diario (19:00 de Buenos Aires; al arrancar el worker si no hay datos) o "Actualizar ahora" en Ajustes | snapshot de Bluelytics |
@@ -325,13 +326,14 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `idea_requests` | id, brand_id, task (`ideas.generate` \| `ideas.research`), params (jsonb: count, pillarKey, seriesKey, focus), status (`queued` \| `running` \| `succeeded` \| `failed`), error, idea_count, created_at, finished_at |
 | `content_series` | id, brand_id, key, name, pillar_id, hook_type, brief (Markdown), required_slides (jsonb), archived_at, created_at, updated_at |
 | `posts` | id, brand_id, public_code, idea_id, pillar_id, hook_type, status, current_version_id, scheduled_at (hora planeada), slot_id (horario de la marca del que salió; null si se eligió a mano), rejection_feedback, created_at, updated_at |
-| `post_versions` | id, post_id, number, content (jsonb `Carousel`), schema_version, origin (`ai` \| `manual`), generation_run_id, datasets (jsonb: puntos de sus `chart` por `datasetRef`, congelados al guardarla), created_at |
+| `post_versions` | id, post_id, number, content (jsonb `Carousel`), schema_version, origin (`ai` \| `manual`), generation_run_id, review_notified_at (ya avisada por Telegram), datasets (jsonb: puntos de sus `chart` por `datasetRef`, congelados al guardarla), created_at |
 | `assets` | id, post_version_id, format (`4x5`; enum ampliable), slide_index, path, width, height, checksum |
 | `schedule_slots` | id, brand_id, weekday (0 = domingo … 6), local_time (`time`, hora de pared en la zona de la marca), active, created_at. Única por marca, día y hora |
 | `social_accounts` | id, brand_id, network, external_id, handle, access_token_enc, refresh_token_enc, expires_at, status |
 | `publications` | id, post_id, social_account_id, network, status, external_id, url, error, attempts, published_at |
 | `ai_routes` | id, task, brand_id (nullable = global), provider, model, fallback_provider, fallback_model. Única por tarea y marca, con una sola global por tarea (`NULLS NOT DISTINCT`) |
 | `generation_runs` | id, brand_id, post_id (null en pedidos de ideas), task, role (`primary` \| `fallback`), provider, model, status (`succeeded` \| `failed`), error_kind, error, input_tokens, output_tokens, cost_usd (nullable), duration_ms, num_turns, session_id, created_at. Una fila por intento |
+| `notifications` | id, key (única: nunca se guarda ni se envía dos veces la misma), kind (`review` \| `publish` \| `failure` \| `limit` \| `cap` \| `test`), text, silent, created_at, sent_at, error |
 | `settings` | clave/valor global: `generation_window`, `slots_fill_last` (resultado de la última pasada del llenado) |
 | `data_snapshots` | id, source (`bluelytics`), as_of (fecha del dato), fetched_at, payload (jsonb, validado al bajarlo). Uno por fuente y día: otro refresh el mismo día lo reemplaza |
 | `post_metrics` (F6) | id, publication_id, captured_at, views, likes, comments, shares, saves, source (`api` \| `screenshot` \| `manual`) |

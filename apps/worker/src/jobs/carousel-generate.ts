@@ -238,6 +238,8 @@ export type GenerateDeps = {
   queueGenerate: (job: CarouselGenerateJob, delayMs: number) => Promise<void>;
   /** The job's last retry by pg-boss: a retryable error fails the post instead. */
   lastTry: boolean;
+  /** A provider hit its limit and the post waits until `retryAt` (Telegram, phase 4 T6). */
+  onRateLimit?: (input: { postId: string; retryAt: Date }) => Promise<void>;
 };
 
 export type GenerateOutcome = "saved" | "rescheduled" | "retry" | "failed" | "skipped";
@@ -417,6 +419,7 @@ export async function generateCarousel(
         const at = new Date(Date.now() + decision.delayMs);
         await setGenerationRetryAt(db, post.id, at);
         await deps.queueGenerate({ postId: post.id, attempt: job.attempt + 1 }, decision.delayMs);
+        await deps.onRateLimit?.({ postId: post.id, retryAt: at });
         log.warn("generation rescheduled: provider limit", {
           post: post.publicCode,
           attempt: job.attempt + 1,

@@ -14,6 +14,7 @@ import {
   type IdeaRequestJob,
   ideaRequestKey,
   JOBS,
+  type NotifySendJob,
   type PostPublishJob,
   QUEUE_OPTIONS,
   SLOTS_FILL_CRON,
@@ -24,9 +25,13 @@ import { generateCarousel, RetryableGenerationError } from "./jobs/carousel-gene
 import { failRender, renderCarousel } from "./jobs/carousel-render";
 import { refreshData } from "./jobs/data-refresh";
 import { RetryableIdeasError, runIdeaRequest } from "./jobs/ideas-request";
+import { notifyReview, sendNotification } from "./jobs/notify";
 import { publishPost } from "./jobs/post-publish";
 import { fillSlots } from "./jobs/slots-fill";
 import { createLogger } from "./logger";
+import { createEvents, errorMessage } from "./notify/events";
+import { createNotifier } from "./notify/notifier";
+import { telegramConfig, telegramSender } from "./notify/telegram";
 import { closeBrowser } from "./render/browser";
 
 const log = createLogger({ service: "worker" });
@@ -86,6 +91,19 @@ async function main() {
     });
   };
 
+  // Notices to the operator on Telegram (phase 4, T6). Without the bot's settings they are still
+  // stored (Settings shows them) but not sent. Links point to the panel's public address.
+  const telegram = telegramConfig();
+  if (!telegram) log.warn("telegram not configured: notices are stored, not sent");
+  await boss.createQueue(JOBS.notifySend, QUEUE_OPTIONS[JOBS.notifySend]);
+  await boss.createQueue(JOBS.reviewNotify, QUEUE_OPTIONS[JOBS.reviewNotify]);
+  const notifier = createNotifier({
+    db,
+    boss,
+    appUrl: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  });
+  const events = createEvents({ db, notifier, log });
+
   await boss.createQueue(JOBS.carouselGenerate, QUEUE_OPTIONS[JOBS.carouselGenerate]);
   // One generation at a time: claude -p shares the subscription with the operator.
   await boss.work(
@@ -97,17 +115,41 @@ async function main() {
       const lastTry = job.retryCount >= GENERATE_RETRIES;
       try {
         const outcome = await generateCarousel(
-          { db, log: jobLog, router, queueRender, queueGenerate, lastTry },
+          {
+            db,
+            log: jobLog,
+            router,
+            queueRender,
+            queueGenerate,
+            lastTry,
+            onRateLimit: events.rateLimited,
+          },
           job.data,
         );
         jobLog.info("generation finished", { outcome });
+        if (outcome === "failed") {
+          await events.postFailed({
+            what: "generation",
+            postId: job.data.postId,
+            id: job.id,
+            error: "La IA no pudo escribir un carrusel válido: los errores están en el post.",
+          });
+        }
       } catch (error) {
         jobLog.error("generation failed", {
           error,
           attempt: job.retryCount + 1,
           retryable: error instanceof RetryableGenerationError,
         });
-        if (lastTry) await failGeneration(db, job.data.postId);
+        if (lastTry) {
+          await failGeneration(db, job.data.postId);
+          await events.postFailed({
+            what: "generation",
+            postId: job.data.postId,
+            id: job.id,
+            error: errorMessage(error),
+          });
+        }
         throw error;
       }
     },
@@ -132,12 +174,18 @@ async function main() {
             log: jobLog,
             env: renderEnv,
             queueGenerate: (postId) => queueGenerate({ postId, attempt: 0 }, 0),
+            onReview: notifier.reviewSoon,
+            onFailed: (failed) =>
+              events.renderFailed({ versionId: failed.versionId, error: failed.error }),
           },
           job.data,
         );
       } catch (error) {
         jobLog.error("render failed", { error, attempt: job.retryCount + 1 });
-        if (job.retryCount >= RENDER_RETRIES) await failRender(db, job.data.versionId, error);
+        if (job.retryCount >= RENDER_RETRIES) {
+          await failRender(db, job.data.versionId, error);
+          await events.renderFailed({ versionId: job.data.versionId, error: errorMessage(error) });
+        }
         throw error;
       }
     },
@@ -168,6 +216,7 @@ async function main() {
               job.data.requestId,
               error instanceof Error ? error.message : "Error inesperado.",
             );
+            await events.ideasFailed({ requestId: job.data.requestId, error: errorMessage(error) });
           }
           throw error;
         }
@@ -214,10 +263,19 @@ async function main() {
       if (!job) return;
       const jobLog = log.child({ job: JOBS.postPublish, id: job.id, postId: job.data.postId });
       try {
-        const outcome = await publishPost({ db, log: jobLog }, job.data);
+        const outcome = await publishPost(
+          { db, log: jobLog, notify: notifier.notify, appUrl: notifier.appUrl },
+          job.data,
+        );
         jobLog.info("publish job finished", { outcome });
       } catch (error) {
         jobLog.error("publish failed", { error, attempt: job.retryCount + 1 });
+        await events.postFailed({
+          what: "publish",
+          postId: job.data.postId,
+          id: job.id,
+          error: errorMessage(error),
+        });
         throw error;
       }
     },
@@ -239,12 +297,41 @@ async function main() {
         queueIdeaRequest: async (task, requestId) => {
           await boss.send(task, { requestId }, { singletonKey: ideaRequestKey(requestId) });
         },
+        notify: (notice) => notifier.notify(notice),
       });
       if (outcome === "outside-window") jobLog.debug("slots fill: outside the window");
       else jobLog.info("slots fill finished", { brands: outcome.brands });
     },
   );
   await boss.schedule(JOBS.slotsFill, SLOTS_FILL_CRON, {}, { key: "slots-fill" });
+
+  // Sending notices: one at a time, retried apart from the job that raised them.
+  await boss.work(
+    JOBS.notifySend,
+    { batchSize: 1, includeMetadata: true },
+    async ([job]: JobWithMetadata<NotifySendJob>[]) => {
+      if (!job) return;
+      const jobLog = log.child({ job: JOBS.notifySend, id: job.id });
+      const outcome = await sendNotification(
+        { db, log: jobLog, send: telegram ? telegramSender(telegram) : null },
+        job.data,
+      );
+      jobLog.debug("notify finished", { outcome });
+    },
+  );
+  await boss.work(JOBS.reviewNotify, { batchSize: 1 }, async () => {
+    await notifyReview({
+      db,
+      appUrl: notifier.appUrl,
+      queueSend: async (notificationId) => {
+        await boss.send(
+          JOBS.notifySend,
+          { notificationId },
+          { singletonKey: `notify:${notificationId}` },
+        );
+      },
+    });
+  });
 
   log.info("worker ready", {
     schema: "pgboss",
@@ -256,6 +343,8 @@ async function main() {
       JOBS.dataRefresh,
       JOBS.postPublish,
       JOBS.slotsFill,
+      JOBS.notifySend,
+      JOBS.reviewNotify,
     ],
   });
 

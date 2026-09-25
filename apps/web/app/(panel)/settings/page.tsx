@@ -13,7 +13,14 @@ import {
   parseGenerationWindow,
   TOOL_TASKS,
 } from "@radev/core";
-import { getLatestSnapshot, getSetting, listAiRoutes, listBrands, snapshotData } from "@radev/db";
+import {
+  getLatestSnapshot,
+  getSetting,
+  listAiRoutes,
+  listBrands,
+  listRecentNotifications,
+  snapshotData,
+} from "@radev/db";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
@@ -22,7 +29,7 @@ import { GenerationWindowForm } from "@/components/settings/generation-window-fo
 import { timezoneOptions } from "@/lib/brand-form";
 import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/time";
-import { refreshDataAction } from "./actions";
+import { refreshDataAction, sendTestNotificationAction } from "./actions";
 
 export const metadata: Metadata = { title: "Ajustes · RAdev Social" };
 
@@ -37,7 +44,7 @@ const TASK_HINTS: Record<AiTask, string> = {
 // Which provider and model each AI task uses, and its fallback (docs/ARCHITECTURE.md §7).
 // Global routes: a brand's own route (the database allows it) is for later.
 export default async function SettingsPage() {
-  const [allRoutes, brands, snapshots, storedWindow, lastFill] = await Promise.all([
+  const [allRoutes, brands, snapshots, storedWindow, lastFill, notices] = await Promise.all([
     listAiRoutes(db),
     listBrands(db),
     Promise.all(
@@ -45,7 +52,10 @@ export default async function SettingsPage() {
     ),
     getSetting(db, GENERATION_WINDOW_KEY),
     getSetting(db, FILL_REPORT_KEY) as Promise<FillReport | undefined>,
+    listRecentNotifications(db, 6),
   ]);
+  // Only whether they are there: the values never reach the page.
+  const telegramReady = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
   const window = parseGenerationWindow(storedWindow);
   const routes = allRoutes.filter((route) => route.brandId === null);
 
@@ -165,6 +175,60 @@ export default async function SettingsPage() {
             </>
           ) : (
             <p className="text-sm text-ink-faint">Todavía no corrió dentro de la ventana.</p>
+          )}
+        </div>
+      </section>
+
+      {/* Notices to the operator (phase 4, T6). */}
+      <section aria-labelledby="telegram-heading" className="flex flex-col gap-6">
+        <Plate id="telegram-heading" aside="Avisos">
+          Telegram
+        </Plate>
+        <div className="flex max-w-[70ch] flex-col gap-2 text-sm text-ink-dim">
+          <p>
+            El bot te avisa de los posts para revisar (juntos; los de la madrugada, al terminar la
+            ventana), la hora de publicar cada post, lo que falla y los límites de la IA. Dentro de
+            la ventana de generación llegan sin sonido, salvo la hora de publicar.
+          </p>
+          <p>
+            {telegramReady ? (
+              <span className="text-ink">Configurado.</span>
+            ) : (
+              <span className="text-tally-amber">
+                Sin configurar: falta TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID en el .env. Los avisos
+                se guardan igual.
+              </span>
+            )}
+          </p>
+        </div>
+        <form action={sendTestNotificationAction}>
+          <button type="submit" className="console-button">
+            Enviar prueba
+          </button>
+        </form>
+        <div className="flex max-w-3xl flex-col gap-2">
+          <h2 className="text-sm text-ink">Últimos avisos</h2>
+          {notices.length === 0 ? (
+            <p className="text-sm text-ink-faint">Todavía no hubo avisos.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-bezel rounded-md border border-bezel">
+              {notices.map((notice) => (
+                <li key={notice.id} className="flex flex-col gap-1 px-4 py-3 text-sm">
+                  <span className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="line-clamp-1 min-w-0 text-ink">
+                      {notice.text.split("\n")[0]}
+                    </span>
+                    <span className="timecode shrink-0 text-xs text-ink-faint">
+                      {formatDateTime(notice.createdAt, window.timeZone)} ·{" "}
+                      {notice.sentAt ? "enviado" : notice.error ? "sin enviar" : "en cola"}
+                    </span>
+                  </span>
+                  {!notice.sentAt && notice.error && (
+                    <span className="text-xs text-tally-red">{notice.error}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </section>

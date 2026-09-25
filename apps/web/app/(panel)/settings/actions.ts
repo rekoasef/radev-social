@@ -9,11 +9,11 @@ import {
   normalizeLocalTime,
   parseGenerationWindow,
 } from "@radev/core";
-import { saveGlobalAiRoute, setSetting } from "@radev/db";
+import { saveGlobalAiRoute, setSetting, storeNotification } from "@radev/db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { queueDataRefresh } from "@/lib/jobs";
+import { queueDataRefresh, queueNotification } from "@/lib/jobs";
 import { requireOperator } from "@/lib/session";
 
 export type RouteFormState =
@@ -102,4 +102,17 @@ export async function saveGenerationWindowAction(
     status: "ok",
     message: window.enabled ? "Generación automática activada." : "Generación automática apagada.",
   };
+}
+
+/** "Enviar prueba": a test message through the same path as every notice (phase 4, T6). */
+export async function sendTestNotificationAction(): Promise<void> {
+  await requireOperator();
+  const now = new Date();
+  const stored = await storeNotification(db, {
+    key: `test:${now.toISOString()}`,
+    kind: "test",
+    text: "✅ Prueba de RAdev Social: los avisos llegan bien.",
+  });
+  if (stored) await queueNotification(stored.id);
+  revalidatePath("/settings");
 }

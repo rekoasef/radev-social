@@ -93,6 +93,14 @@ export {
   transitionIdea,
 } from "./queries/ideas";
 export {
+  getNotification,
+  listRecentNotifications,
+  markNotificationFailed,
+  markNotificationSent,
+  storeNotification,
+  takeReviewNotice,
+} from "./queries/notifications";
+export {
   createPillar,
   deletePillar,
   getPillar,

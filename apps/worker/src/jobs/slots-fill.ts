@@ -1,4 +1,5 @@
 import {
+  capNotice,
   FILL_DAYS,
   FILL_MIN_LEAD_MS,
   FILL_REPORT_KEY,
@@ -9,7 +10,9 @@ import {
   type IdeaRequestTask,
   ideaPrompt,
   isWithinWindow,
+  localDateOf,
   MIX_LOOKBACK_DAYS,
+  type Notice,
   parseGenerationWindow,
   planFill,
   researchDue,
@@ -47,6 +50,8 @@ export type FillDeps = {
   log: Logger;
   queueGenerate: (postId: string) => Promise<void>;
   queueIdeaRequest: (task: IdeaRequestTask, requestId: string) => Promise<void>;
+  /** A brand reached its cap (Telegram, phase 4 T6). */
+  notify?: (notice: Notice) => Promise<void>;
   now?: Date;
 };
 
@@ -170,6 +175,13 @@ async function fillBrand(
   }
   if (entry.unfilled > 0 && budget <= plan.assignments.length) {
     entry.note = "Llegó a su tope de generaciones.";
+    await deps.notify?.(
+      capNotice({
+        brandSlug: brand.slug,
+        brandName: brand.name,
+        localDate: localDateOf(now, brand.timezone),
+      }),
+    );
   } else if (entry.unfilled > 0) {
     entry.note = "Faltan ideas: se pidieron a la IA.";
   }
