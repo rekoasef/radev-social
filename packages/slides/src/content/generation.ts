@@ -34,7 +34,7 @@ límites de caracteres están en el JSON Schema; respetalos, porque un texto má
 - \`flow\`: 3 a 5 pasos **en orden** unidos por flechas, sin texto propio (un proceso de un vistazo). Palabras de hasta 16 letras.
 - \`hubDiagram\`: 3 a 6 cosas que confluyen en un centro (ej. herramientas que se conectan a un sistema).
 - \`comparison\`: X contra Y con 2 a 4 puntos cada uno y un veredicto. A la derecha va la opción que recomendás.
-- \`costBreakdown\`: desglose de costos con rangos. **Solo** con rangos que estén en la sección Precios; si no hay, no uses esta slide.
+- \`costBreakdown\`: desglose de costos con rangos. **Solo** con rangos que estén en la sección Precios, copiados tal cual (se controla: un rango que no esté ahí rechaza el carrusel). Si no hay, no uses esta slide.
 - \`steps\`: 3 a 5 pasos numerados, cada uno con título y explicación.
 - \`cta\`: cierre con llamado a la acción. \`button\` dice la acción concreta (ej. "Escribime por WhatsApp").
 
@@ -52,12 +52,56 @@ Nombres de Lucide en kebab-case (ej. \`message-circle\`, \`calendar-clock\`, \`f
 Si no estás seguro de que un ícono existe, usá uno común.
 `;
 
+/** A range as written, for comparing: no case, no spaces, one kind of dash. */
+function normalizeRange(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[‐-―−]/g, "-")
+    .replace(/\s+/g, "");
+}
+
 /**
  * The carousel schema for a brand's generation: the brand's pillars only, and no blocked slides.
- * Refinements don't reach the JSON Schema, so the brand's CLAUDE.md lists the pillar keys.
+ * A post of a series also has the slide types the series requires (phase 3, T10). With `pricing`
+ * (the brand's pricing document, empty when there is none), every range of a `costBreakdown` has
+ * to be written in it as is: the AI never makes up a price (CLAUDE.md, rule 9). Refinements
+ * don't reach the JSON Schema, so the brand's CLAUDE.md lists the pillar keys and `task.json`
+ * the series' slides.
  */
-export function aiCarouselSchema(pillarKeys: readonly string[]) {
+export function aiCarouselSchema(
+  pillarKeys: readonly string[],
+  options: { requiredSlides?: readonly string[]; pricing?: string } = {},
+) {
+  const required = options.requiredSlides ?? [];
+  const pricing = options.pricing === undefined ? undefined : normalizeRange(options.pricing);
   return carouselSchema.superRefine((carousel, ctx) => {
+    if (pricing !== undefined) {
+      carousel.slides.forEach((slide, index) => {
+        if (slide.type !== "costBreakdown") return;
+        const ranges = [
+          ...slide.items.map((item, i) => ({ range: item.range, path: ["items", i, "range"] })),
+          { range: slide.total.range, path: ["total", "range"] },
+        ];
+        for (const { range, path } of ranges) {
+          if (!pricing.includes(normalizeRange(range))) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["slides", index, ...path],
+              message: `"${range}" no está en Precios: los rangos se copian tal cual de ahí. Si Precios no tiene lo que necesitás, no uses \`costBreakdown\`.`,
+            });
+          }
+        }
+      });
+    }
+    const present = new Set<string>(carousel.slides.map((slide) => slide.type));
+    const missing = required.filter((type) => !present.has(type));
+    if (missing.length > 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["slides"],
+        message: `La serie exige estas slides y faltan: ${missing.map((t) => `\`${t}\``).join(", ")}.`,
+      });
+    }
     if (!pillarKeys.includes(carousel.pillarKey)) {
       ctx.addIssue({
         code: "custom",

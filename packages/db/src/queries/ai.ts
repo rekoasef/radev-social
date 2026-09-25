@@ -73,7 +73,10 @@ export async function recordGenerationRun(db: Database, run: NewGenerationRun): 
   return row.id;
 }
 
-/** Successful generations of a brand since an instant (what the caps count). */
+/**
+ * Successful carousel generations of a brand since an instant (what the caps count). Requests
+ * for ideas do not count: the caps measure carousels (phase 3, T10).
+ */
 export async function countSuccessfulRuns(
   db: Database,
   brandId: string,
@@ -85,6 +88,7 @@ export async function countSuccessfulRuns(
     .where(
       and(
         eq(generationRuns.brandId, brandId),
+        eq(generationRuns.task, "carousel.generate"),
         eq(generationRuns.status, "succeeded"),
         gte(generationRuns.createdAt, since),
       ),

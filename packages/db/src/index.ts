@@ -57,6 +57,17 @@ export {
   setGenerationRetryAt,
 } from "./queries/generation";
 export {
+  completeIdeaRequest,
+  createIdeaRequest,
+  failIdeaRequest,
+  getIdeaRequest,
+  type IdeaRequestResult,
+  listIdeaRequests,
+  listIdeaTitles,
+  type ProposedIdea,
+  startIdeaRequest,
+} from "./queries/idea-requests";
+export {
   countIdeasByStatus,
   createIdea,
   getIdea,
@@ -99,4 +110,17 @@ export {
   type TransitionOutcome,
   transitionPost,
 } from "./queries/posts";
+export {
+  createSeries,
+  deleteSeries,
+  getSeries,
+  getSeriesByKey,
+  listActiveSeries,
+  listBrandSeries,
+  type SeriesFields,
+  type SeriesSummary,
+  type SeriesWriteResult,
+  setSeriesArchived,
+  updateSeries,
+} from "./queries/series";
 export * from "./schema";

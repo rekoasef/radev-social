@@ -73,8 +73,8 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Tabla `brand_documents` y editor de voz, precios, casos y reglas con historial; seed desde `seeds/brands/`
 - [x] Pilares con porcentajes (CRUD) y WhatsApp de la marca
 - [x] Banco de ideas: carga rápida (mobile), listado, descarte
-- [ ] Jobs `ideas.generate` (modelo gratuito) e `ideas.research` (Claude con búsqueda web)
-- [ ] Series recurrentes, empezando por "¿Cuánto cuesta realmente...?"
+- [x] Jobs `ideas.generate` (modelo gratuito) e `ideas.research` (Claude con búsqueda web)
+- [x] Series recurrentes, empezando por "¿Cuánto cuesta realmente...?"
 - [x] Job `carousel.generate` → versión nueva → `carousel.render`
 - [x] Rechazo con feedback y regeneración; regeneración automática por QA (máx. 2)
 - [ ] Importación del historial de posts → `winners.json`

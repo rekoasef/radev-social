@@ -6,6 +6,10 @@ export const JOBS = {
   carouselRender: "carousel.render",
   /** Write a carousel with AI for a post that is `generating` (docs/ARCHITECTURE.md §7). */
   carouselGenerate: "carousel.generate",
+  /** Propose ideas for a brand's bank from its pillars, series and history (free model). */
+  ideasGenerate: "ideas.generate",
+  /** Look into the brand's niche with web search and bring topics as ideas (Claude). */
+  ideasResearch: "ideas.research",
 } as const;
 
 export type CarouselRenderJob = { versionId: string };
@@ -23,7 +27,12 @@ export type GenerationRequest = {
   pillarKey: string | null;
   /** Suggested hook type (a HOOK_TYPES value of packages/slides); null lets the AI choose. */
   hookType: string | null;
+  /** A series of the brand: its structure and required slides apply. Absent in older requests. */
+  seriesKey?: string | null;
 };
+
+/** Both idea jobs run an `idea_requests` row that holds their parameters. */
+export type IdeaRequestJob = { requestId: string };
 
 /**
  * Queue settings, the same wherever the queue is created (the worker on start, the web before its
@@ -39,6 +48,20 @@ export const QUEUE_OPTIONS = {
     retryBackoff: true,
     expireInSeconds: 20 * 60,
   },
+  // Like a carousel: the free model up to 2 min, Claude as fallback up to 5, and one more try
+  // when the answer comes malformed. Research with web search runs up to 10 min per try.
+  [JOBS.ideasGenerate]: {
+    retryLimit: 2,
+    retryDelay: 60,
+    retryBackoff: true,
+    expireInSeconds: 20 * 60,
+  },
+  [JOBS.ideasResearch]: {
+    retryLimit: 1,
+    retryDelay: 120,
+    retryBackoff: true,
+    expireInSeconds: 25 * 60,
+  },
 } as const;
 
 /**
@@ -53,3 +76,6 @@ export const carouselRenderKey = (versionId: string) => `render:${versionId}`;
  */
 export const carouselGenerateKey = (postId: string, attempt: number) =>
   `generate:${postId}:${attempt}`;
+
+/** Key of an idea request's job: one per request (the job skips a request that is not queued). */
+export const ideaRequestKey = (requestId: string) => `ideas:${requestId}`;

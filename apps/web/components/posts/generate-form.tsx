@@ -14,15 +14,18 @@ const idle: GenerateState = { status: "idle" };
 export function GenerateForm({
   brand,
   pillars,
+  series = [],
   fromIdea,
 }: {
   brand: { id: string; name: string };
   pillars: { key: string; name: string }[];
-  fromIdea?: { id: string; text: string; pillarKey: string | null };
+  /** Active series: a post of one follows its structure (its pillar and hook if left empty). */
+  series?: { key: string; name: string }[];
+  fromIdea?: { id: string; text: string; pillarKey: string | null; seriesKey: string | null };
 }) {
   const [state, action, pending] = useActionState(generateCarouselAction, idle);
   const [idea, setIdea] = useState(fromIdea?.text ?? "");
-  const ids = { idea: useId(), pillar: useId(), hook: useId() };
+  const ids = { idea: useId(), pillar: useId(), hook: useId(), series: useId() };
   const length = idea.trim().length;
 
   return (
@@ -58,7 +61,27 @@ export function GenerateForm({
         </p>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className={`grid gap-5 ${series.length > 0 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+        {series.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <label htmlFor={ids.series} className="plate-text text-ink-faint">
+              Serie
+            </label>
+            <select
+              id={ids.series}
+              name="seriesKey"
+              defaultValue={fromIdea?.seriesKey ?? ""}
+              className="console-field"
+            >
+              <option value="">Ninguna</option>
+              {series.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="flex flex-col gap-2">
           <label htmlFor={ids.pillar} className="plate-text text-ink-faint">
             Pilar

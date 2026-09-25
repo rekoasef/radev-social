@@ -113,7 +113,7 @@ Las slides sin referencia (`statement`, `question`, `cta` y las demás) se dise�
 
 **`costBreakdown`** — desglose de costos (serie "¿Cuánto cuesta realmente...?").
 - `title` (≤60) · `items`: 3–6 × `{ label≤30, range≤20 }` · `total`: `{ label≤20, range≤24 }` · `note?` (≤100)
-- Rangos **solo** del documento de precios de la marca.
+- Rangos **solo** del documento de precios de la marca, copiados tal cual: en la generación con IA se valida en código (Fase 3, T10).
 
 **`steps`** — pasos numerados.
 - `title` (≤60) · `steps`: 3–5 × `{ title≤32, text≤90 }`

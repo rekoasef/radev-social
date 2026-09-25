@@ -196,3 +196,27 @@ export const seedPillars: Record<string, SeedPillar[]> = {
     },
   ],
 };
+
+export type SeedSeries = {
+  key: string;
+  name: string;
+  pillarKey: string | null;
+  hookType: string | null;
+  requiredSlides: string[];
+};
+
+/**
+ * Recurring series of each brand (docs/PRD.md RF-12); edited from the panel afterwards. The brief
+ * of each one is seeds/brands/<slug>/series/<key>.md.
+ */
+export const seedSeries: Record<string, SeedSeries[]> = {
+  radev: [
+    {
+      key: "real-cost",
+      name: "¿Cuánto cuesta realmente…?",
+      pillarKey: "business-problems",
+      hookType: "cost",
+      requiredSlides: ["costBreakdown"],
+    },
+  ],
+};

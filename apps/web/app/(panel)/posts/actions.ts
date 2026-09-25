@@ -12,6 +12,7 @@ import {
   getIdea,
   getPostByCode,
   getPostVersion,
+  getSeriesByKey,
   listPillars,
   markPublishedManually,
   rejectAndRegenerate,
@@ -225,6 +226,8 @@ const generateInput = z.object({
     .optional()
     .default(""),
   confirmOverLimit: z.literal("on").optional(),
+  // Empty: not a series post.
+  seriesKey: z.string().trim().max(64).optional().default(""),
   /** The bank idea it comes from, if any: it turns used with the post. */
   ideaId: z
     .union([z.uuid(), z.literal("")])
@@ -245,7 +248,8 @@ export async function generateCarouselAction(
   if (!parsed.success) {
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
-  const { brandId, idea, pillarKey, hookType, confirmOverLimit, ideaId } = parsed.data;
+  const { brandId, idea, hookType, confirmOverLimit, ideaId, seriesKey } = parsed.data;
+  let { pillarKey } = parsed.data;
   const brand = await getBrandById(db, brandId);
   if (!brand || brand.archivedAt)
     return { status: "error", message: "Esa marca no existe o está archivada." };
@@ -255,6 +259,18 @@ export async function generateCarouselAction(
     return { status: "error", message: `${brand.name} no tiene pilares de contenido.` };
   if (pillarKey && !pillars.some((p) => p.key === pillarKey))
     return { status: "error", message: "Elegí un pilar de la marca." };
+
+  // A series post takes the series' pillar and hook when the form leaves them to the AI.
+  let seriesHook: string | null = null;
+  if (seriesKey) {
+    const series = await getSeriesByKey(db, brand.id, seriesKey);
+    if (!series || series.archivedAt)
+      return { status: "error", message: "Elegí una serie activa." };
+    if (!pillarKey && series.pillarKey && pillars.some((p) => p.key === series.pillarKey)) {
+      pillarKey = series.pillarKey;
+    }
+    seriesHook = series.hookType;
+  }
 
   if (ideaId) {
     const bankIdea = await getIdea(db, ideaId);
@@ -268,7 +284,12 @@ export async function generateCarouselAction(
 
   const post = await createGeneratingPost(db, {
     brandId: brand.id,
-    request: { idea, pillarKey: pillarKey || null, hookType: hookType || null },
+    request: {
+      idea,
+      pillarKey: pillarKey || null,
+      hookType: hookType || seriesHook,
+      seriesKey: seriesKey || null,
+    },
     ideaId: ideaId || null,
   });
   await queueGenerate(post.id);

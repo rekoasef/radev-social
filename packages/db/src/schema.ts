@@ -5,8 +5,11 @@ import {
   BRAND_DOCUMENT_KINDS,
   GENERATION_RUN_STATUSES,
   type GenerationRequest,
+  IDEA_REQUEST_STATUSES,
+  IDEA_REQUEST_TASKS,
   IDEA_SOURCES,
   IDEA_STATUSES,
+  type IdeaRequestParams,
   NETWORKS,
   POST_STATUSES,
   PUBLICATION_STATUSES,
@@ -157,6 +160,67 @@ export const contentPillars = pgTable(
 );
 
 /**
+ * A recurring series of a brand (docs/PRD.md RF-12): the brief is the fixed structure the AI
+ * follows; every carousel of the series has the required slide types (checked with Zod).
+ */
+export const contentSeries = pgTable(
+  "content_series",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    /** Stable key ideas and generation requests use (`seriesKey`), e.g. "real-cost". */
+    key: text("key").notNull(),
+    name: text("name").notNull(),
+    /** Pillar of its posts; null lets the AI pick. */
+    pillarId: uuid("pillar_id").references(() => contentPillars.id, { onDelete: "set null" }),
+    /** Suggested hook type (a HOOK_TYPES value of packages/slides), e.g. "cost". */
+    hookType: text("hook_type"),
+    /** Structure and rules of the series, in Markdown, for the AI. */
+    brief: text("brief").notNull(),
+    /** Slide types (SLIDE_TYPES of packages/slides) every post of the series has. */
+    requiredSlides: jsonb("required_slides").$type<string[]>().notNull().default([]),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("content_series_brand_key_unique").on(t.brandId, t.key),
+    check("content_series_key_format", sql`${t.key} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+  ],
+);
+
+/**
+ * A request for ideas to the AI (phase 3, T10), with its parameters and outcome. Its ideas point
+ * back to it, so running the job twice never adds them twice (rule 8).
+ */
+export const ideaRequests = pgTable(
+  "idea_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    task: text("task", { enum: IDEA_REQUEST_TASKS }).notNull(),
+    params: jsonb("params").$type<IdeaRequestParams>().notNull(),
+    status: text("status", { enum: IDEA_REQUEST_STATUSES }).notNull().default("queued"),
+    /** Why it failed, for the panel. */
+    error: text("error"),
+    ideaCount: integer("idea_count").notNull().default(0),
+    createdAt: createdAt(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("idea_requests_brand_created_idx").on(t.brandId, t.createdAt),
+    check("idea_requests_task_valid", sql`${t.task} in (${inList(IDEA_REQUEST_TASKS)})`),
+    check("idea_requests_status_valid", sql`${t.status} in (${inList(IDEA_REQUEST_STATUSES)})`),
+  ],
+);
+
+export type IdeaSourceLink = { title: string; url: string };
+
+/**
  * The brand's idea bank (docs/PRD.md RF-09). An idea is never deleted: discarded ones stay so they
  * can come back and the AI does not propose them again. Status rules: packages/core (ideas.ts).
  */
@@ -174,6 +238,10 @@ export const ideas = pgTable(
     source: text("source", { enum: IDEA_SOURCES }).notNull(),
     /** The recurring series it belongs to (T10), e.g. "real-cost". */
     seriesKey: text("series_key"),
+    /** Web pages the research drew on (ideas.research), for the operator to check. */
+    sources: jsonb("sources").$type<IdeaSourceLink[]>().notNull().default([]),
+    /** The AI request that proposed it; null for ideas typed by hand. */
+    requestId: uuid("request_id").references(() => ideaRequests.id, { onDelete: "set null" }),
     status: text("status", { enum: IDEA_STATUSES }).notNull().default("new"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -396,6 +464,8 @@ export type BrandAsset = typeof brandAssets.$inferSelect;
 export type ContentPillar = typeof contentPillars.$inferSelect;
 export type NewContentPillar = typeof contentPillars.$inferInsert;
 export type Idea = typeof ideas.$inferSelect;
+export type ContentSeries = typeof contentSeries.$inferSelect;
+export type IdeaRequest = typeof ideaRequests.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type PostVersion = typeof postVersions.$inferSelect;
 export type RenderedAsset = typeof assets.$inferSelect;

@@ -42,6 +42,72 @@ describe("aiCarouselSchema", () => {
     expect(parsed.success).toBe(false);
     expect(parsed.error?.issues.map((issue) => issue.path.join("."))).toContain("slides.1.type");
   });
+
+  it("a post of a series has the slides the series requires", () => {
+    const types = withoutBlocked.slides.map((slide) => slide.type);
+    const present = types[1] as string;
+    expect(
+      aiCarouselSchema([pillar], { requiredSlides: [present] }).safeParse(withoutBlocked).success,
+    ).toBe(true);
+
+    const missing = (["costBreakdown", "steps", "comparison"] as const).find(
+      (type) => !types.includes(type),
+    ) as string;
+    const parsed = aiCarouselSchema([pillar], { requiredSlides: [present, missing] }).safeParse(
+      withoutBlocked,
+    );
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues[0]?.path).toEqual(["slides"]);
+    expect(parsed.error?.issues[0]?.message).toContain(missing);
+    expect(parsed.error?.issues[0]?.message).not.toContain(`\`${present}\``);
+  });
+});
+
+describe("aiCarouselSchema with the pricing document", () => {
+  const pillar = exampleCarousel.pillarKey;
+  const base = exampleCarousel.slides.filter(
+    (slide) =>
+      slide.type !== "costBreakdown" &&
+      !(AI_BLOCKED_SLIDES as readonly string[]).includes(slide.type),
+  );
+  const breakdown = {
+    type: "costBreakdown",
+    title: "¿Cuánto cuesta una web?",
+    items: [
+      { label: "Diseño", range: "USD 300 – 600" },
+      { label: "Desarrollo", range: "USD 500-1.200" },
+      { label: "Contenido", range: "a cargo tuyo" },
+    ],
+    total: { label: "Total", range: "USD 800 – 1.800" },
+  };
+  // The example's slides with its second one swapped for the breakdown.
+  const carousel = { ...exampleCarousel, slides: [base[0], breakdown, ...base.slice(2)] };
+  const pricing = `| Web institucional | USD 800 – 1.800 |
+Diseño: usd 300-600 · Desarrollo: USD 500 – 1.200 · Contenido: a cargo tuyo`;
+
+  it("accepts ranges written in Precios, whatever the spaces, case or dash", () => {
+    const parsed = aiCarouselSchema([pillar], { pricing }).safeParse(carousel);
+    expect(parsed.success ? [] : parsed.error.issues).toEqual([]);
+  });
+
+  it("refuses a range that is not in Precios (rule 9)", () => {
+    const parsed = aiCarouselSchema([pillar], {
+      pricing: pricing.replace("1.800", "2.000"),
+    }).safeParse(carousel);
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues.map((issue) => issue.path.join("."))).toEqual([
+      "slides.1.total.range",
+    ]);
+  });
+
+  it("with an empty Precios, no costBreakdown gets through", () => {
+    const parsed = aiCarouselSchema([pillar], { pricing: "" }).safeParse(carousel);
+    expect(parsed.error?.issues).toHaveLength(4);
+  });
+
+  it("without the option, ranges are not checked (the editor's carousels)", () => {
+    expect(aiCarouselSchema([pillar]).safeParse(carousel).success).toBe(true);
+  });
 });
 
 describe("AI_SLIDE_GUIDE", () => {

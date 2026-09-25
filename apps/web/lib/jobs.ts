@@ -1,5 +1,13 @@
 import "server-only";
-import { carouselGenerateKey, carouselRenderKey, JOBS, QUEUE_OPTIONS } from "@radev/core";
+import {
+  carouselGenerateKey,
+  carouselRenderKey,
+  IDEA_REQUEST_TASKS,
+  type IdeaRequestTask,
+  ideaRequestKey,
+  JOBS,
+  QUEUE_OPTIONS,
+} from "@radev/core";
 import { PgBoss } from "pg-boss";
 import { requireEnv } from "./env";
 
@@ -23,6 +31,7 @@ function boss(): Promise<PgBoss> {
     // Idempotent: lets the web queue before the worker has ever started.
     await client.createQueue(JOBS.carouselRender, QUEUE_OPTIONS[JOBS.carouselRender]);
     await client.createQueue(JOBS.carouselGenerate, QUEUE_OPTIONS[JOBS.carouselGenerate]);
+    for (const task of IDEA_REQUEST_TASKS) await client.createQueue(task, QUEUE_OPTIONS[task]);
     return client;
   })();
   return globalForBoss.radevBoss;
@@ -44,4 +53,9 @@ export async function queueGenerate(postId: string): Promise<void> {
     { postId, attempt: 0 },
     { singletonKey: carouselGenerateKey(postId, 0) },
   );
+}
+
+/** Queues an idea request (ideas.generate or ideas.research). The job skips a closed request. */
+export async function queueIdeaRequest(task: IdeaRequestTask, requestId: string): Promise<void> {
+  await (await boss()).send(task, { requestId }, { singletonKey: ideaRequestKey(requestId) });
 }

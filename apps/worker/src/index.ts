@@ -5,13 +5,16 @@ import {
   type CarouselRenderJob,
   carouselGenerateKey,
   carouselRenderKey,
+  IDEA_REQUEST_TASKS,
+  type IdeaRequestJob,
   JOBS,
   QUEUE_OPTIONS,
 } from "@radev/core";
-import { createDb, failGeneration } from "@radev/db";
+import { createDb, failGeneration, failIdeaRequest } from "@radev/db";
 import { type JobWithMetadata, PgBoss } from "pg-boss";
 import { generateCarousel, RetryableGenerationError } from "./jobs/carousel-generate";
 import { failRender, renderCarousel } from "./jobs/carousel-render";
+import { RetryableIdeasError, runIdeaRequest } from "./jobs/ideas-request";
 import { createLogger } from "./logger";
 import { closeBrowser } from "./render/browser";
 
@@ -128,10 +131,43 @@ async function main() {
       }
     },
   );
+  // Idea requests (ideas.generate, ideas.research): one of each at a time. They are asked for by
+  // hand; if the last try breaks, the request fails so the panel takes a new one.
+  for (const task of IDEA_REQUEST_TASKS) {
+    await boss.createQueue(task, QUEUE_OPTIONS[task]);
+    await boss.work(
+      task,
+      { batchSize: 1, includeMetadata: true },
+      async ([job]: JobWithMetadata<IdeaRequestJob>[]) => {
+        if (!job) return;
+        const jobLog = log.child({ job: task, id: job.id, requestId: job.data.requestId });
+        const lastTry = job.retryCount >= QUEUE_OPTIONS[task].retryLimit;
+        try {
+          const outcome = await runIdeaRequest({ db, log: jobLog, router, lastTry }, job.data);
+          jobLog.info("idea request finished", { outcome });
+        } catch (error) {
+          jobLog.error("idea request failed", {
+            error,
+            attempt: job.retryCount + 1,
+            retryable: error instanceof RetryableIdeasError,
+          });
+          if (lastTry) {
+            await failIdeaRequest(
+              db,
+              job.data.requestId,
+              error instanceof Error ? error.message : "Error inesperado.",
+            );
+          }
+          throw error;
+        }
+      },
+    );
+  }
+
   log.info("worker ready", {
     schema: "pgboss",
     schemaVersion: await boss.schemaVersion(),
-    queues: [JOBS.carouselGenerate, JOBS.carouselRender],
+    queues: [JOBS.carouselGenerate, JOBS.carouselRender, ...IDEA_REQUEST_TASKS],
   });
 
   let stopping = false;

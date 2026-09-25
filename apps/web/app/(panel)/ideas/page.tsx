@@ -1,12 +1,20 @@
-import { IDEA_STATUSES, type IdeaStatus } from "@radev/core";
-import { countIdeasByStatus, listIdeas, listPillars } from "@radev/db";
+import { IDEA_STATUSES, type IdeaStatus, isIdeaRequestOpen } from "@radev/core";
+import {
+  countIdeasByStatus,
+  listActiveSeries,
+  listIdeaRequests,
+  listIdeas,
+  listPillars,
+} from "@radev/db";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
+import { AskAiForms } from "@/components/ideas/ask-ai-forms";
 import { QuickIdeaForm } from "@/components/ideas/quick-idea-form";
+import { RequestList } from "@/components/ideas/request-list";
 import { getBrandContext } from "@/lib/active-brand";
 import { db } from "@/lib/db";
-import { IDEA_SOURCE_LABELS, IDEA_STATUS_LABELS } from "@/lib/ideas";
+import { IDEA_REQUEST_LABELS, IDEA_SOURCE_LABELS, IDEA_STATUS_LABELS } from "@/lib/ideas";
 import { formatDateTime } from "@/lib/time";
 import { ideaEventAction } from "./actions";
 
@@ -16,8 +24,9 @@ function isIdeaStatus(value: unknown): value is IdeaStatus {
   return typeof value === "string" && (IDEA_STATUSES as readonly string[]).includes(value);
 }
 
-// The idea bank of the brand the panel is tuned to: quick load on top, then the ideas by status.
-// "Generar" opens "Generar con IA" with the idea; the idea turns used when the post is created.
+// The idea bank of the brand the panel is tuned to: quick load on top, the requests to the AI
+// (propose, research), then the ideas by status. "Generar" opens "Generar con IA" with the idea;
+// the idea turns used when the post is created.
 export default async function IdeasPage({ searchParams }: PageProps<"/ideas">) {
   const { activeBrand: brand } = await getBrandContext();
   if (!brand) {
@@ -31,11 +40,15 @@ export default async function IdeasPage({ searchParams }: PageProps<"/ideas">) {
 
   const { status } = await searchParams;
   const current: IdeaStatus = isIdeaStatus(status) ? status : "new";
-  const [ideas, counts, pillars] = await Promise.all([
+  const [ideas, counts, pillars, series, requests] = await Promise.all([
     listIdeas(db, brand.id, current),
     countIdeasByStatus(db, brand.id),
     listPillars(db, brand.id),
+    listActiveSeries(db, brand.id),
+    listIdeaRequests(db, brand.id),
   ]);
+  const options = (list: { key: string; name: string }[]) =>
+    list.map(({ key, name }) => ({ key, name }));
 
   return (
     <section aria-labelledby="ideas-heading" className="flex flex-col gap-6">
@@ -43,10 +56,29 @@ export default async function IdeasPage({ searchParams }: PageProps<"/ideas">) {
         Ideas · {brand.name}
       </Plate>
 
-      <QuickIdeaForm
-        brand={{ id: brand.id, name: brand.name }}
-        pillars={pillars.map((p) => ({ key: p.key, name: p.name }))}
-      />
+      <QuickIdeaForm brand={{ id: brand.id, name: brand.name }} pillars={options(pillars)} />
+
+      <section aria-labelledby="ask-ai-heading" className="flex flex-col gap-4">
+        <Plate id="ask-ai-heading" aside="IA">
+          Pedir a la IA
+        </Plate>
+        <AskAiForms
+          brand={{ id: brand.id, name: brand.name }}
+          pillars={options(pillars)}
+          series={options(series)}
+          open={requests.filter((r) => isIdeaRequestOpen(r.status)).map((r) => r.task)}
+        />
+        <RequestList
+          requests={requests.map((r) => ({
+            id: r.id,
+            label: IDEA_REQUEST_LABELS[r.task],
+            status: r.status,
+            when: formatDateTime(r.createdAt, brand.timezone),
+            ideaCount: r.ideaCount,
+            error: r.error,
+          }))}
+        />
+      </section>
 
       <nav aria-label="Filtrar por estado" className="border-b border-bezel">
         <ul className="flex flex-wrap gap-1">
@@ -91,12 +123,32 @@ export default async function IdeasPage({ searchParams }: PageProps<"/ideas">) {
                 <p className="timecode text-xs text-ink-faint">
                   {[
                     idea.pillarName ?? "Pilar a elección de la IA",
-                    idea.source !== "manual" && IDEA_SOURCE_LABELS[idea.source],
+                    idea.seriesName && `Serie ${idea.seriesName}`,
+                    idea.source !== "manual" &&
+                      idea.source !== "series" &&
+                      IDEA_SOURCE_LABELS[idea.source],
                     formatDateTime(idea.createdAt, brand.timezone),
                   ]
                     .filter(Boolean)
                     .join(" · ")}
                 </p>
+                {idea.sources.length > 0 && (
+                  <ul className="mt-1 flex flex-col gap-0.5 text-xs">
+                    {idea.sources.map((source) => (
+                      <li key={source.url} className="truncate">
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noreferrer nofollow"
+                          className="text-ink-dim underline underline-offset-2 hover:text-ink"
+                        >
+                          {source.title}
+                        </a>{" "}
+                        <span className="text-ink-faint">{new URL(source.url).hostname}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
                 {idea.status === "new" && (

@@ -1,7 +1,7 @@
 import { IDEA_TRANSITIONS, type IdeaEvent, type IdeaSource, type IdeaStatus } from "@radev/core";
 import { and, count, desc, eq } from "drizzle-orm";
 import type { Database } from "../client";
-import { contentPillars, type Idea, ideas, posts } from "../schema";
+import { contentPillars, contentSeries, type Idea, ideas, posts } from "../schema";
 import type { Executor } from "./brand-assets";
 
 // The brand's idea bank (docs/PRD.md RF-09). An idea's status only changes through the
@@ -25,6 +25,7 @@ export async function createIdea(
 export type IdeaSummary = Idea & {
   pillarKey: string | null;
   pillarName: string | null;
+  seriesName: string | null;
   /** The post generated from it, when it was used. */
   postCode: string | null;
 };
@@ -40,10 +41,15 @@ export async function listIdeas(
       idea: ideas,
       pillarKey: contentPillars.key,
       pillarName: contentPillars.name,
+      seriesName: contentSeries.name,
       postCode: posts.publicCode,
     })
     .from(ideas)
     .leftJoin(contentPillars, eq(contentPillars.id, ideas.pillarId))
+    .leftJoin(
+      contentSeries,
+      and(eq(contentSeries.brandId, ideas.brandId), eq(contentSeries.key, ideas.seriesKey)),
+    )
     .leftJoin(posts, eq(posts.ideaId, ideas.id))
     .where(and(eq(ideas.brandId, brandId), eq(ideas.status, status)))
     .orderBy(desc(ideas.createdAt), desc(posts.createdAt));

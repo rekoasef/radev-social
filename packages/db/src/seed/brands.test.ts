@@ -5,8 +5,11 @@ import {
   isBrandDocumentKind,
   MAX_BRAND_DOCUMENT_CHARS,
   normalizeBrandDocument,
+  SERIES_BRIEF_MAX,
+  SERIES_BRIEF_MIN,
+  SERIES_REQUIRED_SLIDES_MAX,
 } from "@radev/core";
-import { parseTheme } from "@radev/slides";
+import { HOOK_TYPES, parseTheme, SLIDE_TYPES } from "@radev/slides";
 import { describe, expect, it } from "vitest";
 import {
   pendingSeedAssets,
@@ -15,6 +18,7 @@ import {
   seedBrandAssets,
   seedBrands,
   seedPillars,
+  seedSeries,
 } from "./brands";
 
 describe("seed brands", () => {
@@ -79,6 +83,30 @@ describe("seed pillars", () => {
       expect(total).toBeCloseTo(1, 5);
     },
   );
+});
+
+describe("seed series", () => {
+  const cases = Object.entries(seedSeries).flatMap(([slug, list]) =>
+    list.map((series) => [`${slug}/${series.key}`, slug, series] as const),
+  );
+
+  it.each(cases)("%s: valid key, pillar, hook, slides and brief", (_, slug, series) => {
+    expect(series.key).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+    if (series.pillarKey) {
+      expect(seedPillars[slug]?.map((p) => p.key)).toContain(series.pillarKey);
+    }
+    if (series.hookType) expect(HOOK_TYPES).toContain(series.hookType);
+    expect(series.requiredSlides.length).toBeLessThanOrEqual(SERIES_REQUIRED_SLIDES_MAX);
+    for (const type of series.requiredSlides) expect(SLIDE_TYPES).toContain(type);
+    const brief = readFileSync(
+      fileURLToPath(
+        new URL(`../../../../seeds/brands/${slug}/series/${series.key}.md`, import.meta.url),
+      ),
+      "utf8",
+    ).trim();
+    expect(brief.length).toBeGreaterThanOrEqual(SERIES_BRIEF_MIN);
+    expect(brief.length).toBeLessThanOrEqual(SERIES_BRIEF_MAX);
+  });
 });
 
 describe("seed brand documents", () => {

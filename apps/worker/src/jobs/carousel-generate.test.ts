@@ -141,6 +141,38 @@ describe("buildTaskFiles", () => {
   });
 });
 
+describe("buildTaskFiles with a series", () => {
+  const request = {
+    idea: "Cuánto cuesta una web",
+    pillarKey: null,
+    hookType: "cost",
+    seriesKey: "real-cost",
+  };
+
+  it("gives the AI the series' structure and required slides", () => {
+    const files = buildTaskFiles({
+      request,
+      recent: [],
+      series: {
+        name: "¿Cuánto cuesta realmente…?",
+        brief: "1. cover…",
+        requiredSlides: ["costBreakdown"],
+      },
+    });
+    const task = JSON.parse(files["task.json"] ?? "{}");
+    expect(task.series).toMatchObject({
+      name: "¿Cuánto cuesta realmente…?",
+      structure: "1. cover…",
+      requiredSlides: ["costBreakdown"],
+    });
+  });
+
+  it("leaves the series out of a post without one", () => {
+    const task = JSON.parse(buildTaskFiles({ request, recent: [] })["task.json"] ?? "{}");
+    expect(task.series).toBeUndefined();
+  });
+});
+
 describe("runRow", () => {
   const context = { brandId: "brand-1", postId: "post-1" };
   const target = { provider: "claude-code", model: "sonnet" } as const;
@@ -193,5 +225,13 @@ describe("runRow", () => {
       inputTokens: 0,
     });
     expect(row.error).toContain("- hook › Muy largo.");
+  });
+
+  it("records an idea request's attempt without a post", () => {
+    const row = runRow(
+      { role: "primary", target, result: failed(rateLimited("límite")) },
+      { brandId: "brand-1", postId: null, task: "ideas.research" },
+    );
+    expect(row).toMatchObject({ postId: null, task: "ideas.research", errorKind: "rate_limited" });
   });
 });

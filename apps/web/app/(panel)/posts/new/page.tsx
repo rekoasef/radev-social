@@ -1,5 +1,5 @@
 import { ideaPrompt } from "@radev/core";
-import { getIdea, listPillars } from "@radev/db";
+import { getIdea, listActiveSeries, listPillars } from "@radev/db";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
@@ -24,9 +24,10 @@ export default async function NewPostPage({ searchParams }: PageProps<"/posts/ne
     );
   }
   const ideaId = typeof query.idea === "string" ? query.idea : undefined;
-  const [render, pillars, bankIdea] = await Promise.all([
+  const [render, pillars, series, bankIdea] = await Promise.all([
     brandRenderContext(brand),
     listPillars(db, brand.id),
+    listActiveSeries(db, brand.id),
     ideaId && /^[0-9a-f-]{36}$/i.test(ideaId) ? getIdea(db, ideaId) : undefined,
   ]);
   const fromIdea =
@@ -36,6 +37,8 @@ export default async function NewPostPage({ searchParams }: PageProps<"/posts/ne
           text: ideaPrompt(bankIdea),
           // Only a pillar that can still take posts.
           pillarKey: pillars.some((p) => p.key === bankIdea.pillarKey) ? bankIdea.pillarKey : null,
+          // Only a series that is still active.
+          seriesKey: series.some((s) => s.key === bankIdea.seriesKey) ? bankIdea.seriesKey : null,
         }
       : undefined;
 
@@ -72,6 +75,7 @@ export default async function NewPostPage({ searchParams }: PageProps<"/posts/ne
             <GenerateForm
               brand={{ id: brand.id, name: brand.name }}
               pillars={pillars.map((p) => ({ key: p.key, name: p.name }))}
+              series={series.map((s) => ({ key: s.key, name: s.name }))}
               fromIdea={fromIdea}
             />
           </section>

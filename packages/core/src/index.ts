@@ -102,11 +102,26 @@ export {
   nextIdeaStatus,
 } from "./ideas/ideas";
 export {
+  IDEA_COUNT_DEFAULT,
+  IDEA_COUNT_MAX,
+  IDEA_COUNT_MIN,
+  IDEA_REQUEST_STATUSES,
+  IDEA_REQUEST_TASKS,
+  IDEA_SOURCES_MAX,
+  type IdeaRequestParams,
+  type IdeaRequestStatus,
+  type IdeaRequestTask,
+  isIdeaRequestOpen,
+  RESEARCH_FOCUS_MAX,
+} from "./ideas/requests";
+export {
   type CarouselGenerateJob,
   type CarouselRenderJob,
   carouselGenerateKey,
   carouselRenderKey,
   type GenerationRequest,
+  type IdeaRequestJob,
+  ideaRequestKey,
   JOBS,
   QUEUE_OPTIONS,
 } from "./jobs";
@@ -151,3 +166,11 @@ export {
   TRANSITIONS,
   type TransitionResult,
 } from "./posts/state-machine";
+export {
+  canDeleteSeries,
+  missingSeriesSlides,
+  SERIES_BRIEF_MAX,
+  SERIES_BRIEF_MIN,
+  SERIES_NAME_MAX,
+  SERIES_REQUIRED_SLIDES_MAX,
+} from "./series/series";

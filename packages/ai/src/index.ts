@@ -17,6 +17,15 @@ export {
 } from "./errors";
 export { createFakeProvider, type FakeAnswer } from "./fake";
 export {
+  dropRepeatedIdeas,
+  hasFigures,
+  type IdeaProposal,
+  type IdeaProposals,
+  type IdeaSchemaOptions,
+  ideaProposalsSchema,
+  normalizeIdeaTitle,
+} from "./ideas";
+export {
   createOpenRouterProvider,
   OPENROUTER_URL,
   type OpenRouterOptions,

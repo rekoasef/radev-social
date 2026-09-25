@@ -6,6 +6,7 @@ import {
   type Router,
 } from "@radev/ai";
 import {
+  type AiTask,
   type BrandDocumentKind,
   type CarouselGenerateJob,
   type GenerationRequest,
@@ -20,6 +21,7 @@ import {
   getBrandById,
   getPostById,
   getPostVersion,
+  getSeriesByKey,
   listAiRoutes,
   listCurrentBrandDocuments,
   listPillars,
@@ -64,6 +66,9 @@ export type Revision = {
   renderProblems: readonly string[];
 };
 
+/** The series a post belongs to, as the AI gets it (phase 3, T10). */
+export type TaskSeries = { name: string; brief: string; requiredSlides: readonly string[] };
+
 /** The context files of a run, besides the brand's CLAUDE.md. */
 export function buildTaskFiles(input: {
   request: GenerationRequest;
@@ -71,10 +76,19 @@ export function buildTaskFiles(input: {
   /** Problems of the previous answer, when retrying a malformed one. */
   problems?: readonly string[];
   revision?: Revision;
+  series?: TaskSeries;
 }): Record<string, string> {
-  const { request, recent, problems, revision } = input;
+  const { request, recent, problems, revision, series } = input;
   const task = {
     idea: request.idea,
+    ...(series && {
+      series: {
+        name: series.name,
+        structure: series.brief,
+        requiredSlides: series.requiredSlides,
+        note: "El post es de esta serie: seguí su estructura. Las slides de requiredSlides son obligatorias.",
+      },
+    }),
     pillarKey: request.pillarKey,
     ...(request.pillarKey === null && {
       pillarNote: "Elegí el pilar de la marca que mejor le quede a la idea.",
@@ -114,17 +128,17 @@ export function buildTaskFiles(input: {
   };
 }
 
-/** One row of generation_runs from an attempt of the route. */
+/** One row of generation_runs from an attempt of the route (a post's, or an idea request's). */
 export function runRow(
   attempt: RouteAttempt<unknown>,
-  context: { brandId: string; postId: string },
+  context: { brandId: string; postId: string | null; task?: AiTask },
 ): NewGenerationRun {
   const { result, target, role } = attempt;
   const usage = result.usage;
   return {
     brandId: context.brandId,
     postId: context.postId,
-    task: "carousel.generate",
+    task: context.task ?? "carousel.generate",
     role,
     provider: target.provider,
     model: usage?.model ?? target.model,
@@ -141,7 +155,7 @@ export function runRow(
 }
 
 /** The message plus, for a malformed answer, its problems (what the post page shows). */
-const describeError = (error: AIError) =>
+export const describeError = (error: AIError) =>
   error.kind === "validation"
     ? `${error.message}\n${error.issues.map((issue) => `- ${issue}`).join("\n")}`
     : error.message;
@@ -195,7 +209,8 @@ export type GenerateOutcome = "saved" | "rescheduled" | "retry" | "failed" | "sk
 /** Thrown to let pg-boss retry the job (a provider error worth another try). */
 export class RetryableGenerationError extends Error {}
 
-async function brandContext(db: Database, brand: Brand) {
+/** The brand's active pillars and its CLAUDE.md, built from the database (rule 7). */
+export async function brandContext(db: Database, brand: Brand) {
   const [documents, pillars] = await Promise.all([
     listCurrentBrandDocuments(db, brand.id),
     listPillars(db, brand.id),
@@ -206,6 +221,8 @@ async function brandContext(db: Database, brand: Brand) {
   }
   return {
     pillars,
+    /** The pricing document (empty without one): the only source of a costBreakdown's ranges. */
+    pricing: texts.pricing ?? "",
     claudeMd: buildBrandClaudeMd({
       name: brand.name,
       documents: texts,
@@ -247,11 +264,17 @@ export async function generateCarousel(
     return "failed";
   }
 
-  const [{ claudeMd, pillars }, recent, current] = await Promise.all([
+  const [{ claudeMd, pillars, pricing }, recent, current, seriesRow] = await Promise.all([
     brandContext(db, brand),
     listRecentPostHooks(db, brand.id, { exceptPostId: post.id }),
     post.currentVersionId ? getPostVersion(db, post.currentVersionId) : undefined,
+    request.seriesKey ? getSeriesByKey(db, brand.id, request.seriesKey) : undefined,
   ]);
+  const series: TaskSeries | undefined = seriesRow && {
+    name: seriesRow.name,
+    brief: seriesRow.brief,
+    requiredSlides: seriesRow.requiredSlides,
+  };
   // A post that already has a version is being regenerated: after a rejection or the render QA.
   const revision: Revision | undefined = current
     ? {
@@ -262,7 +285,10 @@ export async function generateCarousel(
         ),
       }
     : undefined;
-  const schema = aiCarouselSchema(pillars.map((pillar) => pillar.key));
+  const schema = aiCarouselSchema(
+    pillars.map((pillar) => pillar.key),
+    { requiredSlides: series?.requiredSlides, pricing },
+  );
   const context = { brandId: brand.id, postId: post.id };
 
   let problems: string[] | undefined;
@@ -273,7 +299,7 @@ export async function generateCarousel(
       prompt: revision ? `${GENERATION_PROMPT} ${REVISION_PROMPT}` : GENERATION_PROMPT,
       files: {
         "CLAUDE.md": claudeMd,
-        ...buildTaskFiles({ request, recent, problems, revision }),
+        ...buildTaskFiles({ request, recent, problems, revision, series }),
       },
       schema,
       maxTurns: MAX_TURNS,

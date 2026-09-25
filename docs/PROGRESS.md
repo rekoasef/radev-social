@@ -8,12 +8,13 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 3 — Generación con IA (en curso, T1–T9 hechas). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T10 de la Fase 3: `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web) y la serie "¿Cuánto cuesta realmente…?".
+- **Fase:** 3 — Generación con IA (en curso, T1–T10 hechas). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T11 de la Fase 3: `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor.
+- **Para el operador (T10):** (1) en Ajustes → Ruteo de IA, cambiar `nex-agi/nex-n2.5-pro:free` (ya no existe en OpenRouter) por `nvidia/nemotron-3-super-120b-a12b:free` en `ideas.generate` (principal) y `carousel.generate` (respaldo). (2) Completar Precios de RAdev: sin rangos, los posts de la serie "¿Cuánto cuesta realmente…?" fallan a propósito (no inventan precios). (3) La serie está repetida en el documento de voz de RAdev: se puede sacar de ahí. (4) Mirar con login /ideas (pedidos a la IA) y Marcas → Series.
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
-- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0010_ideas`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T9 de la Fase 3
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0011_idea_requests_and_series`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
+- **Última actualización:** 2026-09-25, al cerrar la T10 de la Fase 3
 
 ## Fase 3 — tareas
 
@@ -31,7 +32,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T7 | Job `carousel.generate`: "Generar" → JSON validado → versión `ai` → render; el panel muestra proveedor y modelo. 👁 | ✅ |
 | T8 | Rechazo con feedback → regeneración; regeneración automática por QA (máx. 2) | ✅ |
 | T9 | Banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca | ✅ |
-| T10 | `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web), serie "¿Cuánto cuesta realmente…?" | |
+| T10 | `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web), serie "¿Cuánto cuesta realmente…?" | ✅ |
 | T11 | `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor | |
 | T12 | Importar historial de posts → `winners.json` | |
 | T13 | Cierre: criterio de terminado con ambas marcas, docs | |
@@ -117,6 +118,15 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Migración `0010_ideas` (solo agrega): tabla `ideas` y `posts.idea_id`. Queries `queries/ideas.ts` (cada cambio de estado es un `UPDATE` condicionado al estado de partida) y `queries/pillars.ts` (`savePillarMix` exige cubrir justo los pilares activos).
 - Panel: **Ideas** encendida en la navegación (`/ideas`, marca activa): una línea + Enter para guardar, ángulo y pilar plegados; pestañas Nuevas / Usadas / Descartadas; "Generar" abre Nuevo post con la idea cargada. **Marcas → Pilares** (mezcla con total en vivo, nuevo pilar, archivados). **Marcas → General → Contacto** (WhatsApp, mensaje con vista previa y "Probar enlace").
 - Verificado contra la base local en una transacción que se deshace: pilar duplicado rechazado, mezcla incompleta rechazada, descartar/recuperar, post desde idea (`used` + `idea_id`), segundo uso de la misma idea rechazado. Las pantallas no se pudieron capturar (requieren login): falta que el operador las mire.
+
+**T10 (2026-09-25)**, decisiones aprobadas por el operador:
+- (1) Series en tabla propia (`content_series`) con pestaña Marcas → Series. (2) La investigación guarda sus fuentes (`ideas.sources`). (3) Pedidos **a mano** desde /ideas; la investigación semanal automática, en la Fase 4. (4) Los topes cuentan solo carruseles. (5) Los rangos de `costBreakdown` se validan en código contra Precios (cambia la decisión (4) de la T7, que lo dejaba para la revisión): con la serie exigiendo `costBreakdown` y Precios vacío, la IA habría inventado rangos.
+- `idea_requests` (no estaba en el plan como tabla, sí "cada pedido tiene un id"): guarda parámetros, estado y error para el panel, y hace idempotente el job (las ideas se guardan en la transacción que cierra el pedido).
+- Migración `0011_idea_requests_and_series` (solo agrega). Seed: serie `real-cost` de RAdev.
+- `packages/ai/src/ideas.ts`: `ideaProposalsSchema`, `hasFigures` (porcentajes, montos, "N mil/millones"; "3 errores" pasa), `dropRepeatedIdeas`. Worker: `jobs/ideas-request.ts`, una cola por tarea, de a uno. `runRow` recibe la tarea y admite `postId` null.
+- Panel: /ideas suma "Pedir a la IA" (Proponer ideas: cantidad, pilar, serie; Investigar temas: foco, cantidad, pilar), la lista de pedidos (se refresca sola mientras hay uno abierto) y, en cada idea, serie y fuentes. "Generar con IA" suma el selector de serie (viene elegido desde una idea de serie). Pestaña **Marcas → Series**.
+- Tests: 533 en total (46 nuevos).
+- **Prueba real** (RAdev, por script que hace lo mismo que la web, porque el panel pide login): `ideas.generate` → OpenRouter 404 (`nex-agi/nex-n2.5-pro:free` ya no existe), respondió el respaldo Claude en 46 s: 5 ideas buenas, repartidas por pilar, sin cifras. Modelos gratuitos probados con la tarea real: `nemotron-3-super-120b` OK en 31 s (a la segunda; la primera, 503 por sobrecarga), `qwen3.8-27b` saturado (429) dos veces, `dots-3-note-preview` 2 min sin JSON. `ideas.research` → Claude, 2,5 min, 15 turnos, ~300.000 tokens de entrada: 5 ideas con fuentes reales de 2026 (ej. el cambio de precios de WhatsApp Business en octubre). Las 10 ideas quedaron en el banco de RAdev.
 
 Pendiente de respuesta del operador: (1) ~~cuenta de OpenRouter~~ hecha en la T5; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 
