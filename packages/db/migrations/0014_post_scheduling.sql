@@ -1,0 +1,3 @@
+ALTER TABLE "posts" ADD COLUMN "slot_id" uuid;--> statement-breakpoint
+ALTER TABLE "posts" ADD CONSTRAINT "posts_slot_id_schedule_slots_id_fk" FOREIGN KEY ("slot_id") REFERENCES "public"."schedule_slots"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "posts_brand_scheduled_at_unique" ON "posts" USING btree ("brand_id","scheduled_at") WHERE "posts"."scheduled_at" is not null and "posts"."status" <> 'archived';

@@ -13,6 +13,7 @@ import {
   IDEA_REQUEST_TASKS,
   type IdeaRequestJob,
   JOBS,
+  type PostPublishJob,
   QUEUE_OPTIONS,
 } from "@radev/core";
 import { createDb, failGeneration, failIdeaRequest, getLatestSnapshot } from "@radev/db";
@@ -21,6 +22,7 @@ import { generateCarousel, RetryableGenerationError } from "./jobs/carousel-gene
 import { failRender, renderCarousel } from "./jobs/carousel-render";
 import { refreshData } from "./jobs/data-refresh";
 import { RetryableIdeasError, runIdeaRequest } from "./jobs/ideas-request";
+import { publishPost } from "./jobs/post-publish";
 import { createLogger } from "./logger";
 import { closeBrowser } from "./render/browser";
 
@@ -199,10 +201,35 @@ async function main() {
     }
   }
 
+  // Scheduled posts: queued by the web for their time (startAfter). A post whose job is gone or
+  // stale is not published: the job checks its planned time first.
+  await boss.createQueue(JOBS.postPublish, QUEUE_OPTIONS[JOBS.postPublish]);
+  await boss.work(
+    JOBS.postPublish,
+    { batchSize: 1, includeMetadata: true },
+    async ([job]: JobWithMetadata<PostPublishJob>[]) => {
+      if (!job) return;
+      const jobLog = log.child({ job: JOBS.postPublish, id: job.id, postId: job.data.postId });
+      try {
+        const outcome = await publishPost({ db, log: jobLog }, job.data);
+        jobLog.info("publish job finished", { outcome });
+      } catch (error) {
+        jobLog.error("publish failed", { error, attempt: job.retryCount + 1 });
+        throw error;
+      }
+    },
+  );
+
   log.info("worker ready", {
     schema: "pgboss",
     schemaVersion: await boss.schemaVersion(),
-    queues: [JOBS.carouselGenerate, JOBS.carouselRender, ...IDEA_REQUEST_TASKS, JOBS.dataRefresh],
+    queues: [
+      JOBS.carouselGenerate,
+      JOBS.carouselRender,
+      ...IDEA_REQUEST_TASKS,
+      JOBS.dataRefresh,
+      JOBS.postPublish,
+    ],
   });
 
   let stopping = false;

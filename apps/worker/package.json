@@ -12,6 +12,7 @@
     "@radev/ai": "workspace:*",
     "@radev/core": "workspace:*",
     "@radev/db": "workspace:*",
+    "@radev/publishers": "workspace:*",
     "@radev/slides": "workspace:*",
     "pg-boss": "^12.33.5",
     "playwright": "1.63.0",

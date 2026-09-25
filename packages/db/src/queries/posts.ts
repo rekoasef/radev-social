@@ -6,6 +6,7 @@ import {
   type PostEffect,
   type PostEvent,
   type PostStatus,
+  plannedTimeOnApprove,
   publicCode,
   type VersionOrigin,
 } from "@radev/core";
@@ -35,6 +36,17 @@ export type CarouselContent = { pillarKey: string; hookType: string } & Record<s
 
 /** Points of a version's charts, frozen with it (resolveVersionDatasets). Null: no charts. */
 export type VersionDatasets = Record<string, DataSeries> | null;
+
+/** Approving may schedule the post at its planned time (`scheduledAt`, else null). */
+export type ApproveOutcome =
+  | {
+      ok: true;
+      from: PostStatus;
+      to: PostStatus;
+      effects: readonly PostEffect[];
+      scheduledAt: Date | null;
+    }
+  | { ok: false; reason: string };
 
 export type TransitionOutcome =
   | { ok: true; from: PostStatus; to: PostStatus; effects: readonly PostEffect[] }
@@ -314,11 +326,15 @@ export async function setVersionRenderIssues(
  */
 export async function approvePost(
   db: Database,
-  input: { postId: string; reviewedVersionId: string },
-): Promise<TransitionOutcome> {
+  input: { postId: string; reviewedVersionId: string; now: Date },
+): Promise<ApproveOutcome> {
   return db.transaction(async (tx) => {
     const [post] = await tx
-      .select({ status: posts.status, currentVersionId: posts.currentVersionId })
+      .select({
+        status: posts.status,
+        currentVersionId: posts.currentVersionId,
+        scheduledAt: posts.scheduledAt,
+      })
       .from(posts)
       .where(eq(posts.id, input.postId))
       .for("update");
@@ -334,13 +350,29 @@ export async function approvePost(
       renderedSlides: rendered.map((asset) => asset.slideIndex),
     });
     if (!check.ok) return check;
-    return transitionPost(tx, input.postId, "approve");
+    const approved = await transitionPost(tx, input.postId, "approve");
+    if (!approved.ok) return approved;
+    // A planned time still ahead schedules it right away; one that passed is forgotten.
+    const planned = plannedTimeOnApprove(post.scheduledAt, input.now);
+    if (planned.schedule) {
+      const scheduled = await transitionPost(tx, input.postId, "schedule");
+      if (!scheduled.ok) throw new Error(scheduled.reason);
+      return { ...scheduled, from: approved.from, scheduledAt: planned.at };
+    }
+    if (planned.clear) {
+      await tx
+        .update(posts)
+        .set({ scheduledAt: null, slotId: null })
+        .where(eq(posts.id, input.postId));
+    }
+    return { ...approved, scheduledAt: null };
   });
 }
 
 /**
- * The operator published an approved post by hand (adapter `manual`): approved → publishing →
- * published and the publication recorded, in one transaction. The (post, network) key keeps a
+ * The operator published a post by hand (adapter `manual`): approved or scheduled → publishing →
+ * published (or just → published when post.publish already started it at its time) and the
+ * publication recorded, in one transaction. The (post, network) key keeps a
  * repeated click from recording twice; the state machine refuses it anyway (rule 8).
  */
 export async function markPublishedManually(
@@ -348,7 +380,16 @@ export async function markPublishedManually(
   input: { postId: string; url: string | null; publishedAt: Date },
 ): Promise<TransitionOutcome> {
   return db.transaction(async (tx) => {
-    const started = await transitionPost(tx, input.postId, "startPublishing");
+    const [post] = await tx
+      .select({ status: posts.status })
+      .from(posts)
+      .where(eq(posts.id, input.postId))
+      .for("update");
+    // A scheduled post reached its time and is already waiting (post.publish): only confirm it.
+    const started: TransitionOutcome =
+      post?.status === "publishing"
+        ? { ok: true, from: "publishing", to: "publishing", effects: [] }
+        : await transitionPost(tx, input.postId, "startPublishing");
     if (!started.ok) return started;
     await tx
       .insert(publications)

@@ -2,15 +2,21 @@ import {
   AI_PROVIDER_LABELS,
   availableEvents,
   canExport,
+  freeOccurrences,
   MAX_QA_REGENERATIONS,
   postDescription,
+  SCHEDULE_PICK_DAYS,
+  upcomingSlots,
+  WEEKDAY_LABELS,
 } from "@radev/core";
 import {
   getBrandById,
   getPostByCode,
   listGenerationRuns,
+  listPlannedTimes,
   listPostVersions,
   listPublications,
+  listScheduleSlots,
   listVersionAssets,
 } from "@radev/db";
 import { carouselSchema } from "@radev/slides";
@@ -28,12 +34,14 @@ import { PostStrip } from "@/components/posts/post-strip";
 import { RejectForm } from "@/components/posts/reject-form";
 import { RenderProgress } from "@/components/posts/render-progress";
 import { RenderedStrip } from "@/components/posts/rendered-strip";
+import { ScheduleForm, type SlotChoice } from "@/components/posts/schedule-form";
 import { mediaUrl } from "@/lib/brand-assets";
 import { brandRenderContext } from "@/lib/carousel";
 import { db } from "@/lib/db";
 import { STATUS_DISPLAY } from "@/lib/post-status";
-import { formatDateTime } from "@/lib/time";
+import { cityOf, formatDateTime, offsetOf } from "@/lib/time";
 import { restoreVersionAction, retryGenerationAction, retryRenderAction } from "../actions";
+import { unschedulePostAction } from "../schedule-actions";
 
 export async function generateMetadata({ params }: PageProps<"/posts/[code]">): Promise<Metadata> {
   return { title: `${(await params).code} · RAdev Social` };
@@ -87,7 +95,15 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
     !viewingOld &&
     post.generationRequest !== null &&
     availableEvents(post.status).includes("reject");
-  const canMarkPublished = !viewingOld && availableEvents(post.status).includes("startPublishing");
+  // Approved or scheduled (published by hand before its time), or waiting since its time came.
+  const canMarkPublished =
+    !viewingOld &&
+    (post.status === "publishing" || availableEvents(post.status).includes("startPublishing"));
+  const canSchedule =
+    !viewingOld &&
+    (post.status === "approved" || post.status === "scheduled") &&
+    content?.success === true;
+  const slotChoices = canSchedule ? await scheduleChoices(brand, post.id) : [];
   const published = publications.find((p) => p.status === "published");
   // Export is about the current version: hidden while looking at an older one.
   const exportable =
@@ -209,8 +225,35 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
         )}
         {post.status === "approved" && (
           <p className="max-w-[60ch] text-sm text-ink-dim">
-            Aprobado: descargalo, publicalo a mano y después marcalo como publicado. Si lo editás,
-            vuelve a render y a revisión.
+            Aprobado: programalo, o descargalo, publicalo a mano y marcalo como publicado. Si lo
+            editás, vuelve a render y a revisión.
+          </p>
+        )}
+        {post.status === "scheduled" && post.scheduledAt && (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="max-w-[60ch] text-sm text-ink">
+              Programado para el{" "}
+              <span className="timecode">{formatDateTime(post.scheduledAt, brand.timezone)}</span>.
+              A esa hora queda listo para que lo publiques a mano.
+            </p>
+            <form action={unschedulePostAction}>
+              <input type="hidden" name="code" value={post.publicCode} />
+              <button type="submit" className="console-button">
+                Desprogramar
+              </button>
+            </form>
+          </div>
+        )}
+        {post.status === "publishing" && (
+          <p role="status" className="max-w-[60ch] text-sm text-ink">
+            Llegó su hora: descargalo, publicalo a mano y marcalo como publicado.
+          </p>
+        )}
+        {post.scheduledAt && ["generating", "rendering", "in_review"].includes(post.status) && (
+          <p className="max-w-[60ch] text-sm text-ink-dim">
+            Planeado para el{" "}
+            <span className="timecode">{formatDateTime(post.scheduledAt, brand.timezone)}</span>: al
+            aprobarlo se programa solo.
           </p>
         )}
         {post.status === "published" && published?.publishedAt && (
@@ -239,7 +282,8 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
               <a
                 href={`/posts/${post.publicCode}/download`}
                 download
-                className="console-button console-button-primary"
+                // Scheduling is the main step of an approved post; downloading, of a due one.
+                className={canSchedule ? "console-button" : "console-button console-button-primary"}
               >
                 Descargar ZIP
               </a>
@@ -269,6 +313,14 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
             </form>
           )}
         </div>
+        {canSchedule && (
+          <ScheduleForm
+            code={post.publicCode}
+            choices={slotChoices}
+            zoneLabel={`${cityOf(brand.timezone)}, ${offsetOf(brand.timezone)}`}
+            rescheduling={post.status === "scheduled"}
+          />
+        )}
         {canMarkPublished && exportable && <MarkPublishedForm code={post.publicCode} />}
       </section>
 
@@ -367,6 +419,32 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
       )}
     </>
   );
+}
+
+/** The brand's free slot times in the next days, for scheduling this post (its own time counts as free). */
+async function scheduleChoices(
+  brand: { id: string; timezone: string },
+  postId: string,
+): Promise<SlotChoice[]> {
+  const now = new Date();
+  const occurrences = upcomingSlots(await listScheduleSlots(db, brand.id), {
+    from: now,
+    days: SCHEDULE_PICK_DAYS,
+    timeZone: brand.timezone,
+  });
+  const last = occurrences.at(-1);
+  const taken = last
+    ? await listPlannedTimes(db, {
+        brandId: brand.id,
+        from: now,
+        to: new Date(last.at.getTime() + 1),
+        exceptPostId: postId,
+      })
+    : [];
+  return freeOccurrences(occurrences, taken).map((occurrence) => ({
+    value: `${occurrence.slotId}|${occurrence.at.toISOString()}`,
+    label: `${WEEKDAY_LABELS[occurrence.weekday]} ${occurrence.localDate.slice(8, 10)}/${occurrence.localDate.slice(5, 7)} · ${occurrence.localTime}`,
+  }));
 }
 
 /** Who wrote a version: the editor, or the AI with the provider and model that answered. */

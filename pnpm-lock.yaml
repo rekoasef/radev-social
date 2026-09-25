@@ -272,6 +272,9 @@ importers:
       '@radev/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@radev/publishers':
+        specifier: workspace:*
+        version: link:../../packages/publishers
       '@radev/slides':
         specifier: workspace:*
         version: link:../../packages/slides

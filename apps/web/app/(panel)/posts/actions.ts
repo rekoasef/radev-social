@@ -26,7 +26,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { queueGenerate, queueRender } from "@/lib/jobs";
+import { applyPostEffects, queueGenerate, queuePublish, queueRender } from "@/lib/jobs";
 import { requireOperator } from "@/lib/session";
 
 export type SaveCarouselState =
@@ -111,6 +111,8 @@ export async function saveCarouselAction(
       datasets: datasets.datasets,
     });
     if (!result.ok) return { status: "error", message: result.reason };
+    // A scheduled post loses its publish job (it keeps its time: approving schedules it again).
+    await applyPostEffects(post.id, result.effects);
     await queueRender(result.version.id);
     publicCode = post.publicCode;
   } else {
@@ -155,6 +157,7 @@ export async function restoreVersionAction(form: FormData): Promise<void> {
     datasets: version.datasets,
   });
   if (!result.ok) throw new Error(result.reason);
+  await applyPostEffects(post.id, result.effects);
   await queueRender(result.version.id);
   revalidatePath("/posts");
   redirect(`/posts/${post.publicCode}`);
@@ -192,8 +195,11 @@ export async function approvePostAction(_: ApproveState, form: FormData): Promis
   const approved = await approvePost(db, {
     postId: post.id,
     reviewedVersionId: parsed.data.versionId,
+    now: new Date(),
   });
   if (!approved.ok) return { status: "error", message: approved.reason };
+  // It had a planned time still ahead: approving scheduled it.
+  if (approved.scheduledAt) await queuePublish(post.id, approved.scheduledAt);
   revalidatePath("/posts");
   redirect(`/posts/${post.publicCode}`);
 }

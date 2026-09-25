@@ -314,7 +314,15 @@ export const posts = pgTable(
     currentVersionId: uuid("current_version_id").references((): AnyPgColumn => postVersions.id, {
       onDelete: "set null",
     }),
+    /**
+     * Planned publishing time (phase 4, T2). The `scheduled` status means its publish job is
+     * queued; editing drops the job but keeps this time, and approving schedules it back.
+     */
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+    /** The brand slot the planned time comes from; null for a time picked by hand. */
+    slotId: uuid("slot_id").references((): AnyPgColumn => scheduleSlots.id, {
+      onDelete: "set null",
+    }),
     /** The operator's last rejection: the AI reads it in every regeneration of the post. */
     rejectionFeedback: text("rejection_feedback"),
     /** Automatic regenerations for render QA problems since the last rejection (max. 2). */
@@ -330,6 +338,10 @@ export const posts = pgTable(
     uniqueIndex("posts_public_code_unique").on(t.publicCode),
     uniqueIndex("posts_brand_number_unique").on(t.brandId, t.number),
     index("posts_brand_status_idx").on(t.brandId, t.status),
+    // One post per brand and time: an archived one frees its time.
+    uniqueIndex("posts_brand_scheduled_at_unique")
+      .on(t.brandId, t.scheduledAt)
+      .where(sql`${t.scheduledAt} is not null and ${t.status} <> 'archived'`),
     check("posts_status_valid", sql`${t.status} in (${inList(POST_STATUSES)})`),
   ],
 );

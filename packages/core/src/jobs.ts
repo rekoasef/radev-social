@@ -12,6 +12,8 @@ export const JOBS = {
   ideasResearch: "ideas.research",
   /** Fetch today's data of a source (Bluelytics) and store it as a snapshot. */
   dataRefresh: "data.refresh",
+  /** At a scheduled post's time: publish it through its adapter (manual: wait for the operator). */
+  postPublish: "post.publish",
 } as const;
 
 export type CarouselRenderJob = { versionId: string };
@@ -73,6 +75,8 @@ export const QUEUE_OPTIONS = {
   },
   // Two HTTP requests; a failed day is tried again a few minutes later.
   [JOBS.dataRefresh]: { retryLimit: 3, retryDelay: 300, retryBackoff: true },
+  // Quick (the manual adapter only marks it); a network hiccup is tried again soon.
+  [JOBS.postPublish]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
 } as const;
 
 /**
@@ -96,3 +100,9 @@ export const ideaRequestKey = (requestId: string) => `ideas:${requestId}`;
  * replaces the snapshot of the same day (rule 8).
  */
 export const dataRefreshKey = (source: string) => `data:${source}`;
+
+/**
+ * Key of a post's publish job: one queued per post. Unscheduling finds it by this key to cancel
+ * it; the job also checks the post's planned time, so a stale copy never publishes (rule 8).
+ */
+export const postPublishKey = (postId: string) => `publish:${postId}`;

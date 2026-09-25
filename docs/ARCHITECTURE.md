@@ -157,6 +157,8 @@ Invariantes con test obligatorio:
 - Editar un post `approved` o `scheduled` lo devuelve a `rendering` → `in_review`.
 - Des-programar un post `scheduled` cancela su job de publicación.
 
+**Programación (F4, T2)**: `posts.scheduled_at` es la **hora planeada** y `scheduled` quiere decir que el job `post.publish` está encolado. Editar un post programado le cancela el job pero conserva la hora; al aprobarlo de nuevo, si la hora no pasó, se programa solo (si pasó, se olvida y queda `approved`). Una hora por marca: índice único `(brand_id, scheduled_at)` sin contar archivados. El job, antes de publicar, confirma que el post siga `scheduled` para esa misma hora (`isPublishJobCurrent`), así un job viejo nunca publica. Reglas en `packages/core/src/scheduling/publish.ts`.
+
 Cada post tiene un **código público** corto e inmutable (`<prefijo de marca>-<número>`, ej. `RA-0142`, `LU-0031`) usado en el mensaje precargado de WhatsApp y en los links.
 
 ## 6. Jobs (pg-boss)
@@ -170,7 +172,7 @@ Todos idempotentes (clave `singletonKey` derivada del objetivo), con reintentos 
 | `carousel.generate` | manual, `slots.fill`, rechazo | idea → JSON validado → nueva versión |
 | `carousel.render` | tras generar o editar | Playwright renderiza cada slide en 4:5, QA, guarda assets |
 | `review.notify` | post entra a `in_review` | aviso agrupado por Telegram |
-| `post.publish` | `startAfter = scheduled_at` | publica vía adaptador |
+| `post.publish` | `startAfter = scheduled_at`, clave `publish:<post>` | publica vía adaptador si el post sigue `scheduled` para esa hora (si no, se saltea) |
 | `slots.fill` | cron diario **dentro de la ventana de generación** | llena slots vacíos de los próximos días respetando la mezcla |
 | `data.refresh` | cron diario (19:00 de Buenos Aires; al arrancar el worker si no hay datos) o "Actualizar ahora" en Ajustes | snapshot de Bluelytics |
 | `metrics.sync` | cron (F6) | métricas por publicación |
@@ -304,7 +306,7 @@ interface PublisherAdapter {
 }
 ```
 
-- `manual`: a la hora programada notifica por Telegram con link de descarga; el operador marca "publicado".
+- `manual`: a la hora programada el post pasa a `publishing` con la publicación `pending` y espera; el operador lo publica a mano y marca "publicado" (el aviso por Telegram con link de descarga llega en la F4, T6).
 - `tiktok`: Content Posting API, modo foto, `PULL_FROM_URL` desde `media.gestorlumus.site` (formato 4:5; verificar que la API lo acepte, ver ADR 0011). Antes de la auditoría: modo borrador a la bandeja.
 - Instagram queda fuera de la v1; la interfaz ya lo contempla.
 
@@ -321,7 +323,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `ideas` | id, brand_id, pillar_id (null: elige la IA), title, angle, source (`manual` \| `ai` \| `research` \| `recycled` \| `series`), series_key, status (`new` \| `used` \| `discarded`), sources (jsonb: `{ title, url }[]`), request_id, created_at, updated_at |
 | `idea_requests` | id, brand_id, task (`ideas.generate` \| `ideas.research`), params (jsonb: count, pillarKey, seriesKey, focus), status (`queued` \| `running` \| `succeeded` \| `failed`), error, idea_count, created_at, finished_at |
 | `content_series` | id, brand_id, key, name, pillar_id, hook_type, brief (Markdown), required_slides (jsonb), archived_at, created_at, updated_at |
-| `posts` | id, brand_id, public_code, idea_id, pillar_id, hook_type, status, current_version_id, scheduled_at, slot_id, rejection_feedback, created_at, updated_at |
+| `posts` | id, brand_id, public_code, idea_id, pillar_id, hook_type, status, current_version_id, scheduled_at (hora planeada), slot_id (horario de la marca del que salió; null si se eligió a mano), rejection_feedback, created_at, updated_at |
 | `post_versions` | id, post_id, number, content (jsonb `Carousel`), schema_version, origin (`ai` \| `manual`), generation_run_id, datasets (jsonb: puntos de sus `chart` por `datasetRef`, congelados al guardarla), created_at |
 | `assets` | id, post_version_id, format (`4x5`; enum ampliable), slide_index, path, width, height, checksum |
 | `schedule_slots` | id, brand_id, weekday (0 = domingo … 6), local_time (`time`, hora de pared en la zona de la marca), active, created_at. Única por marca, día y hora |

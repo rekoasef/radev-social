@@ -97,6 +97,7 @@ export {
   setPillarArchived,
 } from "./queries/pillars";
 export {
+  type ApproveOutcome,
   addPostVersion,
   approvePost,
   type CarouselContent,
@@ -121,6 +122,14 @@ export {
   transitionPost,
   type VersionDatasets,
 } from "./queries/posts";
+export {
+  listPlannedTimes,
+  type PublishStart,
+  type ScheduleOutcome,
+  schedulePost,
+  startScheduledPublishing,
+  unschedulePost,
+} from "./queries/publishing";
 export {
   addScheduleSlots,
   deleteScheduleSlot,
