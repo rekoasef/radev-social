@@ -54,12 +54,30 @@ export async function transitionPost(
   return { ok: true, from: post.status, to: result.to, effects: result.effects };
 }
 
-async function pillarId(db: Executor, brandId: string, key: string): Promise<string | null> {
+export async function pillarId(db: Executor, brandId: string, key: string): Promise<string | null> {
   const [pillar] = await db
     .select({ id: contentPillars.id })
     .from(contentPillars)
     .where(and(eq(contentPillars.brandId, brandId), eq(contentPillars.key, key)));
   return pillar?.id ?? null;
+}
+
+/** The brand's next post number and public code. Call inside the transaction that inserts it. */
+export async function takePostNumber(
+  tx: Executor,
+  brandId: string,
+): Promise<{ number: number; code: string }> {
+  const [brand] = await tx
+    .update(brands)
+    .set({ nextPostNumber: sql`${brands.nextPostNumber} + 1` })
+    .where(eq(brands.id, brandId))
+    .returning({
+      codePrefix: brands.codePrefix,
+      taken: sql<number>`${brands.nextPostNumber} - 1`,
+    });
+  if (!brand) throw new Error("Esa marca no existe.");
+  const number = Number(brand.taken);
+  return { number, code: publicCode(brand.codePrefix, number) };
 }
 
 export type CreatedPost = { post: Post; version: PostVersion };
@@ -73,23 +91,14 @@ export async function createPost(
   input: { brandId: string; content: CarouselContent; origin: VersionOrigin },
 ): Promise<CreatedPost> {
   return db.transaction(async (tx) => {
-    const [brand] = await tx
-      .update(brands)
-      .set({ nextPostNumber: sql`${brands.nextPostNumber} + 1` })
-      .where(eq(brands.id, input.brandId))
-      .returning({
-        codePrefix: brands.codePrefix,
-        taken: sql<number>`${brands.nextPostNumber} - 1`,
-      });
-    if (!brand) throw new Error("Esa marca no existe.");
-    const number = Number(brand.taken);
+    const { number, code } = await takePostNumber(tx, input.brandId);
 
     const [post] = await tx
       .insert(posts)
       .values({
         brandId: input.brandId,
         number,
-        publicCode: publicCode(brand.codePrefix, number),
+        publicCode: code,
         pillarId: await pillarId(tx, input.brandId, input.content.pillarKey),
         hookType: input.content.hookType,
         status: INITIAL_STATUSES[input.origin],

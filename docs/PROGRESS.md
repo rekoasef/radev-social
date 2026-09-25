@@ -9,10 +9,10 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 3 — Generación con IA (por empezar). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T7 de la Fase 3: job `carousel.generate` ("Generar" → router → versión `ai` → render), registrando cada intento en `generation_runs` y respetando los topes.
+- **Próximo paso:** T8 de la Fase 3: rechazo con feedback → regeneración (usa `posts.generation_request` + `rejection_feedback`); regeneración automática por QA del render (máx. 2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
-- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0007_ai_routes_and_runs`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T6 de la Fase 3
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0008_ai_generation`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
+- **Última actualización:** 2026-09-25, al cerrar la T7 de la Fase 3
 
 ## Fase 3 — tareas
 
@@ -27,7 +27,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T4 | Proveedor `claude-code` (`claude -p`, sobre JSON, detección de límite, timeout) + Claude Code CLI en la imagen del worker (amd64 y arm64). El operador genera `CLAUDE_CODE_OAUTH_TOKEN` con `claude setup-token` | ✅ |
 | T5 | Proveedor `openrouter` (HTTP, salida estructurada, nunca datos privados). Tests con fetch simulado | ✅ |
 | T6 | Tablas `ai_routes` y `generation_runs`; router con respaldo, backoff ante `rate_limited`, topes por marca; pantalla de ruteo. Tests obligatorios | ✅ |
-| T7 | Job `carousel.generate`: "Generar" → JSON validado → versión `ai` → render; el panel muestra proveedor y modelo. 👁 | |
+| T7 | Job `carousel.generate`: "Generar" → JSON validado → versión `ai` → render; el panel muestra proveedor y modelo. 👁 | ✅ |
 | T8 | Rechazo con feedback → regeneración; regeneración automática por QA (máx. 2) | |
 | T9 | Banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca | |
 | T10 | `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web), serie "¿Cuánto cuesta realmente…?" | |
@@ -88,6 +88,16 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Seed: 5 rutas globales (`packages/db/src/seed/ai-routes.ts`), con test de que cumplen las reglas y cubren todas las tareas.
 - Panel: **Ajustes** se encendió (`/settings`, "Ruteo de IA"): una fila por tarea con principal y respaldo (o "Sin respaldo"), validación en vivo con las mismas reglas y otra vez en el servidor. **Marcas → General** suma "Topes de IA" (por día y por mes, con lo usado; vacío = sin tope, 0 pausa; el diario no puede superar al mensual). `next build` OK; el operador revisó las dos pantallas con login: se ven bien.
 - Tests nuevos: rutas, reglas, topes, zonas horarias (Buenos Aires y Madrid con cambio de horario), backoff, router (9 casos), seed. Total del repo: 424.
+
+**T7 (2026-09-25)**, decisiones aprobadas por el operador:
+- (1) Respuesta que no pasa Zod → **un** reintento en el mismo job con los problemas como feedback (`previousProblems` en `task.json`); si vuelve a fallar, `failed`. (2) Límite en todos los proveedores → el post sigue `generating`, `posts.generation_retry_at` y el job se reprograma con `rateLimitDelayMs` (máx. 8 reprogramaciones, ~17 h; después `failed`). (3) Topes: al generar a mano, si se pasó el tope el formulario pide "Generar igual"; el worker no los vuelve a chequear (eso es para la generación automática, F4). (4) La IA no puede usar `chart` ni `bigNumber` hasta la T11 (sus cifras vienen de `data.json`, DESIGN-SYSTEM §5): `aiCarouselSchema` los rechaza. `costBreakdown`, solo con rangos de Precios (instrucción; se controla al revisar). (5) Guía de slides para la IA: `AI_SLIDE_GUIDE` → `slides.md` en el workspace.
+- `packages/slides/src/content/generation.ts` (entrada `@radev/slides/generation`, sin React, para el worker): `AI_SLIDE_GUIDE`, `AI_BLOCKED_SLIDES`, `aiCarouselSchema(pillarKeys)` (pilar de la marca + slides bloqueadas).
+- `core/jobs.ts`: `carousel.generate` (`{ postId, attempt }`, `retryLimit` 2 desde 60 s, `expireInSeconds` 20 min), `GenerationRequest`, `carouselGenerateKey`.
+- Migración `0008_ai_generation`: `posts.generation_request` (jsonb), `posts.generation_retry_at`, `post_versions.generation_run_id`. `packages/db/src/queries/generation.ts`: `createGeneratingPost` (nace `generating` sin versión; numeración compartida con `createPost` vía `takePostNumber`), `addGeneratedVersion` (`generationDone` + versión `ai`), `failGeneration`, `retryGeneration`, `setGenerationRetryAt`, `listGenerationRuns`, `listRecentPostHooks`. `recordGenerationRun` ahora devuelve el id.
+- Worker `jobs/carousel-generate.ts`: arma `CLAUDE.md` (marca), `task.json`, `slides.md` y `recent-posts.json` (últimos 10 hooks), pasa por el router, registra cada intento, guarda la versión y encola el render. La decisión (`decide`) es pura y tiene tests. En `index.ts`: proveedores, router y cola `carousel.generate` de a uno.
+- Panel: Nuevo post tiene **Generar con IA** (idea, pilar u "Que elija la IA", tipo de hook) arriba de **Armar a mano**. La página del post muestra el pedido, "Escribiendo el carrusel con IA…" (consulta `/status` cada 3 s) o la hora de reintento, los errores de cada intento y **Reintentar generación**; cada versión de IA dice proveedor y modelo. El listado muestra la idea mientras no hay hook. `HOOK_LABELS` pasó a `apps/web/lib/hooks.ts`.
+- **Prueba real OK** (RA-0003, RAdev): Claude Code principal, `claude-sonnet-5`, 95 s, 6 turnos, a la primera; hook de advertencia y pilar `business-problems` elegidos por la IA; 7 slides (cover → statement → question → flow → cardGrid → statement → cta). El operador lo editó y lo aprobó.
+- **Consumo**: ~128.000 tokens de entrada y ~10.000 de salida por carrusel (prompt de sistema de Claude Code + CLAUDE.md de ~13.000 caracteres, que se reenvían en cada turno). Sin costo, pero consume la ventana de la suscripción. Anotado para más adelante: meter `task.json` y la guía en el prompt para bajar turnos.
 
 Pendiente de respuesta del operador: (1) ~~cuenta de OpenRouter~~ hecha en la T5; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 

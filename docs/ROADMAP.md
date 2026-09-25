@@ -75,7 +75,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Banco de ideas: carga rápida (mobile), listado, descarte
 - [ ] Jobs `ideas.generate` (modelo gratuito) e `ideas.research` (Claude con búsqueda web)
 - [ ] Series recurrentes, empezando por "¿Cuánto cuesta realmente...?"
-- [ ] Job `carousel.generate` → versión nueva → `carousel.render`
+- [x] Job `carousel.generate` → versión nueva → `carousel.render`
 - [ ] Rechazo con feedback y regeneración; regeneración automática por QA (máx. 2)
 - [ ] Importación del historial de posts → `winners.json`
 - [ ] Job `data.refresh` (Bluelytics) → `data.json` para Lumus

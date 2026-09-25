@@ -12,7 +12,11 @@ export async function GET(_request: Request, { params }: RouteContext<"/posts/[c
     ? await getPostVersion(db, post.currentVersionId)
     : undefined;
   return Response.json(
-    { status: post.status, progress: version?.renderProgress ?? null },
+    {
+      status: post.status,
+      progress: version?.renderProgress ?? null,
+      retryAt: post.generationRetryAt?.toISOString() ?? null,
+    },
     { headers: { "Cache-Control": "private, no-store" } },
   );
 }

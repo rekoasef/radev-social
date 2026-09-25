@@ -272,6 +272,9 @@ importers:
       '@radev/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@radev/slides':
+        specifier: workspace:*
+        version: link:../../packages/slides
       pg-boss:
         specifier: ^12.33.5
         version: 12.33.5

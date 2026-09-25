@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
 import { CarouselEditor } from "@/components/posts/carousel-editor";
+import { GenerateForm } from "@/components/posts/generate-form";
 import { getBrandContext } from "@/lib/active-brand";
 import { blankCarousel, brandRenderContext } from "@/lib/carousel";
 import { db } from "@/lib/db";
@@ -42,13 +43,29 @@ export default async function NewPostPage() {
           {brand.name} no tiene pilares de contenido todavía.
         </p>
       ) : (
-        <CarouselEditor
-          brand={{ id: brand.id, slug: brand.slug, name: brand.name }}
-          theme={render.theme}
-          assets={render.assets}
-          pillars={pillars.map((p) => ({ key: p.key, name: p.name }))}
-          initial={blankCarousel(pillars[0]?.key ?? "")}
-        />
+        <>
+          <section aria-labelledby="generate-heading" className="flex flex-col gap-5">
+            <Plate id="generate-heading" aside="IA">
+              Generar con IA
+            </Plate>
+            <GenerateForm
+              brand={{ id: brand.id, name: brand.name }}
+              pillars={pillars.map((p) => ({ key: p.key, name: p.name }))}
+            />
+          </section>
+          <section aria-labelledby="manual-heading" className="flex flex-col gap-5">
+            <Plate id="manual-heading" aside="Editor">
+              Armar a mano
+            </Plate>
+            <CarouselEditor
+              brand={{ id: brand.id, slug: brand.slug, name: brand.name }}
+              theme={render.theme}
+              assets={render.assets}
+              pillars={pillars.map((p) => ({ key: p.key, name: p.name }))}
+              initial={blankCarousel(pillars[0]?.key ?? "")}
+            />
+          </section>
+        </>
       )}
     </section>
   );

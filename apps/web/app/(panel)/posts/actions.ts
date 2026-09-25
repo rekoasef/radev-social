@@ -3,21 +3,24 @@
 import {
   addPostVersion,
   approvePost,
+  checkBrandAiQuota,
+  createGeneratingPost,
   createPost,
   getBrandById,
   getPostByCode,
   getPostVersion,
   listPillars,
   markPublishedManually,
+  retryGeneration,
   transitionPost,
 } from "@radev/db";
 import { confirmManualPublication } from "@radev/publishers";
-import { carouselSchema } from "@radev/slides";
+import { carouselSchema, HOOK_TYPES } from "@radev/slides";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { queueRender } from "@/lib/jobs";
+import { queueGenerate, queueRender } from "@/lib/jobs";
 import { requireOperator } from "@/lib/session";
 
 export type SaveCarouselState =
@@ -194,6 +197,86 @@ export async function markPublishedAction(_: PublishState, form: FormData): Prom
     publishedAt: confirmed.publishedAt,
   });
   if (!marked.ok) return { status: "error", message: marked.reason };
+  revalidatePath("/posts");
+  redirect(`/posts/${post.publicCode}`);
+}
+
+export type GenerateState =
+  | { status: "idle" }
+  | { status: "error"; message: string }
+  /** The brand reached its cap: the operator has to confirm (docs/ARCHITECTURE.md §7). */
+  | { status: "limit"; message: string };
+
+const generateInput = z.object({
+  brandId: z.uuid(),
+  idea: z
+    .string()
+    .trim()
+    .min(10, { error: "Contá la idea en al menos 10 caracteres." })
+    .max(600, { error: "Máximo 600 caracteres." }),
+  // Empty: the AI picks.
+  pillarKey: z.string().trim().max(64).optional().default(""),
+  hookType: z
+    .union([z.enum(HOOK_TYPES), z.literal("")])
+    .optional()
+    .default(""),
+  confirmOverLimit: z.literal("on").optional(),
+});
+
+/**
+ * "Generar con IA": creates the post in `generating` with the operator's request and queues the
+ * worker's carousel.generate. The web never runs AI (CLAUDE.md, rule 5).
+ */
+export async function generateCarouselAction(
+  _: GenerateState,
+  form: FormData,
+): Promise<GenerateState> {
+  await requireOperator();
+  const parsed = generateInput.safeParse(Object.fromEntries(form));
+  if (!parsed.success) {
+    return { status: "error", message: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+  const { brandId, idea, pillarKey, hookType, confirmOverLimit } = parsed.data;
+  const brand = await getBrandById(db, brandId);
+  if (!brand || brand.archivedAt)
+    return { status: "error", message: "Esa marca no existe o está archivada." };
+
+  const pillars = await listPillars(db, brand.id);
+  if (pillars.length === 0)
+    return { status: "error", message: `${brand.name} no tiene pilares de contenido.` };
+  if (pillarKey && !pillars.some((p) => p.key === pillarKey))
+    return { status: "error", message: "Elegí un pilar de la marca." };
+
+  const quota = await checkBrandAiQuota(db, brand);
+  if (!quota.ok && !confirmOverLimit) {
+    const period = quota.period === "day" ? "hoy" : "este mes";
+    return {
+      status: "limit",
+      message:
+        quota.limit === 0
+          ? `La generación de ${brand.name} está pausada (tope 0).`
+          : `${brand.name} ya usó sus ${quota.limit} generaciones de ${period}.`,
+    };
+  }
+
+  const post = await createGeneratingPost(db, {
+    brandId: brand.id,
+    request: { idea, pillarKey: pillarKey || null, hookType: hookType || null },
+  });
+  await queueGenerate(post.id);
+  revalidatePath("/posts");
+  redirect(`/posts/${post.publicCode}`);
+}
+
+/** A failed generation, again with the same request (state machine: `retryGeneration`). */
+export async function retryGenerationAction(form: FormData): Promise<void> {
+  await requireOperator();
+  const { code } = retryInput.parse(Object.fromEntries(form));
+  const post = await getPostByCode(db, code);
+  if (!post?.generationRequest) throw new Error("Ese post no se generó con IA.");
+  const moved = await retryGeneration(db, post.id);
+  if (!moved.ok) throw new Error(moved.reason);
+  await queueGenerate(post.id);
   revalidatePath("/posts");
   redirect(`/posts/${post.publicCode}`);
 }

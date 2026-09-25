@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./fonts": "./src/fonts/load.ts",
-    "./qa": "./src/qa.ts"
+    "./qa": "./src/qa.ts",
+    "./generation": "./src/content/generation.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

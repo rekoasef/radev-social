@@ -21,22 +21,12 @@ import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { type SaveCarouselState, saveCarouselAction } from "@/app/(panel)/posts/actions";
 import { SlidePreview } from "@/components/brands/slide-preview";
+import { HOOK_LABELS } from "@/lib/hooks";
 import { LayerEditor, LayerToolbar, useLayerSelection } from "./layer-editor";
 import { Fields, ICON_LIST_ID } from "./slide-fields";
 
 const idle: SaveCarouselState = { status: "idle" };
 const ICONS: ReadonlySet<string> = new Set(ICON_NAMES);
-
-const HOOK_LABELS: Record<(typeof HOOK_TYPES)[number], string> = {
-  cost: "Costo",
-  warning: "Advertencia",
-  myth: "Mito",
-  comparison: "Comparación",
-  question: "Pregunta",
-  data: "Dato",
-  story: "Historia",
-  howto: "Cómo hacer",
-};
 
 export type EditorPillar = { key: string; name: string };
 

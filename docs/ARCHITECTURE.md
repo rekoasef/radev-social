@@ -254,6 +254,10 @@ Router (`packages/ai/src/router.ts`): prueba el principal y pasa al respaldo ant
 - **Reintentos por QA**: máximo 2 regeneraciones automáticas; después queda `in_review` con las violaciones marcadas.
 - Contexto mínimo: solo últimos posts y ganadores relevantes; `carousel.generate` sin búsqueda web.
 
+### Generación de un carrusel (Fase 3, T7)
+
+"Generar con IA" (Nuevo post) crea el post en `generating` sin versión, con el pedido en `posts.generation_request`, y encola `carousel.generate`. El worker arma el workspace (`CLAUDE.md` de la marca, `task.json`, `slides.md` con la guía de plantillas, `recent-posts.json`), pasa por la ruta de `carousel.generate`, registra cada intento y valida con `aiCarouselSchema` (pilares de la marca; sin `chart` ni `bigNumber` hasta tener `data.json`). OK → versión `ai` con su `generation_run_id`, `generationDone` y render. Respuesta mal armada → un reintento con los problemas como feedback. Límite → reprogramación con backoff (`generation_retry_at`). Error reintentable → reintento de pg-boss (2). Lo demás → `generationFailed`; el panel muestra los errores y "Reintentar generación".
+
 ### Registro
 Cada ejecución queda en `generation_runs` con proveedor, modelo, uso, duración, turnos, estado y error. Cada `post_version` referencia su `generation_run`, para comparar rendimiento por modelo en el tablero.
 

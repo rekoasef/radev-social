@@ -4,6 +4,7 @@ import {
   ASSET_ROLES,
   BRAND_DOCUMENT_KINDS,
   GENERATION_RUN_STATUSES,
+  type GenerationRequest,
   NETWORKS,
   POST_STATUSES,
   PUBLICATION_STATUSES,
@@ -177,6 +178,10 @@ export const posts = pgTable(
     }),
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
     rejectionFeedback: text("rejection_feedback"),
+    /** What the operator asked the AI for (idea, pillar, hook). Null for posts made by hand. */
+    generationRequest: jsonb("generation_request").$type<GenerationRequest>(),
+    /** When a generation that hit a provider's limit tries again. Null otherwise. */
+    generationRetryAt: timestamp("generation_retry_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -205,6 +210,10 @@ export const postVersions = pgTable(
     renderIssues: jsonb("render_issues").$type<unknown[]>(),
     /** 0–100 while the worker renders this version (slides done); null otherwise. */
     renderProgress: integer("render_progress"),
+    /** The generation attempt that wrote this version (origin `ai`). */
+    generationRunId: uuid("generation_run_id").references((): AnyPgColumn => generationRuns.id, {
+      onDelete: "set null",
+    }),
     createdAt: createdAt(),
   },
   (t) => [

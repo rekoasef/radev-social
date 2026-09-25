@@ -66,8 +66,11 @@ export async function saveGlobalAiRoute(
   return { ok: true };
 }
 
-export async function recordGenerationRun(db: Database, run: NewGenerationRun): Promise<void> {
-  await db.insert(generationRuns).values(run);
+/** Stores one attempt and returns its id (a version written by it points to it). */
+export async function recordGenerationRun(db: Database, run: NewGenerationRun): Promise<string> {
+  const [row] = await db.insert(generationRuns).values(run).returning({ id: generationRuns.id });
+  if (!row) throw new Error("No se pudo registrar la ejecución.");
+  return row.id;
 }
 
 /** Successful generations of a brand since an instant (what the caps count). */

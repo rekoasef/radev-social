@@ -101,7 +101,9 @@ export default async function PostsPage({ searchParams }: PageProps<"/posts">) {
                 >
                   <span className="callsign w-fit">{post.publicCode}</span>
                   <span className="flex min-w-0 flex-col gap-1">
-                    <span className="truncate text-sm text-ink">{hook || "Sin hook"}</span>
+                    <span className="truncate text-sm text-ink">
+                      {hook || post.generationRequest?.idea || "Sin hook"}
+                    </span>
                     <span className="timecode text-xs text-ink-faint">
                       {[post.pillarName, `${slides} slides`, `v${post.versionNumber ?? 1}`]
                         .filter(Boolean)

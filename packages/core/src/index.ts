@@ -68,7 +68,15 @@ export {
   normalizeBrandDocument,
 } from "./brands/documents";
 export { contrastRatio, MIN_TEXT_CONTRAST, parseColor, type Rgba } from "./colors/contrast";
-export { type CarouselRenderJob, carouselRenderKey, JOBS, QUEUE_OPTIONS } from "./jobs";
+export {
+  type CarouselGenerateJob,
+  type CarouselRenderJob,
+  carouselGenerateKey,
+  carouselRenderKey,
+  type GenerationRequest,
+  JOBS,
+  QUEUE_OPTIONS,
+} from "./jobs";
 export {
   NETWORKS,
   type Network,

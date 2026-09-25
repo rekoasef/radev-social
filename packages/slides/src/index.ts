@@ -28,6 +28,13 @@ export {
   SLIDE_FIELDS,
   SLIDE_LABELS,
 } from "./content/form";
+export {
+  AI_BLOCKED_SLIDES,
+  AI_SLIDE_GUIDE,
+  type AiCarousel,
+  type AiCarouselSchema,
+  aiCarouselSchema,
+} from "./content/generation";
 export { default as ICON_NAMES } from "./content/icon-names.json";
 export {
   isMoved,
