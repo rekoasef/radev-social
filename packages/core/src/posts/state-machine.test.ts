@@ -80,6 +80,13 @@ describe("post state machine: transitions", () => {
     expect(nextStatus("publishing", "publishDone")).toMatchObject({ ok: true, to: "published" });
   });
 
+  it("regenerates with AI: after a rejection, or when the render QA fails", () => {
+    expect(nextStatus("in_review", "reject")).toMatchObject({ ok: true, to: "rejected" });
+    expect(nextStatus("rejected", "regenerate")).toMatchObject({ ok: true, to: "generating" });
+    expect(nextStatus("rendering", "qaRegenerate")).toMatchObject({ ok: true, to: "generating" });
+    expect(nextStatus("in_review", "qaRegenerate").ok).toBe(false);
+  });
+
   it("only leaves archived and published through nothing (they are final)", () => {
     expect(availableEvents("archived")).toEqual([]);
     expect(availableEvents("published")).toEqual([]);

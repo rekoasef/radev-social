@@ -50,6 +50,8 @@ export {
   listGenerationRuns,
   listRecentPostHooks,
   type RecentPost,
+  regenerateForQa,
+  rejectAndRegenerate,
   retryGeneration,
   setGenerationRetryAt,
 } from "./queries/generation";

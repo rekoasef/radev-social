@@ -6,17 +6,13 @@
 // Browser code: exported as `@radev/slides/qa`, apart from the package index, so server-only
 // packages that import @radev/slides do not need the DOM types.
 //
-// Self-contained on purpose (no imports, constants inside): Playwright can send it to the page
+// checkRender is self-contained on purpose (only type imports, constants inside): Playwright can send it to the page
 // as is with page.evaluate(checkRender). Keep the numbers in sync with frame/geometry.ts (a test
 // checks it).
 
-export const QA_KINDS = ["overflow", "outside-box", "safe-area", "tiktok", "overlap"] as const;
+import type { QaIssue } from "./qa-issues";
 
-export type QaIssue = {
-  kind: (typeof QA_KINDS)[number];
-  /** Start of the offending text, to find it. */
-  text: string;
-};
+export { describeQaIssue, QA_KINDS, type QaIssue } from "./qa-issues";
 
 /**
  * Checks the slide under `frame` (the element with `data-slide-frame`). Works on a scaled
@@ -191,17 +187,4 @@ export function checkRender(
     }
   }
   return issues;
-}
-
-/** Spanish description of an issue, for the panel and the capture script. */
-export function describeQaIssue(issue: QaIssue): string {
-  // For overlaps the text already names both layers ("Título y Elemento gráfico").
-  if (issue.kind === "overlap") return `${issue.text}: quedan uno encima del otro`;
-  const what = {
-    overflow: "El texto no entra en su caja",
-    "outside-box": "El texto se sale de su tarjeta",
-    "safe-area": "Queda fuera del área segura",
-    tiktok: "Queda debajo de los botones de TikTok",
-  }[issue.kind];
-  return `${what}: “${issue.text}”`;
 }

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { exampleCarousel } from "./examples";
-import { AI_BLOCKED_SLIDES, AI_SLIDE_GUIDE, aiCarouselSchema } from "./generation";
+import {
+  AI_BLOCKED_SLIDES,
+  AI_SLIDE_GUIDE,
+  aiCarouselSchema,
+  describeRenderProblems,
+} from "./generation";
 
 describe("aiCarouselSchema", () => {
   const pillar = exampleCarousel.pillarKey;
@@ -42,5 +47,24 @@ describe("aiCarouselSchema", () => {
 describe("AI_SLIDE_GUIDE", () => {
   it("tells the model which slides it can't use", () => {
     for (const type of AI_BLOCKED_SLIDES) expect(AI_SLIDE_GUIDE).toContain(`\`${type}\``);
+  });
+});
+
+describe("describeRenderProblems", () => {
+  it("describes each QA problem with its slide, once", () => {
+    expect(
+      describeRenderProblems([
+        { slide: 1, kind: "overflow", text: "Un título largo" },
+        { slide: 1, kind: "overflow", text: "Un título largo" },
+        { slide: 3, kind: "tiktok", text: "Escribime" },
+      ]),
+    ).toEqual([
+      "Slide 2: El texto no entra en su caja: “Un título largo”",
+      "Slide 4: Queda debajo de los botones de TikTok: “Escribime”",
+    ]);
+  });
+
+  it("leaves out render errors, which are not the content's fault", () => {
+    expect(describeRenderProblems([{ slide: -1, kind: "error", text: "Timeout" }])).toEqual([]);
   });
 });

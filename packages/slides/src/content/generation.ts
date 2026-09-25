@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { describeQaIssue, QA_KINDS, type QaIssue } from "../qa-issues";
 import { carouselSchema } from "./carousel";
 import { limits as L } from "./limits";
 
@@ -78,3 +79,20 @@ export function aiCarouselSchema(pillarKeys: readonly string[]) {
 
 export type AiCarouselSchema = ReturnType<typeof aiCarouselSchema>;
 export type AiCarousel = z.infer<AiCarouselSchema>;
+
+/** A render issue as the worker stores it on a version (`post_versions.render_issues`). */
+export type StoredRenderIssue = { slide: number; kind: string; text: string };
+
+/**
+ * The render QA problems of a version, for the AI to fix them (phase 3, T8): one line per problem,
+ * with its slide. Render errors (the page failed) are left out: they are not the content's fault.
+ */
+export function describeRenderProblems(issues: readonly StoredRenderIssue[]): string[] {
+  const lines = issues.flatMap((issue) =>
+    (QA_KINDS as readonly string[]).includes(issue.kind)
+      ? [`Slide ${issue.slide + 1}: ${describeQaIssue(issue as QaIssue)}`]
+      : [],
+  );
+  // A text and its box can report the same problem.
+  return [...new Set(lines)];
+}

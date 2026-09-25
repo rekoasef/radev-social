@@ -76,7 +76,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Jobs `ideas.generate` (modelo gratuito) e `ideas.research` (Claude con búsqueda web)
 - [ ] Series recurrentes, empezando por "¿Cuánto cuesta realmente...?"
 - [x] Job `carousel.generate` → versión nueva → `carousel.render`
-- [ ] Rechazo con feedback y regeneración; regeneración automática por QA (máx. 2)
+- [x] Rechazo con feedback y regeneración; regeneración automática por QA (máx. 2)
 - [ ] Importación del historial de posts → `winners.json`
 - [ ] Job `data.refresh` (Bluelytics) → `data.json` para Lumus
 - [ ] Documentos de marca completos: `pricing.md` y `cases.md` de RAdev

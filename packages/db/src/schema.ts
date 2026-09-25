@@ -177,7 +177,10 @@ export const posts = pgTable(
       onDelete: "set null",
     }),
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+    /** The operator's last rejection: the AI reads it in every regeneration of the post. */
     rejectionFeedback: text("rejection_feedback"),
+    /** Automatic regenerations for render QA problems since the last rejection (max. 2). */
+    qaRegenerations: integer("qa_regenerations").notNull().default(0),
     /** What the operator asked the AI for (idea, pillar, hook). Null for posts made by hand. */
     generationRequest: jsonb("generation_request").$type<GenerationRequest>(),
     /** When a generation that hit a provider's limit tries again. Null otherwise. */

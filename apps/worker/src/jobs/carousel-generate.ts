@@ -19,6 +19,7 @@ import {
   failGeneration,
   getBrandById,
   getPostById,
+  getPostVersion,
   listAiRoutes,
   listCurrentBrandDocuments,
   listPillars,
@@ -28,7 +29,13 @@ import {
   recordGenerationRun,
   setGenerationRetryAt,
 } from "@radev/db";
-import { AI_SLIDE_GUIDE, type AiCarousel, aiCarouselSchema } from "@radev/slides/generation";
+import {
+  AI_SLIDE_GUIDE,
+  type AiCarousel,
+  aiCarouselSchema,
+  describeRenderProblems,
+  type StoredRenderIssue,
+} from "@radev/slides/generation";
 import type { Logger } from "../logger";
 
 // carousel.generate (docs/ARCHITECTURE.md §7, phase 3 T7): writes a post that is `generating`
@@ -44,14 +51,28 @@ export const MAX_RATE_LIMIT_ATTEMPTS = 8;
 export const GENERATION_PROMPT =
   "Escribí un carrusel para TikTok a partir de `task.json`. Antes leé `slides.md` (qué hace cada tipo de slide) y `recent-posts.json` (no repitas temas ni hooks). Devolvé solo el objeto que pide el schema.";
 
+/** Added to the prompt when the run rewrites an existing version (phase 3, T8). */
+export const REVISION_PROMPT =
+  "Es una revisión: `task.json` trae `revision` y `previous.json` es el carrusel anterior. Corregí lo que se pide y mantené lo que funciona.";
+
+/** A regeneration: the post's current version and why it has to change. */
+export type Revision = {
+  previous: unknown;
+  /** The operator's rejection, if the post was rejected. */
+  feedback: string | null;
+  /** Render QA problems of the previous version (describeRenderProblems). */
+  renderProblems: readonly string[];
+};
+
 /** The context files of a run, besides the brand's CLAUDE.md. */
 export function buildTaskFiles(input: {
   request: GenerationRequest;
   recent: readonly RecentPost[];
   /** Problems of the previous answer, when retrying a malformed one. */
   problems?: readonly string[];
+  revision?: Revision;
 }): Record<string, string> {
-  const { request, recent, problems } = input;
+  const { request, recent, problems, revision } = input;
   const task = {
     idea: request.idea,
     pillarKey: request.pillarKey,
@@ -68,11 +89,28 @@ export function buildTaskFiles(input: {
         previousProblemsNote:
           "Tu respuesta anterior no cumplía el formato por estos problemas. Corregilos.",
       }),
+    ...(revision && {
+      revision: {
+        previousFile: "previous.json",
+        note: "Ya escribiste este carrusel (está en previous.json) y hay que corregirlo. Cambiá lo que se pide abajo y mantené lo que funciona.",
+        ...(revision.feedback && {
+          operatorFeedback: revision.feedback,
+          operatorFeedbackNote:
+            "El operador lo rechazó por esto. Es lo más importante: resolvelo aunque haya que cambiar mucho.",
+        }),
+        ...(revision.renderProblems.length > 0 && {
+          renderProblems: revision.renderProblems,
+          renderProblemsNote:
+            "Estos textos no entran en el diseño de la slide: acortalos o usá otro tipo de slide. Respetá los límites de caracteres del schema.",
+        }),
+      },
+    }),
   };
   return {
     "task.json": `${JSON.stringify(task, null, 2)}\n`,
     "slides.md": AI_SLIDE_GUIDE,
     "recent-posts.json": `${JSON.stringify(recent, null, 2)}\n`,
+    ...(revision && { "previous.json": `${JSON.stringify(revision.previous, null, 2)}\n` }),
   };
 }
 
@@ -209,10 +247,21 @@ export async function generateCarousel(
     return "failed";
   }
 
-  const [{ claudeMd, pillars }, recent] = await Promise.all([
+  const [{ claudeMd, pillars }, recent, current] = await Promise.all([
     brandContext(db, brand),
-    listRecentPostHooks(db, brand.id),
+    listRecentPostHooks(db, brand.id, { exceptPostId: post.id }),
+    post.currentVersionId ? getPostVersion(db, post.currentVersionId) : undefined,
   ]);
+  // A post that already has a version is being regenerated: after a rejection or the render QA.
+  const revision: Revision | undefined = current
+    ? {
+        previous: current.content,
+        feedback: post.rejectionFeedback,
+        renderProblems: describeRenderProblems(
+          Array.isArray(current.renderIssues) ? (current.renderIssues as StoredRenderIssue[]) : [],
+        ),
+      }
+    : undefined;
   const schema = aiCarouselSchema(pillars.map((pillar) => pillar.key));
   const context = { brandId: brand.id, postId: post.id };
 
@@ -221,8 +270,11 @@ export async function generateCarousel(
     const routed = await deps.router.generate<AiCarousel>(route, {
       task: "carousel.generate",
       brandId: brand.id,
-      prompt: GENERATION_PROMPT,
-      files: { "CLAUDE.md": claudeMd, ...buildTaskFiles({ request, recent, problems }) },
+      prompt: revision ? `${GENERATION_PROMPT} ${REVISION_PROMPT}` : GENERATION_PROMPT,
+      files: {
+        "CLAUDE.md": claudeMd,
+        ...buildTaskFiles({ request, recent, problems, revision }),
+      },
       schema,
       maxTurns: MAX_TURNS,
     });

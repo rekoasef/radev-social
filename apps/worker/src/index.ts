@@ -112,7 +112,15 @@ async function main() {
         versionId: job.data.versionId,
       });
       try {
-        await renderCarousel(db, jobLog, renderEnv, job.data);
+        await renderCarousel(
+          {
+            db,
+            log: jobLog,
+            env: renderEnv,
+            queueGenerate: (postId) => queueGenerate({ postId, attempt: 0 }, 0),
+          },
+          job.data,
+        );
       } catch (error) {
         jobLog.error("render failed", { error, attempt: job.retryCount + 1 });
         if (job.retryCount >= RENDER_RETRIES) await failRender(db, job.data.versionId, error);

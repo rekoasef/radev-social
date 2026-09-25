@@ -1,5 +1,5 @@
 import { type GenerationRequest, INITIAL_STATUSES } from "@radev/core";
-import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, ne, sql } from "drizzle-orm";
 import type { Database } from "../client";
 import {
   contentPillars,
@@ -119,6 +119,51 @@ export async function retryGeneration(db: Database, postId: string): Promise<Tra
   });
 }
 
+/**
+ * The operator rejected the post with feedback: in_review → rejected → generating in one go
+ * (`reject`, `regenerate`), with the feedback stored for the AI and the QA count reset. Only for
+ * posts the AI wrote (they have a request to regenerate from).
+ */
+export async function rejectAndRegenerate(
+  db: Database,
+  input: { postId: string; feedback: string },
+): Promise<TransitionOutcome> {
+  return db.transaction(async (tx) => {
+    const [post] = await tx
+      .select({ generationRequest: posts.generationRequest })
+      .from(posts)
+      .where(eq(posts.id, input.postId));
+    if (!post) return { ok: false, reason: "Ese post no existe." };
+    if (!post.generationRequest)
+      return { ok: false, reason: "Este post se armó a mano: corregilo con Editar." };
+    const rejected = await transitionPost(tx, input.postId, "reject");
+    if (!rejected.ok) return rejected;
+    const moved = await transitionPost(tx, input.postId, "regenerate");
+    if (!moved.ok) throw new Error(moved.reason);
+    await tx
+      .update(posts)
+      .set({ rejectionFeedback: input.feedback, qaRegenerations: 0, generationRetryAt: null })
+      .where(eq(posts.id, input.postId));
+    return moved;
+  });
+}
+
+/**
+ * An AI version failed the render QA: back to `generating` (`qaRegenerate`), one more on the
+ * count. The worker checks the maximum before calling it (renderOutcome).
+ */
+export async function regenerateForQa(db: Database, postId: string): Promise<TransitionOutcome> {
+  return db.transaction(async (tx) => {
+    const moved = await transitionPost(tx, postId, "qaRegenerate");
+    if (!moved.ok) return moved;
+    await tx
+      .update(posts)
+      .set({ qaRegenerations: sql`${posts.qaRegenerations} + 1`, generationRetryAt: null })
+      .where(eq(posts.id, postId));
+    return moved;
+  });
+}
+
 const clearRetryAt = (tx: Executor, postId: string) =>
   tx.update(posts).set({ generationRetryAt: null }).where(eq(posts.id, postId));
 
@@ -144,13 +189,14 @@ export type RecentPost = { hook: string; hookType: string | null; pillarKey: str
 
 /**
  * The brand's latest posts that have content, for recent-posts.json: the AI reads them so as
- * not to repeat topics or hooks.
+ * not to repeat topics or hooks. `exceptPostId` leaves out the post being regenerated.
  */
 export async function listRecentPostHooks(
   db: Database,
   brandId: string,
-  limit = 10,
+  options: { exceptPostId?: string; limit?: number } = {},
 ): Promise<RecentPost[]> {
+  const { exceptPostId, limit = 10 } = options;
   const rows = await db
     .select({
       content: postVersions.content,
@@ -160,7 +206,13 @@ export async function listRecentPostHooks(
     .from(posts)
     .innerJoin(postVersions, eq(postVersions.id, posts.currentVersionId))
     .leftJoin(contentPillars, eq(contentPillars.id, posts.pillarId))
-    .where(and(eq(posts.brandId, brandId), isNotNull(posts.currentVersionId)))
+    .where(
+      and(
+        eq(posts.brandId, brandId),
+        isNotNull(posts.currentVersionId),
+        exceptPostId ? ne(posts.id, exceptPostId) : undefined,
+      ),
+    )
     .orderBy(desc(posts.number))
     .limit(limit);
   return rows.flatMap(({ content, hookType, pillarKey }) => {

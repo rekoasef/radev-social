@@ -32,6 +32,12 @@ export const TRANSITIONS = {
     label: "marcar la generación como fallida",
   },
   renderDone: { from: ["rendering"], to: "in_review", label: "terminar el render" },
+  /** An AI version failed the render QA: the AI writes it again with the problems (max. 2). */
+  qaRegenerate: {
+    from: ["rendering"],
+    to: "generating",
+    label: "regenerar por problemas del render",
+  },
   renderFailed: { from: ["rendering"], to: "failed", label: "marcar el render como fallido" },
   approve: { from: ["in_review"], to: "approved", label: "aprobar" },
   reject: { from: ["in_review"], to: "rejected", label: "rechazar" },

@@ -8,11 +8,11 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 3 — Generación con IA (por empezar). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T8 de la Fase 3: rechazo con feedback → regeneración (usa `posts.generation_request` + `rejection_feedback`); regeneración automática por QA del render (máx. 2).
+- **Fase:** 3 — Generación con IA (en curso, T1–T8 hechas). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T9 de la Fase 3: banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca.
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
-- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0008_ai_generation`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T7 de la Fase 3
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0009_qa_regenerations`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
+- **Última actualización:** 2026-09-25, al cerrar la T8 de la Fase 3
 
 ## Fase 3 — tareas
 
@@ -28,7 +28,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T5 | Proveedor `openrouter` (HTTP, salida estructurada, nunca datos privados). Tests con fetch simulado | ✅ |
 | T6 | Tablas `ai_routes` y `generation_runs`; router con respaldo, backoff ante `rate_limited`, topes por marca; pantalla de ruteo. Tests obligatorios | ✅ |
 | T7 | Job `carousel.generate`: "Generar" → JSON validado → versión `ai` → render; el panel muestra proveedor y modelo. 👁 | ✅ |
-| T8 | Rechazo con feedback → regeneración; regeneración automática por QA (máx. 2) | |
+| T8 | Rechazo con feedback → regeneración; regeneración automática por QA (máx. 2) | ✅ |
 | T9 | Banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca | |
 | T10 | `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web), serie "¿Cuánto cuesta realmente…?" | |
 | T11 | `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor | |
@@ -98,6 +98,16 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Panel: Nuevo post tiene **Generar con IA** (idea, pilar u "Que elija la IA", tipo de hook) arriba de **Armar a mano**. La página del post muestra el pedido, "Escribiendo el carrusel con IA…" (consulta `/status` cada 3 s) o la hora de reintento, los errores de cada intento y **Reintentar generación**; cada versión de IA dice proveedor y modelo. El listado muestra la idea mientras no hay hook. `HOOK_LABELS` pasó a `apps/web/lib/hooks.ts`.
 - **Prueba real OK** (RA-0003, RAdev): Claude Code principal, `claude-sonnet-5`, 95 s, 6 turnos, a la primera; hook de advertencia y pilar `business-problems` elegidos por la IA; 7 slides (cover → statement → question → flow → cardGrid → statement → cta). El operador lo editó y lo aprobó.
 - **Consumo**: ~128.000 tokens de entrada y ~10.000 de salida por carrusel (prompt de sistema de Claude Code + CLAUDE.md de ~13.000 caracteres, que se reenvían en cada turno). Sin costo, pero consume la ventana de la suscripción. Anotado para más adelante: meter `task.json` y la guía en el prompt para bajar turnos.
+
+**T8 (2026-09-25)**, decisiones aprobadas por el operador:
+- (1) "Rechazar" rechaza y regenera en el mismo clic (`reject` + `regenerate` en una transacción, `rejectAndRegenerate`); `rejected` es un paso interno. (2) Solo se rechazan posts de IA (con `generation_request`); los manuales se editan.
+- `packages/core/src/posts/regeneration.ts`: `renderOutcome` (pura, con tests), `MAX_QA_REGENERATIONS` = 2, largo del feedback (10–1.000). Evento nuevo `qaRegenerate` (rendering → generating) en la máquina de estados.
+- Migración `0009_qa_regenerations`: `posts.qa_regenerations` (se pone en 0 al rechazar). `regenerateForQa` suma 1 y transiciona. `rejection_feedback` ya existía y queda guardado: la IA lo lee en todas las regeneraciones del post.
+- Worker: `carousel.render` decide con `renderOutcome` y encola la regeneración; `carousel.generate`, si el post ya tiene versión, suma `previous.json` y `revision` en `task.json` (feedback + problemas del render por slide, `describeRenderProblems`) y agrega `REVISION_PROMPT`. `recent-posts.json` excluye al propio post (`listRecentPostHooks(..., { exceptPostId })`).
+- `describeQaIssue` y `QA_KINDS` pasaron a `packages/slides/src/qa-issues.ts` (sin tipos del DOM, para el worker); `qa.ts` los reexporta.
+- Panel: **Rechazar** en posts de IA en revisión (se despliega con el campo "¿Qué cambiarías?" y "Rechazar y regenerar"; pide "Generar igual" si se pasó el tope). La página muestra el último rechazo, "la IA la está corrigiendo (intento N de 2)" durante una regeneración por QA y, si llega a revisión con problemas, que la IA no los pudo corregir.
+- Tests: 449 en total. `next build` OK. Migración aplicada en la base local.
+- **Prueba real: pendiente (la hace el operador más adelante).** Tras la caída de Docker Desktop se rehízo el `docker compose up -d --build`: migraciones hasta la `0009` aplicadas, web y worker arriba con el código de la T8. Falta: rechazar un post de IA con feedback y ver la v2; la regeneración por QA solo se ve si la IA escribe un texto que no entra.
 
 Pendiente de respuesta del operador: (1) ~~cuenta de OpenRouter~~ hecha en la T5; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 

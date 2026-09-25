@@ -1,4 +1,10 @@
-import { AI_PROVIDER_LABELS, availableEvents, canExport, postDescription } from "@radev/core";
+import {
+  AI_PROVIDER_LABELS,
+  availableEvents,
+  canExport,
+  MAX_QA_REGENERATIONS,
+  postDescription,
+} from "@radev/core";
 import {
   getBrandById,
   getPostByCode,
@@ -19,6 +25,7 @@ import { CopyButton } from "@/components/posts/copy-button";
 import { GenerationStatus } from "@/components/posts/generation-status";
 import { MarkPublishedForm } from "@/components/posts/mark-published-form";
 import { PostStrip } from "@/components/posts/post-strip";
+import { RejectForm } from "@/components/posts/reject-form";
 import { RenderProgress } from "@/components/posts/render-progress";
 import { RenderedStrip } from "@/components/posts/rendered-strip";
 import { mediaUrl } from "@/lib/brand-assets";
@@ -75,6 +82,11 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
     : [];
   const runsById = new Map(runs.map((run) => [run.id, run]));
   const canApprove = !viewingOld && availableEvents(post.status).includes("approve");
+  // Rejecting sends it back to the AI: only for posts it wrote (manual ones are edited).
+  const canReject =
+    !viewingOld &&
+    post.generationRequest !== null &&
+    availableEvents(post.status).includes("reject");
   const canMarkPublished = !viewingOld && availableEvents(post.status).includes("startPublishing");
   const published = publications.find((p) => p.status === "published");
   // Export is about the current version: hidden while looking at an older one.
@@ -124,6 +136,17 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
             <span className="text-ink-faint">Pedido a la IA:</span> {post.generationRequest.idea}
           </p>
         )}
+        {post.rejectionFeedback && (
+          <p className="max-w-[70ch] text-sm text-ink-dim">
+            <span className="text-ink-faint">Último rechazo:</span> {post.rejectionFeedback}
+          </p>
+        )}
+        {post.status === "generating" && current && post.qaRegenerations > 0 && (
+          <p className="max-w-[70ch] text-sm text-ink-dim">
+            La versión {current.number} no pasó el control del render: la IA la está corrigiendo
+            (intento {post.qaRegenerations} de {MAX_QA_REGENERATIONS}).
+          </p>
+        )}
         {post.status === "generating" && (
           <GenerationStatus
             code={post.publicCode}
@@ -162,7 +185,12 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
             role="alert"
             className="flex flex-col gap-1 border-l border-tally-red pl-3 text-sm text-ink"
           >
-            <span>El render encontró problemas:</span>
+            <span>
+              El render encontró problemas
+              {post.status === "in_review" && current?.origin === "ai"
+                ? ` y la IA no los pudo corregir en ${MAX_QA_REGENERATIONS} intentos: editalo o rechazalo.`
+                : ":"}
+            </span>
             <ul className="list-disc pl-5 text-ink-dim">
               {renderIssues.map((issue) => (
                 <li key={`${issue.slide}-${issue.text}`}>
@@ -205,6 +233,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
         )}
         <div className="flex flex-wrap items-start gap-2">
           {canApprove && current && <ApproveButton code={post.publicCode} versionId={current.id} />}
+          {canReject && current && <RejectForm code={post.publicCode} versionId={current.id} />}
           {exportable && content?.success && (
             <>
               <a

@@ -132,6 +132,8 @@ La máquina de estados vive en `packages/core/state-machine.ts` y es la **única
                                                                             retry ──► publishing
 ```
 
+Además, `rendering → generating` (`qaRegenerate`): una versión de IA que no pasa el QA del render vuelve a la IA (máx. 2, §7). Rechazar hace `reject` y `regenerate` en el mismo paso: `rejected` no se ve en el panel.
+
 | Estado | Significado |
 |---|---|
 | `generating` | job de IA en curso (o esperando que se renueve un límite) |
@@ -257,6 +259,12 @@ Router (`packages/ai/src/router.ts`): prueba el principal y pasa al respaldo ant
 ### Generación de un carrusel (Fase 3, T7)
 
 "Generar con IA" (Nuevo post) crea el post en `generating` sin versión, con el pedido en `posts.generation_request`, y encola `carousel.generate`. El worker arma el workspace (`CLAUDE.md` de la marca, `task.json`, `slides.md` con la guía de plantillas, `recent-posts.json`), pasa por la ruta de `carousel.generate`, registra cada intento y valida con `aiCarouselSchema` (pilares de la marca; sin `chart` ni `bigNumber` hasta tener `data.json`). OK → versión `ai` con su `generation_run_id`, `generationDone` y render. Respuesta mal armada → un reintento con los problemas como feedback. Límite → reprogramación con backoff (`generation_retry_at`). Error reintentable → reintento de pg-boss (2). Lo demás → `generationFailed`; el panel muestra los errores y "Reintentar generación".
+
+### Regeneración (Fase 3, T8)
+
+- **Rechazo con feedback**: en la página de un post de IA en `in_review`, "Rechazar" pide qué cambiar (10 a 1.000 caracteres) y, en una transacción (`rejectAndRegenerate`), hace `reject` → `regenerate`, guarda `posts.rejection_feedback`, pone `posts.qa_regenerations` en 0 y encola `carousel.generate`. Mismo control de topes que "Generar con IA". Los posts armados a mano no se rechazan: se editan.
+- **QA del render**: al terminar un render, `renderOutcome` (`packages/core/src/posts/regeneration.ts`) decide. Sin problemas → `renderDone`. Error de página o versión del editor con problemas → `renderFailed`. Versión de IA con problemas de QA y menos de 2 regeneraciones → evento `qaRegenerate` (rendering → generating), `qa_regenerations + 1` y `carousel.generate`. Con 2 → `renderDone`: queda `in_review` con los problemas marcados.
+- **Qué recibe la IA**: si el post ya tiene versión, el workspace suma `previous.json` (la versión actual) y `task.json` trae `revision` con el feedback del último rechazo (mientras exista, vale para todas las regeneraciones del post) y los problemas del render de esa versión, descriptos por slide (`describeRenderProblems`). `recent-posts.json` excluye al propio post.
 
 ### Registro
 Cada ejecución queda en `generation_runs` con proveedor, modelo, uso, duración, turnos, estado y error. Cada `post_version` referencia su `generation_run`, para comparar rendimiento por modelo en el tablero.

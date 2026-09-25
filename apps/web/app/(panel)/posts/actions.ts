@@ -1,8 +1,10 @@
 "use server";
 
+import { REJECTION_FEEDBACK_MAX, REJECTION_FEEDBACK_MIN } from "@radev/core";
 import {
   addPostVersion,
   approvePost,
+  type Brand,
   checkBrandAiQuota,
   createGeneratingPost,
   createPost,
@@ -11,6 +13,7 @@ import {
   getPostVersion,
   listPillars,
   markPublishedManually,
+  rejectAndRegenerate,
   retryGeneration,
   transitionPost,
 } from "@radev/db";
@@ -247,17 +250,8 @@ export async function generateCarouselAction(
   if (pillarKey && !pillars.some((p) => p.key === pillarKey))
     return { status: "error", message: "Elegí un pilar de la marca." };
 
-  const quota = await checkBrandAiQuota(db, brand);
-  if (!quota.ok && !confirmOverLimit) {
-    const period = quota.period === "day" ? "hoy" : "este mes";
-    return {
-      status: "limit",
-      message:
-        quota.limit === 0
-          ? `La generación de ${brand.name} está pausada (tope 0).`
-          : `${brand.name} ya usó sus ${quota.limit} generaciones de ${period}.`,
-    };
-  }
+  const overLimit = await quotaWarning(brand);
+  if (overLimit && !confirmOverLimit) return { status: "limit", message: overLimit };
 
   const post = await createGeneratingPost(db, {
     brandId: brand.id,
@@ -276,6 +270,63 @@ export async function retryGenerationAction(form: FormData): Promise<void> {
   if (!post?.generationRequest) throw new Error("Ese post no se generó con IA.");
   const moved = await retryGeneration(db, post.id);
   if (!moved.ok) throw new Error(moved.reason);
+  await queueGenerate(post.id);
+  revalidatePath("/posts");
+  redirect(`/posts/${post.publicCode}`);
+}
+
+/** Why the brand should not generate now (its cap), or null. Manual runs can confirm past it. */
+async function quotaWarning(brand: Brand): Promise<string | null> {
+  const quota = await checkBrandAiQuota(db, brand);
+  if (quota.ok) return null;
+  const period = quota.period === "day" ? "hoy" : "este mes";
+  return quota.limit === 0
+    ? `La generación de ${brand.name} está pausada (tope 0).`
+    : `${brand.name} ya usó sus ${quota.limit} generaciones de ${period}.`;
+}
+
+export type RejectState = GenerateState;
+
+const rejectInput = z.object({
+  code: z.string().min(1).max(20),
+  versionId: z.uuid(),
+  feedback: z
+    .string()
+    .trim()
+    .min(REJECTION_FEEDBACK_MIN, {
+      error: `Contá qué cambiar en al menos ${REJECTION_FEEDBACK_MIN} caracteres.`,
+    })
+    .max(REJECTION_FEEDBACK_MAX, { error: `Máximo ${REJECTION_FEEDBACK_MAX} caracteres.` }),
+  confirmOverLimit: z.literal("on").optional(),
+});
+
+/**
+ * "Rechazar y regenerar": the operator says what to change and the AI writes a new version from
+ * the current one (state machine: `reject`, then `regenerate`). Only for posts the AI wrote.
+ */
+export async function rejectPostAction(_: RejectState, form: FormData): Promise<RejectState> {
+  await requireOperator();
+  const parsed = rejectInput.safeParse(Object.fromEntries(form));
+  if (!parsed.success) {
+    return { status: "error", message: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+  const { code, versionId, feedback, confirmOverLimit } = parsed.data;
+  const post = await getPostByCode(db, code);
+  if (!post) return { status: "error", message: "Ese post ya no existe." };
+  if (post.currentVersionId !== versionId)
+    return {
+      status: "error",
+      message: "El post cambió mientras lo revisabas: mirá la versión nueva antes de rechazar.",
+    };
+  const brand = await getBrandById(db, post.brandId);
+  if (!brand || brand.archivedAt)
+    return { status: "error", message: "Esa marca no existe o está archivada." };
+
+  const overLimit = await quotaWarning(brand);
+  if (overLimit && !confirmOverLimit) return { status: "limit", message: overLimit };
+
+  const moved = await rejectAndRegenerate(db, { postId: post.id, feedback });
+  if (!moved.ok) return { status: "error", message: moved.reason };
   await queueGenerate(post.id);
   revalidatePath("/posts");
   redirect(`/posts/${post.publicCode}`);

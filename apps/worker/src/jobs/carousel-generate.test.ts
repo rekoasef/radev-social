@@ -98,6 +98,47 @@ describe("buildTaskFiles", () => {
     );
     expect(task.previousProblems).toEqual(["hook › Máximo 100 caracteres."]);
   });
+
+  it("adds no revision to a first generation", () => {
+    const files = buildTaskFiles({
+      request: { idea: "x", pillarKey: "a", hookType: null },
+      recent,
+    });
+    expect(files["previous.json"]).toBeUndefined();
+    expect(JSON.parse(files["task.json"] ?? "").revision).toBeUndefined();
+  });
+
+  it("rewrites from the previous version with the operator's feedback", () => {
+    const previous = { hook: "Viejo hook", slides: [] };
+    const files = buildTaskFiles({
+      request: { idea: "x", pillarKey: "a", hookType: null },
+      recent,
+      revision: { previous, feedback: "El hook es muy genérico.", renderProblems: [] },
+    });
+    expect(JSON.parse(files["previous.json"] ?? "")).toEqual(previous);
+    const { revision } = JSON.parse(files["task.json"] ?? "");
+    expect(revision).toMatchObject({
+      previousFile: "previous.json",
+      operatorFeedback: "El hook es muy genérico.",
+    });
+    expect(revision.renderProblems).toBeUndefined();
+  });
+
+  it("carries the render problems of the previous version", () => {
+    const files = buildTaskFiles({
+      request: { idea: "x", pillarKey: "a", hookType: null },
+      recent,
+      revision: {
+        previous: {},
+        feedback: null,
+        renderProblems: ["Slide 2: El texto no entra en su caja: “Muy largo”"],
+      },
+    });
+    const { revision } = JSON.parse(files["task.json"] ?? "");
+    expect(revision.renderProblems).toEqual(["Slide 2: El texto no entra en su caja: “Muy largo”"]);
+    expect(revision.renderProblemsNote).toMatch(/acortalos/);
+    expect(revision.operatorFeedback).toBeUndefined();
+  });
 });
 
 describe("runRow", () => {

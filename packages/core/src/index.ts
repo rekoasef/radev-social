@@ -98,6 +98,14 @@ export {
   type PostCopy,
   postDescription,
 } from "./posts/export";
+export {
+  MAX_QA_REGENERATIONS,
+  REJECTION_FEEDBACK_MAX,
+  REJECTION_FEEDBACK_MIN,
+  RENDER_ERROR_KIND,
+  type RenderOutcome,
+  renderOutcome,
+} from "./posts/regeneration";
 export { type ApprovalInput, canApprove, checkRenderedSlides } from "./posts/review";
 export {
   availableEvents,

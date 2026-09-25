@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
-import { type CarouselRenderJob, RENDER_FORMATS } from "@radev/core";
+import { type CarouselRenderJob, RENDER_FORMATS, renderOutcome } from "@radev/core";
 import {
   type Database,
   getBrandById,
   getPostById,
   getPostVersion,
+  regenerateForQa,
   saveRenderedAsset,
   setVersionRenderIssues,
   setVersionRenderProgress,
@@ -16,9 +17,11 @@ import { getBrowser } from "../render/browser";
 
 // carousel.render (docs/ARCHITECTURE.md §8): opens each slide of a version in the web's internal
 // render page, waits until fonts and images are in, reads the render QA the page ran, takes the
-// PNG and registers it. All slides fine → in_review; any problem → failed, with the problems on
-// the version so the panel can show them. Runs only for the current version of a post that is
-// `rendering`, so a repeated or outdated job does nothing (rule 8).
+// PNG and registers it. All slides fine → in_review. Problems stay on the version so the panel
+// (and the AI) can see them: an AI version goes back to the AI to fix them (max. 2, then to
+// review with them marked); a version from the editor, or a broken render → failed. Runs only
+// for the current version of a post that is `rendering`, so a repeated or outdated job does
+// nothing (rule 8).
 
 const [FORMAT] = RENDER_FORMATS;
 const SIZE = { width: 1080, height: 1350 };
@@ -31,12 +34,19 @@ type RenderWindow = { __renderReady?: boolean; __renderQa?: { kind: string; text
 
 export type RenderEnv = { webUrl: string; renderToken: string };
 
+export type RenderDeps = {
+  db: Database;
+  log: Logger;
+  env: RenderEnv;
+  /** Queues a regeneration of the post (render QA of an AI version, phase 3 T8). */
+  queueGenerate: (postId: string) => Promise<void>;
+};
+
 export async function renderCarousel(
-  db: Database,
-  log: Logger,
-  env: RenderEnv,
+  deps: RenderDeps,
   { versionId }: CarouselRenderJob,
 ): Promise<void> {
+  const { db, log, env } = deps;
   const version = await getPostVersion(db, versionId);
   const post = version ? await getPostById(db, version.postId) : undefined;
   if (!version || !post) {
@@ -109,16 +119,24 @@ export async function renderCarousel(
 
   await setVersionRenderIssues(db, version.id, issues.length > 0 ? issues : null);
   await setVersionRenderProgress(db, version.id, null);
-  const moved = await transitionPost(
-    db,
-    post.id,
-    issues.length > 0 ? "renderFailed" : "renderDone",
-  );
+  const outcome = renderOutcome({
+    origin: version.origin,
+    issueKinds: issues.map((issue) => issue.kind),
+    qaRegenerations: post.qaRegenerations,
+  });
+  const moved =
+    outcome === "regenerate"
+      ? await regenerateForQa(db, post.id)
+      : await transitionPost(db, post.id, outcome === "done" ? "renderDone" : "renderFailed");
+  // The AI writes it again with the problems, which stay on this version for it to read.
+  if (outcome === "regenerate" && moved.ok) await deps.queueGenerate(post.id);
   log.info("render finished", {
     post: post.publicCode,
     version: version.number,
     slides: slides.length,
     issues: issues.length,
+    outcome,
+    qaRegenerations: post.qaRegenerations + (outcome === "regenerate" ? 1 : 0),
     status: moved.ok ? moved.to : post.status,
     ms: Date.now() - started,
   });
