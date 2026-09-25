@@ -5,6 +5,8 @@ packages:
 # Paquetes autorizados a ejecutar scripts al instalarse (pnpm los bloquea por defecto).
 allowBuilds:
   esbuild: true
+  # Elige el binario de Claude Code de la plataforma (packages/ai, fase 3 T4).
+  '@anthropic-ai/claude-code': true
 
 # pnpm no instala versiones publicadas hace muy poco (protección ante paquetes comprometidos).
 # Excepciones explícitas para versiones fijadas que eran muy recientes al instalarlas.
@@ -26,3 +28,12 @@ minimumReleaseAgeExclude:
   - '@next/swc-win32-arm64-msvc@16.3.6'
   - '@next/swc-win32-x64-msvc@16.3.6'
   - next@16.3.6
+  - '@anthropic-ai/claude-code@2.1.282'
+  - '@anthropic-ai/claude-code-linux-x64@2.1.282'
+  - '@anthropic-ai/claude-code-linux-arm64@2.1.282'
+  - '@anthropic-ai/claude-code-linux-x64-musl@2.1.282'
+  - '@anthropic-ai/claude-code-linux-arm64-musl@2.1.282'
+  - '@anthropic-ai/claude-code-darwin-x64@2.1.282'
+  - '@anthropic-ai/claude-code-darwin-arm64@2.1.282'
+  - '@anthropic-ai/claude-code-win32-x64@2.1.282'
+  - '@anthropic-ai/claude-code-win32-arm64@2.1.282'

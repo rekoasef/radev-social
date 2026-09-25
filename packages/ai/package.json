@@ -7,13 +7,16 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "smoke": "tsx scripts/smoke.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.282",
     "@radev/core": "workspace:*",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@radev/slides": "workspace:*"
+    "@radev/slides": "workspace:*",
+    "tsx": "4.23.15"
   }
 }

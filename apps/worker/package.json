@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@radev/ai": "workspace:*",
     "@radev/core": "workspace:*",
     "@radev/db": "workspace:*",
     "pg-boss": "^12.33.5",

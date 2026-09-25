@@ -9,10 +9,10 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 3 — Generación con IA (por empezar). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T4 de la Fase 3: proveedor `claude-code` (ejecuta `claude -p` en el workspace) y Claude Code CLI en la imagen del worker. El operador tiene que generar `CLAUDE_CODE_OAUTH_TOKEN` con `claude setup-token`.
+- **Próximo paso:** T5 de la Fase 3: proveedor `openrouter`. Antes, el operador decide si crea la cuenta gratuita de OpenRouter o se pospone (ver pendientes de respuesta).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
-- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install`, `pnpm db:migrate` (crea `brand_documents`) y `pnpm db:seed` (carga los documentos). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-24, al cerrar la Fase 2
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` y `pnpm db:seed`. El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` (ver `.env.example`). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
+- **Última actualización:** 2026-09-25, al cerrar la T4 de la Fase 3
 
 ## Fase 3 — tareas
 
@@ -24,7 +24,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T1 | `packages/ai`: interfaz `AIProvider`, errores tipados (`validation`, `rate_limited`, `provider_error`), Zod → JSON Schema. Tests con proveedor falso | ✅ |
 | T2 | Tabla `brand_documents` (voz, precios, casos, reglas, con historial), seed desde `seeds/brands/`, editor en el panel | ✅ |
 | T3 | Workspace aislado: carpeta temporal fuera del repo con el CLAUDE.md de la marca armado desde la base (regla 7). Tests | ✅ |
-| T4 | Proveedor `claude-code` (`claude -p`, sobre JSON, detección de límite, timeout) + Claude Code CLI en la imagen del worker (amd64 y arm64). El operador genera `CLAUDE_CODE_OAUTH_TOKEN` con `claude setup-token` | |
+| T4 | Proveedor `claude-code` (`claude -p`, sobre JSON, detección de límite, timeout) + Claude Code CLI en la imagen del worker (amd64 y arm64). El operador genera `CLAUDE_CODE_OAUTH_TOKEN` con `claude setup-token` | ✅ |
 | T5 | Proveedor `openrouter` (HTTP, salida estructurada, nunca datos privados). Tests con fetch simulado | |
 | T6 | Tablas `ai_routes` y `generation_runs`; router con respaldo, backoff ante `rate_limited`, topes por marca; pantalla de ruteo. Tests obligatorios | |
 | T7 | Job `carousel.generate`: "Generar" → JSON validado → versión `ai` → render; el panel muestra proveedor y modelo. 👁 | |
@@ -59,6 +59,18 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - `packages/ai/src/brand-instructions.ts`: `buildBrandClaudeMd({ name, documents, pillars, whatsappNumber })` arma el CLAUDE.md de la marca con datos planos (el worker los carga de `brand_documents` y `content_pillars`; `ai` no depende de `db`). Orden: reglas de trabajo (nunca inventar números, leer `task.json`, responder solo el objeto) → voz → reglas → precios → casos → pilares con `pillarKey` y porcentaje → contacto (WhatsApp sin escribir el número). Los títulos de cada documento bajan dos niveles (`#` → `###`) para quedar bajo su sección. El de RAdev real sale de ~13.000 caracteres.
 - `packages/ai/src/workspace.ts`: `createWorkspace(files, { root?, runId? })` crea `<tmp>/radev-social/runs/<uuid>/` (permisos 700, archivos 600), valida nombres (sin carpetas, `..` ni ocultos) y **se niega a crearla dentro de un proyecto**: sube por las carpetas buscando `CLAUDE.md`, `CLAUDE.local.md`, `.claude`, `.git/HEAD` o `pnpm-workspace.yaml`. `withWorkspace(files, fn, { keepIf })` la borra al terminar y la conserva si `fn` tira error o `keepIf` lo pide.
 - En WSL existe un `/tmp/.git` **vacío** (de mayo, ajeno al proyecto; no es un repo). Por eso el control mira `.git/HEAD` y no `.git`. No se tocó.
+
+**T4 (2026-09-25)**:
+- `@anthropic-ai/claude-code` **2.1.282** fijado en `packages/ai` (el worker ahora depende de `@radev/ai`). En `pnpm-workspace.yaml`: `allowBuilds` para su script de instalación (copia el binario nativo sobre `bin/claude.exe`) y excepciones de antigüedad para el paquete y sus 8 binarios por plataforma. `resolveClaudeBin()` lo encuentra; el lockfile trae linux x64 y arm64.
+- `packages/ai/src/claude-code.ts`: `createClaudeCodeProvider({ env?, bin?, home?, workspaceRoot?, keepFailed? })`. Corre en `withWorkspace` con los flags de la T0, entorno mínimo (sin secretos del worker) y `HOME` propio en `/tmp/radev-social/claude-home` (amplía lo documentado: así no lee el `~/.claude` del operador; anotado en ARCHITECTURE §7). Tiempo máximo 5 min, cancelable con `signal`. Clasificación de errores en ARCHITECTURE §7. Conserva la carpeta de las ejecuciones fallidas.
+- Las dos credenciales a la vez → el proveedor no se crea (regla 10). Sin credencial → error no reintentable, sin ejecutar.
+- Tests con un `claude` falso (script de Node): éxito, JSON dentro del texto, Zod, 429, texto de límite con horario, turnos, 401, 404, salida ilegible, tiempo agotado, cancelación, entorno filtrado, sin credencial, binario inexistente.
+- Imagen del worker: `claude --version` responde 2.1.282 como usuario `node` (amd64, verificado). arm64 no se construyó (emulación lenta); el binario está en el lockfile.
+- `pnpm --filter @radev/ai smoke [modelo]`: generación mínima real con la credencial del `.env` (nunca la imprime). **Prueba real OK**: Sonnet respondió como `claude-sonnet-5`, 3 turnos, ~4 s, validado con Zod, en voseo (cargó el CLAUDE.md del workspace con el `HOME` propio: confirmado que el token por variable alcanza sin login). La carpeta de la ejecución exitosa se borró; la de un intento con token inválido quedó conservada, como corresponde.
+- Un token inválido devuelve `api_error_status: 401` ("Invalid bearer token") → `provider_error` no reintentable: verificado en real.
+- **Ojo con el consumo**: aun para una respuesta mínima entraron ~55.000 tokens (el prompt de sistema y las herramientas de Claude Code, más el CLAUDE.md). Precio de lista ~USD 0,12, que con la suscripción no se cobra pero sí cuenta para la ventana de uso. Tenerlo en cuenta en los topes de la T6.
+- Pegar el token en el `.env` **entre comillas simples**: puede traer `#` (sin comillas, Node lo toma como comentario y lo corta) y con comillas dobles Docker Compose interpretaría un `$`. Anotado en `.env.example`. Al copiarlo de la terminal es fácil perder el principio: tiene que empezar con `sk-ant-oat`.
+- El límite de uso (429) sigue sin verse en real; la clasificación queda como está hasta que aparezca.
 
 Pendiente de respuesta del operador: (1) crear cuenta gratuita de OpenRouter y su API key (sin tarjeta) antes de la T5, o posponer OpenRouter; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 

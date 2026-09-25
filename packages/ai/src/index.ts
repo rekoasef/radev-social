@@ -1,6 +1,14 @@
 // AI providers (claude-code, openrouter), per-task routing and usage limits.
 export { type BrandContext, buildBrandClaudeMd } from "./brand-instructions";
 export {
+  CLAUDE_CREDENTIAL_VARS,
+  type ClaudeCodeOptions,
+  type ClaudeCredential,
+  claudeCredential,
+  createClaudeCodeProvider,
+  resolveClaudeBin,
+} from "./claude-code";
+export {
   type AIError,
   isRetryable,
   providerError,

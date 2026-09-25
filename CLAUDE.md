@@ -74,6 +74,9 @@ pnpm db:migrate     # aplicar migraciones
 pnpm db:seed        # cargar marcas iniciales (solo agrega las que faltan)
 pnpm db:studio      # ver y editar la base
 
+# IA
+pnpm --filter @radev/ai smoke [modelo]  # generación mínima real con claude -p (CLAUDE_CODE_OAUTH_TOKEN en .env)
+
 # Slides
 pnpm --filter @radev/slides icons:sync   # regenerar la lista de íconos tras actualizar lucide-react
 pnpm --filter @radev/slides fonts:measure # medir el ancho de las tipografías (tras sumar una)

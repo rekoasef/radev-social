@@ -213,6 +213,10 @@ Verificado el 2026-09-24 con Claude Code 2.1.282 (Fase 3, T0):
   - `recent-posts.json`, `winners.json`, `data.json` (según la tarea).
   Claude Code se ejecuta con ese `cwd`, así carga el CLAUDE.md de la marca y no el de desarrollo. El directorio se borra al terminar (se conserva si falló, para depurar).
 - **Salida**: sobre JSON (`is_error`, `structured_output`, `session_id`, uso). Se valida otra vez con Zod.
+- **Binario** (Fase 3, T4): `@anthropic-ai/claude-code` fijado (versión exacta) como dependencia de `packages/ai`; su script de instalación copia el binario nativo de la plataforma. Misma versión en desarrollo y en Docker, sin instalación global ni actualizaciones automáticas (`DISABLE_AUTOUPDATER=1`). Para cambiar de versión: subir el número en `packages/ai/package.json` y en las excepciones de `pnpm-workspace.yaml`.
+- **Entorno del proceso**: `claude` recibe solo `PATH`, idioma, zona horaria, proxies y la credencial; nunca `DATABASE_URL`, `RENDER_TOKEN` ni otros secretos del worker. `HOME` y `CLAUDE_CONFIG_DIR` apuntan a `/tmp/radev-social/claude-home`, así en desarrollo no lee el `~/.claude` del operador (CLAUDE.md personal, skills, plugins).
+- **Tiempo máximo**: 5 minutos por ejecución por defecto (`timeoutMs` de la tarea); al vencer, SIGTERM y a los 5 s SIGKILL. Un job cancelado (`signal`) corta igual.
+- **Clasificación** (`packages/ai/src/claude-code.ts`): 429 o el texto "usage limit reached" → `rate_limited` (con el horario de reinicio si viene); `max_turns`, tiempo agotado, 5xx o salida ilegible → `provider_error` reintentable; 401/403 (credencial) y otros 4xx (modelo inválido) → `provider_error` no reintentable. Sin credencial, falla sin ejecutar; con las dos definidas, el proveedor no se crea.
 
 **OpenRouter** (`openrouter`): API HTTP compatible con OpenAI, con modelos gratuitos.
 - Sin herramientas: el contenido de los archivos de contexto se incluye en el prompt.

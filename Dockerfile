@@ -79,6 +79,8 @@ RUN pnpm --filter @radev/worker deploy --prod /out
 # --- worker ------------------------------------------------------------------------------
 # Incluye Chromium para renderizar slides (Playwright). Pesa ~400 MB más; hay versiones para
 # amd64 y arm64. Los navegadores van a /ms-playwright, legible por el usuario `node`.
+# Claude Code (`claude -p`) viene con las dependencias: @anthropic-ai/claude-code, fijado en
+# packages/ai, instala el binario nativo de la plataforma (amd64 o arm64) al hacer el deploy.
 FROM node:${NODE_VERSION}-bookworm-slim AS worker
 ENV NODE_ENV=production \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
