@@ -8,8 +8,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 3 — Generación con IA **cerrada el 2026-09-25** en 2 días (T12 pospuesta a la Fase 6). Próxima: Fase 4 — Producción y piloto automático. Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** planificar la Fase 4 (servidor, hardening, DNS, Caddy, backups, horarios, `slots.fill`, Telegram): proponer tareas al operador antes de codear.
+- **Fase:** 4 — Producción y piloto automático (plan aprobado el 2026-09-25, sin empezar). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T1 de la Fase 4: horarios por marca (`schedule_slots`).
+- **Para el operador (Fase 4, ya):** crear la cuenta de Oracle Cloud (pide tarjeta para verificar identidad; Always Free no cobra). Crear la instancia puede requerir reintentos por falta de capacidad: arrancar ahora, en paralelo al bloque local.
 - **Para el operador (T13):** mirar RA-0004 (prueba del criterio de RAdev, en revisión). Completar Precios y Casos de RAdev cuando puedas: siguen siendo el borrador del seed (con `[completar]`, y eso le llega a la IA).
 - **Para el operador (T11):** (1) mirar LU-0004 y LU-0005 (posts de prueba de Lumus con gráficos y cifras del dólar, en revisión) y Ajustes → Datos reales. (2) En la otra máquina, tildar Bluelytics en Marcas → Lumus → General → Fuentes de datos: el seed no toca marcas que ya existen.
 - **Para el operador (T10):** (1) en Ajustes → Ruteo de IA, cambiar (el seed ya trae el nuevo desde la T13, pero no pisa rutas existentes) `nex-agi/nex-n2.5-pro:free` (ya no existe en OpenRouter) por `nvidia/nemotron-3-super-120b-a12b:free` en `ideas.generate` (principal) y `carousel.generate` (respaldo). (2) Completar Precios de RAdev: sin rangos, los posts de la serie "¿Cuánto cuesta realmente…?" fallan a propósito (no inventan precios). (3) La serie está repetida en el documento de voz de RAdev: se puede sacar de ahí. (4) Mirar con login /ideas (pedidos a la IA) y Marcas → Series.
@@ -17,6 +18,29 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0012_data_snapshots`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
 - **Última actualización:** 2026-09-25, al cerrar la Fase 3 (T13)
+
+## Fase 4 — tareas
+
+Plan aprobado el 2026-09-25. Primero el piloto automático en local (bloque A), después producción (bloque B); la cuenta de Oracle se crea en paralelo desde el principio. 👁 = termina con capturas para aprobar.
+
+Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con el banco vacío pide ideas a la IA (`ideas.generate` para el pilar que falta) y usa una; (3) horizonte de llenado: 7 días; (4) deploy: `git pull` + `docker compose build` en el servidor (sin registro de imágenes).
+
+| Tarea | Qué | Estado |
+|---|---|---|
+| T1 | Horarios por marca: `schedule_slots`, pestaña Marcas → Horarios (arranque: 1 post/día en la franja 14–21 h); lógica de horarios con zona explícita y tests | |
+| T2 | Programar: estado `scheduled`, programar / des-programar / re-programar, job `post.publish` a la hora del slot (adaptador manual: queda `publishing` hasta "Marcar como publicado"); idempotente | |
+| T3 | Calendario por marca: semana con slots y posts, arrastrar entre slots. 👁 | |
+| T4 | Ventana de generación (Ajustes, 02:00–07:00) + `slots.fill`: 7 días, pilar según la mezcla, idea del banco o pedida a la IA, respeta topes. Tests | |
+| T5 | `ideas.research` semanal automática | |
+| T6 | Bot de Telegram (grammY): posts para revisar (agrupado), recordatorio de publicación con descarga, errores, límites de IA y aviso si comprometen un post programado | |
+| T7 | Cola de revisión para el celular: ver, editar lo básico, aprobar o rechazar con feedback. 👁 | |
+| T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | |
+| T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | |
+| T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | |
+| T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | |
+| T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | |
+| T13 | Mudanza: base local y `media/` al servidor | |
+| T14 | Cierre: unos días corriendo, criterio de terminado, y la prueba de publicación real pendiente de la Fase 2 | |
 
 ## Fase 3 — tareas
 
