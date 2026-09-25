@@ -2,6 +2,8 @@ import "server-only";
 import {
   carouselGenerateKey,
   carouselRenderKey,
+  type DataSource,
+  dataRefreshKey,
   IDEA_REQUEST_TASKS,
   type IdeaRequestTask,
   ideaRequestKey,
@@ -32,6 +34,7 @@ function boss(): Promise<PgBoss> {
     await client.createQueue(JOBS.carouselRender, QUEUE_OPTIONS[JOBS.carouselRender]);
     await client.createQueue(JOBS.carouselGenerate, QUEUE_OPTIONS[JOBS.carouselGenerate]);
     for (const task of IDEA_REQUEST_TASKS) await client.createQueue(task, QUEUE_OPTIONS[task]);
+    await client.createQueue(JOBS.dataRefresh, QUEUE_OPTIONS[JOBS.dataRefresh]);
     return client;
   })();
   return globalForBoss.radevBoss;
@@ -58,4 +61,9 @@ export async function queueGenerate(postId: string): Promise<void> {
 /** Queues an idea request (ideas.generate or ideas.research). The job skips a closed request. */
 export async function queueIdeaRequest(task: IdeaRequestTask, requestId: string): Promise<void> {
   await (await boss()).send(task, { requestId }, { singletonKey: ideaRequestKey(requestId) });
+}
+
+/** Queues a refresh of a data source ("Actualizar ahora"). One waiting at a time per source. */
+export async function queueDataRefresh(source: DataSource): Promise<void> {
+  await (await boss()).send(JOBS.dataRefresh, { source }, { singletonKey: dataRefreshKey(source) });
 }

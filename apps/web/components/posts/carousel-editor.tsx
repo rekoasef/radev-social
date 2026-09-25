@@ -4,6 +4,7 @@ import {
   type BrandTheme,
   type Carousel,
   carouselSchema,
+  type Datasets,
   EDITOR_MIDDLE_TYPES,
   emptySlide,
   exampleCarouselByPreset,
@@ -23,12 +24,22 @@ import { type SaveCarouselState, saveCarouselAction } from "@/app/(panel)/posts/
 import { SlidePreview } from "@/components/brands/slide-preview";
 import { HOOK_LABELS } from "@/lib/hooks";
 import { LayerEditor, LayerToolbar, useLayerSelection } from "./layer-editor";
-import { Fields, ICON_LIST_ID } from "./slide-fields";
+import { type DatasetOption, DatasetOptions, Fields, ICON_LIST_ID } from "./slide-fields";
 
 const idle: SaveCarouselState = { status: "idle" };
 const ICONS: ReadonlySet<string> = new Set(ICON_NAMES);
 
 export type EditorPillar = { key: string; name: string };
+
+/**
+ * The brand's real data for the editor (phase 3, T11): the datasets a chart can use (today's, plus
+ * the ones frozen with the version being edited) and the day's figures for a bigNumber.
+ */
+export type EditorData = {
+  datasets: Datasets;
+  options: DatasetOption[];
+  figures: { key: string; label: string; value: string; source: string }[];
+};
 
 /** Unknown icon names (half typed) would break the preview: draw a circle instead. */
 function previewable(value: unknown): unknown {
@@ -60,6 +71,7 @@ export function CarouselEditor({
   pillars,
   initial,
   post,
+  data,
 }: {
   brand: { id: string; slug: string; name: string };
   theme: BrandTheme;
@@ -68,6 +80,8 @@ export function CarouselEditor({
   initial: Carousel;
   /** The post being edited; absent for a new one. */
   post?: { code: string; version: number };
+  /** Null when the brand uses no data source (no charts then). */
+  data: EditorData | null;
 }) {
   const draftKey = `radev-social:draft:${brand.slug}:${post?.code ?? "new"}`;
   const [carousel, setCarousel] = useState<Carousel>(initial);
@@ -110,8 +124,21 @@ export function CarouselEditor({
   const index = Math.min(selected, slides.length - 1);
   const slide = slides[index] as Slide;
   const setSlides = (next: Slide[]) => setCarousel((c) => ({ ...c, slides: next }));
-  const updateSlide = (value: Record<string, unknown>) =>
-    setSlides(slides.map((s, i) => (i === index ? ({ ...value, type: s.type } as Slide) : s)));
+  const updateSlide = (value: Record<string, unknown>) => {
+    const next = { ...value, type: slide.type } as Slide;
+    // A chart takes its source from the chosen dataset while the field is empty.
+    if (next.type === "chart" && !next.source) {
+      const chosen = data?.datasets[next.datasetRef] as { source?: string } | undefined;
+      if (chosen?.source) next.source = chosen.source;
+    }
+    setSlides(slides.map((s, i) => (i === index ? next : s)));
+  };
+  const datasets = data?.datasets ?? {};
+  const middleTypes = EDITOR_MIDDLE_TYPES.filter(
+    (t) => t !== "chart" || (data?.options.length ?? 0) > 0,
+  );
+  // A chart with no data yet can't be drawn: the preview says so instead.
+  const drawable = slide.type !== "chart" || Boolean(datasets[slide.datasetRef]);
   const moveSlide = (from: number, to: number) => {
     const next = [...slides];
     const [item] = next.splice(from, 1);
@@ -297,7 +324,7 @@ export function CarouselEditor({
                 onChange={(e) => setNewType(e.target.value as SlideType)}
                 className="console-field min-w-0 flex-1"
               >
-                {EDITOR_MIDDLE_TYPES.map((t) => (
+                {middleTypes.map((t) => (
                   <option key={t} value={t}>
                     {SLIDE_LABELS[t]}
                   </option>
@@ -377,14 +404,44 @@ export function CarouselEditor({
         {errors[`slides.${index}`] && (
           <p className="text-sm text-tally-red">{errors[`slides.${index}`]}</p>
         )}
-        <Fields
-          fields={SLIDE_FIELDS[slide.type]}
-          value={slide as unknown as Record<string, unknown>}
-          onChange={updateSlide}
-          errors={errors}
-          path={["slides", String(index)]}
-          icons={ICONS}
-        />
+        <DatasetOptions value={data?.options ?? []}>
+          <Fields
+            fields={SLIDE_FIELDS[slide.type]}
+            value={slide as unknown as Record<string, unknown>}
+            onChange={updateSlide}
+            errors={errors}
+            path={["slides", String(index)]}
+            icons={ICONS}
+          />
+        </DatasetOptions>
+        {slide.type === "bigNumber" && data && data.figures.length > 0 && (
+          <div className="flex flex-col gap-2 rounded-md border border-bezel p-3">
+            <p className="text-sm text-ink">Cifras del día</p>
+            <ul className="flex flex-col gap-1.5">
+              {data.figures.map((figure) => (
+                <li key={figure.key} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="min-w-0 text-ink-dim">
+                    {figure.label}: <span className="timecode text-ink">{figure.value}</span>
+                  </span>
+                  <button
+                    type="button"
+                    className="console-button shrink-0"
+                    onClick={() =>
+                      updateSlide({
+                        ...slide,
+                        value: figure.value,
+                        source: figure.source,
+                        label: slide.label || figure.label,
+                      })
+                    }
+                  >
+                    Usar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       {/* Right: preview and save. */}
@@ -393,26 +450,33 @@ export function CarouselEditor({
         className="flex flex-col gap-4 xl:sticky xl:top-24 xl:self-start"
       >
         <div className="mx-auto w-full max-w-[400px]">
-          <SlidePreview
-            theme={theme}
-            brandName={brand.name}
-            assets={assets}
-            type={slide.type}
-            content={previewSlide}
-            page={{ index, total: slides.length }}
-            qaOverlap
-            overlay={(scale, frame) => (
-              <LayerEditor
-                scale={scale}
-                frame={frame}
-                layout={slide.layout}
-                redrawKey={JSON.stringify(previewSlide)}
-                selected={layer}
-                onSelect={setLayer}
-                onChange={setLayout}
-              />
-            )}
-          />
+          {!drawable ? (
+            <div className="grid aspect-[4/5] place-items-center rounded-md border border-bezel p-6 text-center text-sm text-ink-dim">
+              Elegí qué datos muestra el gráfico para verlo.
+            </div>
+          ) : (
+            <SlidePreview
+              datasets={datasets}
+              theme={theme}
+              brandName={brand.name}
+              assets={assets}
+              type={slide.type}
+              content={previewSlide}
+              page={{ index, total: slides.length }}
+              qaOverlap
+              overlay={(scale, frame) => (
+                <LayerEditor
+                  scale={scale}
+                  frame={frame}
+                  layout={slide.layout}
+                  redrawKey={JSON.stringify(previewSlide)}
+                  selected={layer}
+                  onSelect={setLayer}
+                  onChange={setLayout}
+                />
+              )}
+            />
+          )}
         </div>
         <LayerToolbar
           layout={slide.layout}

@@ -3,6 +3,7 @@
 import {
   canChangeCodePrefix,
   canDeleteBrand,
+  DATA_SOURCES,
   normalizeWhatsappMessage,
   normalizeWhatsappNumber,
 } from "@radev/core";
@@ -14,6 +15,7 @@ import {
   setBrandAiLimits,
   setBrandArchived,
   setBrandContact,
+  setBrandDataSources,
   updateBrand,
 } from "@radev/db";
 import { defaultTokens } from "@radev/slides";
@@ -200,4 +202,34 @@ export async function saveContactAction(
   });
   revalidatePath(`/brands/${brand.slug}`);
   return { status: "ok", message: "Contacto guardado." };
+}
+
+export type DataSourcesFormState =
+  | { status: "idle" }
+  | { status: "ok"; message: string }
+  | { status: "error"; message: string };
+
+const dataSourcesInput = z.object({
+  id: z.uuid(),
+  sources: z.array(z.enum(DATA_SOURCES)).max(DATA_SOURCES.length),
+});
+
+/** The data sources whose numbers the brand's content may show (phase 3, T11). */
+export async function saveDataSourcesAction(
+  _: DataSourcesFormState,
+  form: FormData,
+): Promise<DataSourcesFormState> {
+  await requireOperator();
+  const parsed = dataSourcesInput.safeParse({
+    id: form.get("id"),
+    sources: form.getAll("sources"),
+  });
+  if (!parsed.success) return { status: "error", message: "Datos inválidos." };
+  const brand = await getBrandById(db, parsed.data.id);
+  if (!brand || brand.archivedAt !== null) {
+    return { status: "error", message: "Esa marca no existe o está archivada." };
+  }
+  await setBrandDataSources(db, brand.id, parsed.data.sources);
+  revalidatePath(`/brands/${brand.slug}`);
+  return { status: "ok", message: "Fuentes guardadas." };
 }

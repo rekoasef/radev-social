@@ -78,7 +78,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Job `carousel.generate` → versión nueva → `carousel.render`
 - [x] Rechazo con feedback y regeneración; regeneración automática por QA (máx. 2)
 - [ ] Importación del historial de posts → `winners.json`
-- [ ] Job `data.refresh` (Bluelytics) → `data.json` para Lumus
+- [x] Job `data.refresh` (Bluelytics) → `data.json` para Lumus
 - [ ] Documentos de marca completos: `pricing.md` y `cases.md` de RAdev
 
 **Paralelo (no depende del código):** crear la cuenta de TikTok de Lumus; registrar la app de desarrollador de TikTok; definir el número de WhatsApp de RAdev; crear el bot de Telegram.

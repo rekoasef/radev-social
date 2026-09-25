@@ -10,6 +10,8 @@ export const JOBS = {
   ideasGenerate: "ideas.generate",
   /** Look into the brand's niche with web search and bring topics as ideas (Claude). */
   ideasResearch: "ideas.research",
+  /** Fetch today's data of a source (Bluelytics) and store it as a snapshot. */
+  dataRefresh: "data.refresh",
 } as const;
 
 export type CarouselRenderJob = { versionId: string };
@@ -30,6 +32,13 @@ export type GenerationRequest = {
   /** A series of the brand: its structure and required slides apply. Absent in older requests. */
   seriesKey?: string | null;
 };
+
+/** A source's refresh: by the daily cron or by "Actualizar ahora" in the panel. */
+export type DataRefreshJob = { source: string };
+
+/** When the daily refresh runs (cron, in DATA_REFRESH_TZ): Bluelytics updates during the day. */
+export const DATA_REFRESH_CRON = "0 19 * * *";
+export const DATA_REFRESH_TZ = "America/Argentina/Buenos_Aires";
 
 /** Both idea jobs run an `idea_requests` row that holds their parameters. */
 export type IdeaRequestJob = { requestId: string };
@@ -62,6 +71,8 @@ export const QUEUE_OPTIONS = {
     retryBackoff: true,
     expireInSeconds: 25 * 60,
   },
+  // Two HTTP requests; a failed day is tried again a few minutes later.
+  [JOBS.dataRefresh]: { retryLimit: 3, retryDelay: 300, retryBackoff: true },
 } as const;
 
 /**
@@ -79,3 +90,9 @@ export const carouselGenerateKey = (postId: string, attempt: number) =>
 
 /** Key of an idea request's job: one per request (the job skips a request that is not queued). */
 export const ideaRequestKey = (requestId: string) => `ideas:${requestId}`;
+
+/**
+ * Key of a refresh job: at most one waiting per source. The job itself is idempotent too: it
+ * replaces the snapshot of the same day (rule 8).
+ */
+export const dataRefreshKey = (source: string) => `data:${source}`;

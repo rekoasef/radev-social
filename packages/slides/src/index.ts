@@ -29,11 +29,11 @@ export {
   SLIDE_LABELS,
 } from "./content/form";
 export {
-  AI_BLOCKED_SLIDES,
-  AI_SLIDE_GUIDE,
   type AiCarousel,
   type AiCarouselSchema,
   aiCarouselSchema,
+  aiSlideGuide,
+  DATA_SLIDES,
 } from "./content/generation";
 export { default as ICON_NAMES } from "./content/icon-names.json";
 export {

@@ -1,10 +1,11 @@
 "use server";
 
-import { AI_PROVIDERS, AI_TASKS, MAX_MODEL_ID_LENGTH } from "@radev/core";
+import { AI_PROVIDERS, AI_TASKS, DATA_SOURCES, MAX_MODEL_ID_LENGTH } from "@radev/core";
 import { saveGlobalAiRoute } from "@radev/db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { queueDataRefresh } from "@/lib/jobs";
 import { requireOperator } from "@/lib/session";
 
 export type RouteFormState =
@@ -44,4 +45,14 @@ export async function saveRouteAction(_: RouteFormState, form: FormData): Promis
 
   revalidatePath("/settings");
   return { status: "ok", message: "Ruta guardada." };
+}
+
+const refreshInput = z.object({ source: z.enum(DATA_SOURCES) });
+
+/** "Actualizar ahora": the worker fetches the source's data of today (data.refresh). */
+export async function refreshDataAction(form: FormData): Promise<void> {
+  await requireOperator();
+  const { source } = refreshInput.parse(Object.fromEntries(form));
+  await queueDataRefresh(source);
+  revalidatePath("/settings");
 }

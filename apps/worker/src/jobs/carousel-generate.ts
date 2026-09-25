@@ -7,18 +7,25 @@ import {
 } from "@radev/ai";
 import {
   type AiTask,
+  type BrandData,
   type BrandDocumentKind,
   type CarouselGenerateJob,
+  type DataFigure,
+  type DataSeries,
+  findFigure,
   type GenerationRequest,
   rateLimitDelayMs,
   resolveAiRoute,
+  versionDatasets,
 } from "@radev/core";
 import {
   addGeneratedVersion,
   type Brand,
+  chartRefs,
   type Database,
   failGeneration,
   getBrandById,
+  getBrandData,
   getPostById,
   getPostVersion,
   getSeriesByKey,
@@ -32,9 +39,9 @@ import {
   setGenerationRetryAt,
 } from "@radev/db";
 import {
-  AI_SLIDE_GUIDE,
   type AiCarousel,
   aiCarouselSchema,
+  aiSlideGuide,
   describeRenderProblems,
   type StoredRenderIssue,
 } from "@radev/slides/generation";
@@ -52,6 +59,10 @@ export const MAX_RATE_LIMIT_ATTEMPTS = 8;
 
 export const GENERATION_PROMPT =
   "Escribí un carrusel para TikTok a partir de `task.json`. Antes leé `slides.md` (qué hace cada tipo de slide) y `recent-posts.json` (no repitas temas ni hooks). Devolvé solo el objeto que pide el schema.";
+
+/** Added to the prompt when the brand has real data (phase 3, T11). */
+export const DATA_PROMPT =
+  "`data.json` trae datos reales del día: si el tema lo pide, usalos, y son los únicos números que podés mostrar.";
 
 /** Added to the prompt when the run rewrites an existing version (phase 3, T8). */
 export const REVISION_PROMPT =
@@ -77,8 +88,10 @@ export function buildTaskFiles(input: {
   problems?: readonly string[];
   revision?: Revision;
   series?: TaskSeries;
+  /** The brand's real data (`data.json`), when it has data sources. */
+  data?: BrandData | null;
 }): Record<string, string> {
-  const { request, recent, problems, revision, series } = input;
+  const { request, recent, problems, revision, series, data } = input;
   const task = {
     idea: request.idea,
     ...(series && {
@@ -122,10 +135,33 @@ export function buildTaskFiles(input: {
   };
   return {
     "task.json": `${JSON.stringify(task, null, 2)}\n`,
-    "slides.md": AI_SLIDE_GUIDE,
+    "slides.md": aiSlideGuide({ data: Boolean(data) }),
     "recent-posts.json": `${JSON.stringify(recent, null, 2)}\n`,
+    ...(data && { "data.json": `${JSON.stringify(data, null, 2)}\n` }),
     ...(revision && { "previous.json": `${JSON.stringify(revision.previous, null, 2)}\n` }),
   };
+}
+
+/**
+ * The source of a data slide is data too (rule 9): a chart gets its dataset's, a bigNumber its
+ * figure's, whatever the AI wrote (it tends to add "Fuente:", which the template already puts).
+ */
+export function stampDataSources(
+  carousel: AiCarousel,
+  data: { datasets: Readonly<Record<string, DataSeries>>; figures: readonly DataFigure[] },
+): AiCarousel {
+  const slides = carousel.slides.map((slide) => {
+    if (slide.type === "chart") {
+      const source = data.datasets[slide.datasetRef]?.source;
+      return source ? { ...slide, source } : slide;
+    }
+    if (slide.type === "bigNumber") {
+      const source = findFigure(data.figures, slide.value)?.source;
+      return source ? { ...slide, source } : slide;
+    }
+    return slide;
+  });
+  return { ...carousel, slides };
 }
 
 /** One row of generation_runs from an attempt of the route (a post's, or an idea request's). */
@@ -264,11 +300,12 @@ export async function generateCarousel(
     return "failed";
   }
 
-  const [{ claudeMd, pillars, pricing }, recent, current, seriesRow] = await Promise.all([
+  const [{ claudeMd, pillars, pricing }, recent, current, seriesRow, data] = await Promise.all([
     brandContext(db, brand),
     listRecentPostHooks(db, brand.id, { exceptPostId: post.id }),
     post.currentVersionId ? getPostVersion(db, post.currentVersionId) : undefined,
     request.seriesKey ? getSeriesByKey(db, brand.id, request.seriesKey) : undefined,
+    getBrandData(db, brand.id),
   ]);
   const series: TaskSeries | undefined = seriesRow && {
     name: seriesRow.name,
@@ -287,8 +324,22 @@ export async function generateCarousel(
     : undefined;
   const schema = aiCarouselSchema(
     pillars.map((pillar) => pillar.key),
-    { requiredSlides: series?.requiredSlides, pricing },
+    {
+      requiredSlides: series?.requiredSlides,
+      pricing,
+      data: data
+        ? {
+            datasets: Object.keys(data.datasets),
+            isFigure: (value) => findFigure(data.figures, value) !== undefined,
+          }
+        : undefined,
+    },
   );
+  const prompt = [
+    GENERATION_PROMPT,
+    ...(data ? [DATA_PROMPT] : []),
+    ...(revision ? [REVISION_PROMPT] : []),
+  ].join(" ");
   const context = { brandId: brand.id, postId: post.id };
 
   let problems: string[] | undefined;
@@ -296,13 +347,14 @@ export async function generateCarousel(
     const routed = await deps.router.generate<AiCarousel>(route, {
       task: "carousel.generate",
       brandId: brand.id,
-      prompt: revision ? `${GENERATION_PROMPT} ${REVISION_PROMPT}` : GENERATION_PROMPT,
+      prompt,
       files: {
         "CLAUDE.md": claudeMd,
-        ...buildTaskFiles({ request, recent, problems, revision, series }),
+        ...buildTaskFiles({ request, recent, problems, revision, series, data }),
       },
       schema,
-      maxTurns: MAX_TURNS,
+      // One more turn to read data.json.
+      maxTurns: data ? MAX_TURNS + 1 : MAX_TURNS,
     });
     const runIds = [];
     for (const attempt of routed.attempts) {
@@ -329,10 +381,27 @@ export async function generateCarousel(
       case "save": {
         if (!routed.result.ok) throw new Error("unreachable");
         const winner = routed.attempts.findIndex((attempt) => attempt.result.ok);
+        // The charts keep the points the AI was given (or the previous version's, in a revision).
+        const refs = chartRefs(routed.result.data);
+        const datasets =
+          refs.length > 0
+            ? versionDatasets({
+                refs,
+                previous: current?.datasets ?? null,
+                current: data?.datasets ?? null,
+              }).datasets
+            : null;
+        const content = data
+          ? stampDataSources(routed.result.data, {
+              datasets: datasets ?? {},
+              figures: data.figures,
+            })
+          : routed.result.data;
         const saved = await addGeneratedVersion(db, {
           postId: post.id,
-          content: routed.result.data,
+          content,
           generationRunId: runIds[winner] ?? null,
+          datasets,
         });
         if (!saved.ok) {
           log.warn("generated version not saved", { post: post.publicCode, reason: saved.reason });

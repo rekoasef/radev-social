@@ -1,4 +1,4 @@
-import { AI_BLOCKED_SLIDES, SLIDE_TYPES, type SlideType } from "@radev/slides";
+import { DATA_SLIDES, SLIDE_TYPES, type SlideType } from "@radev/slides";
 
 /**
  * Slide types a series can require: the ones the AI may write, minus the cover and the closing,
@@ -6,5 +6,5 @@ import { AI_BLOCKED_SLIDES, SLIDE_TYPES, type SlideType } from "@radev/slides";
  */
 export const SERIES_SLIDE_CHOICES = SLIDE_TYPES.filter(
   (type) =>
-    type !== "cover" && type !== "cta" && !(AI_BLOCKED_SLIDES as readonly string[]).includes(type),
+    type !== "cover" && type !== "cta" && !(DATA_SLIDES as readonly string[]).includes(type),
 ) as [SlideType, ...SlideType[]];

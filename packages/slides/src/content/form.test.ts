@@ -24,16 +24,13 @@ function specKeys(fields: FieldSpec[], prefix = ""): string[] {
 }
 
 describe("slide form spec", () => {
-  it.each(SLIDE_TYPES.filter((t) => t !== "chart"))(
-    "%s covers every field of its example",
-    (type) => {
-      expect(specKeys(SLIDE_FIELDS[type]).sort()).toEqual(
-        expect.arrayContaining(keys(exampleSlides[type]).sort()),
-      );
-      // …and nothing the schema does not know: the example with every spec field is still valid.
-      expect(slideSchema.safeParse(exampleSlides[type]).success).toBe(true);
-    },
-  );
+  it.each(SLIDE_TYPES)("%s covers every field of its example", (type) => {
+    expect(specKeys(SLIDE_FIELDS[type]).sort()).toEqual(
+      expect.arrayContaining(keys(exampleSlides[type]).sort()),
+    );
+    // …and nothing the schema does not know: the example with every spec field is still valid.
+    expect(slideSchema.safeParse(exampleSlides[type]).success).toBe(true);
+  });
 
   it.each(SLIDE_TYPES)(
     "%s: a new empty slide has the schema's shape (only texts missing)",
@@ -46,9 +43,9 @@ describe("slide form spec", () => {
     },
   );
 
-  it("offers every type in the editor but cover, cta and chart", () => {
+  it("offers every type in the editor but cover and cta", () => {
     expect([...EDITOR_MIDDLE_TYPES].sort()).toEqual(
-      SLIDE_TYPES.filter((t) => !["cover", "cta", "chart"].includes(t)).sort(),
+      SLIDE_TYPES.filter((t) => !["cover", "cta"].includes(t)).sort(),
     );
   });
 });

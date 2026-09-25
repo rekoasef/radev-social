@@ -1,5 +1,6 @@
 import {
   canApprove,
+  type DataSeries,
   INITIAL_STATUSES,
   nextStatus,
   type PostEffect,
@@ -31,6 +32,9 @@ import type { Executor } from "./brand-assets";
 
 /** What a version stores: a Carousel (packages/slides). Kept loose here on purpose. */
 export type CarouselContent = { pillarKey: string; hookType: string } & Record<string, unknown>;
+
+/** Points of a version's charts, frozen with it (resolveVersionDatasets). Null: no charts. */
+export type VersionDatasets = Record<string, DataSeries> | null;
 
 export type TransitionOutcome =
   | { ok: true; from: PostStatus; to: PostStatus; effects: readonly PostEffect[] }
@@ -88,7 +92,12 @@ export type CreatedPost = { post: Post; version: PostVersion };
  */
 export async function createPost(
   db: Database,
-  input: { brandId: string; content: CarouselContent; origin: VersionOrigin },
+  input: {
+    brandId: string;
+    content: CarouselContent;
+    origin: VersionOrigin;
+    datasets?: VersionDatasets;
+  },
 ): Promise<CreatedPost> {
   return db.transaction(async (tx) => {
     const { number, code } = await takePostNumber(tx, input.brandId);
@@ -108,7 +117,13 @@ export async function createPost(
 
     const [version] = await tx
       .insert(postVersions)
-      .values({ postId: post.id, number: 1, content: input.content, origin: input.origin })
+      .values({
+        postId: post.id,
+        number: 1,
+        content: input.content,
+        origin: input.origin,
+        datasets: input.datasets ?? null,
+      })
       .returning();
     if (!version) throw new Error("No se pudo guardar la versión.");
 
@@ -131,7 +146,12 @@ export type NewVersionResult =
  */
 export async function addPostVersion(
   db: Database,
-  input: { postId: string; content: CarouselContent; origin: VersionOrigin },
+  input: {
+    postId: string;
+    content: CarouselContent;
+    origin: VersionOrigin;
+    datasets?: VersionDatasets;
+  },
 ): Promise<NewVersionResult> {
   return db.transaction(async (tx) => {
     const moved = await transitionPost(tx, input.postId, "edit");
@@ -156,6 +176,7 @@ export async function addPostVersion(
         number: (last?.number ?? 0) + 1,
         content: input.content,
         origin: input.origin,
+        datasets: input.datasets ?? null,
       })
       .returning();
     if (!version) throw new Error("No se pudo guardar la versión.");

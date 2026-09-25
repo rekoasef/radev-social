@@ -8,12 +8,25 @@ import { limits as L } from "./limits";
 // exist; this says what each template is for (docs/DESIGN-SYSTEM.md §5).
 
 /**
- * Slide types the AI may not use yet: their figures must come from real data (data.json, phase 3
- * T11), never from the model (CLAUDE.md, rule 9).
+ * Slide types whose figures come from real data (`data.json`, phase 3 T11), never from the model
+ * (CLAUDE.md, rule 9). The AI only uses them for a brand with data sources.
  */
-export const AI_BLOCKED_SLIDES = ["chart", "bigNumber"] as const;
+export const DATA_SLIDES = ["chart", "bigNumber"] as const;
 
-export const AI_SLIDE_GUIDE = `# Guía de slides
+const DATA_GUIDE = `## Datos (\`data.json\`)
+
+\`data.json\` trae datos reales del día (\`asOf\`): \`figures\` (cifras sueltas) y \`datasets\`
+(series para gráficos). Son los **únicos** números que podés mostrar: no calcules otros ni los
+redondees, y no escribas cifras que no estén ahí.
+
+- \`bigNumber\`: \`value\` es el \`value\` de una cifra de \`figures\`, copiado tal cual (se controla:
+  una cifra que no esté ahí rechaza el carrusel). \`label\` dice qué es; \`source\` es el \`source\` de la cifra.
+- \`chart\`: \`datasetRef\` es la clave de uno de \`datasets\`; los puntos los pone el código, vos no.
+  \`kind\`: \`line\` para ver cómo se movió algo, \`bar\` para comparar meses. \`source\` es el del dataset.
+  El \`title\` y el \`caption\` describen lo que muestra el dataset, sin inventar tendencias que sus \`title\` y cifras no digan.
+- Usalos cuando el tema lo pida (ej. el dólar); no hace falta meterlos en todos los carruseles.`;
+
+const AI_SLIDE_GUIDE_BASE = `# Guía de slides
 
 Cada slide es una plantilla con un diseño fijo: vos elegís el tipo y escribís los textos. Los
 límites de caracteres están en el JSON Schema; respetalos, porque un texto más largo no entra.
@@ -37,8 +50,7 @@ límites de caracteres están en el JSON Schema; respetalos, porque un texto má
 - \`costBreakdown\`: desglose de costos con rangos. **Solo** con rangos que estén en la sección Precios, copiados tal cual (se controla: un rango que no esté ahí rechaza el carrusel). Si no hay, no uses esta slide.
 - \`steps\`: 3 a 5 pasos numerados, cada uno con título y explicación.
 - \`cta\`: cierre con llamado a la acción. \`button\` dice la acción concreta (ej. "Escribime por WhatsApp").
-
-No uses ${AI_BLOCKED_SLIDES.map((type) => `\`${type}\``).join(" ni ")}: sus cifras tienen que venir de datos reales que todavía no tenés.
+{{data}}
 
 ## Énfasis
 
@@ -51,6 +63,22 @@ de la portada, en \`name\` de \`comparison\`, en rangos ni en \`button\`.
 Nombres de Lucide en kebab-case (ej. \`message-circle\`, \`calendar-clock\`, \`file-spreadsheet\`).
 Si no estás seguro de que un ícono existe, usá uno común.
 `;
+
+/**
+ * What the AI reads about the templates (`slides.md`). With `data`, the brand has real data
+ * (`data.json`) and may use the data slides.
+ */
+export function aiSlideGuide(options: { data: boolean }): string {
+  const dataSlides = DATA_SLIDES.map((type) => `\`${type}\``).join(" ni ");
+  const dataPart = options.data
+    ? `- \`bigNumber\`: una cifra enorme de \`data.json\` con su contexto.
+- \`chart\`: un gráfico de líneas o barras con un dataset de \`data.json\`.
+
+${DATA_GUIDE}`
+    : `
+No uses ${dataSlides}: sus cifras tienen que venir de datos reales que esta marca no tiene.`;
+  return AI_SLIDE_GUIDE_BASE.replace("{{data}}", dataPart);
+}
 
 /** A range as written, for comparing: no case, no spaces, one kind of dash. */
 function normalizeRange(text: string): string {
@@ -66,12 +94,18 @@ function normalizeRange(text: string): string {
  * (the brand's pricing document, empty when there is none), every range of a `costBreakdown` has
  * to be written in it as is: the AI never makes up a price (CLAUDE.md, rule 9). Refinements
  * don't reach the JSON Schema, so the brand's CLAUDE.md lists the pillar keys and `task.json`
- * the series' slides.
+ * the series' slides. Without `data` the data slides are rejected; with it, a chart must point
+ * to one of its datasets and a bigNumber must show one of its figures (`isFigure`).
  */
 export function aiCarouselSchema(
   pillarKeys: readonly string[],
-  options: { requiredSlides?: readonly string[]; pricing?: string } = {},
+  options: {
+    requiredSlides?: readonly string[];
+    pricing?: string;
+    data?: { datasets: readonly string[]; isFigure: (value: string) => boolean };
+  } = {},
 ) {
+  const data = options.data;
   const required = options.requiredSlides ?? [];
   const pricing = options.pricing === undefined ? undefined : normalizeRange(options.pricing);
   return carouselSchema.superRefine((carousel, ctx) => {
@@ -110,11 +144,28 @@ export function aiCarouselSchema(
       });
     }
     carousel.slides.forEach((slide, index) => {
-      if ((AI_BLOCKED_SLIDES as readonly string[]).includes(slide.type)) {
+      if (!data) {
+        if ((DATA_SLIDES as readonly string[]).includes(slide.type)) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["slides", index, "type"],
+            message: `No se puede usar \`${slide.type}\`: necesita datos reales y esta marca no tiene.`,
+          });
+        }
+        return;
+      }
+      if (slide.type === "chart" && !data.datasets.includes(slide.datasetRef)) {
         ctx.addIssue({
           code: "custom",
-          path: ["slides", index, "type"],
-          message: `No se puede usar \`${slide.type}\` todavía: necesita datos reales.`,
+          path: ["slides", index, "datasetRef"],
+          message: `"${slide.datasetRef}" no es un dataset de data.json. Usá uno de: ${data.datasets.join(", ")}.`,
+        });
+      }
+      if (slide.type === "bigNumber" && !data.isFigure(slide.value)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["slides", index, "value"],
+          message: `"${slide.value}" no es una cifra de data.json: copiá el \`value\` de una de \`figures\` tal cual.`,
         });
       }
     });

@@ -42,6 +42,8 @@ export const seedBrands: NewBrand[] = [
     stylePreset: "soft",
     timezone: "America/Argentina/Buenos_Aires",
     postsPerDayTarget: 1,
+    // Personal money in Argentina: its content may show the dollar (phase 3, T11).
+    dataSources: ["bluelytics"],
     themeTokens: {
       colors: {
         bg: "#0B0B12",

@@ -7,6 +7,7 @@ import { BrandDangerZone } from "@/components/brands/brand-danger-zone";
 import { BrandForm } from "@/components/brands/brand-form";
 import { BrandTabs } from "@/components/brands/brand-tabs";
 import { ContactForm } from "@/components/brands/contact-form";
+import { DataSourcesForm } from "@/components/brands/data-sources-form";
 import { Plate } from "@/components/console/plate";
 import { timezoneOptions } from "@/lib/brand-form";
 import { db } from "@/lib/db";
@@ -52,6 +53,15 @@ export default async function BrandPage({ params }: PageProps<"/brands/[slug]">)
           codePrefix={brand.codePrefix}
           number={brand.whatsappNumber}
           message={brand.whatsappMessageTemplate}
+          readOnly={brand.archivedAt !== null}
+        />
+      </section>
+      <section aria-labelledby="data-sources-heading" className="flex flex-col gap-6">
+        <Plate id="data-sources-heading">Fuentes de datos</Plate>
+        <DataSourcesForm
+          key={brand.updatedAt.toISOString()}
+          id={brand.id}
+          sources={brand.dataSources}
           readOnly={brand.archivedAt !== null}
         />
       </section>

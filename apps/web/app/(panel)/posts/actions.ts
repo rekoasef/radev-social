@@ -16,6 +16,7 @@ import {
   listPillars,
   markPublishedManually,
   rejectAndRegenerate,
+  resolveVersionDatasets,
   retryGeneration,
   transitionPost,
 } from "@radev/db";
@@ -81,27 +82,46 @@ export async function saveCarouselAction(
     };
   }
 
+  const post = code ? await getPostByCode(db, code) : undefined;
+  if (code && (!post || post.brandId !== brand.id))
+    return { status: "error", message: "Ese post ya no existe." };
+
+  // Charts freeze their points with the version: the ones already in the post keep theirs, a
+  // new one takes the brand's data of today (phase 3, T11).
+  const datasets = await resolveVersionDatasets(db, {
+    brandId: brand.id,
+    postId: post?.id ?? null,
+    content: carousel.data,
+  });
+  if (!datasets.ok) {
+    const fields: Record<string, string> = {};
+    carousel.data.slides.forEach((slide, index) => {
+      if (slide.type === "chart" && datasets.missing.includes(slide.datasetRef))
+        fields[`slides.${index}.datasetRef`] = "No hay datos para este gráfico.";
+    });
+    return { status: "error", message: "Hay gráficos sin datos de la marca.", fields };
+  }
+
   let publicCode: string;
-  if (code) {
-    const post = await getPostByCode(db, code);
-    if (!post || post.brandId !== brand.id)
-      return { status: "error", message: "Ese post ya no existe." };
+  if (post) {
     const result = await addPostVersion(db, {
       postId: post.id,
       content: carousel.data,
       origin: "manual",
+      datasets: datasets.datasets,
     });
     if (!result.ok) return { status: "error", message: result.reason };
     await queueRender(result.version.id);
     publicCode = post.publicCode;
   } else {
-    const { post, version } = await createPost(db, {
+    const created = await createPost(db, {
       brandId: brand.id,
       content: carousel.data,
       origin: "manual",
+      datasets: datasets.datasets,
     });
-    await queueRender(version.id);
-    publicCode = post.publicCode;
+    await queueRender(created.version.id);
+    publicCode = created.post.publicCode;
   }
 
   revalidatePath("/posts");
@@ -131,6 +151,8 @@ export async function restoreVersionAction(form: FormData): Promise<void> {
     postId: post.id,
     content: content.data,
     origin: "manual",
+    // Its charts come back with the numbers they had.
+    datasets: version.datasets,
   });
   if (!result.ok) throw new Error(result.reason);
   await queueRender(result.version.id);

@@ -25,6 +25,12 @@ describe("decimalsFor", () => {
   it("shows no decimals when every value is whole", () => {
     expect(decimalsFor([12, 18, 9])).toBe(0);
   });
+
+  it("never shows more decimals than the values have", () => {
+    expect(decimalsFor([1.4, 0.4, 1.8])).toBe(1);
+    expect(decimalsFor([1.4, 0.25])).toBe(2);
+    expect(decimalsFor([0.123456, 3])).toBe(2);
+  });
 });
 
 describe("withUnit", () => {

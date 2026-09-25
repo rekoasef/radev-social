@@ -2,6 +2,7 @@
 
 import {
   type BrandTheme,
+  type Datasets,
   exampleDatasets,
   exampleSlidesByPreset,
   extremeSlides,
@@ -44,6 +45,7 @@ export function SlidePreview({
   onQa,
   qaOverlap = false,
   overlay,
+  datasets = exampleDatasets,
 }: {
   theme: BrandTheme;
   brandName: string;
@@ -65,6 +67,8 @@ export function SlidePreview({
    * (the carousel editor puts its drag handles here).
    */
   overlay?: (scale: number, frame: () => HTMLElement | null) => ReactNode;
+  /** Points of `chart` slides; the example dollar by default (the brand gallery). */
+  datasets?: Datasets;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(420);
@@ -94,7 +98,7 @@ export function SlidePreview({
     return () => {
       active = false;
     };
-  }, [theme, type, extreme, width, content, qaOverlap]);
+  }, [theme, type, extreme, width, content, qaOverlap, datasets]);
 
   const scale = width / FORMAT.width;
   const slide = content ?? (extreme ? extremeSlides : exampleSlidesByPreset[theme.preset])[type];
@@ -120,7 +124,7 @@ export function SlidePreview({
             glow={type === "cover" || type === "cta"}
             assets={assets}
           >
-            <SlideContent theme={theme} slide={slide} datasets={exampleDatasets} assets={assets} />
+            <SlideContent theme={theme} slide={slide} datasets={datasets} assets={assets} />
           </SlideFrame>
         </div>
         {overlay?.(

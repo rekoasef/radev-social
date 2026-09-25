@@ -2,7 +2,7 @@
 
 import { emptyField, type FieldSpec, parseEmphasis, SlideIcon } from "@radev/slides";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
-import { useId } from "react";
+import { createContext, useContext, useId } from "react";
 
 // Form controls for one slide, built from its field spec (packages/slides, SLIDE_FIELDS). Values
 // go in and out as plain JSON; errors come keyed by path ("cards.1.label").
@@ -161,6 +161,83 @@ function ItemControls({
   );
 }
 
+/** The brand's datasets a `chart` can point to (key and what it shows), for the dataset field. */
+export type DatasetOption = { key: string; title: string };
+export const DatasetOptions = createContext<readonly DatasetOption[]>([]);
+
+function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+  error,
+  placeholder,
+}: {
+  label: string;
+  value: Value;
+  options: readonly { value: string; label: string }[];
+  onChange: (v: Value) => void;
+  error?: string;
+  placeholder?: string;
+}) {
+  const id = useId();
+  const current = typeof value === "string" ? value : "";
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-sm text-ink-dim">
+        {label}
+      </label>
+      <select
+        id={id}
+        value={current}
+        onChange={(e) => onChange(e.target.value)}
+        className="console-field w-full"
+        aria-invalid={error ? true : undefined}
+      >
+        {placeholder && (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        )}
+        {/* A frozen dataset the brand no longer offers still shows as chosen. */}
+        {current && !options.some((o) => o.value === current) && (
+          <option value={current}>{current}</option>
+        )}
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {error && <p className="text-sm text-tally-red">{error}</p>}
+    </div>
+  );
+}
+
+function DatasetField({
+  field,
+  value,
+  onChange,
+  error,
+}: {
+  field: Extract<FieldSpec, { kind: "dataset" }>;
+  value: Value;
+  onChange: (v: Value) => void;
+  error?: string;
+}) {
+  const options = useContext(DatasetOptions);
+  return (
+    <SelectField
+      label={field.label}
+      value={value}
+      options={options.map((o) => ({ value: o.key, label: o.title }))}
+      onChange={onChange}
+      error={error}
+      placeholder="Elegí qué datos mostrar"
+    />
+  );
+}
+
 function move<T>(list: T[], from: number, to: number): T[] {
   const next = [...list];
   const [item] = next.splice(from, 1);
@@ -216,6 +293,27 @@ export function Fields({
                 onChange={(v) => set(field.key, v)}
                 error={errors[key]}
                 icons={icons}
+              />
+            );
+          case "choice":
+            return (
+              <SelectField
+                key={key}
+                label={field.label}
+                value={current}
+                options={field.options}
+                onChange={(v) => set(field.key, v)}
+                error={errors[key]}
+              />
+            );
+          case "dataset":
+            return (
+              <DatasetField
+                key={key}
+                field={field}
+                value={current}
+                onChange={(v) => set(field.key, v)}
+                error={errors[key]}
               />
             );
           case "object": {

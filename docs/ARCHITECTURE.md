@@ -172,7 +172,7 @@ Todos idempotentes (clave `singletonKey` derivada del objetivo), con reintentos 
 | `review.notify` | post entra a `in_review` | aviso agrupado por Telegram |
 | `post.publish` | `startAfter = scheduled_at` | publica vía adaptador |
 | `slots.fill` | cron diario **dentro de la ventana de generación** | llena slots vacíos de los próximos días respetando la mezcla |
-| `data.refresh` | cron diario | snapshot de Bluelytics |
+| `data.refresh` | cron diario (19:00 de Buenos Aires; al arrancar el worker si no hay datos) o "Actualizar ahora" en Ajustes | snapshot de Bluelytics |
 | `metrics.sync` | cron (F6) | métricas por publicación |
 | `tokens.refresh` | cron | renueva tokens de TikTok |
 | `backup.run` | cron diario | lo ejecuta el contenedor de backup |
@@ -216,7 +216,7 @@ Verificado el 2026-09-24 con Claude Code 2.1.282 (Fase 3, T0):
 - **Aislamiento**: por ejecución, `packages/ai/workspace.ts` crea `/tmp/radev-social/runs/<runId>/` (fuera del repo) y escribe:
   - `CLAUDE.md` — armado desde la base: voz + reglas + precios + casos de la marca.
   - `task.json` — idea, pilar, tipo de hook sugerido, feedback de rechazo, violaciones de QA.
-  - `recent-posts.json`, `winners.json`, `data.json` (según la tarea).
+  - `recent-posts.json`, `winners.json`, `data.json` (según la tarea). `data.json` (`BrandData` de `packages/core/src/data`): `asOf`, `datasets` (series para `chart`) y `figures` (cifras ya escritas para `bigNumber`), armados desde el último snapshot de cada fuente de la marca.
   Claude Code se ejecuta con ese `cwd`, así carga el CLAUDE.md de la marca y no el de desarrollo. El directorio se borra al terminar (se conserva si falló, para depurar).
 - **Salida**: sobre JSON (`is_error`, `structured_output`, `session_id`, uso). Se valida otra vez con Zod.
 - **Binario** (Fase 3, T4): `@anthropic-ai/claude-code` fijado (versión exacta) como dependencia de `packages/ai`; su script de instalación copia el binario nativo de la plataforma. Misma versión en desarrollo y en Docker, sin instalación global ni actualizaciones automáticas (`DISABLE_AUTOUPDATER=1`). Para cambiar de versión: subir el número en `packages/ai/package.json` y en las excepciones de `pnpm-workspace.yaml`.
@@ -262,7 +262,7 @@ Router (`packages/ai/src/router.ts`): prueba el principal y pasa al respaldo ant
 
 ### Generación de un carrusel (Fase 3, T7)
 
-"Generar con IA" (Nuevo post) crea el post en `generating` sin versión, con el pedido en `posts.generation_request`, y encola `carousel.generate`. El worker arma el workspace (`CLAUDE.md` de la marca, `task.json`, `slides.md` con la guía de plantillas, `recent-posts.json`), pasa por la ruta de `carousel.generate`, registra cada intento y valida con `aiCarouselSchema` (pilares de la marca; sin `chart` ni `bigNumber` hasta tener `data.json`). OK → versión `ai` con su `generation_run_id`, `generationDone` y render. Respuesta mal armada → un reintento con los problemas como feedback. Límite → reprogramación con backoff (`generation_retry_at`). Error reintentable → reintento de pg-boss (2). Lo demás → `generationFailed`; el panel muestra los errores y "Reintentar generación".
+"Generar con IA" (Nuevo post) crea el post en `generating` sin versión, con el pedido en `posts.generation_request`, y encola `carousel.generate`. El worker arma el workspace (`CLAUDE.md` de la marca, `task.json`, `slides.md` con la guía de plantillas, `recent-posts.json`), pasa por la ruta de `carousel.generate`, registra cada intento y valida con `aiCarouselSchema` (pilares de la marca; `chart` y `bigNumber` solo si la marca tiene fuentes de datos: el dataset tiene que estar en `data.json` y la cifra, en sus `figures`). OK → versión `ai` con su `generation_run_id`, `generationDone` y render. Respuesta mal armada → un reintento con los problemas como feedback. Límite → reprogramación con backoff (`generation_retry_at`). Error reintentable → reintento de pg-boss (2). Lo demás → `generationFailed`; el panel muestra los errores y "Reintentar generación".
 
 Desde el **banco de ideas** (`/ideas`, T9), "Generar" abre Nuevo post con `?idea=<id>`: el formulario viene con el título y el ángulo (`ideaPrompt`) y el pilar de la idea. Al crear el post, la idea pasa a `used` en la misma transacción (`createGeneratingPost` con `ideaId`, que queda en `posts.idea_id`); si ya no estaba `new`, no se crea nada. Estados de una idea: `new` → `used` | `discarded`, y `discarded` → `new` (`packages/core/src/ideas/ideas.ts`); las descartadas no se borran.
 
@@ -314,7 +314,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 
 | Tabla | Campos principales |
 |---|---|
-| `brands` | id, slug, name, code_prefix (ej. `RA`), style_preset, theme_tokens (jsonb), timezone, posts_per_day_target, ai_daily_limit, ai_monthly_limit, whatsapp_number, whatsapp_message_template, archived_at |
+| `brands` | id, slug, name, code_prefix (ej. `RA`), style_preset, theme_tokens (jsonb), timezone, posts_per_day_target, ai_daily_limit, ai_monthly_limit, whatsapp_number, whatsapp_message_template, data_sources (text[]: fuentes de datos que usa su contenido, ej. `bluelytics`), archived_at |
 | `brand_assets` | id, brand_id, role (`logo` \| `hero` \| `decoration` \| `other`), path (relativo a `MEDIA_DIR`), mime, width, height (null en un SVG sin tamaño), size_bytes, created_at, updated_at |
 | `brand_documents` | id, brand_id, kind (`voice` \| `pricing` \| `cases` \| `rules`), content (markdown), version, created_at — la versión vigente es la más alta |
 | `content_pillars` | id, brand_id, key, name, description, target_share (0–1), archived_at |
@@ -322,7 +322,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `idea_requests` | id, brand_id, task (`ideas.generate` \| `ideas.research`), params (jsonb: count, pillarKey, seriesKey, focus), status (`queued` \| `running` \| `succeeded` \| `failed`), error, idea_count, created_at, finished_at |
 | `content_series` | id, brand_id, key, name, pillar_id, hook_type, brief (Markdown), required_slides (jsonb), archived_at, created_at, updated_at |
 | `posts` | id, brand_id, public_code, idea_id, pillar_id, hook_type, status, current_version_id, scheduled_at, slot_id, rejection_feedback, created_at, updated_at |
-| `post_versions` | id, post_id, number, content (jsonb `Carousel`), schema_version, origin (`ai` \| `manual`), generation_run_id, created_at |
+| `post_versions` | id, post_id, number, content (jsonb `Carousel`), schema_version, origin (`ai` \| `manual`), generation_run_id, datasets (jsonb: puntos de sus `chart` por `datasetRef`, congelados al guardarla), created_at |
 | `assets` | id, post_version_id, format (`4x5`; enum ampliable), slide_index, path, width, height, checksum |
 | `schedule_slots` | id, brand_id, weekday (0–6), local_time, active |
 | `social_accounts` | id, brand_id, network, external_id, handle, access_token_enc, refresh_token_enc, expires_at, status |
@@ -330,7 +330,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `ai_routes` | id, task, brand_id (nullable = global), provider, model, fallback_provider, fallback_model. Única por tarea y marca, con una sola global por tarea (`NULLS NOT DISTINCT`) |
 | `generation_runs` | id, brand_id, post_id (null en pedidos de ideas), task, role (`primary` \| `fallback`), provider, model, status (`succeeded` \| `failed`), error_kind, error, input_tokens, output_tokens, cost_usd (nullable), duration_ms, num_turns, session_id, created_at. Una fila por intento |
 | `settings` | clave/valor global (ventana de generación, etc.) |
-| `data_snapshots` | id, source (`bluelytics`), fetched_at, payload (jsonb) |
+| `data_snapshots` | id, source (`bluelytics`), as_of (fecha del dato), fetched_at, payload (jsonb, validado al bajarlo). Uno por fuente y día: otro refresh el mismo día lo reemplaza |
 | `post_metrics` (F6) | id, publication_id, captured_at, views, likes, comments, shares, saves, source (`api` \| `screenshot` \| `manual`) |
 | `audience_snapshots` (F6) | id, brand_id, network, captured_at, data (jsonb), source |
 | `links`, `link_clicks` (F6) | slug, destination, brand_id, post_id / link_id, clicked_at, referrer |

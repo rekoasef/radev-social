@@ -3,6 +3,8 @@ import {
   AI_TASKS,
   ASSET_ROLES,
   BRAND_DOCUMENT_KINDS,
+  DATA_SOURCES,
+  type DataSeries,
   GENERATION_RUN_STATUSES,
   type GenerationRequest,
   IDEA_REQUEST_STATUSES,
@@ -21,6 +23,7 @@ import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
   check,
+  date,
   index,
   integer,
   jsonb,
@@ -62,6 +65,12 @@ export const brands = pgTable(
     aiMonthlyLimit: integer("ai_monthly_limit"),
     whatsappNumber: text("whatsapp_number"),
     whatsappMessageTemplate: text("whatsapp_message_template"),
+    /** Data sources whose numbers the brand's content may show (DATA_SOURCES, e.g. bluelytics). */
+    dataSources: text("data_sources")
+      .array()
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     /** Number the next post gets in its public code (RA-0001, RA-0002…). Never reused. */
     nextPostNumber: integer("next_post_number").notNull().default(1),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
@@ -318,6 +327,11 @@ export const postVersions = pgTable(
     generationRunId: uuid("generation_run_id").references((): AnyPgColumn => generationRuns.id, {
       onDelete: "set null",
     }),
+    /**
+     * Points of this version's `chart` slides, by datasetRef, frozen when it was saved (phase 3,
+     * T11): a new render always draws the numbers the text was written with.
+     */
+    datasets: jsonb("datasets").$type<Record<string, DataSeries>>(),
     createdAt: createdAt(),
   },
   (t) => [
@@ -450,6 +464,27 @@ export const generationRuns = pgTable(
   ],
 );
 
+/**
+ * What a data source said on a day (`data.refresh`), e.g. the dollar from Bluelytics. One per
+ * source and day: a second refresh the same day replaces it (rule 8).
+ */
+export const dataSnapshots = pgTable(
+  "data_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    source: text("source", { enum: DATA_SOURCES }).notNull(),
+    /** Date of the data, as the source reports it. */
+    asOf: date("as_of").notNull(),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+    /** The source's own shape, validated when fetched (e.g. BluelyticsSnapshot of packages/core). */
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+  },
+  (t) => [
+    uniqueIndex("data_snapshots_source_as_of_unique").on(t.source, t.asOf),
+    check("data_snapshots_source_valid", sql`${t.source} in (${inList(DATA_SOURCES)})`),
+  ],
+);
+
 /** Global key/value settings (e.g. the AI generation window). */
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
@@ -473,6 +508,7 @@ export type Publication = typeof publications.$inferSelect;
 export type NewBrandAsset = typeof brandAssets.$inferInsert;
 export type BrandDocument = typeof brandDocuments.$inferSelect;
 export type AiRouteRow = typeof aiRoutes.$inferSelect;
+export type DataSnapshot = typeof dataSnapshots.$inferSelect;
 export type GenerationRun = typeof generationRuns.$inferSelect;
 export type NewGenerationRun = typeof generationRuns.$inferInsert;
 

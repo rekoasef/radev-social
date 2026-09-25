@@ -5,15 +5,21 @@ import {
   type CarouselRenderJob,
   carouselGenerateKey,
   carouselRenderKey,
+  DATA_REFRESH_CRON,
+  DATA_REFRESH_TZ,
+  DATA_SOURCES,
+  type DataRefreshJob,
+  dataRefreshKey,
   IDEA_REQUEST_TASKS,
   type IdeaRequestJob,
   JOBS,
   QUEUE_OPTIONS,
 } from "@radev/core";
-import { createDb, failGeneration, failIdeaRequest } from "@radev/db";
+import { createDb, failGeneration, failIdeaRequest, getLatestSnapshot } from "@radev/db";
 import { type JobWithMetadata, PgBoss } from "pg-boss";
 import { generateCarousel, RetryableGenerationError } from "./jobs/carousel-generate";
 import { failRender, renderCarousel } from "./jobs/carousel-render";
+import { refreshData } from "./jobs/data-refresh";
 import { RetryableIdeasError, runIdeaRequest } from "./jobs/ideas-request";
 import { createLogger } from "./logger";
 import { closeBrowser } from "./render/browser";
@@ -164,10 +170,39 @@ async function main() {
     );
   }
 
+  // Real data (Bluelytics): once a day by cron, or by hand from the panel. If the worker was off
+  // at that time, it catches up once when it starts; with no data at all, it fetches right away.
+  await boss.createQueue(JOBS.dataRefresh, QUEUE_OPTIONS[JOBS.dataRefresh]);
+  await boss.work(
+    JOBS.dataRefresh,
+    { batchSize: 1, includeMetadata: true },
+    async ([job]: JobWithMetadata<DataRefreshJob>[]) => {
+      if (!job) return;
+      const jobLog = log.child({ job: JOBS.dataRefresh, id: job.id, source: job.data.source });
+      try {
+        await refreshData({ db, log: jobLog }, job.data);
+      } catch (error) {
+        jobLog.error("data refresh failed", { error, attempt: job.retryCount + 1 });
+        throw error;
+      }
+    },
+  );
+  for (const source of DATA_SOURCES) {
+    await boss.schedule(
+      JOBS.dataRefresh,
+      DATA_REFRESH_CRON,
+      { source },
+      { tz: DATA_REFRESH_TZ, key: source, missed: "once", singletonKey: dataRefreshKey(source) },
+    );
+    if (!(await getLatestSnapshot(db, source))) {
+      await boss.send(JOBS.dataRefresh, { source }, { singletonKey: dataRefreshKey(source) });
+    }
+  }
+
   log.info("worker ready", {
     schema: "pgboss",
     schemaVersion: await boss.schemaVersion(),
-    queues: [JOBS.carouselGenerate, JOBS.carouselRender, ...IDEA_REQUEST_TASKS],
+    queues: [JOBS.carouselGenerate, JOBS.carouselRender, ...IDEA_REQUEST_TASKS, JOBS.dataRefresh],
   });
 
   let stopping = false;

@@ -120,12 +120,12 @@ Las slides sin referencia (`statement`, `question`, `cta` y las demás) se dise�
 
 **`bigNumber`** — cifra enorme con contexto.
 - `kicker?` (≤30) · `value` (≤10, sin énfasis) · `label` (≤80) · `context?` (≤140) · `source` (≤90, obligatorio)
-- `value` debe existir en `data.json`; nunca inventado.
+- `value` debe existir en `data.json` (`figures`, se controla al validar); nunca inventado. La `source` la pone el código (la de la cifra).
 
 **`chart`** — gráfico simple de líneas o barras en SVG.
 - `title` (≤60) · `kind`: `line` | `bar` · `datasetRef` · `caption?` (≤100) · `source` (≤90)
-- La IA elige el dataset; los puntos los inyecta el código. Cada dataset (`chartDatasetSchema`) tiene `unit?`, `unitPosition` y 2–60 puntos `{ label≤10, value }`. El render recibe los datasets de la marca; si falta el de `datasetRef`, falla (nunca se dibuja un gráfico sin datos reales).
-- Números con "." de miles y "," decimal (`formatNumber`, sin `Intl` para no depender del runtime). Sin decimales si todos los valores son enteros o desde 100.
+- La IA elige el dataset; los puntos los inyecta el código. Cada dataset (`chartDatasetSchema`) tiene `unit?`, `unitPosition` y 2–60 puntos `{ label≤10, value }`. El render recibe los datasets **congelados en la versión** (`post_versions.datasets`: un render nuevo dibuja los mismos números con los que se escribió el texto); si falta el de `datasetRef`, falla (nunca se dibuja un gráfico sin datos reales). La `source` la pone el código (la del dataset).
+- Números con "." de miles y "," decimal (`formatNumber`, sin `Intl` para no depender del runtime). Sin decimales si todos los valores son enteros o desde 100; nunca más decimales que los que traen los datos (1,4 → "1,4", no "1,40").
 
 **`cta`** — cierre con llamado a la acción.
 - `title` (≤70) · `subtitle?` (≤120) · `button` (≤50) · `icon?`

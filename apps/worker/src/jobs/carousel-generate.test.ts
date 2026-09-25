@@ -1,6 +1,13 @@
 import { type AIError, providerError, rateLimited, validationError } from "@radev/ai";
+import type { AiCarousel } from "@radev/slides/generation";
 import { describe, expect, it } from "vitest";
-import { buildTaskFiles, decide, MAX_RATE_LIMIT_ATTEMPTS, runRow } from "./carousel-generate";
+import {
+  buildTaskFiles,
+  decide,
+  MAX_RATE_LIMIT_ATTEMPTS,
+  runRow,
+  stampDataSources,
+} from "./carousel-generate";
 
 const fresh = { feedbackUsed: false, rateLimitAttempt: 0, lastTry: false };
 const failed = (error: AIError) => ({ ok: false as const, error, usage: null });
@@ -76,6 +83,28 @@ describe("buildTaskFiles", () => {
     });
     expect(JSON.parse(files["recent-posts.json"] ?? "")).toEqual(recent);
     expect(files["slides.md"]).toContain("# Guía de slides");
+  });
+
+  it("adds data.json and explains it when the brand has data", () => {
+    const data = {
+      asOf: "2026-09-25",
+      datasets: {},
+      figures: [
+        {
+          key: "usd-blue-venta",
+          label: "Dólar blue, venta",
+          value: "$ 1.560",
+          source: "Bluelytics",
+        },
+      ],
+    };
+    const request = { idea: "El dólar hoy", pillarKey: null, hookType: null };
+    const files = buildTaskFiles({ request, recent, data });
+    expect(JSON.parse(files["data.json"] ?? "")).toEqual(data);
+    expect(files["slides.md"]).toContain("## Datos (`data.json`)");
+    const without = buildTaskFiles({ request, recent, data: null });
+    expect(without["data.json"]).toBeUndefined();
+    expect(without["slides.md"]).toContain("No uses `chart` ni `bigNumber`");
   });
 
   it("lets the AI choose the pillar and hook when the operator didn't", () => {
@@ -170,6 +199,48 @@ describe("buildTaskFiles with a series", () => {
   it("leaves the series out of a post without one", () => {
     const task = JSON.parse(buildTaskFiles({ request, recent: [] })["task.json"] ?? "{}");
     expect(task.series).toBeUndefined();
+  });
+});
+
+describe("stampDataSources", () => {
+  const carousel = {
+    pillarKey: "dollar",
+    hookType: "data",
+    slides: [
+      { type: "cover", title: "El dólar" },
+      {
+        type: "chart",
+        title: "Cómo se movió",
+        kind: "line",
+        datasetRef: "usd-blue-30d",
+        source: "Dólar blue. Fuente: Bluelytics",
+      },
+      { type: "bigNumber", value: "$1.560", label: "Dólar blue", source: "la IA" },
+    ],
+  } as unknown as AiCarousel;
+  const series = {
+    title: "Dólar blue",
+    source: "Bluelytics, 20/09/2026",
+    unitPosition: "before" as const,
+    points: [],
+  };
+  const figure = {
+    key: "usd-blue-venta",
+    label: "Dólar blue, venta",
+    value: "$ 1.560",
+    source: "Bluelytics, 25/09/2026",
+  };
+
+  it("puts the source of the dataset and of the figure, not the AI's", () => {
+    const stamped = stampDataSources(carousel, {
+      datasets: { "usd-blue-30d": series },
+      figures: [figure],
+    });
+    expect(stamped.slides.map((slide) => ("source" in slide ? slide.source : null))).toEqual([
+      null,
+      "Bluelytics, 20/09/2026",
+      "Bluelytics, 25/09/2026",
+    ]);
   });
 });
 

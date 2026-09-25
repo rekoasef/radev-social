@@ -44,6 +44,16 @@ export {
   updateBrandTheme,
 } from "./queries/brands";
 export {
+  chartRefs,
+  getBrandData,
+  getLatestSnapshot,
+  resolveVersionDatasets,
+  saveDataSnapshot,
+  setBrandDataSources,
+  snapshotData,
+  type VersionDatasetsResult,
+} from "./queries/data";
+export {
   addGeneratedVersion,
   createGeneratingPost,
   failGeneration,
@@ -109,6 +119,7 @@ export {
   setVersionRenderProgress,
   type TransitionOutcome,
   transitionPost,
+  type VersionDatasets,
 } from "./queries/posts";
 export {
   createSeries,

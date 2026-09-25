@@ -8,6 +8,10 @@ import type { Slide, SlideType } from "./slides";
 export type FieldSpec = { key: string; label: string; optional?: boolean } & (
   | { kind: "text"; max: number; emphasis: boolean; multiline?: boolean; hint?: string }
   | { kind: "icon" }
+  /** One of a fixed set of values; the first one is the default. */
+  | { kind: "choice"; options: readonly { value: string; label: string }[] }
+  /** A dataset of the brand's data, by key (the editor lists them). */
+  | { kind: "dataset" }
   | { kind: "object"; fields: FieldSpec[] }
   | {
       kind: "list";
@@ -242,6 +246,16 @@ export const SLIDE_FIELDS: Record<SlideType, FieldSpec[]> = {
   ],
   chart: [
     text("title", "Título", L.chart.title),
+    {
+      key: "kind",
+      label: "Tipo de gráfico",
+      kind: "choice",
+      options: [
+        { value: "line", label: "Líneas" },
+        { value: "bar", label: "Barras" },
+      ],
+    },
+    { key: "datasetRef", label: "Datos", kind: "dataset" },
     text("caption", "Epígrafe", L.chart.caption, { optional: true }),
     plain("source", "Fuente", L.chart.source),
   ],
@@ -254,8 +268,8 @@ export const SLIDE_FIELDS: Record<SlideType, FieldSpec[]> = {
 };
 
 /**
- * Types the manual editor offers. `chart` needs datasets from the brand's data (phases 3 and
- * 5); `cover` and `cta` are always the first and last slides.
+ * Types the manual editor offers. `cover` and `cta` are always the first and last slides; `chart`
+ * only for a brand with data (the editor leaves it out otherwise).
  */
 export const EDITOR_MIDDLE_TYPES: readonly SlideType[] = [
   "statement",
@@ -267,6 +281,7 @@ export const EDITOR_MIDDLE_TYPES: readonly SlideType[] = [
   "costBreakdown",
   "steps",
   "bigNumber",
+  "chart",
 ];
 
 function emptyValue(field: FieldSpec): unknown {
@@ -276,6 +291,10 @@ function emptyValue(field: FieldSpec): unknown {
       return "";
     case "icon":
       return "circle";
+    case "choice":
+      return field.options[0]?.value ?? "";
+    case "dataset":
+      return "";
     case "object":
       return emptyObject(field.fields);
     case "list":
@@ -296,9 +315,7 @@ function emptyObject(fields: FieldSpec[]): Record<string, unknown> {
 
 /** A new slide of a type: required texts empty, lists at their minimum, icons "circle". */
 export function emptySlide(type: SlideType): Slide {
-  const base = emptyObject(SLIDE_FIELDS[type]);
-  if (type === "chart") Object.assign(base, { kind: "line", datasetRef: "" });
-  return { type, ...base } as Slide;
+  return { type, ...emptyObject(SLIDE_FIELDS[type]) } as Slide;
 }
 
 /** An empty value for one field (the editor uses it when an optional field is turned on). */

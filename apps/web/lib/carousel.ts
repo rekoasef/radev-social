@@ -1,5 +1,6 @@
+import type { DataSeries } from "@radev/core";
 import type { Brand } from "@radev/db";
-import { listBrandAssets } from "@radev/db";
+import { getBrandData, listBrandAssets } from "@radev/db";
 import {
   type BrandTheme,
   type Carousel,
@@ -7,6 +8,7 @@ import {
   parseTheme,
   type SlideAssets,
 } from "@radev/slides";
+import type { EditorData } from "@/components/posts/carousel-editor";
 import { mediaUrl } from "./brand-assets";
 import { db } from "./db";
 
@@ -41,4 +43,28 @@ export async function brandRenderContext(
     ]),
   );
   return { ok: true, theme: parsed.theme, assets };
+}
+
+/**
+ * The brand's data for the editor: today's datasets and figures, plus the datasets frozen with
+ * the version being edited (they win: that chart keeps its points). Null with neither.
+ */
+export async function editorData(
+  brandId: string,
+  frozen: Record<string, DataSeries> | null = null,
+): Promise<EditorData | null> {
+  const today = await getBrandData(db, brandId);
+  const datasets = { ...today?.datasets, ...frozen };
+  const keys = Object.keys(datasets);
+  if (!today && keys.length === 0) return null;
+  return {
+    datasets,
+    options: keys.map((key) => ({
+      key,
+      title: frozen?.[key]
+        ? `${datasets[key]?.title} (el de esta versión)`
+        : (datasets[key]?.title ?? key),
+    })),
+    figures: today?.figures ?? [],
+  };
 }

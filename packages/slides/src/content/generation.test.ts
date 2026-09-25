@@ -1,18 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { exampleCarousel } from "./examples";
-import {
-  AI_BLOCKED_SLIDES,
-  AI_SLIDE_GUIDE,
-  aiCarouselSchema,
-  describeRenderProblems,
-} from "./generation";
+import { aiCarouselSchema, aiSlideGuide, DATA_SLIDES, describeRenderProblems } from "./generation";
 
 describe("aiCarouselSchema", () => {
   const pillar = exampleCarousel.pillarKey;
   const withoutBlocked = {
     ...exampleCarousel,
     slides: exampleCarousel.slides.filter(
-      (slide) => !(AI_BLOCKED_SLIDES as readonly string[]).includes(slide.type),
+      (slide) => !(DATA_SLIDES as readonly string[]).includes(slide.type),
     ),
   };
 
@@ -67,8 +62,7 @@ describe("aiCarouselSchema with the pricing document", () => {
   const pillar = exampleCarousel.pillarKey;
   const base = exampleCarousel.slides.filter(
     (slide) =>
-      slide.type !== "costBreakdown" &&
-      !(AI_BLOCKED_SLIDES as readonly string[]).includes(slide.type),
+      slide.type !== "costBreakdown" && !(DATA_SLIDES as readonly string[]).includes(slide.type),
   );
   const breakdown = {
     type: "costBreakdown",
@@ -110,9 +104,65 @@ Diseño: usd 300-600 · Desarrollo: USD 500 – 1.200 · Contenido: a cargo tuyo
   });
 });
 
-describe("AI_SLIDE_GUIDE", () => {
-  it("tells the model which slides it can't use", () => {
-    for (const type of AI_BLOCKED_SLIDES) expect(AI_SLIDE_GUIDE).toContain(`\`${type}\``);
+describe("aiCarouselSchema with the brand's data", () => {
+  const pillar = exampleCarousel.pillarKey;
+  const [cover, ...rest] = exampleCarousel.slides.filter(
+    (slide) => !(DATA_SLIDES as readonly string[]).includes(slide.type),
+  );
+  const data = {
+    datasets: ["usd-blue-30d"],
+    isFigure: (value: string) => value === "$ 1.560",
+  };
+  const withSlides = (...slides: unknown[]) => ({
+    ...exampleCarousel,
+    slides: [cover, ...slides, ...rest],
+  });
+  const bigNumber = (value: string) => ({
+    type: "bigNumber",
+    value,
+    label: "pesos por dólar blue",
+    source: "Bluelytics, 25/09/2026",
+  });
+  const chart = (datasetRef: string) => ({
+    type: "chart",
+    title: "Cómo se movió el dólar",
+    kind: "line",
+    datasetRef,
+    source: "Bluelytics, 25/09/2026",
+  });
+
+  it("accepts a figure and a dataset of data.json", () => {
+    const parsed = aiCarouselSchema([pillar], { data }).safeParse(
+      withSlides(bigNumber("$ 1.560"), chart("usd-blue-30d")),
+    );
+    expect(parsed.success ? [] : parsed.error.issues).toEqual([]);
+  });
+
+  it("refuses a figure or a dataset that are not in data.json (rule 9)", () => {
+    const parsed = aiCarouselSchema([pillar], { data }).safeParse(
+      withSlides(bigNumber("$ 1.600"), chart("usd-euro-30d")),
+    );
+    expect(parsed.error?.issues.map((issue) => issue.path)).toEqual([
+      ["slides", 1, "value"],
+      ["slides", 2, "datasetRef"],
+    ]);
+  });
+});
+
+describe("aiSlideGuide", () => {
+  it("tells a brand without data which slides it can't use", () => {
+    const guide = aiSlideGuide({ data: false });
+    expect(guide).toContain("No uses `chart` ni `bigNumber`");
+    expect(guide).not.toContain("data.json");
+    expect(guide).not.toContain("{{data}}");
+  });
+
+  it("explains data.json to a brand with data", () => {
+    const guide = aiSlideGuide({ data: true });
+    expect(guide).not.toContain("No uses");
+    expect(guide).toContain("## Datos (`data.json`)");
+    expect(guide).toMatch(/cta.*\n- `bigNumber`/);
+    expect(guide).toMatch(/carruseles\.\n\n## Énfasis/);
   });
 });
 

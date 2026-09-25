@@ -8,13 +8,14 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 3 — Generación con IA (en curso, T1–T10 hechas). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T11 de la Fase 3: `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor.
+- **Fase:** 3 — Generación con IA (en curso, T1–T11 hechas). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T12 de la Fase 3: importar historial de posts → `winners.json` (depende de que el operador diga de dónde sale el historial; si no hay, se pospone).
+- **Para el operador (T11):** (1) mirar LU-0004 y LU-0005 (posts de prueba de Lumus con gráficos y cifras del dólar, en revisión) y Ajustes → Datos reales. (2) En la otra máquina, tildar Bluelytics en Marcas → Lumus → General → Fuentes de datos: el seed no toca marcas que ya existen.
 - **Para el operador (T10):** (1) en Ajustes → Ruteo de IA, cambiar `nex-agi/nex-n2.5-pro:free` (ya no existe en OpenRouter) por `nvidia/nemotron-3-super-120b-a12b:free` en `ideas.generate` (principal) y `carousel.generate` (respaldo). (2) Completar Precios de RAdev: sin rangos, los posts de la serie "¿Cuánto cuesta realmente…?" fallan a propósito (no inventan precios). (3) La serie está repetida en el documento de voz de RAdev: se puede sacar de ahí. (4) Mirar con login /ideas (pedidos a la IA) y Marcas → Series.
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
-- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0011_idea_requests_and_series`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T10 de la Fase 3
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0012_data_snapshots`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
+- **Última actualización:** 2026-09-25, al cerrar la T11 de la Fase 3
 
 ## Fase 3 — tareas
 
@@ -33,7 +34,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T8 | Rechazo con feedback → regeneración; regeneración automática por QA (máx. 2) | ✅ |
 | T9 | Banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca | ✅ |
 | T10 | `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web), serie "¿Cuánto cuesta realmente…?" | ✅ |
-| T11 | `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor | |
+| T11 | `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor | ✅ |
 | T12 | Importar historial de posts → `winners.json` | |
 | T13 | Cierre: criterio de terminado con ambas marcas, docs | |
 
@@ -92,7 +93,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Tests nuevos: rutas, reglas, topes, zonas horarias (Buenos Aires y Madrid con cambio de horario), backoff, router (9 casos), seed. Total del repo: 424.
 
 **T7 (2026-09-25)**, decisiones aprobadas por el operador:
-- (1) Respuesta que no pasa Zod → **un** reintento en el mismo job con los problemas como feedback (`previousProblems` en `task.json`); si vuelve a fallar, `failed`. (2) Límite en todos los proveedores → el post sigue `generating`, `posts.generation_retry_at` y el job se reprograma con `rateLimitDelayMs` (máx. 8 reprogramaciones, ~17 h; después `failed`). (3) Topes: al generar a mano, si se pasó el tope el formulario pide "Generar igual"; el worker no los vuelve a chequear (eso es para la generación automática, F4). (4) La IA no puede usar `chart` ni `bigNumber` hasta la T11 (sus cifras vienen de `data.json`, DESIGN-SYSTEM §5): `aiCarouselSchema` los rechaza. `costBreakdown`, solo con rangos de Precios (instrucción; se controla al revisar). (5) Guía de slides para la IA: `AI_SLIDE_GUIDE` → `slides.md` en el workspace.
+- (1) Respuesta que no pasa Zod → **un** reintento en el mismo job con los problemas como feedback (`previousProblems` en `task.json`); si vuelve a fallar, `failed`. (2) Límite en todos los proveedores → el post sigue `generating`, `posts.generation_retry_at` y el job se reprograma con `rateLimitDelayMs` (máx. 8 reprogramaciones, ~17 h; después `failed`). (3) Topes: al generar a mano, si se pasó el tope el formulario pide "Generar igual"; el worker no los vuelve a chequear (eso es para la generación automática, F4). (4) La IA no puede usar `chart` ni `bigNumber` hasta la T11 (desde la T11, solo con fuentes de datos) (sus cifras vienen de `data.json`, DESIGN-SYSTEM §5): `aiCarouselSchema` los rechaza. `costBreakdown`, solo con rangos de Precios (instrucción; se controla al revisar). (5) Guía de slides para la IA: `AI_SLIDE_GUIDE` → `slides.md` en el workspace.
 - `packages/slides/src/content/generation.ts` (entrada `@radev/slides/generation`, sin React, para el worker): `AI_SLIDE_GUIDE`, `AI_BLOCKED_SLIDES`, `aiCarouselSchema(pillarKeys)` (pilar de la marca + slides bloqueadas).
 - `core/jobs.ts`: `carousel.generate` (`{ postId, attempt }`, `retryLimit` 2 desde 60 s, `expireInSeconds` 20 min), `GenerationRequest`, `carouselGenerateKey`.
 - Migración `0008_ai_generation`: `posts.generation_request` (jsonb), `posts.generation_retry_at`, `post_versions.generation_run_id`. `packages/db/src/queries/generation.ts`: `createGeneratingPost` (nace `generating` sin versión; numeración compartida con `createPost` vía `takePostNumber`), `addGeneratedVersion` (`generationDone` + versión `ai`), `failGeneration`, `retryGeneration`, `setGenerationRetryAt`, `listGenerationRuns`, `listRecentPostHooks`. `recordGenerationRun` ahora devuelve el id.
@@ -127,6 +128,18 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Panel: /ideas suma "Pedir a la IA" (Proponer ideas: cantidad, pilar, serie; Investigar temas: foco, cantidad, pilar), la lista de pedidos (se refresca sola mientras hay uno abierto) y, en cada idea, serie y fuentes. "Generar con IA" suma el selector de serie (viene elegido desde una idea de serie). Pestaña **Marcas → Series**.
 - Tests: 533 en total (46 nuevos).
 - **Prueba real** (RAdev, por script que hace lo mismo que la web, porque el panel pide login): `ideas.generate` → OpenRouter 404 (`nex-agi/nex-n2.5-pro:free` ya no existe), respondió el respaldo Claude en 46 s: 5 ideas buenas, repartidas por pilar, sin cifras. Modelos gratuitos probados con la tarea real: `nemotron-3-super-120b` OK en 31 s (a la segunda; la primera, 503 por sobrecarga), `qwen3.8-27b` saturado (429) dos veces, `dots-3-note-preview` 2 min sin JSON. `ideas.research` → Claude, 2,5 min, 15 turnos, ~300.000 tokens de entrada: 5 ideas con fuentes reales de 2026 (ej. el cambio de precios de WhatsApp Business en octubre). Las 10 ideas quedaron en el banco de RAdev.
+
+**T11 (2026-09-25)**:
+- **Fuentes por marca**: `brands.data_sources` (hoy solo `bluelytics`), se eligen en Marcas → General → Fuentes de datos. El seed se la pone a Lumus. Nada de la fuente está atado a una marca (regla 6).
+- **Snapshots**: `data_snapshots` (uno por fuente y día; otro refresh el mismo día lo reemplaza, regla 8). Guarda lo que devolvió Bluelytics (`/v2/latest` + `/v2/evolution.json`, validados con Zod en el worker, recortado a 400 días). Sin clave: la API es pública y gratuita.
+- **Job `data.refresh`**: cron diario 19:00 (Buenos Aires) por fuente con `missed: "once"`, y al arrancar el worker si todavía no hay datos. Ajustes → **Datos reales** muestra lo último bajado, sus cifras, qué marcas la usan y "Actualizar ahora". 3 reintentos cada 5 min.
+- **Datos para el contenido** (`packages/core/src/data`): `bluelyticsData` arma datasets (`usd-{blue,oficial}-30d`, `usd-{blue,oficial}-12m` con el cierre de cada mes, `brecha-30d`) y cifras ya escritas (`$ 1.560`, `+0,3 %`, variación a 30 días y 12 meses, brecha). Todo cálculo lo hace el código; la IA solo copia (regla 9).
+- **IA**: con fuentes, el workspace suma `data.json` y `slides.md` explica cómo usarlo (`aiSlideGuide({ data })`). `aiCarouselSchema` exige que `datasetRef` sea uno de `data.json` y que el `value` de un `bigNumber` sea una de sus cifras (`findFigure`: acepta sin espacios o sin "$"). La `source` de `chart` y `bigNumber` la pone el código al guardar (`stampDataSources`): en la prueba real la IA escribió "… Fuente: Bluelytics" y la plantilla ya antepone "Fuente:". Sin fuentes, siguen prohibidas como antes.
+- **Datos congelados por versión**: `post_versions.datasets` guarda los puntos de sus `chart`. El render usa esos (un render nuevo no contradice el texto escrito con ellos). Al editar o regenerar, un gráfico que ya estaba conserva sus puntos y uno nuevo toma los de hoy (`versionDatasets`); restaurar una versión trae los suyos.
+- **Editor**: `chart` aparece solo si la marca tiene datos; campos nuevos `choice` (líneas/barras) y `dataset` (lista de datasets, marca "el de esta versión"). La fuente se completa sola al elegir el dataset. En `bigNumber`, "Cifras del día" con botón Usar. Guardar un gráfico sin datos da error en el campo.
+- **Formato**: `decimalsFor` nunca muestra más decimales de los que traen los datos (la brecha salía "1,40 %" en el gráfico y "1,4 %" en la cifra).
+- Migración `0012_data_snapshots` (solo agrega). Tests: 555 en total (22 nuevos).
+- **Prueba real** (Lumus, por script, en Docker): el worker bajó Bluelytics al arrancar (572 registros de historia). LU-0004 "cómo se movió el dólar blue en el último mes": 112 s, cover → `chart` 30 días → `bigNumber` +0,3 % → `chart` 12 meses → statement → cta, datos congelados, render sin problemas. LU-0005 "brecha": 132 s, `bigNumber` 1,4 % + `chart` de la brecha, fuente ya puesta por el código. Controles de `chart` (`--check`, normal y extremo) OK en las dos marcas.
 
 Pendiente de respuesta del operador: (1) ~~cuenta de OpenRouter~~ hecha en la T5; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 

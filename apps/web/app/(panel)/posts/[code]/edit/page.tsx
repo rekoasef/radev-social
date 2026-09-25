@@ -6,7 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plate } from "@/components/console/plate";
 import { CarouselEditor } from "@/components/posts/carousel-editor";
-import { brandRenderContext } from "@/lib/carousel";
+import { brandRenderContext, editorData } from "@/lib/carousel";
 import { db } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Editar post · RAdev Social" };
@@ -20,9 +20,10 @@ export default async function EditPostPage({ params }: PageProps<"/posts/[code]/
     getPostVersion(db, post.currentVersionId),
   ]);
   if (!brand || !version) notFound();
-  const [render, pillars] = await Promise.all([
+  const [render, pillars, data] = await Promise.all([
     brandRenderContext(brand),
     listPillars(db, brand.id),
+    editorData(brand.id, version.datasets),
   ]);
   const content = carouselSchema.safeParse(version.content);
   const editable = availableEvents(post.status).includes("edit");
@@ -55,6 +56,7 @@ export default async function EditPostPage({ params }: PageProps<"/posts/[code]/
           pillars={pillars.map((p) => ({ key: p.key, name: p.name }))}
           initial={content.data}
           post={{ code: post.publicCode, version: version.number }}
+          data={data}
         />
       )}
     </section>

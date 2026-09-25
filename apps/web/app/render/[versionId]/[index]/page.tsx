@@ -64,9 +64,14 @@ export default async function RenderSlidePage({
         glow={slide.type === "cover" || slide.type === "cta"}
         assets={render.assets}
       >
-        {/* Chart datasets arrive with the brand's data (phases 3 and 5); the editor does not
-            offer charts yet. */}
-        <SlideContent theme={render.theme} slide={slide} datasets={{}} assets={render.assets} />
+        {/* Charts draw the points frozen with the version (phase 3, T11); without them the
+            template fails, so a chart never goes out with made-up numbers. */}
+        <SlideContent
+          theme={render.theme}
+          slide={slide}
+          datasets={version.datasets ?? {}}
+          assets={render.assets}
+        />
       </SlideFrame>
       <RenderReady />
       {/* Next's dev-tools badge would end up in the renders. */}

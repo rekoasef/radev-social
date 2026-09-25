@@ -18,6 +18,7 @@ import {
   type TransitionOutcome,
   takePostNumber,
   transitionPost,
+  type VersionDatasets,
 } from "./posts";
 
 // AI generation of a post (phase 3, T7): the post is born `generating` with no version; the
@@ -71,7 +72,12 @@ export type GeneratedVersionResult =
  */
 export async function addGeneratedVersion(
   db: Database,
-  input: { postId: string; content: CarouselContent; generationRunId: string | null },
+  input: {
+    postId: string;
+    content: CarouselContent;
+    generationRunId: string | null;
+    datasets?: VersionDatasets;
+  },
 ): Promise<GeneratedVersionResult> {
   return db.transaction(async (tx) => {
     const moved = await transitionPost(tx, input.postId, "generationDone");
@@ -97,6 +103,7 @@ export async function addGeneratedVersion(
         content: input.content,
         origin: "ai",
         generationRunId: input.generationRunId,
+        datasets: input.datasets ?? null,
       })
       .returning();
     if (!version) throw new Error("No se pudo guardar la versión.");

@@ -6,7 +6,7 @@ import { Plate } from "@/components/console/plate";
 import { CarouselEditor } from "@/components/posts/carousel-editor";
 import { GenerateForm } from "@/components/posts/generate-form";
 import { getBrandContext } from "@/lib/active-brand";
-import { blankCarousel, brandRenderContext } from "@/lib/carousel";
+import { blankCarousel, brandRenderContext, editorData } from "@/lib/carousel";
 import { db } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Nuevo post · RAdev Social" };
@@ -24,11 +24,12 @@ export default async function NewPostPage({ searchParams }: PageProps<"/posts/ne
     );
   }
   const ideaId = typeof query.idea === "string" ? query.idea : undefined;
-  const [render, pillars, series, bankIdea] = await Promise.all([
+  const [render, pillars, series, bankIdea, data] = await Promise.all([
     brandRenderContext(brand),
     listPillars(db, brand.id),
     listActiveSeries(db, brand.id),
     ideaId && /^[0-9a-f-]{36}$/i.test(ideaId) ? getIdea(db, ideaId) : undefined,
+    editorData(brand.id),
   ]);
   const fromIdea =
     bankIdea && bankIdea.brandId === brand.id && bankIdea.status === "new"
@@ -89,6 +90,7 @@ export default async function NewPostPage({ searchParams }: PageProps<"/posts/ne
               assets={render.assets}
               pillars={pillars.map((p) => ({ key: p.key, name: p.name }))}
               initial={blankCarousel(pillars[0]?.key ?? "")}
+              data={data}
             />
           </section>
         </>
