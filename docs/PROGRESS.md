@@ -9,10 +9,10 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 3 — Generación con IA (por empezar). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T5 de la Fase 3: proveedor `openrouter`. Antes, el operador decide si crea la cuenta gratuita de OpenRouter o se pospone (ver pendientes de respuesta).
+- **Próximo paso:** T6 de la Fase 3: tablas `ai_routes` y `generation_runs`, router con respaldo y backoff, topes por marca, pantalla de ruteo.
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
-- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` y `pnpm db:seed`. El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` (ver `.env.example`). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T4 de la Fase 3
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` y `pnpm db:seed`. El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
+- **Última actualización:** 2026-09-25, al cerrar la T5 de la Fase 3
 
 ## Fase 3 — tareas
 
@@ -25,7 +25,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T2 | Tabla `brand_documents` (voz, precios, casos, reglas, con historial), seed desde `seeds/brands/`, editor en el panel | ✅ |
 | T3 | Workspace aislado: carpeta temporal fuera del repo con el CLAUDE.md de la marca armado desde la base (regla 7). Tests | ✅ |
 | T4 | Proveedor `claude-code` (`claude -p`, sobre JSON, detección de límite, timeout) + Claude Code CLI en la imagen del worker (amd64 y arm64). El operador genera `CLAUDE_CODE_OAUTH_TOKEN` con `claude setup-token` | ✅ |
-| T5 | Proveedor `openrouter` (HTTP, salida estructurada, nunca datos privados). Tests con fetch simulado | |
+| T5 | Proveedor `openrouter` (HTTP, salida estructurada, nunca datos privados). Tests con fetch simulado | ✅ |
 | T6 | Tablas `ai_routes` y `generation_runs`; router con respaldo, backoff ante `rate_limited`, topes por marca; pantalla de ruteo. Tests obligatorios | |
 | T7 | Job `carousel.generate`: "Generar" → JSON validado → versión `ai` → render; el panel muestra proveedor y modelo. 👁 | |
 | T8 | Rechazo con feedback → regeneración; regeneración automática por QA (máx. 2) | |
@@ -72,7 +72,14 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Pegar el token en el `.env` **entre comillas simples**: puede traer `#` (sin comillas, Node lo toma como comentario y lo corta) y con comillas dobles Docker Compose interpretaría un `$`. Anotado en `.env.example`. Al copiarlo de la terminal es fácil perder el principio: tiene que empezar con `sk-ant-oat`.
 - El límite de uso (429) sigue sin verse en real; la clasificación queda como está hasta que aparezca.
 
-Pendiente de respuesta del operador: (1) crear cuenta gratuita de OpenRouter y su API key (sin tarjeta) antes de la T5, o posponer OpenRouter; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
+**T5 (2026-09-25)**:
+- `packages/ai/src/openrouter.ts`: `createOpenRouterProvider({ env?, fetch?, url?, allowPaidModels? })`, con `fetch` nativo (sin SDK). Detalle de pedido, errores y límites en ARCHITECTURE §7.
+- **Regla aprobada por el operador: solo modelos `:free`.** Cualquier otro se rechaza antes de llamar (no quiere cobros). La cuenta de OpenRouter se creó sin saldo; la key tiene un tope de crédito configurado en la web de OpenRouter (no se usa: los `:free` no consumen saldo).
+- Tests con `fetch` simulado: datos con uso, key solo en la cabecera, JSON dentro de texto, Zod, reintento sin salida estructurada, 429 con `Retry-After`, error dentro de 200, respuesta cortada, modelo pago, herramientas, sin key, tiempo agotado, cancelación, falla de red.
+- **Prueba real** (`pnpm --filter @radev/ai smoke openrouter [modelo]`): `qwen/qwen3.8-27b:free` → 429 "Provider returned error" (modelo saturado, cuenta nueva); `nvidia/nemotron-3-super-120b-a12b:free` OK en 6,5 s pero copió la idea como hook (calidad baja); `nex-agi/nex-n2.5-pro:free` OK en 22 s con un hook en voseo. Precio 0 en todos. Queda como modelo por defecto de la prueba.
+- Modelos gratuitos con salida estructurada al 2026-09-25 (6): nex-n2.5-mini y nex-n2.5-pro, qwen3.8-27b, dots-3-note-preview, lfm-2.5-2.6b, nemotron-3-super-120b. La lista rota: se consulta en `openrouter.ai/api/v1/models?supported_parameters=structured_outputs`.
+
+Pendiente de respuesta del operador: (1) ~~cuenta de OpenRouter~~ hecha en la T5; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 
 ## Fase 2 — tareas
 

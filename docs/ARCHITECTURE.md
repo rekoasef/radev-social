@@ -223,6 +223,10 @@ Verificado el 2026-09-24 con Claude Code 2.1.282 (Fase 3, T0):
 - Salida estructurada con el mismo JSON Schema; validación con Zod igual.
 - **Nunca** se le envían datos privados (tokens, datos de clientes no publicables). Solo contenido destinado a ser público.
 - La oferta de modelos gratuitos rota: los modelos se configuran desde el panel, nunca en código.
+- **Solo modelos `:free`** (Fase 3, T5): el proveedor rechaza, sin llamar a OpenRouter, cualquier modelo cuyo id no termine en `:free` (regla 13). Un modelo pago solo se habilita a propósito (`allowPaidModels`). Además la cuenta no tiene saldo cargado: un modelo pago daría 402, nunca un cobro.
+- **Pedido** (`packages/ai/src/openrouter.ts`): `POST /api/v1/chat/completions`. El `CLAUDE.md` de la marca va como mensaje de sistema; los demás archivos, con su nombre, en el mensaje del usuario junto con el JSON Schema en texto. Se pide `response_format: json_schema` (no estricto: el modo estricto no admite campos opcionales) con `provider.require_parameters: true`; si el modelo no lo soporta (404/400), se reintenta una vez sin él. El resultado siempre pasa por Zod. Tareas con herramientas (`ideas.research`) se rechazan. Tiempo máximo: 2 minutos.
+- **Errores**: 429 → `rate_limited` (con `Retry-After` / `X-RateLimit-Reset`); 401 (key), 402 (saldo), 400/403/404 → no reintentables; 408, 5xx, errores dentro de una respuesta 200, respuesta cortada (`finish_reason: length`) o falla de red → reintentables.
+- **Límites de la cuenta gratuita** (sin créditos comprados): 20 pedidos por minuto y **50 por día**. Además, cada modelo gratuito puede estar saturado: OpenRouter devuelve 429 "Provider returned error" aunque la cuenta tenga cupo. Conviene tener más de un modelo gratuito en el ruteo.
 
 ### Ruteo por tarea
 

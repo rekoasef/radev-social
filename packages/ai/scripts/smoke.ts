@@ -1,25 +1,40 @@
-// Real run of the claude-code provider (phase 3, T4): a tiny generation with the operator's
-// credential from the root .env, in an isolated workspace. It never prints the credential.
-// Usage: pnpm --filter @radev/ai smoke [model]   (default: sonnet)
+// Real run of a provider (phase 3, T4–T5): a tiny generation with the operator's credentials
+// from the root .env. It never prints them.
+// Usage: pnpm --filter @radev/ai smoke [claude-code|openrouter] [model]
+//   defaults: claude-code with sonnet; openrouter with nex-agi/nex-n2.5-pro:free
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { claudeCredential, createClaudeCodeProvider } from "../src";
+import { claudeCredential, createClaudeCodeProvider, createOpenRouterProvider } from "../src";
 
 const envFile = fileURLToPath(new URL("../../../.env", import.meta.url));
 if (existsSync(envFile)) process.loadEnvFile(envFile);
 
-const credential = claudeCredential(process.env);
-console.log(`Credencial: ${credential ? credential.name : "ninguna"}`);
+const providerId = process.argv[2] ?? "claude-code";
+if (providerId !== "claude-code" && providerId !== "openrouter") {
+  console.error("Proveedor desconocido. Usá claude-code u openrouter.");
+  process.exit(1);
+}
+
+let provider: ReturnType<typeof createClaudeCodeProvider>;
+let model: string;
+if (providerId === "claude-code") {
+  const credential = claudeCredential(process.env);
+  console.log(`Credencial: ${credential ? credential.name : "ninguna"}`);
+  provider = createClaudeCodeProvider();
+  model = process.argv[3] ?? "sonnet";
+} else {
+  console.log(`Credencial: ${process.env.OPENROUTER_API_KEY ? "OPENROUTER_API_KEY" : "ninguna"}`);
+  provider = createOpenRouterProvider();
+  model = process.argv[3] ?? "nex-agi/nex-n2.5-pro:free";
+}
 
 const schema = z.object({
   hook: z.string().min(1).max(80),
   pillarKey: z.enum(["tips", "cases"]),
 });
 
-const model = process.argv[2] ?? "sonnet";
-const provider = createClaudeCodeProvider();
-console.log(`Generando con claude-code (${model})…`);
+console.log(`Generando con ${providerId} (${model})…`);
 
 const result = await provider.generate({
   task: "carousel.generate",
@@ -50,7 +65,7 @@ if (result.usage) {
   const { model: used, inputTokens, outputTokens, durationMs, numTurns, costUsd } = result.usage;
   console.log(
     `Modelo: ${used} · tokens ${inputTokens} entrada / ${outputTokens} salida · ` +
-      `${numTurns ?? "?"} turnos · ${(durationMs / 1000).toFixed(1)} s · precio de lista USD ${costUsd ?? "?"} (no se cobra con la suscripción)`,
+      `${numTurns ?? "?"} turnos · ${(durationMs / 1000).toFixed(1)} s · precio USD ${costUsd ?? "?"}`,
   );
 }
 process.exit(result.ok ? 0 : 1);

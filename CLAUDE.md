@@ -75,7 +75,8 @@ pnpm db:seed        # cargar marcas iniciales (solo agrega las que faltan)
 pnpm db:studio      # ver y editar la base
 
 # IA
-pnpm --filter @radev/ai smoke [modelo]  # generación mínima real con claude -p (CLAUDE_CODE_OAUTH_TOKEN en .env)
+pnpm --filter @radev/ai smoke [claude-code|openrouter] [modelo]
+                    # generación mínima real (CLAUDE_CODE_OAUTH_TOKEN / OPENROUTER_API_KEY en .env)
 
 # Slides
 pnpm --filter @radev/slides icons:sync   # regenerar la lista de íconos tras actualizar lucide-react

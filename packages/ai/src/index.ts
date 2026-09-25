@@ -16,6 +16,12 @@ export {
   validationError,
 } from "./errors";
 export { createFakeProvider, type FakeAnswer } from "./fake";
+export {
+  createOpenRouterProvider,
+  isFreeModel,
+  OPENROUTER_URL,
+  type OpenRouterOptions,
+} from "./openrouter";
 export { formatIssues, parseJsonText, parseOutput, toJsonSchema } from "./schema";
 export type { AIProvider, GenerationResult, GenerationTask, Usage } from "./types";
 export {
