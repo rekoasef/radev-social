@@ -6,7 +6,8 @@ import { createDb } from "../client";
 import { loadRootEnv } from "../load-root-env";
 import { createBrandAsset, listBrandAssets, setBrandAssetToken } from "../queries/brand-assets";
 import { listCurrentBrandDocuments, saveBrandDocument } from "../queries/brand-documents";
-import { brands, contentPillars } from "../schema";
+import { aiRoutes, brands, contentPillars } from "../schema";
+import { seedAiRoutes } from "./ai-routes";
 import {
   pendingSeedAssets,
   pendingSeedDocuments,
@@ -101,6 +102,24 @@ try {
     }
   }
   console.log(`Documentos cargados: ${documentsAdded.join(", ") || "ninguno (ya estaban)"}`);
+
+  // Global AI routes: only for tasks without one (a conflict on the task leaves it as it is).
+  const routesAdded = await db
+    .insert(aiRoutes)
+    .values(
+      seedAiRoutes.map(({ task, primary, fallback }) => ({
+        task,
+        provider: primary.provider,
+        model: primary.model,
+        fallbackProvider: fallback?.provider ?? null,
+        fallbackModel: fallback?.model ?? null,
+      })),
+    )
+    .onConflictDoNothing()
+    .returning({ task: aiRoutes.task });
+  console.log(
+    `Rutas de IA creadas: ${routesAdded.map((r) => r.task).join(", ") || "ninguna (ya estaban)"}`,
+  );
 } finally {
   await pool.end();
 }

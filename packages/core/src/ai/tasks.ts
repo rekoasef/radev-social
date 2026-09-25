@@ -19,3 +19,11 @@ export const isAiTask = (value: string): value is AiTask => AI_TASKS.some((t) =>
 
 export const isAiProvider = (value: string): value is AiProviderId =>
   AI_PROVIDERS.some((p) => p === value);
+
+/** Outcome of one attempt of a generation (generation_runs.status). */
+export const GENERATION_RUN_STATUSES = ["succeeded", "failed"] as const;
+export type GenerationRunStatus = (typeof GENERATION_RUN_STATUSES)[number];
+
+/** Which place of the route the attempt took. */
+export const ROUTE_ROLES = ["primary", "fallback"] as const;
+export type RouteRole = (typeof ROUTE_ROLES)[number];

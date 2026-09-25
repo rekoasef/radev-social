@@ -1,3 +1,4 @@
+import { isFreeModel } from "@radev/core";
 import { type AIError, providerError, rateLimited } from "./errors";
 import { parseJsonText, toJsonSchema } from "./schema";
 import type { AIProvider, GenerationResult, GenerationTask, Usage } from "./types";
@@ -8,9 +9,6 @@ import type { AIProvider, GenerationResult, GenerationTask, Usage } from "./type
 
 export const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 export const DEFAULT_OPENROUTER_TIMEOUT_MS = 2 * 60_000;
-
-/** Free variants end in `:free`. Anything else could charge the account (CLAUDE.md, rule 13). */
-export const isFreeModel = (model: string) => model.endsWith(":free");
 
 /**
  * Messages of a run. CLAUDE.md (the brand's instructions) goes as the system message; the other

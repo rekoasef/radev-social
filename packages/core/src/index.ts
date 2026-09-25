@@ -1,11 +1,35 @@
 // Pure domain: types, post state machine, rules. No I/O and no dependencies on other workspace packages.
+
+export {
+  type AiQuota,
+  type AiQuotaCheck,
+  checkAiQuota,
+  RATE_LIMIT_BACKOFF_MINUTES,
+  rateLimitDelayMs,
+  zonedPeriodStart,
+} from "./ai/limits";
+export {
+  AI_PROVIDER_LABELS,
+  AI_TASK_LABELS,
+  type AiRoute,
+  type AiRouteTarget,
+  checkAiRoute,
+  isFreeModel,
+  MAX_MODEL_ID_LENGTH,
+  resolveAiRoute,
+  TOOL_TASKS,
+} from "./ai/routing";
 export {
   AI_PROVIDERS,
   AI_TASKS,
   type AiProviderId,
   type AiTask,
+  GENERATION_RUN_STATUSES,
+  type GenerationRunStatus,
   isAiProvider,
   isAiTask,
+  ROUTE_ROLES,
+  type RouteRole,
 } from "./ai/tasks";
 export {
   isEmailAllowed,

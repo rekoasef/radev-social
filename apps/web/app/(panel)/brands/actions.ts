@@ -6,6 +6,7 @@ import {
   createBrand,
   deleteBrand,
   getBrandById,
+  setBrandAiLimits,
   setBrandArchived,
   updateBrand,
 } from "@radev/db";
@@ -105,4 +106,47 @@ export async function deleteBrandAction(
   await deleteBrand(db, brand.id);
   revalidatePath("/", "layout");
   redirect("/brands");
+}
+
+export type AiLimitsFormState =
+  | { status: "idle" }
+  | { status: "ok"; message: string }
+  | { status: "error"; message: string };
+
+/** Empty field: no cap. Otherwise a whole number from 0 (0 pauses generation). */
+const aiLimit = z
+  .string()
+  .trim()
+  .transform((value) => (value === "" ? null : Number(value)))
+  .pipe(
+    z
+      .number({ error: "Poné un número entero o dejalo vacío." })
+      .int({ error: "Poné un número entero o dejalo vacío." })
+      .min(0, { error: "El tope no puede ser negativo." })
+      .max(1000, { error: "Máximo 1000." })
+      .nullable(),
+  );
+const aiLimitsInput = z.object({ id: z.uuid(), daily: aiLimit, monthly: aiLimit });
+
+/** A brand's caps of successful AI generations (docs/ARCHITECTURE.md §7, "Topes propios"). */
+export async function saveAiLimitsAction(
+  _: AiLimitsFormState,
+  form: FormData,
+): Promise<AiLimitsFormState> {
+  await requireOperator();
+  const parsed = aiLimitsInput.safeParse(Object.fromEntries(form));
+  if (!parsed.success) {
+    return { status: "error", message: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+  const { id, daily, monthly } = parsed.data;
+  const brand = await getBrandById(db, id);
+  if (!brand || brand.archivedAt !== null) {
+    return { status: "error", message: "Esa marca no existe o está archivada." };
+  }
+  if (daily !== null && monthly !== null && daily > monthly) {
+    return { status: "error", message: "El tope diario no puede ser mayor que el mensual." };
+  }
+  await setBrandAiLimits(db, id, { daily, monthly });
+  revalidatePath(`/brands/${brand.slug}`);
+  return { status: "ok", message: "Topes guardados." };
 }

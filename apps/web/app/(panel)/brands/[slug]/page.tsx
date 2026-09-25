@@ -1,7 +1,8 @@
 import { canChangeCodePrefix, canDeleteBrand } from "@radev/core";
-import { countBrandPosts, getBrandBySlug } from "@radev/db";
+import { countBrandPosts, getBrandAiUsage, getBrandBySlug } from "@radev/db";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { AiLimitsForm } from "@/components/brands/ai-limits-form";
 import { BrandDangerZone } from "@/components/brands/brand-danger-zone";
 import { BrandForm } from "@/components/brands/brand-form";
 import { BrandTabs } from "@/components/brands/brand-tabs";
@@ -14,7 +15,10 @@ export const metadata: Metadata = { title: "Marca · RAdev Social" };
 export default async function BrandPage({ params }: PageProps<"/brands/[slug]">) {
   const brand = await getBrandBySlug(db, (await params).slug);
   if (!brand) notFound();
-  const posts = await countBrandPosts(db, brand.id);
+  const [posts, usage] = await Promise.all([
+    countBrandPosts(db, brand.id),
+    getBrandAiUsage(db, brand),
+  ]);
   const prefixRule = canChangeCodePrefix(posts);
   const deleteRule = canDeleteBrand(posts);
 
@@ -37,6 +41,17 @@ export default async function BrandPage({ params }: PageProps<"/brands/[slug]">)
           }}
           timezones={timezoneOptions()}
           prefixLocked={prefixRule.ok ? undefined : prefixRule.reason}
+        />
+      </section>
+      <section aria-labelledby="ai-limits-heading" className="flex flex-col gap-6">
+        <Plate id="ai-limits-heading">Topes de IA</Plate>
+        <AiLimitsForm
+          key={brand.updatedAt.toISOString()}
+          id={brand.id}
+          daily={brand.aiDailyLimit}
+          monthly={brand.aiMonthlyLimit}
+          usage={usage}
+          readOnly={brand.archivedAt !== null}
         />
       </section>
       <section aria-labelledby="danger-heading" className="flex flex-col gap-6">

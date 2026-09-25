@@ -67,9 +67,9 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] `packages/ai`: interfaz `AIProvider`, errores tipados (`validation`, `rate_limited`, `provider_error`)
 - [x] Proveedor `claude-code`: Claude Code CLI en la imagen del worker, `CLAUDE_CODE_OAUTH_TOKEN` (generado con `claude setup-token`), workspace temporal fuera del repo con el CLAUDE.md armado desde la base
 - [x] Proveedor `openrouter` con modelos gratuitos configurables
-- [ ] Tabla `ai_routes` + pantalla de ruteo por tarea con respaldo
+- [x] Tabla `ai_routes` + pantalla de ruteo por tarea con respaldo
 - [ ] Manejo de `rate_limited`: respaldo o reprogramación con backoff, y aviso
-- [ ] Tabla `generation_runs`; topes diarios y mensuales por marca
+- [x] Tabla `generation_runs`; topes diarios y mensuales por marca
 - [x] Tabla `brand_documents` y editor de voz, precios, casos y reglas con historial; seed desde `seeds/brands/`
 - [ ] Pilares con porcentajes (CRUD) y WhatsApp de la marca
 - [ ] Banco de ideas: carga rápida (mobile), listado, descarte

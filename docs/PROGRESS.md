@@ -9,10 +9,10 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 3 — Generación con IA (por empezar). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T6 de la Fase 3: tablas `ai_routes` y `generation_runs`, router con respaldo y backoff, topes por marca, pantalla de ruteo.
+- **Próximo paso:** T7 de la Fase 3: job `carousel.generate` ("Generar" → router → versión `ai` → render), registrando cada intento en `generation_runs` y respetando los topes.
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
-- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` y `pnpm db:seed`. El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T5 de la Fase 3
+- **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0007_ai_routes_and_runs`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
+- **Última actualización:** 2026-09-25, al cerrar la T6 de la Fase 3
 
 ## Fase 3 — tareas
 
@@ -26,7 +26,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T3 | Workspace aislado: carpeta temporal fuera del repo con el CLAUDE.md de la marca armado desde la base (regla 7). Tests | ✅ |
 | T4 | Proveedor `claude-code` (`claude -p`, sobre JSON, detección de límite, timeout) + Claude Code CLI en la imagen del worker (amd64 y arm64). El operador genera `CLAUDE_CODE_OAUTH_TOKEN` con `claude setup-token` | ✅ |
 | T5 | Proveedor `openrouter` (HTTP, salida estructurada, nunca datos privados). Tests con fetch simulado | ✅ |
-| T6 | Tablas `ai_routes` y `generation_runs`; router con respaldo, backoff ante `rate_limited`, topes por marca; pantalla de ruteo. Tests obligatorios | |
+| T6 | Tablas `ai_routes` y `generation_runs`; router con respaldo, backoff ante `rate_limited`, topes por marca; pantalla de ruteo. Tests obligatorios | ✅ |
 | T7 | Job `carousel.generate`: "Generar" → JSON validado → versión `ai` → render; el panel muestra proveedor y modelo. 👁 | |
 | T8 | Rechazo con feedback → regeneración; regeneración automática por QA (máx. 2) | |
 | T9 | Banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca | |
@@ -78,6 +78,16 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Tests con `fetch` simulado: datos con uso, key solo en la cabecera, JSON dentro de texto, Zod, reintento sin salida estructurada, 429 con `Retry-After`, error dentro de 200, respuesta cortada, modelo pago, herramientas, sin key, tiempo agotado, cancelación, falla de red.
 - **Prueba real** (`pnpm --filter @radev/ai smoke openrouter [modelo]`): `qwen/qwen3.8-27b:free` → 429 "Provider returned error" (modelo saturado, cuenta nueva); `nvidia/nemotron-3-super-120b-a12b:free` OK en 6,5 s pero copió la idea como hook (calidad baja); `nex-agi/nex-n2.5-pro:free` OK en 22 s con un hook en voseo. Precio 0 en todos. Queda como modelo por defecto de la prueba.
 - Modelos gratuitos con salida estructurada al 2026-09-25 (6): nex-n2.5-mini y nex-n2.5-pro, qwen3.8-27b, dots-3-note-preview, lfm-2.5-2.6b, nemotron-3-super-120b. La lista rota: se consulta en `openrouter.ai/api/v1/models?supported_parameters=structured_outputs`.
+
+**T6 (2026-09-25)**, decisiones aprobadas por el operador:
+- (1) El respaldo se usa ante `rate_limited` o `provider_error`, **no** ante `validation`. (2) Los topes cuentan solo generaciones **exitosas**; los intentos fallidos igual se registran. (3) Solo modelos `:free` en OpenRouter y tareas con herramientas solo con Claude, también en el formulario. (4) La pantalla edita solo rutas globales; la base ya admite rutas por marca.
+- `packages/core/src/ai/routing.ts` (`resolveAiRoute`, `checkAiRoute`, `isFreeModel` movido acá desde `ai`, etiquetas) y `limits.ts` (`checkAiQuota`, `zonedPeriodStart` con `Intl` y corrección por cambio de horario, `rateLimitDelayMs`). `GENERATION_RUN_STATUSES` y `ROUTE_ROLES` en `tasks.ts`.
+- `packages/ai/src/router.ts`: `createRouter(providers).generate(route, task)` → `{ result, attempts }`. Criterio del fallo final en ARCHITECTURE §7.
+- Migración `0007_ai_routes_and_runs` (renombrada desde el nombre al azar, junto con su `tag`): `ai_routes` con `UNIQUE NULLS NOT DISTINCT (task, brand_id)` (una sola global por tarea: el seed con `onConflictDoNothing` no duplica, verificado) y `generation_runs` (una fila por intento, con `role` y `error_kind`, índice por marca y fecha). `post_versions.generation_run_id` queda para la T7, que es la que crea versiones de IA.
+- `packages/db/src/queries/ai.ts`: `listAiRoutes`, `saveGlobalAiRoute` (valida con `checkAiRoute`), `recordGenerationRun`, `getBrandAiUsage`, `checkBrandAiQuota`, `setBrandAiLimits`. Verificadas contra la base en una transacción que se deshace: modelo pago rechazado, reemplazo sin duplicar, conteo solo de exitosas, topes.
+- Seed: 5 rutas globales (`packages/db/src/seed/ai-routes.ts`), con test de que cumplen las reglas y cubren todas las tareas.
+- Panel: **Ajustes** se encendió (`/settings`, "Ruteo de IA"): una fila por tarea con principal y respaldo (o "Sin respaldo"), validación en vivo con las mismas reglas y otra vez en el servidor. **Marcas → General** suma "Topes de IA" (por día y por mes, con lo usado; vacío = sin tope, 0 pausa; el diario no puede superar al mensual). `next build` OK; el operador revisó las dos pantallas con login: se ven bien.
+- Tests nuevos: rutas, reglas, topes, zonas horarias (Buenos Aires y Madrid con cambio de horario), backoff, router (9 casos), seed. Total del repo: 424.
 
 Pendiente de respuesta del operador: (1) ~~cuenta de OpenRouter~~ hecha en la T5; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
 

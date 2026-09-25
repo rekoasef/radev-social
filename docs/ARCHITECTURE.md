@@ -240,10 +240,16 @@ Tabla `ai_routes` editable desde el panel. Valores iniciales:
 | `caption.variants` | openrouter | claude-code |
 | `metrics.extract` (capturas) | claude-code | — |
 
+Seed (Fase 3, T6): claude-code con `sonnet` y openrouter con `nex-agi/nex-n2.5-pro:free`; solo se cargan si la tarea no tiene ruta global. Se editan en **Ajustes → Ruteo de IA** (`/settings`), que por ahora edita solo las rutas globales; la tabla ya admite rutas por marca (`brand_id`), que ganan sobre la global (`resolveAiRoute`).
+
+Reglas de una ruta (`checkAiRoute`, `packages/core/src/ai/routing.ts`; las aplican el panel y el servidor): modelo obligatorio; con openrouter, solo modelos `:free`; las tareas con herramientas (`ideas.research`, `metrics.extract`) solo con claude-code; el respaldo no puede ser igual al principal.
+
+Router (`packages/ai/src/router.ts`): prueba el principal y pasa al respaldo ante `rate_limited` o `provider_error` (cualquiera, también una credencial faltante), **nunca ante `validation`** (la respuesta llegó mal: se regenera con el mismo proveedor, T8), ni si el job se canceló. Devuelve todos los intentos para registrarlos. Si fallan los dos, decide el fallo más útil para el job: `rate_limited` (esperar y reintentar) antes que un error reintentable, y este antes que el resto; en empate, el del principal.
+
 ### Límites de uso
 
-- **Límite del proveedor** (ej. ventana de Claude Pro agotada): el proveedor devuelve `rate_limited`. El router intenta el respaldo; si no hay respaldo, el job se reprograma con backoff creciente (15 min, 30, 60...) y el post queda en `generating`. Si eso pone en riesgo un post programado en menos de N horas, avisa por Telegram.
-- **Topes propios por marca**: máximo de generaciones por día y por mes (`brands.ai_daily_limit`, `brands.ai_monthly_limit`). Al alcanzarse, la generación automática se pausa y avisa; la manual pide confirmación.
+- **Límite del proveedor** (ej. ventana de Claude Pro agotada): el proveedor devuelve `rate_limited`. El router intenta el respaldo; si no hay respaldo, el job se reprograma con backoff creciente (15 min, 30, 60, 120 y después 240; `rateLimitDelayMs`, que espera al menos hasta el reinicio que informe el proveedor) y el post queda en `generating`. Si eso pone en riesgo un post programado en menos de N horas, avisa por Telegram.
+- **Topes propios por marca**: máximo de generaciones por día y por mes (`brands.ai_daily_limit`, `brands.ai_monthly_limit`). Al alcanzarse, la generación automática se pausa y avisa; la manual pide confirmación. Cuentan solo las generaciones **exitosas**, con el día y el mes en la zona horaria de la marca (`zonedPeriodStart`, `checkBrandAiQuota`). Vacío = sin tope; 0 pausa la generación. Se editan en Marcas → General.
 - **Ventana de generación**: la generación automática (`slots.fill`) solo corre dentro de `settings.generation_window` (por defecto 02:00–07:00), para no competir con el uso del operador.
 - **Reintentos por QA**: máximo 2 regeneraciones automáticas; después queda `in_review` con las violaciones marcadas.
 - Contexto mínimo: solo últimos posts y ganadores relevantes; `carousel.generate` sin búsqueda web.
@@ -294,8 +300,8 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `schedule_slots` | id, brand_id, weekday (0–6), local_time, active |
 | `social_accounts` | id, brand_id, network, external_id, handle, access_token_enc, refresh_token_enc, expires_at, status |
 | `publications` | id, post_id, social_account_id, network, status, external_id, url, error, attempts, published_at |
-| `ai_routes` | id, task, brand_id (nullable = global), provider, model, fallback_provider, fallback_model |
-| `generation_runs` | id, brand_id, post_id, task, provider, model, session_id, input_tokens, output_tokens, cost_usd (nullable), duration_ms, num_turns, status, error, created_at |
+| `ai_routes` | id, task, brand_id (nullable = global), provider, model, fallback_provider, fallback_model. Única por tarea y marca, con una sola global por tarea (`NULLS NOT DISTINCT`) |
+| `generation_runs` | id, brand_id, post_id, task, role (`primary` \| `fallback`), provider, model, status (`succeeded` \| `failed`), error_kind, error, input_tokens, output_tokens, cost_usd (nullable), duration_ms, num_turns, session_id, created_at. Una fila por intento |
 | `settings` | clave/valor global (ventana de generación, etc.) |
 | `data_snapshots` | id, source (`bluelytics`), fetched_at, payload (jsonb) |
 | `post_metrics` (F6) | id, publication_id, captured_at, views, likes, comments, shares, saves, source (`api` \| `screenshot` \| `manual`) |

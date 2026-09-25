@@ -2,6 +2,18 @@
 export { createDb, type Database } from "./client";
 export { readMediaFile, removeMediaFile, writeMediaFile } from "./media";
 export {
+  type BrandAiUsage,
+  checkBrandAiQuota,
+  countSuccessfulRuns,
+  getBrandAiUsage,
+  listAiRoutes,
+  recordGenerationRun,
+  type SaveRouteResult,
+  saveGlobalAiRoute,
+  setBrandAiLimits,
+  toAiRoute,
+} from "./queries/ai";
+export {
   type AssetResult,
   createBrandAsset,
   deleteBrandAsset,

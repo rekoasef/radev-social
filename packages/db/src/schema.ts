@@ -1,10 +1,14 @@
 import {
+  AI_PROVIDERS,
+  AI_TASKS,
   ASSET_ROLES,
   BRAND_DOCUMENT_KINDS,
+  GENERATION_RUN_STATUSES,
   NETWORKS,
   POST_STATUSES,
   PUBLICATION_STATUSES,
   RENDER_FORMATS,
+  ROUTE_ROLES,
   VERSION_ORIGINS,
 } from "@radev/core";
 import { sql } from "drizzle-orm";
@@ -18,6 +22,7 @@ import {
   real,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -259,6 +264,79 @@ export const publications = pgTable(
   ],
 );
 
+/**
+ * Provider and model of each AI task, with an optional fallback (docs/ARCHITECTURE.md §7).
+ * `brand_id` null is the global route; a brand's own route wins over it. Checked with
+ * checkAiRoute (packages/core) before saving.
+ */
+export const aiRoutes = pgTable(
+  "ai_routes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    task: text("task", { enum: AI_TASKS }).notNull(),
+    brandId: uuid("brand_id").references(() => brands.id, { onDelete: "cascade" }),
+    provider: text("provider", { enum: AI_PROVIDERS }).notNull(),
+    model: text("model").notNull(),
+    fallbackProvider: text("fallback_provider", { enum: AI_PROVIDERS }),
+    fallbackModel: text("fallback_model"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    // One route per task and brand, and one global (null brand) per task.
+    unique("ai_routes_task_brand_unique").on(t.task, t.brandId).nullsNotDistinct(),
+    check("ai_routes_task_valid", sql`${t.task} in (${inList(AI_TASKS)})`),
+    check("ai_routes_provider_valid", sql`${t.provider} in (${inList(AI_PROVIDERS)})`),
+    check(
+      "ai_routes_fallback_provider_valid",
+      sql`${t.fallbackProvider} is null or ${t.fallbackProvider} in (${inList(AI_PROVIDERS)})`,
+    ),
+    check(
+      "ai_routes_fallback_complete",
+      sql`(${t.fallbackProvider} is null) = (${t.fallbackModel} is null)`,
+    ),
+  ],
+);
+
+/**
+ * One attempt of a generation: which provider and model answered, what it used and how it
+ * ended. The brand's caps count the successful ones (docs/ARCHITECTURE.md §7, "Registro").
+ */
+export const generationRuns = pgTable(
+  "generation_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    postId: uuid("post_id").references(() => posts.id, { onDelete: "set null" }),
+    task: text("task", { enum: AI_TASKS }).notNull(),
+    role: text("role", { enum: ROUTE_ROLES }).notNull(),
+    provider: text("provider", { enum: AI_PROVIDERS }).notNull(),
+    /** The model that answered (the canonical name when the provider reports it). */
+    model: text("model").notNull(),
+    status: text("status", { enum: GENERATION_RUN_STATUSES }).notNull(),
+    /** validation, rate_limited or provider_error; null when it succeeded. */
+    errorKind: text("error_kind"),
+    error: text("error"),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    /** List price reported by the provider; with the Claude subscription nothing is charged. */
+    costUsd: real("cost_usd"),
+    durationMs: integer("duration_ms"),
+    numTurns: integer("num_turns"),
+    sessionId: text("session_id"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("generation_runs_brand_created_idx").on(t.brandId, t.createdAt),
+    check("generation_runs_task_valid", sql`${t.task} in (${inList(AI_TASKS)})`),
+    check("generation_runs_role_valid", sql`${t.role} in (${inList(ROUTE_ROLES)})`),
+    check("generation_runs_provider_valid", sql`${t.provider} in (${inList(AI_PROVIDERS)})`),
+    check("generation_runs_status_valid", sql`${t.status} in (${inList(GENERATION_RUN_STATUSES)})`),
+  ],
+);
+
 /** Global key/value settings (e.g. the AI generation window). */
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
@@ -278,5 +356,8 @@ export type RenderedAsset = typeof assets.$inferSelect;
 export type Publication = typeof publications.$inferSelect;
 export type NewBrandAsset = typeof brandAssets.$inferInsert;
 export type BrandDocument = typeof brandDocuments.$inferSelect;
+export type AiRouteRow = typeof aiRoutes.$inferSelect;
+export type GenerationRun = typeof generationRuns.$inferSelect;
+export type NewGenerationRun = typeof generationRuns.$inferInsert;
 
 export * from "./auth-schema";

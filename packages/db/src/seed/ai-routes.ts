@@ -1,0 +1,20 @@
+import type { AiRouteTarget, AiTask } from "@radev/core";
+
+// Initial global AI routes (docs/ARCHITECTURE.md §7). Loaded only when a task has no global
+// route yet: after that they belong to the panel (Ajustes → Ruteo de IA).
+
+const claude: AiRouteTarget = { provider: "claude-code", model: "sonnet" };
+/** Answered well in the phase 3, T5 real test. The free offer rotates: change it from the panel. */
+const free: AiRouteTarget = { provider: "openrouter", model: "nex-agi/nex-n2.5-pro:free" };
+
+export const seedAiRoutes: {
+  task: AiTask;
+  primary: AiRouteTarget;
+  fallback: AiRouteTarget | null;
+}[] = [
+  { task: "carousel.generate", primary: claude, fallback: free },
+  { task: "ideas.generate", primary: free, fallback: claude },
+  { task: "ideas.research", primary: claude, fallback: null },
+  { task: "caption.variants", primary: free, fallback: claude },
+  { task: "metrics.extract", primary: claude, fallback: null },
+];
