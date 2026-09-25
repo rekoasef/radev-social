@@ -8,14 +8,15 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 3 — Generación con IA (en curso, T1–T11 hechas). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T13 de la Fase 3 (cierre). La T12 quedó pospuesta a la Fase 6 (ver T12 abajo).
+- **Fase:** 3 — Generación con IA **cerrada el 2026-09-25** en 2 días (T12 pospuesta a la Fase 6). Próxima: Fase 4 — Producción y piloto automático. Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** planificar la Fase 4 (servidor, hardening, DNS, Caddy, backups, horarios, `slots.fill`, Telegram): proponer tareas al operador antes de codear.
+- **Para el operador (T13):** mirar RA-0004 (prueba del criterio de RAdev, en revisión). Completar Precios y Casos de RAdev cuando puedas: siguen siendo el borrador del seed (con `[completar]`, y eso le llega a la IA).
 - **Para el operador (T11):** (1) mirar LU-0004 y LU-0005 (posts de prueba de Lumus con gráficos y cifras del dólar, en revisión) y Ajustes → Datos reales. (2) En la otra máquina, tildar Bluelytics en Marcas → Lumus → General → Fuentes de datos: el seed no toca marcas que ya existen.
-- **Para el operador (T10):** (1) en Ajustes → Ruteo de IA, cambiar `nex-agi/nex-n2.5-pro:free` (ya no existe en OpenRouter) por `nvidia/nemotron-3-super-120b-a12b:free` en `ideas.generate` (principal) y `carousel.generate` (respaldo). (2) Completar Precios de RAdev: sin rangos, los posts de la serie "¿Cuánto cuesta realmente…?" fallan a propósito (no inventan precios). (3) La serie está repetida en el documento de voz de RAdev: se puede sacar de ahí. (4) Mirar con login /ideas (pedidos a la IA) y Marcas → Series.
+- **Para el operador (T10):** (1) en Ajustes → Ruteo de IA, cambiar (el seed ya trae el nuevo desde la T13, pero no pisa rutas existentes) `nex-agi/nex-n2.5-pro:free` (ya no existe en OpenRouter) por `nvidia/nemotron-3-super-120b-a12b:free` en `ideas.generate` (principal) y `carousel.generate` (respaldo). (2) Completar Precios de RAdev: sin rangos, los posts de la serie "¿Cuánto cuesta realmente…?" fallan a propósito (no inventan precios). (3) La serie está repetida en el documento de voz de RAdev: se puede sacar de ahí. (4) Mirar con login /ideas (pedidos a la IA) y Marcas → Series.
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0012_data_snapshots`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T11 de la Fase 3
+- **Última actualización:** 2026-09-25, al cerrar la Fase 3 (T13)
 
 ## Fase 3 — tareas
 
@@ -36,7 +37,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T10 | `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web), serie "¿Cuánto cuesta realmente…?" | ✅ |
 | T11 | `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor | ✅ |
 | T12 | Importar historial de posts → `winners.json` | ⏸ pospuesta a la Fase 6 |
-| T13 | Cierre: criterio de terminado con ambas marcas, docs | |
+| T13 | Cierre: criterio de terminado con ambas marcas, docs | ✅ |
 
 **T0 (2026-09-24), resultados** — detalle de flags y sobre de salida en `ARCHITECTURE.md` §7:
 - Una generación chica (Sonnet, leer `task.json` + JSON Schema) tardó ~9 s y 3 turnos; el CLAUDE.md de la carpeta temporal se cargó (salió con la voz de la marca de prueba).
@@ -142,6 +143,12 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - **Prueba real** (Lumus, por script, en Docker): el worker bajó Bluelytics al arrancar (572 registros de historia). LU-0004 "cómo se movió el dólar blue en el último mes": 112 s, cover → `chart` 30 días → `bigNumber` +0,3 % → `chart` 12 meses → statement → cta, datos congelados, render sin problemas. LU-0005 "brecha": 132 s, `bigNumber` 1,4 % + `chart` de la brecha, fuente ya puesta por el código. Controles de `chart` (`--check`, normal y extremo) OK en las dos marcas.
 
 **T12 (2026-09-25), pospuesta** por decisión del operador: no hay historial con métricas. Lo único que existe son carpetas de Google Drive con las imágenes de los posts de **RAdev** (nada de Lumus). Sin métricas no hay forma de saber cuáles fueron ganadores, así que `winners.json` se arma en la Fase 6 con las métricas reales de lo que publique el sistema. Si se retoma la importación de esas fotos (como ejemplos de estilo, con el texto transcripto por Claude), el operador prefiere **conectar Google Drive** antes que subir zips.
+
+**T13 (2026-09-25), cierre**:
+- **Criterio de terminado, recorrido**: "Generar" → borrador renderizado en unos minutos, con proveedor y modelo registrados (`generation_runs`, visibles en el post). RAdev: RA-0004 (WhatsApp y primera respuesta automática), 134 s, 7 slides (cover → statement → flow → statement → cardGrid → question → cta), sin cifras, render sin problemas. Lumus: LU-0004 y LU-0005 (T11), con gráficos y cifras reales del dólar. Los tres con `claude-code` / `claude-sonnet-5`, a la primera. Que sean "aprobables con cambios mínimos" lo confirma el operador al revisarlos.
+- Seed de rutas y `smoke`: el modelo gratuito por defecto pasa a `nvidia/nemotron-3-super-120b-a12b:free` (`nex-agi/nex-n2.5-pro:free` ya no existe).
+- Requerimientos F3 que no se cierran acá: RF-13 (reciclado) y RF-37 (historial) → Fase 6, necesitan métricas; RF-11 investigación **semanal automática** y el aviso de RF-23 cuando un límite compromete un post programado → Fase 4 (no hay programación todavía). Documentos de RAdev completos: tarea del operador.
+- Comandos del CLAUDE.md: la Fase 3 no sumó comandos nuevos (el `smoke` ya estaba).
 
 Pendiente de respuesta del operador: (1) ~~cuenta de OpenRouter~~ hecha en la T5; (2) ~~de dónde sale el historial de posts para la T12~~: no hay, T12 pospuesta.
 

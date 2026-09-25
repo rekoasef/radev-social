@@ -68,7 +68,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Proveedor `claude-code`: Claude Code CLI en la imagen del worker, `CLAUDE_CODE_OAUTH_TOKEN` (generado con `claude setup-token`), workspace temporal fuera del repo con el CLAUDE.md armado desde la base
 - [x] Proveedor `openrouter` con modelos gratuitos configurables
 - [x] Tabla `ai_routes` + pantalla de ruteo por tarea con respaldo
-- [ ] Manejo de `rate_limited`: respaldo o reprogramación con backoff, y aviso
+- [x] Manejo de `rate_limited`: respaldo o reprogramación con backoff, y aviso (en el panel; el aviso por Telegram es de la Fase 4)
 - [x] Tabla `generation_runs`; topes diarios y mensuales por marca
 - [x] Tabla `brand_documents` y editor de voz, precios, casos y reglas con historial; seed desde `seeds/brands/`
 - [x] Pilares con porcentajes (CRUD) y WhatsApp de la marca
@@ -79,7 +79,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Rechazo con feedback y regeneración; regeneración automática por QA (máx. 2)
 - [ ] ~~Importación del historial de posts → `winners.json`~~ → pospuesta a la Fase 6 (no hay historial con métricas)
 - [x] Job `data.refresh` (Bluelytics) → `data.json` para Lumus
-- [ ] Documentos de marca completos: `pricing.md` y `cases.md` de RAdev
+- [ ] Documentos de marca completos: `pricing.md` y `cases.md` de RAdev (lo completa el operador desde Marcas → Documentos; no bloquea: sin rangos la IA no muestra precios)
 
 **Paralelo (no depende del código):** crear la cuenta de TikTok de Lumus; registrar la app de desarrollador de TikTok; definir el número de WhatsApp de RAdev; crear el bot de Telegram.
 
@@ -97,6 +97,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Tabla `schedule_slots` y configuración por marca (arrancar con 1 post/día en la franja 14–21 h)
 - [ ] Calendario: arrastrar posts entre slots; programar, des-programar y re-programar
 - [ ] Ventana de generación (por defecto 02:00–07:00) y job `slots.fill` respetando la mezcla de pilares
+- [ ] `ideas.research` semanal automática (viene de la Fase 3: hoy es a mano desde /ideas)
 - [ ] Cola de revisión optimizada para celular
 - [ ] Bot de Telegram (grammY): revisar, recordatorio de publicación manual, errores, límites de IA
 - [ ] Vista de jobs (pendientes, fallidos, reintentos)
@@ -129,7 +130,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Registro de leads (carga rápida, búsqueda por código de post)
 - [ ] Tablero por pilar, tipo de hook, horario y proveedor/modelo de IA
 - [ ] Recomendaciones de horarios y de mezcla; `slots.fill` usa la mezcla ajustada
-- [ ] `winners.json` para la generación: los posts con mejores métricas (viene de la Fase 3). Opcional: importar como ejemplos de estilo las imágenes de posts viejos de RAdev desde Google Drive
+- [ ] `winners.json` para la generación y reciclado de posts con buen rendimiento (RF-13): los dos necesitan métricas (vienen de la Fase 3). Opcional: importar como ejemplos de estilo las imágenes de posts viejos de RAdev desde Google Drive
 
 **Terminado cuando:** la app me dice qué contenido me trae clientes (RAdev) y registros (Lumus), y ajusta la mezcla en base a eso.
 

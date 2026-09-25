@@ -4,8 +4,11 @@ import type { AiRouteTarget, AiTask } from "@radev/core";
 // route yet: after that they belong to the panel (Ajustes → Ruteo de IA).
 
 const claude: AiRouteTarget = { provider: "claude-code", model: "sonnet" };
-/** Answered well in the phase 3, T5 real test. The free offer rotates: change it from the panel. */
-const free: AiRouteTarget = { provider: "openrouter", model: "nex-agi/nex-n2.5-pro:free" };
+/** Answered well in the phase 3, T10 real test. The free offer rotates: change it from the panel. */
+const free: AiRouteTarget = {
+  provider: "openrouter",
+  model: "nvidia/nemotron-3-super-120b-a12b:free",
+};
 
 export const seedAiRoutes: {
   task: AiTask;

@@ -246,7 +246,7 @@ Tabla `ai_routes` editable desde el panel. Valores iniciales:
 | `caption.variants` | openrouter | claude-code |
 | `metrics.extract` (capturas) | claude-code | — |
 
-Seed (Fase 3, T6): claude-code con `sonnet` y openrouter con `nex-agi/nex-n2.5-pro:free`; solo se cargan si la tarea no tiene ruta global. Se editan en **Ajustes → Ruteo de IA** (`/settings`), que por ahora edita solo las rutas globales; la tabla ya admite rutas por marca (`brand_id`), que ganan sobre la global (`resolveAiRoute`).
+Seed (Fase 3, T6): claude-code con `sonnet` y openrouter con `nvidia/nemotron-3-super-120b-a12b:free` (hasta la T13 era `nex-agi/nex-n2.5-pro:free`, que OpenRouter dio de baja); solo se cargan si la tarea no tiene ruta global. Se editan en **Ajustes → Ruteo de IA** (`/settings`), que por ahora edita solo las rutas globales; la tabla ya admite rutas por marca (`brand_id`), que ganan sobre la global (`resolveAiRoute`).
 
 Reglas de una ruta (`checkAiRoute`, `packages/core/src/ai/routing.ts`; las aplican el panel y el servidor): modelo obligatorio; con openrouter, solo modelos `:free`; las tareas con herramientas (`ideas.research`, `metrics.extract`) solo con claude-code; el respaldo no puede ser igual al principal.
 

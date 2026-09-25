@@ -1,7 +1,7 @@
 // Real run of a provider (phase 3, T4–T5): a tiny generation with the operator's credentials
 // from the root .env. It never prints them.
 // Usage: pnpm --filter @radev/ai smoke [claude-code|openrouter] [model]
-//   defaults: claude-code with sonnet; openrouter with nex-agi/nex-n2.5-pro:free
+//   defaults: claude-code with sonnet; openrouter with nvidia/nemotron-3-super-120b-a12b:free
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
@@ -26,7 +26,7 @@ if (providerId === "claude-code") {
 } else {
   console.log(`Credencial: ${process.env.OPENROUTER_API_KEY ? "OPENROUTER_API_KEY" : "ninguna"}`);
   provider = createOpenRouterProvider();
-  model = process.argv[3] ?? "nex-agi/nex-n2.5-pro:free";
+  model = process.argv[3] ?? "nvidia/nemotron-3-super-120b-a12b:free";
 }
 
 const schema = z.object({
