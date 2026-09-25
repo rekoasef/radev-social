@@ -2,11 +2,13 @@ import {
   checkScheduleTime,
   isPublishJobCurrent,
   type Network,
+  PLANNABLE_STATUSES,
   type PostPublishJob,
+  type PostStatus,
 } from "@radev/core";
-import { and, eq, gte, lt, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lt, ne, or, sql } from "drizzle-orm";
 import type { Database } from "../client";
-import { posts, publications } from "../schema";
+import { posts, postVersions, publications } from "../schema";
 import type { Executor } from "./brand-assets";
 import { type TransitionOutcome, transitionPost } from "./posts";
 
@@ -43,12 +45,14 @@ function isTimeConflict(error: unknown): boolean {
 const TIME_TAKEN = "Ya hay un post de la marca en ese horario.";
 
 export type ScheduleOutcome =
-  | { ok: true; at: Date; wasScheduled: boolean }
-  | { ok: false; reason: string };
+  /** `queue`: the post is scheduled now and needs its publish job at `at`. */
+  { ok: true; at: Date; wasScheduled: boolean; queue: boolean } | { ok: false; reason: string };
 
 /**
  * Schedules an approved post, or moves a scheduled one (unschedule + schedule, in one
- * transaction). The caller cancels the old job when `wasScheduled` and queues the new one.
+ * transaction). A post still being written or reviewed only gets the planned time: approving it
+ * schedules it (the calendar moves those too). The caller queues the job when `queue` (which
+ * cancels the one of the previous time).
  */
 export async function schedulePost(
   db: Database,
@@ -67,6 +71,13 @@ export async function schedulePost(
       if (await timeTaken(tx, { brandId: post.brandId, postId: input.postId, at: input.at })) {
         return { ok: false, reason: TIME_TAKEN };
       }
+      if (PLANNABLE_STATUSES.includes(post.status)) {
+        await tx
+          .update(posts)
+          .set({ scheduledAt: input.at, slotId: input.slotId })
+          .where(eq(posts.id, input.postId));
+        return { ok: true, at: input.at, wasScheduled: false, queue: false };
+      }
       const wasScheduled = post.status === "scheduled";
       if (wasScheduled) {
         const back = await transitionPost(tx, input.postId, "unschedule");
@@ -82,7 +93,7 @@ export async function schedulePost(
         .update(posts)
         .set({ scheduledAt: input.at, slotId: input.slotId })
         .where(eq(posts.id, input.postId));
-      return { ok: true, at: input.at, wasScheduled };
+      return { ok: true, at: input.at, wasScheduled, queue: true };
     });
   } catch (error) {
     if (isTimeConflict(error)) return { ok: false, reason: TIME_TAKEN };
@@ -162,4 +173,86 @@ export async function listPlannedTimes(
       ),
     );
   return rows.flatMap((row) => (row.at ? [row.at] : []));
+}
+
+export type CalendarPostRow = {
+  id: string;
+  publicCode: string;
+  status: PostStatus;
+  /** Planned time, or when it was published if it had none. */
+  at: Date;
+  slotId: string | null;
+  hook: string | null;
+};
+
+/**
+ * A brand's posts for a calendar range: planned in it, or published in it without a planned time
+ * (by hand before phase 4). Archived ones are left out.
+ */
+export async function listCalendarPosts(
+  db: Executor,
+  input: { brandId: string; from: Date; to: Date },
+): Promise<CalendarPostRow[]> {
+  const rows = await db
+    .select({
+      id: posts.id,
+      publicCode: posts.publicCode,
+      status: posts.status,
+      scheduledAt: posts.scheduledAt,
+      slotId: posts.slotId,
+      publishedAt: publications.publishedAt,
+      hook: sql<string | null>`${postVersions.content} ->> 'hook'`,
+    })
+    .from(posts)
+    .leftJoin(postVersions, eq(postVersions.id, posts.currentVersionId))
+    .leftJoin(
+      publications,
+      and(eq(publications.postId, posts.id), eq(publications.status, "published")),
+    )
+    .where(
+      and(
+        eq(posts.brandId, input.brandId),
+        ne(posts.status, "archived"),
+        or(
+          and(gte(posts.scheduledAt, input.from), lt(posts.scheduledAt, input.to)),
+          and(
+            isNull(posts.scheduledAt),
+            gte(publications.publishedAt, input.from),
+            lt(publications.publishedAt, input.to),
+          ),
+        ),
+      ),
+    );
+  return rows.flatMap((row) => {
+    const at = row.scheduledAt ?? row.publishedAt;
+    return at
+      ? [
+          {
+            id: row.id,
+            publicCode: row.publicCode,
+            status: row.status,
+            at,
+            slotId: row.slotId,
+            hook: row.hook,
+          },
+        ]
+      : [];
+  });
+}
+
+/** Approved posts without a planned time: the calendar's tray, newest first. */
+export async function listUnplannedApproved(
+  db: Executor,
+  brandId: string,
+): Promise<{ id: string; publicCode: string; hook: string | null }[]> {
+  return db
+    .select({
+      id: posts.id,
+      publicCode: posts.publicCode,
+      hook: sql<string | null>`${postVersions.content} ->> 'hook'`,
+    })
+    .from(posts)
+    .leftJoin(postVersions, eq(postVersions.id, posts.currentVersionId))
+    .where(and(eq(posts.brandId, brandId), eq(posts.status, "approved"), isNull(posts.scheduledAt)))
+    .orderBy(desc(posts.number));
 }

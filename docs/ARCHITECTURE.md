@@ -157,7 +157,7 @@ Invariantes con test obligatorio:
 - Editar un post `approved` o `scheduled` lo devuelve a `rendering` → `in_review`.
 - Des-programar un post `scheduled` cancela su job de publicación.
 
-**Programación (F4, T2)**: `posts.scheduled_at` es la **hora planeada** y `scheduled` quiere decir que el job `post.publish` está encolado. Editar un post programado le cancela el job pero conserva la hora; al aprobarlo de nuevo, si la hora no pasó, se programa solo (si pasó, se olvida y queda `approved`). Una hora por marca: índice único `(brand_id, scheduled_at)` sin contar archivados. El job, antes de publicar, confirma que el post siga `scheduled` para esa misma hora (`isPublishJobCurrent`), así un job viejo nunca publica. Reglas en `packages/core/src/scheduling/publish.ts`.
+**Programación (F4, T2)**: `posts.scheduled_at` es la **hora planeada** y `scheduled` quiere decir que el job `post.publish` está encolado. Editar un post programado le cancela el job pero conserva la hora; al aprobarlo de nuevo, si la hora no pasó, se programa solo (si pasó, se olvida y queda `approved`). Una hora por marca: índice único `(brand_id, scheduled_at)` sin contar archivados. El job, antes de publicar, confirma que el post siga `scheduled` para esa misma hora (`isPublishJobCurrent`), así un job viejo nunca publica. Reglas en `packages/core/src/scheduling/publish.ts`. El calendario (F4, T3) también mueve la hora planeada de posts que todavía se generan o revisan (`PLANNABLE_STATUSES`): no cambian de estado ni tienen job hasta que se aprueban.
 
 Cada post tiene un **código público** corto e inmutable (`<prefijo de marca>-<número>`, ej. `RA-0142`, `LU-0031`) usado en el mensaje precargado de WhatsApp y en los links.
 

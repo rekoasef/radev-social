@@ -123,7 +123,10 @@ export {
   type VersionDatasets,
 } from "./queries/posts";
 export {
+  type CalendarPostRow,
+  listCalendarPosts,
   listPlannedTimes,
+  listUnplannedApproved,
   type PublishStart,
   type ScheduleOutcome,
   schedulePost,

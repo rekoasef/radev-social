@@ -221,6 +221,19 @@ export {
   WEEKDAYS,
   type Weekday,
 } from "./scheduling/slots";
+export {
+  addDays,
+  buildWeek,
+  type CalendarDay,
+  type CalendarEntry,
+  type CalendarPost,
+  isMovable,
+  localDateOf,
+  MOVABLE_STATUSES,
+  PLANNABLE_STATUSES,
+  weekMonday,
+  weekRange,
+} from "./scheduling/week";
 export { type WallClock, wallClock, zonedToUtc, zoneOffsetMs } from "./scheduling/zoned";
 export {
   canDeleteSeries,

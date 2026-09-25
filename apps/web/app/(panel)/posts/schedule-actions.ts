@@ -71,7 +71,7 @@ export async function schedulePostAction(_: ScheduleState, form: FormData): Prom
   const scheduled = await schedulePost(db, { postId: post.id, at, slotId, now: new Date() });
   if (!scheduled.ok) return { status: "error", message: scheduled.reason };
   // queuePublish cancels the job of the previous time first.
-  await queuePublish(post.id, scheduled.at);
+  if (scheduled.queue) await queuePublish(post.id, scheduled.at);
   revalidatePath("/posts");
   revalidatePath(`/posts/${post.publicCode}`);
   return { status: "ok", message: scheduled.wasScheduled ? "Reprogramado." : "Programado." };

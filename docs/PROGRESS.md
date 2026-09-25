@@ -8,8 +8,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 4 — Producción y piloto automático (en curso, T1–T2 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T3 de la Fase 4: calendario por marca (semana con slots y posts, arrastrar entre slots). 👁
+- **Fase:** 4 — Producción y piloto automático (en curso, T1–T3 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T4 de la Fase 4: ventana de generación + `slots.fill`.
+- **Para el operador (T3) 👁:** aprobar el diseño del calendario (capturas en la conversación del 2026-09-25) y probarlo con login: arrastrar con el mouse, y en el celular "Mover" → tocar un horario libre.
 - **Para el operador (T2):** probar con login en un post aprobado: Programar (horario de la marca u otra fecha), Reprogramar, Desprogramar; y un post que llegue a su hora (queda "Publicando" hasta Marcar como publicado). Confirmar la decisión (1) de la T2.
 - **Para el operador (T1):** mirar con login Marcas → Horarios (también desde el celular). A las dos marcas se les cargó el horario de arranque (todos los días 19:00): cambialo ahí si querés otro. En la otra máquina, `pnpm db:migrate` (hasta `0014_post_scheduling`) y cargar los horarios desde el panel (el seed solo los pone en marcas nuevas).
 - **Para el operador (Fase 4, ya):** crear la cuenta de Oracle Cloud (pide tarjeta para verificar identidad; Always Free no cobra). Crear la instancia puede requerir reintentos por falta de capacidad: arrancar ahora, en paralelo al bloque local.
@@ -19,7 +20,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0014_post_scheduling`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T2 de la Fase 4
+- **Última actualización:** 2026-09-25, al cerrar la T3 de la Fase 4
 
 ## Fase 4 — tareas
 
@@ -31,7 +32,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 |---|---|---|
 | T1 | Horarios por marca: `schedule_slots`, pestaña Marcas → Horarios (arranque: 1 post/día en la franja 14–21 h); lógica de horarios con zona explícita y tests | ✅ |
 | T2 | Programar: estado `scheduled`, programar / des-programar / re-programar, job `post.publish` a la hora del slot (adaptador manual: queda `publishing` hasta "Marcar como publicado"); idempotente | ✅ |
-| T3 | Calendario por marca: semana con slots y posts, arrastrar entre slots. 👁 | |
+| T3 | Calendario por marca: semana con slots y posts, arrastrar entre slots. 👁 | ✅ (falta el OK del diseño) |
 | T4 | Ventana de generación (Ajustes, 02:00–07:00) + `slots.fill`: 7 días, pilar según la mezcla, idea del banco o pedida a la IA, respeta topes. Tests | |
 | T5 | `ideas.research` semanal automática | |
 | T6 | Bot de Telegram (grammY): posts para revisar (agrupado), recordatorio de publicación con descarga, errores, límites de IA y aviso si comprometen un post programado | |
@@ -60,6 +61,14 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - Web: `lib/jobs.ts` suma `queuePublish` (cancela el anterior y encola con `startAfter`), `cancelPublish` (busca por clave con `findJobs`) y `applyPostEffects` (editar y restaurar ya cancelan el job). `posts/schedule-actions.ts` y `ScheduleForm` en la página del post: horarios libres de la marca de los próximos 14 días u "Otra fecha y hora" (en la zona de la marca), Reprogramar y Desprogramar; "Planeado para…" mientras se renderiza o revisa; "Llegó su hora" en `publishing`. Con el post programable, Descargar ZIP deja de ser el botón principal.
 - Tests: 576 en total (10 nuevos).
 - **Prueba real** (Docker, por script con las mismas funciones que la web; posts de prueba LU-0006 y LU-0007): programar a 20 min y reprogramar a ~1 min → job viejo `cancelled`; a su hora exacta (+0,9 s) el worker lo pasó a `publishing` con `manual:pending`; "Marcar como publicado" → `published`. Editar un programado → efecto `cancel_publish_job`, job cancelado, hora conservada; reaprobar → `scheduled` a la misma hora. Horario ocupado → rechazado. Pantallas capturadas sin login con ruta temporal (borrada), escritorio y 390 px.
+
+**T3 (2026-09-25)**:
+- Core `scheduling/week.ts`: `weekMonday` (lunes de la semana de una fecha, o de hoy en la zona de la marca), `weekRange`, `addDays`, `localDateOf`, `buildWeek` (cada día: sus horarios activos con el post planeado en cada uno o libre, más los posts a otras horas —elegidas a mano, o de un horario pausado o borrado—, ordenados) y `MOVABLE_STATUSES` / `PLANNABLE_STATUSES`.
+- `schedulePost` ahora también **planea** posts `generating` / `rendering` / `in_review`: solo mueve la hora (sin transición ni job; `queue: false`); aprobar los programa (T2). Queries `listCalendarPosts` (planeados en el rango, o publicados en el rango sin hora planeada; con el título de la versión actual) y `listUnplannedApproved`.
+- Pantalla **`/calendar`** (sección Calendario del menú, ya activa), de la marca activa: semana lunes a domingo en la hora de la marca, `?semana=YYYY-MM-DD`, Anterior / Hoy / Siguiente. Cada horario: su post (código, título, estado) o "Libre"; los pasados, "Sin post". Bandeja "Aprobados sin programar". Mover: arrastrar con el mouse (HTML5), o "Mover" y tocar un horario libre (celular y teclado). Solo a horarios libres y futuros; el servidor vuelve a validar todo (`movePostAction`). En el celular la semana actual arranca en hoy.
+- Tests: 582 en total (6 nuevos).
+- Probado: capturas sin login (ruta temporal, borrada) de Lumus y RAdev en escritorio y 390 px; con Playwright, "Mover" habilita los 3 horarios libres y "Cancelar" los vuelve a "Libre"; arrastrar RA-0003 al sábado envía la acción con el horario correcto (sin sesión el servidor la rechaza: RA-0003 no cambió). Contra la base: planear LU-0005 (en revisión) → hora puesta, sigue `in_review`, sin job; horario ocupado → rechazado (se le sacó la hora después).
+
 
 
 ## Fase 3 — tareas
