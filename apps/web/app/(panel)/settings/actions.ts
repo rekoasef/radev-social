@@ -1,7 +1,15 @@
 "use server";
 
-import { AI_PROVIDERS, AI_TASKS, DATA_SOURCES, MAX_MODEL_ID_LENGTH } from "@radev/core";
-import { saveGlobalAiRoute } from "@radev/db";
+import {
+  AI_PROVIDERS,
+  AI_TASKS,
+  DATA_SOURCES,
+  GENERATION_WINDOW_KEY,
+  MAX_MODEL_ID_LENGTH,
+  normalizeLocalTime,
+  parseGenerationWindow,
+} from "@radev/core";
+import { saveGlobalAiRoute, setSetting } from "@radev/db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -55,4 +63,43 @@ export async function refreshDataAction(form: FormData): Promise<void> {
   const { source } = refreshInput.parse(Object.fromEntries(form));
   await queueDataRefresh(source);
   revalidatePath("/settings");
+}
+
+export type WindowFormState =
+  | { status: "idle" }
+  | { status: "ok"; message: string }
+  | { status: "error"; message: string };
+
+const windowInput = z.object({
+  enabled: z.literal("on").optional(),
+  start: z
+    .string()
+    .refine((v) => normalizeLocalTime(v) !== null, { error: "Hora de inicio inválida." }),
+  end: z.string().refine((v) => normalizeLocalTime(v) !== null, { error: "Hora de fin inválida." }),
+  timeZone: z.string().min(1).max(64),
+});
+
+/** The generation window: when slots.fill may start posts for the AI (phase 4, T4). */
+export async function saveGenerationWindowAction(
+  _: WindowFormState,
+  form: FormData,
+): Promise<WindowFormState> {
+  await requireOperator();
+  const parsed = windowInput.safeParse(Object.fromEntries(form));
+  if (!parsed.success) {
+    return { status: "error", message: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+  const window = parseGenerationWindow({ ...parsed.data, enabled: parsed.data.enabled === "on" });
+  if (window.timeZone !== parsed.data.timeZone) {
+    return { status: "error", message: "Elegí una zona horaria válida." };
+  }
+  if (window.start === window.end) {
+    return { status: "error", message: "El inicio y el fin no pueden ser la misma hora." };
+  }
+  await setSetting(db, GENERATION_WINDOW_KEY, window);
+  revalidatePath("/settings");
+  return {
+    status: "ok",
+    message: window.enabled ? "Generación automática activada." : "Generación automática apagada.",
+  };
 }

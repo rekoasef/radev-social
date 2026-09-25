@@ -30,7 +30,13 @@ import {
  */
 export async function createGeneratingPost(
   db: Database,
-  input: { brandId: string; request: GenerationRequest; ideaId?: string | null },
+  input: {
+    brandId: string;
+    request: GenerationRequest;
+    ideaId?: string | null;
+    /** Planned time and slot (slots.fill, phase 4 T4): approving it schedules it there. */
+    plan?: { at: Date; slotId: string | null };
+  },
 ): Promise<Post> {
   return db.transaction(async (tx) => {
     if (input.ideaId) {
@@ -55,6 +61,8 @@ export async function createGeneratingPost(
         ideaId: input.ideaId ?? null,
         status: INITIAL_STATUSES.ai,
         generationRequest: input.request,
+        scheduledAt: input.plan?.at ?? null,
+        slotId: input.plan?.slotId ?? null,
       })
       .returning();
     if (!post) throw new Error("No se pudo crear el post.");

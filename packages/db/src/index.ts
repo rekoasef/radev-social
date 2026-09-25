@@ -54,6 +54,12 @@ export {
   type VersionDatasetsResult,
 } from "./queries/data";
 export {
+  type BankIdea,
+  countGeneratingPosts,
+  listBankIdeasForFill,
+  pillarPostCounts,
+} from "./queries/fill";
+export {
   addGeneratedVersion,
   createGeneratingPost,
   failGeneration,
@@ -152,4 +158,5 @@ export {
   setSeriesArchived,
   updateSeries,
 } from "./queries/series";
+export { getSetting, setSetting } from "./queries/settings";
 export * from "./schema";

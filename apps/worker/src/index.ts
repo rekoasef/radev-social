@@ -12,9 +12,11 @@ import {
   dataRefreshKey,
   IDEA_REQUEST_TASKS,
   type IdeaRequestJob,
+  ideaRequestKey,
   JOBS,
   type PostPublishJob,
   QUEUE_OPTIONS,
+  SLOTS_FILL_CRON,
 } from "@radev/core";
 import { createDb, failGeneration, failIdeaRequest, getLatestSnapshot } from "@radev/db";
 import { type JobWithMetadata, PgBoss } from "pg-boss";
@@ -23,6 +25,7 @@ import { failRender, renderCarousel } from "./jobs/carousel-render";
 import { refreshData } from "./jobs/data-refresh";
 import { RetryableIdeasError, runIdeaRequest } from "./jobs/ideas-request";
 import { publishPost } from "./jobs/post-publish";
+import { fillSlots } from "./jobs/slots-fill";
 import { createLogger } from "./logger";
 import { closeBrowser } from "./render/browser";
 
@@ -220,6 +223,33 @@ async function main() {
     },
   );
 
+  // Automatic filling: every 15 min by cron; it only acts inside the generation window (Settings).
+  // One run at a time (a single cron job per tick, one worker at a time on it).
+  await boss.createQueue(JOBS.slotsFill, QUEUE_OPTIONS[JOBS.slotsFill]);
+  await boss.work(
+    JOBS.slotsFill,
+    { batchSize: 1, includeMetadata: true },
+    async ([job]: JobWithMetadata<object>[]) => {
+      if (!job) return;
+      const jobLog = log.child({ job: JOBS.slotsFill, id: job.id });
+      const outcome = await fillSlots({
+        db,
+        log: jobLog,
+        queueGenerate: (postId) => queueGenerate({ postId, attempt: 0 }, 0),
+        queueIdeaRequest: async (requestId) => {
+          await boss.send(
+            JOBS.ideasGenerate,
+            { requestId },
+            { singletonKey: ideaRequestKey(requestId) },
+          );
+        },
+      });
+      if (outcome === "outside-window") jobLog.debug("slots fill: outside the window");
+      else jobLog.info("slots fill finished", { brands: outcome.brands });
+    },
+  );
+  await boss.schedule(JOBS.slotsFill, SLOTS_FILL_CRON, {}, { key: "slots-fill" });
+
   log.info("worker ready", {
     schema: "pgboss",
     schemaVersion: await boss.schemaVersion(),
@@ -229,6 +259,7 @@ async function main() {
       ...IDEA_REQUEST_TASKS,
       JOBS.dataRefresh,
       JOBS.postPublish,
+      JOBS.slotsFill,
     ],
   });
 

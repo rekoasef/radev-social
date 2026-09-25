@@ -41,7 +41,7 @@ export default async function BrandPage({ params }: PageProps<"/brands/[slug]">)
             codePrefix: brand.codePrefix,
             timezone: brand.timezone,
           }}
-          timezones={timezoneOptions()}
+          timezones={timezoneOptions(brand.timezone)}
           prefixLocked={prefixRule.ok ? undefined : prefixRule.reason}
         />
       </section>

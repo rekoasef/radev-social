@@ -173,7 +173,7 @@ Todos idempotentes (clave `singletonKey` derivada del objetivo), con reintentos 
 | `carousel.render` | tras generar o editar | Playwright renderiza cada slide en 4:5, QA, guarda assets |
 | `review.notify` | post entra a `in_review` | aviso agrupado por Telegram |
 | `post.publish` | `startAfter = scheduled_at`, clave `publish:<post>` | publica vía adaptador si el post sigue `scheduled` para esa hora (si no, se saltea) |
-| `slots.fill` | cron diario **dentro de la ventana de generación** | llena slots vacíos de los próximos días respetando la mezcla |
+| `slots.fill` | cron cada 15 min; actúa solo **dentro de la ventana de generación** | llena los slots libres de los próximos 7 días respetando la mezcla (ver §7) |
 | `data.refresh` | cron diario (19:00 de Buenos Aires; al arrancar el worker si no hay datos) o "Actualizar ahora" en Ajustes | snapshot de Bluelytics |
 | `metrics.sync` | cron (F6) | métricas por publicación |
 | `tokens.refresh` | cron | renueva tokens de TikTok |
@@ -258,7 +258,8 @@ Router (`packages/ai/src/router.ts`): prueba el principal y pasa al respaldo ant
 
 - **Límite del proveedor** (ej. ventana de Claude Pro agotada): el proveedor devuelve `rate_limited`. El router intenta el respaldo; si no hay respaldo, el job se reprograma con backoff creciente (15 min, 30, 60, 120 y después 240; `rateLimitDelayMs`, que espera al menos hasta el reinicio que informe el proveedor) y el post queda en `generating`. Si eso pone en riesgo un post programado en menos de N horas, avisa por Telegram.
 - **Topes propios por marca**: máximo de generaciones por día y por mes (`brands.ai_daily_limit`, `brands.ai_monthly_limit`). Al alcanzarse, la generación automática se pausa y avisa; la manual pide confirmación. Cuentan solo las generaciones **exitosas de carruseles** (`carousel.generate`; los pedidos de ideas no, desde la T10), con el día y el mes en la zona horaria de la marca (`zonedPeriodStart`, `checkBrandAiQuota`). Vacío = sin tope; 0 pausa la generación. Se editan en Marcas → General.
-- **Ventana de generación**: la generación automática (`slots.fill`) solo corre dentro de `settings.generation_window` (por defecto 02:00–07:00), para no competir con el uso del operador.
+- **Ventana de generación**: la generación automática (`slots.fill`) solo corre dentro de `settings.generation_window` (`{ enabled, start, end, timeZone }`, por defecto 02:00–07:00 de Buenos Aires y **apagada** hasta que el operador la active en Ajustes), para no competir con el uso del operador. Puede cruzar la medianoche.
+- **Llenado (`slots.fill`, F4 T4)**: por marca activa, los horarios libres de los próximos 7 días con al menos 2 h de margen. Cada uno toma el pilar con más déficit (posts creados en los últimos 28 días más los planeados, contra el porcentaje objetivo; `pillarsByNeed`) que tenga una idea `new` en el banco (la suya o una sin pilar; la más vieja), y crea el post `generating` **planeado en ese horario** (`scheduled_at` + `slot_id`) desde la idea (la idea pasa a `used`); al aprobarlo se programa (§5). Si a algún pilar le faltan ideas, crea un pedido `ideas.generate` para el de más déficit (uno abierto por marca) y la pasada siguiente las usa. Topes: lo generado hoy y en el mes más lo que está `generating` (`fillBudget`). Resultado de la última pasada en `settings.slots_fill_last`, visible en Ajustes. Lógica pura en `packages/core/src/scheduling/fill.ts`.
 - **Reintentos por QA**: máximo 2 regeneraciones automáticas; después queda `in_review` con las violaciones marcadas.
 - Contexto mínimo: solo últimos posts y ganadores relevantes; `carousel.generate` sin búsqueda web.
 
@@ -331,7 +332,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `publications` | id, post_id, social_account_id, network, status, external_id, url, error, attempts, published_at |
 | `ai_routes` | id, task, brand_id (nullable = global), provider, model, fallback_provider, fallback_model. Única por tarea y marca, con una sola global por tarea (`NULLS NOT DISTINCT`) |
 | `generation_runs` | id, brand_id, post_id (null en pedidos de ideas), task, role (`primary` \| `fallback`), provider, model, status (`succeeded` \| `failed`), error_kind, error, input_tokens, output_tokens, cost_usd (nullable), duration_ms, num_turns, session_id, created_at. Una fila por intento |
-| `settings` | clave/valor global (ventana de generación, etc.) |
+| `settings` | clave/valor global: `generation_window`, `slots_fill_last` (resultado de la última pasada del llenado) |
 | `data_snapshots` | id, source (`bluelytics`), as_of (fecha del dato), fetched_at, payload (jsonb, validado al bajarlo). Uno por fuente y día: otro refresh el mismo día lo reemplaza |
 | `post_metrics` (F6) | id, publication_id, captured_at, views, likes, comments, shares, saves, source (`api` \| `screenshot` \| `manual`) |
 | `audience_snapshots` (F6) | id, brand_id, network, captured_at, data (jsonb), source |

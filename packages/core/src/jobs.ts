@@ -14,6 +14,8 @@ export const JOBS = {
   dataRefresh: "data.refresh",
   /** At a scheduled post's time: publish it through its adapter (manual: wait for the operator). */
   postPublish: "post.publish",
+  /** Every 15 min: inside the generation window, give free slots a post for the AI (phase 4, T4). */
+  slotsFill: "slots.fill",
 } as const;
 
 export type CarouselRenderJob = { versionId: string };
@@ -77,6 +79,8 @@ export const QUEUE_OPTIONS = {
   [JOBS.dataRefresh]: { retryLimit: 3, retryDelay: 300, retryBackoff: true },
   // Quick (the manual adapter only marks it); a network hiccup is tried again soon.
   [JOBS.postPublish]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
+  // Only database work and queueing; the next run (15 min) is the retry.
+  [JOBS.slotsFill]: { retryLimit: 0, expireInSeconds: 10 * 60 },
 } as const;
 
 /**

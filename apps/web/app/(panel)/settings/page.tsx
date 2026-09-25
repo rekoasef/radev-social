@@ -5,14 +5,21 @@ import {
   DATA_REFRESH_TZ,
   DATA_SOURCE_LABELS,
   DATA_SOURCES,
+  FILL_DAYS,
+  FILL_REPORT_KEY,
+  type FillReport,
   formatDataDate,
+  GENERATION_WINDOW_KEY,
+  parseGenerationWindow,
   TOOL_TASKS,
 } from "@radev/core";
-import { getLatestSnapshot, listAiRoutes, listBrands, snapshotData } from "@radev/db";
+import { getLatestSnapshot, getSetting, listAiRoutes, listBrands, snapshotData } from "@radev/db";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
 import { AiRouteForm } from "@/components/settings/ai-route-form";
+import { GenerationWindowForm } from "@/components/settings/generation-window-form";
+import { timezoneOptions } from "@/lib/brand-form";
 import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/time";
 import { refreshDataAction } from "./actions";
@@ -30,13 +37,16 @@ const TASK_HINTS: Record<AiTask, string> = {
 // Which provider and model each AI task uses, and its fallback (docs/ARCHITECTURE.md §7).
 // Global routes: a brand's own route (the database allows it) is for later.
 export default async function SettingsPage() {
-  const [allRoutes, brands, snapshots] = await Promise.all([
+  const [allRoutes, brands, snapshots, storedWindow, lastFill] = await Promise.all([
     listAiRoutes(db),
     listBrands(db),
     Promise.all(
       DATA_SOURCES.map(async (source) => [source, await getLatestSnapshot(db, source)] as const),
     ),
+    getSetting(db, GENERATION_WINDOW_KEY),
+    getSetting(db, FILL_REPORT_KEY) as Promise<FillReport | undefined>,
   ]);
+  const window = parseGenerationWindow(storedWindow);
   const routes = allRoutes.filter((route) => route.brandId === null);
 
   return (
@@ -94,6 +104,61 @@ export default async function SettingsPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* Automatic filling (phase 4, T4): the window and what its last run did. */}
+      <section aria-labelledby="fill-heading" className="flex flex-col gap-6">
+        <Plate id="fill-heading" aside="Piloto automático">
+          Generación automática
+        </Plate>
+        <div className="flex max-w-[70ch] flex-col gap-2 text-sm text-ink-dim">
+          <p>
+            Dentro de la ventana, cada 15 minutos, los horarios libres de los próximos {FILL_DAYS}{" "}
+            días de cada marca reciben un post para que escriba la IA: el pilar que más falta según
+            la mezcla y la idea más vieja del banco. Si no hay ideas, se las pide a la IA. Respeta
+            los topes de cada marca. Al aprobar esos posts se programan solos.
+          </p>
+          <p>Conviene de madrugada, para no competir con tu uso de Claude.</p>
+        </div>
+        <GenerationWindowForm
+          key={JSON.stringify(window)}
+          window={window}
+          timeZones={timezoneOptions(window.timeZone)}
+        />
+        <div className="flex max-w-3xl flex-col gap-2">
+          <h2 className="text-sm text-ink">Última pasada</h2>
+          {lastFill ? (
+            <>
+              <p className="timecode text-xs text-ink-faint">
+                {formatDateTime(new Date(lastFill.at), window.timeZone)}
+              </p>
+              <ul className="flex flex-col divide-y divide-bezel rounded-md border border-bezel">
+                {lastFill.brands.map((entry) => (
+                  <li key={entry.slug} className="flex flex-col gap-1 px-4 py-3 text-sm">
+                    <span className="text-ink">
+                      {brands.find((b) => b.slug === entry.slug)?.name ?? entry.slug}
+                      {": "}
+                      {entry.created.length > 0
+                        ? `${entry.created.length} ${entry.created.length === 1 ? "post nuevo" : "posts nuevos"} (${entry.created.join(", ")})`
+                        : "nada nuevo"}
+                    </span>
+                    {(entry.unfilled > 0 || entry.note || entry.requestedIdeasFor) && (
+                      <span className="text-ink-dim">
+                        {entry.unfilled > 0 &&
+                          `${entry.unfilled} ${entry.unfilled === 1 ? "horario quedó libre" : "horarios quedaron libres"}. `}
+                        {entry.note}
+                        {entry.requestedIdeasFor &&
+                          ` Se pidieron ideas para el pilar ${entry.requestedIdeasFor}.`}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="text-sm text-ink-faint">Todavía no corrió dentro de la ventana.</p>
+          )}
+        </div>
       </section>
 
       {/* Real data for the content (phase 3, T11): what data.refresh fetched last. */}
