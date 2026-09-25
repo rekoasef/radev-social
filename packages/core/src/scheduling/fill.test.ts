@@ -6,6 +6,7 @@ import {
   parseGenerationWindow,
   pillarsByNeed,
   planFill,
+  researchDue,
 } from "./fill";
 import type { SlotOccurrence } from "./slots";
 
@@ -144,5 +145,21 @@ describe("planFill", () => {
       needIdeasFor: "habits",
       unfilled: 4,
     });
+  });
+});
+
+describe("researchDue", () => {
+  const now = new Date("2026-09-26T06:00:00Z");
+  const daysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000);
+
+  it("asks once a week, counting the ones that worked or are running", () => {
+    expect(researchDue({ ok: null, any: null }, now)).toBe(true);
+    expect(researchDue({ ok: daysAgo(3), any: daysAgo(3) }, now)).toBe(false);
+    expect(researchDue({ ok: daysAgo(7.1), any: daysAgo(7.1) }, now)).toBe(true);
+  });
+
+  it("after a failure, waits a day before trying again", () => {
+    expect(researchDue({ ok: daysAgo(10), any: daysAgo(0.5) }, now)).toBe(false);
+    expect(researchDue({ ok: null, any: daysAgo(1.5) }, now)).toBe(true);
   });
 });

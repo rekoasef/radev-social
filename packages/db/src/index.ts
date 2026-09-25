@@ -78,6 +78,7 @@ export {
   failIdeaRequest,
   getIdeaRequest,
   type IdeaRequestResult,
+  lastIdeaRequestTimes,
   listIdeaRequests,
   listIdeaTitles,
   type ProposedIdea,

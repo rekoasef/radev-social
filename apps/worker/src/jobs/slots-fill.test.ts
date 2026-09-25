@@ -8,6 +8,7 @@ const db = vi.hoisted(() => ({
   created: [] as { request: unknown; plan: unknown; ideaId: unknown }[],
   requests: [] as unknown[],
   saved: {} as Record<string, unknown>,
+  lastResearch: { ok: null as Date | null, any: null as Date | null },
 }));
 
 vi.mock("@radev/db", () => ({
@@ -66,6 +67,7 @@ vi.mock("@radev/db", () => ({
     db.created.push(input);
     return { id: `p${db.created.length}`, publicCode: `LU-000${db.created.length}` };
   },
+  lastIdeaRequestTimes: async () => db.lastResearch,
   createIdeaRequest: async (_: unknown, input: unknown) => {
     db.requests.push(input);
     return { ok: true, request: { id: "r1" } };
@@ -88,7 +90,14 @@ describe("slots.fill", () => {
   const run = () => fillSlots({ db: {} as never, log, queueGenerate, queueIdeaRequest, now });
 
   beforeEach(() => {
-    Object.assign(db, { window, planned: [], created: [], requests: [], saved: {} });
+    Object.assign(db, {
+      window,
+      planned: [],
+      created: [],
+      requests: [],
+      saved: {},
+      lastResearch: { ok: null, any: null },
+    });
     queueGenerate.mockClear();
     queueIdeaRequest.mockClear();
   });
@@ -116,24 +125,41 @@ describe("slots.fill", () => {
       seriesKey: null,
     });
     expect(queueGenerate).toHaveBeenCalledTimes(2);
-    expect(db.requests).toEqual([
-      {
-        brandId: "b1",
-        task: "ideas.generate",
-        params: { count: 5, pillarKey: "habits", seriesKey: null, focus: null },
-      },
+    expect(db.requests[0]).toEqual({
+      brandId: "b1",
+      task: "ideas.generate",
+      params: { count: 5, pillarKey: "habits", seriesKey: null, focus: null },
+    });
+    expect(db.requests[1]).toEqual({
+      brandId: "b1",
+      task: "ideas.research",
+      params: { count: 5, pillarKey: null, seriesKey: null, focus: null },
+    });
+    expect(queueIdeaRequest.mock.calls).toEqual([
+      ["ideas.generate", "r1"],
+      ["ideas.research", "r1"],
     ]);
-    expect(queueIdeaRequest).toHaveBeenCalledWith("r1");
     expect(report).toMatchObject({
       brands: [
         {
           slug: "lumus",
           created: ["LU-0001", "LU-0002"],
           requestedIdeasFor: "habits",
+          researched: true,
           unfilled: 4,
         },
       ],
     });
     expect(db.saved.slots_fill_last).toEqual(report);
+  });
+
+  it("asks for the weekly research only once a week", async () => {
+    db.lastResearch = {
+      ok: new Date("2026-09-22T06:00:00Z"),
+      any: new Date("2026-09-22T06:00:00Z"),
+    };
+    const report = await run();
+    expect(db.requests.map((r) => (r as { task: string }).task)).toEqual(["ideas.generate"]);
+    expect(report).toMatchObject({ brands: [{ researched: false }] });
   });
 });

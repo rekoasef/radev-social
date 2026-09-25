@@ -8,8 +8,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 4 — Producción y piloto automático (en curso, T1–T4 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T5 de la Fase 4: `ideas.research` semanal automática.
+- **Fase:** 4 — Producción y piloto automático (en curso, T1–T5 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T6 de la Fase 4: bot de Telegram (grammY). El operador crea el bot con @BotFather.
 - **Para el operador (T4):** en Ajustes → Generación automática, activarla cuando quieras que llene la semana sola (viene apagada: en la notebook generaría de madrugada con tu suscripción). Lumus tiene el banco de ideas vacío: la primera pasada pide ideas y la siguiente llena.
 - **Para el operador (T3) 👁:** aprobar el diseño del calendario (capturas en la conversación del 2026-09-25) y probarlo con login: arrastrar con el mouse, y en el celular "Mover" → tocar un horario libre.
 - **Para el operador (T2):** probar con login en un post aprobado: Programar (horario de la marca u otra fecha), Reprogramar, Desprogramar; y un post que llegue a su hora (queda "Publicando" hasta Marcar como publicado). Confirmar la decisión (1) de la T2.
@@ -21,7 +21,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0014_post_scheduling`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T4 de la Fase 4
+- **Última actualización:** 2026-09-25, al cerrar la T5 de la Fase 4
 
 ## Fase 4 — tareas
 
@@ -35,7 +35,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T2 | Programar: estado `scheduled`, programar / des-programar / re-programar, job `post.publish` a la hora del slot (adaptador manual: queda `publishing` hasta "Marcar como publicado"); idempotente | ✅ |
 | T3 | Calendario por marca: semana con slots y posts, arrastrar entre slots. 👁 | ✅ (falta el OK del diseño) |
 | T4 | Ventana de generación (Ajustes, 02:00–07:00) + `slots.fill`: 7 días, pilar según la mezcla, idea del banco o pedida a la IA, respeta topes. Tests | ✅ |
-| T5 | `ideas.research` semanal automática | |
+| T5 | `ideas.research` semanal automática | ✅ |
 | T6 | Bot de Telegram (grammY): posts para revisar (agrupado), recordatorio de publicación con descarga, errores, límites de IA y aviso si comprometen un post programado | |
 | T7 | Cola de revisión para el celular: ver, editar lo básico, aprobar o rechazar con feedback. 👁 | |
 | T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | |
@@ -78,6 +78,13 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - **Bug arreglado de paso**: el ICU del Node actual lista `America/Buenos_Aires` pero no el alias `America/Argentina/Buenos_Aires` que usan las marcas. El selector de zona de Marcas → General mostraba otra zona (La_Rioja) y guardar la marca habría fallado o cambiado la zona. `timezoneOptions(current)` siempre incluye la actual (y el alias argentino) y `isKnownTimeZone` acepta alias.
 - Tests: 593 en total (11 nuevos; el job con la base simulada).
 - **Prueba real** contra la base, dentro de una transacción que se deshace (sin IA, sin dejar nada): RAdev → 7 posts planeados a las 19:00 de los próximos 7 días con ideas del banco + pedido de ideas para `built-by-radev` (pilar sin ideas); Lumus (banco vacío) → ningún post y pedido de ideas para `money-myths`; segunda pasada → nada nuevo. El cron corrió en Docker a las 17:00 UTC y terminó sin hacer nada (ventana apagada). Ajustes capturado sin login en escritorio y 390 px.
+
+**T5 (2026-09-25)**:
+- Sin cron propio: va en la pasada de `slots.fill`, así usa la misma ventana y la misma llave de encendido (la investigación con búsqueda web es lo más caro en uso de Claude: solo de madrugada y si el operador activó la generación automática).
+- Core `researchDue({ ok, any }, now)`: toca si no hubo una `ideas.research` que haya funcionado o siga abierta en `RESEARCH_EVERY_DAYS` (7) y ningún intento en `RESEARCH_RETRY_HOURS` (24; una fallida no se reintenta cada 15 min). Query `lastIdeaRequestTimes`. El pedido: 5 ideas, sin pilar ni foco (la IA reparte), vía `createIdeaRequest` (uno abierto por marca y tarea). `FillReport` suma `researched`; Ajustes lo muestra.
+- Tests: 596 en total (3 nuevos).
+- Prueba contra la base en transacción deshecha: Lumus (nunca investigó) → pedido `ideas.research`; RAdev (investigó en la T10, hace menos de una semana) → no; segunda pasada → nada.
+
 
 
 

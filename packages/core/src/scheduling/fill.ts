@@ -165,6 +165,22 @@ export function planFill(input: {
   };
 }
 
+/** The weekly research (docs/PRD.md RF-11, phase 4 T5): once a week per brand, in the window. */
+export const RESEARCH_EVERY_DAYS = 7;
+
+/** After a failed research, the next try waits this long (the window runs every 15 min). */
+export const RESEARCH_RETRY_HOURS = 24;
+
+/**
+ * Whether a brand is due its weekly research: none that worked (or is still running) in the last
+ * week, and no attempt at all in the last day (a failed one is not retried every 15 minutes).
+ */
+export function researchDue(last: { ok: Date | null; any: Date | null }, now: Date): boolean {
+  const ago = (at: Date | null, ms: number) => at !== null && now.getTime() - at.getTime() < ms;
+  if (ago(last.ok, RESEARCH_EVERY_DAYS * 86_400_000)) return false;
+  return !ago(last.any, RESEARCH_RETRY_HOURS * 3_600_000);
+}
+
 /** What the last run did, shown in Settings (stored under `slots_fill_last`). */
 export type FillReport = {
   at: string;
@@ -172,6 +188,8 @@ export type FillReport = {
     slug: string;
     created: string[];
     requestedIdeasFor: string | null;
+    /** The weekly research was asked for in this run. */
+    researched: boolean;
     unfilled: number;
     /** Why a brand was skipped or left slots empty, in Spanish. */
     note: string | null;

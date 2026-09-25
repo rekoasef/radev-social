@@ -118,6 +118,10 @@ export default async function SettingsPage() {
             la mezcla y la idea más vieja del banco. Si no hay ideas, se las pide a la IA. Respeta
             los topes de cada marca. Al aprobar esos posts se programan solos.
           </p>
+          <p>
+            Además, una vez por semana cada marca recibe su investigación de temas en la web (como
+            "Investigar temas" en Ideas): las ideas nuevas quedan en el banco.
+          </p>
           <p>Conviene de madrugada, para no competir con tu uso de Claude.</p>
         </div>
         <GenerationWindowForm
@@ -142,13 +146,17 @@ export default async function SettingsPage() {
                         ? `${entry.created.length} ${entry.created.length === 1 ? "post nuevo" : "posts nuevos"} (${entry.created.join(", ")})`
                         : "nada nuevo"}
                     </span>
-                    {(entry.unfilled > 0 || entry.note || entry.requestedIdeasFor) && (
+                    {(entry.unfilled > 0 ||
+                      entry.note ||
+                      entry.requestedIdeasFor ||
+                      entry.researched) && (
                       <span className="text-ink-dim">
                         {entry.unfilled > 0 &&
                           `${entry.unfilled} ${entry.unfilled === 1 ? "horario quedó libre" : "horarios quedaron libres"}. `}
                         {entry.note}
                         {entry.requestedIdeasFor &&
                           ` Se pidieron ideas para el pilar ${entry.requestedIdeasFor}.`}
+                        {entry.researched && " Se pidió la investigación semanal de temas."}
                       </span>
                     )}
                   </li>

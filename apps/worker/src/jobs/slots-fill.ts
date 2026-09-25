@@ -6,11 +6,13 @@ import {
   fillBudget,
   GENERATION_WINDOW_KEY,
   IDEA_COUNT_DEFAULT,
+  type IdeaRequestTask,
   ideaPrompt,
   isWithinWindow,
   MIX_LOOKBACK_DAYS,
   parseGenerationWindow,
   planFill,
+  researchDue,
   shareToPercent,
   upcomingSlots,
 } from "@radev/core";
@@ -22,6 +24,7 @@ import {
   type Database,
   getBrandAiUsage,
   getSetting,
+  lastIdeaRequestTimes,
   listBankIdeasForFill,
   listBrands,
   listPillars,
@@ -35,14 +38,15 @@ import type { Logger } from "../logger";
 // slots.fill (docs/ARCHITECTURE.md §6, phase 4 T4): during the generation window, every free slot
 // time of the next days gets a post for the AI to write, planned there (approving it schedules
 // it, T2). The pillar follows the mix and the idea comes from the bank; with no ideas, it asks the
-// AI for some and the next run uses them. Idempotent: a slot time holds one post (unique index)
+// AI for some and the next run uses them. Once a week each brand also gets its web research of
+// topics (ideas.research, T5). Idempotent: a slot time holds one post (unique index)
 // and a bank idea is used once (rule 8).
 
 export type FillDeps = {
   db: Database;
   log: Logger;
   queueGenerate: (postId: string) => Promise<void>;
-  queueIdeaRequest: (requestId: string) => Promise<void>;
+  queueIdeaRequest: (task: IdeaRequestTask, requestId: string) => Promise<void>;
   now?: Date;
 };
 
@@ -56,7 +60,9 @@ export async function fillSlots(deps: FillDeps): Promise<FillOutcome> {
   const report: FillReport = { at: now.toISOString(), brands: [] };
   for (const brand of await listBrands(deps.db)) {
     if (brand.archivedAt !== null) continue;
-    report.brands.push(await fillBrand(deps, brand, now));
+    const entry = await fillBrand(deps, brand, now);
+    entry.researched = await weeklyResearch(deps, brand, now);
+    report.brands.push(entry);
   }
   await setSetting(deps.db, FILL_REPORT_KEY, report);
   return report;
@@ -72,6 +78,7 @@ async function fillBrand(
     slug: brand.slug,
     created: [] as string[],
     requestedIdeasFor: null as string | null,
+    researched: false,
     unfilled: 0,
     note: null as string | null,
   };
@@ -157,7 +164,7 @@ async function fillBrand(
       },
     });
     if (requested.ok) {
-      await deps.queueIdeaRequest(requested.request.id);
+      await deps.queueIdeaRequest("ideas.generate", requested.request.id);
       entry.requestedIdeasFor = plan.needIdeasFor;
     }
   }
@@ -174,4 +181,19 @@ async function fillBrand(
     mix: Object.fromEntries(pillars.map((p) => [p.key, shareToPercent(p.targetShare)])),
   });
   return entry;
+}
+
+/** The brand's weekly research of topics, when it is due (and none is already open). */
+async function weeklyResearch(deps: FillDeps, brand: Brand, now: Date): Promise<boolean> {
+  const last = await lastIdeaRequestTimes(deps.db, { brandId: brand.id, task: "ideas.research" });
+  if (!researchDue(last, now)) return false;
+  const requested = await createIdeaRequest(deps.db, {
+    brandId: brand.id,
+    task: "ideas.research",
+    params: { count: IDEA_COUNT_DEFAULT, pillarKey: null, seriesKey: null, focus: null },
+  });
+  if (!requested.ok) return false;
+  await deps.queueIdeaRequest("ideas.research", requested.request.id);
+  deps.log.info("weekly research asked", { brand: brand.slug });
+  return true;
 }

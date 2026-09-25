@@ -215,6 +215,9 @@ export {
   parseGenerationWindow,
   pillarsByNeed,
   planFill,
+  RESEARCH_EVERY_DAYS,
+  RESEARCH_RETRY_HOURS,
+  researchDue,
   SLOTS_FILL_CRON,
 } from "./scheduling/fill";
 export {

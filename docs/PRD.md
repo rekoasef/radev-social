@@ -60,7 +60,7 @@ Cada requerimiento indica la fase del roadmap en la que se implementa.
 ### Ideas
 - **RF-09** (F3) Banco de ideas por marca: cargar ideas manualmente en segundos (desde el celular).
 - **RF-10** (F3) Generación de ideas con IA a partir de pilares, series e historial (modelo gratuito por defecto).
-- **RF-11** (F3) Investigación semanal de temas del nicho con búsqueda web (Claude).
+- **RF-11** (F3; la parte automática, F4 T5) Investigación semanal de temas del nicho con búsqueda web (Claude).
 - **RF-12** (F3) Series recurrentes (ej. "¿Cuánto cuesta realmente...?") con estructura fija.
 - **RF-13** (F6, pospuesto desde F3: necesita métricas) Reciclado: nuevos ángulos de posts anteriores con buen rendimiento.
 

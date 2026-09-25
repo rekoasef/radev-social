@@ -119,3 +119,22 @@ export function listIdeaTitles(db: Database, brandId: string, limit = 80) {
     .orderBy(desc(ideas.createdAt))
     .limit(limit);
 }
+
+/**
+ * When the brand last asked for a task: the latest request that worked or is still open (`ok`),
+ * and the latest of any status (`any`). The weekly research uses them (phase 4, T5).
+ */
+export async function lastIdeaRequestTimes(
+  db: Database,
+  input: { brandId: string; task: IdeaRequestTask },
+): Promise<{ ok: Date | null; any: Date | null }> {
+  const [row] = await db
+    .select({
+      ok: sql<Date | null>`max(${ideaRequests.createdAt}) filter (where ${ideaRequests.status} <> 'failed')`,
+      any: sql<Date | null>`max(${ideaRequests.createdAt})`,
+    })
+    .from(ideaRequests)
+    .where(and(eq(ideaRequests.brandId, input.brandId), eq(ideaRequests.task, input.task)));
+  const date = (value: Date | string | null | undefined) => (value ? new Date(value) : null);
+  return { ok: date(row?.ok), any: date(row?.any) };
+}

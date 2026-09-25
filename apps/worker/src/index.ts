@@ -236,12 +236,8 @@ async function main() {
         db,
         log: jobLog,
         queueGenerate: (postId) => queueGenerate({ postId, attempt: 0 }, 0),
-        queueIdeaRequest: async (requestId) => {
-          await boss.send(
-            JOBS.ideasGenerate,
-            { requestId },
-            { singletonKey: ideaRequestKey(requestId) },
-          );
+        queueIdeaRequest: async (task, requestId) => {
+          await boss.send(task, { requestId }, { singletonKey: ideaRequestKey(requestId) });
         },
       });
       if (outcome === "outside-window") jobLog.debug("slots fill: outside the window");
