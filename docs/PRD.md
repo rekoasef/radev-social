@@ -98,7 +98,7 @@ Cada requerimiento indica la fase del roadmap en la que se implementa.
 - **RF-36** (F5) Conectar cuentas de TikTok por marca (OAuth), con renovación de tokens.
 
 ### Medición y aprendizaje
-- **RF-37** (F3) Importar historial de posts (texto + métricas) como ejemplos para la generación.
+- **RF-37** (F6, pospuesto desde F3: no hay historial con métricas) Usar los posts con mejores métricas como ejemplos para la generación.
 - **RF-38** (F6) Sincronizar métricas por post desde la API de TikTok.
 - **RF-39** (F6) Cargar capturas de analíticas y extraer datos con IA.
 - **RF-40** (F6) Página de links propia por marca con seguimiento de clics.

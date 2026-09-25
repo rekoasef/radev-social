@@ -9,7 +9,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 3 — Generación con IA (en curso, T1–T11 hechas). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T12 de la Fase 3: importar historial de posts → `winners.json` (depende de que el operador diga de dónde sale el historial; si no hay, se pospone).
+- **Próximo paso:** T13 de la Fase 3 (cierre). La T12 quedó pospuesta a la Fase 6 (ver T12 abajo).
 - **Para el operador (T11):** (1) mirar LU-0004 y LU-0005 (posts de prueba de Lumus con gráficos y cifras del dólar, en revisión) y Ajustes → Datos reales. (2) En la otra máquina, tildar Bluelytics en Marcas → Lumus → General → Fuentes de datos: el seed no toca marcas que ya existen.
 - **Para el operador (T10):** (1) en Ajustes → Ruteo de IA, cambiar `nex-agi/nex-n2.5-pro:free` (ya no existe en OpenRouter) por `nvidia/nemotron-3-super-120b-a12b:free` en `ideas.generate` (principal) y `carousel.generate` (respaldo). (2) Completar Precios de RAdev: sin rangos, los posts de la serie "¿Cuánto cuesta realmente…?" fallan a propósito (no inventan precios). (3) La serie está repetida en el documento de voz de RAdev: se puede sacar de ahí. (4) Mirar con login /ideas (pedidos a la IA) y Marcas → Series.
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
@@ -35,7 +35,7 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 | T9 | Banco de ideas (carga rápida mobile, listado, descarte) + edición de pilares con porcentajes y WhatsApp de la marca | ✅ |
 | T10 | `ideas.generate` (modelo gratuito), `ideas.research` (Claude con búsqueda web), serie "¿Cuánto cuesta realmente…?" | ✅ |
 | T11 | `data.refresh` (Bluelytics) → datos reales para `chart` / `bigNumber`; `chart` en el editor | ✅ |
-| T12 | Importar historial de posts → `winners.json` | |
+| T12 | Importar historial de posts → `winners.json` | ⏸ pospuesta a la Fase 6 |
 | T13 | Cierre: criterio de terminado con ambas marcas, docs | |
 
 **T0 (2026-09-24), resultados** — detalle de flags y sobre de salida en `ARCHITECTURE.md` §7:
@@ -141,7 +141,9 @@ Plan aprobado el 2026-09-24. Primero el camino completo "Generar → carrusel re
 - Migración `0012_data_snapshots` (solo agrega). Tests: 555 en total (22 nuevos).
 - **Prueba real** (Lumus, por script, en Docker): el worker bajó Bluelytics al arrancar (572 registros de historia). LU-0004 "cómo se movió el dólar blue en el último mes": 112 s, cover → `chart` 30 días → `bigNumber` +0,3 % → `chart` 12 meses → statement → cta, datos congelados, render sin problemas. LU-0005 "brecha": 132 s, `bigNumber` 1,4 % + `chart` de la brecha, fuente ya puesta por el código. Controles de `chart` (`--check`, normal y extremo) OK en las dos marcas.
 
-Pendiente de respuesta del operador: (1) ~~cuenta de OpenRouter~~ hecha en la T5; (2) de dónde sale el historial de posts para la T12 (export de TikTok, planilla, capturas); si no hay, se pospone.
+**T12 (2026-09-25), pospuesta** por decisión del operador: no hay historial con métricas. Lo único que existe son carpetas de Google Drive con las imágenes de los posts de **RAdev** (nada de Lumus). Sin métricas no hay forma de saber cuáles fueron ganadores, así que `winners.json` se arma en la Fase 6 con las métricas reales de lo que publique el sistema. Si se retoma la importación de esas fotos (como ejemplos de estilo, con el texto transcripto por Claude), el operador prefiere **conectar Google Drive** antes que subir zips.
+
+Pendiente de respuesta del operador: (1) ~~cuenta de OpenRouter~~ hecha en la T5; (2) ~~de dónde sale el historial de posts para la T12~~: no hay, T12 pospuesta.
 
 ## Fase 2 — tareas
 

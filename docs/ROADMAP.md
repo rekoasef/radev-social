@@ -77,7 +77,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Series recurrentes, empezando por "¿Cuánto cuesta realmente...?"
 - [x] Job `carousel.generate` → versión nueva → `carousel.render`
 - [x] Rechazo con feedback y regeneración; regeneración automática por QA (máx. 2)
-- [ ] Importación del historial de posts → `winners.json`
+- [ ] ~~Importación del historial de posts → `winners.json`~~ → pospuesta a la Fase 6 (no hay historial con métricas)
 - [x] Job `data.refresh` (Bluelytics) → `data.json` para Lumus
 - [ ] Documentos de marca completos: `pricing.md` y `cases.md` de RAdev
 
@@ -129,6 +129,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [ ] Registro de leads (carga rápida, búsqueda por código de post)
 - [ ] Tablero por pilar, tipo de hook, horario y proveedor/modelo de IA
 - [ ] Recomendaciones de horarios y de mezcla; `slots.fill` usa la mezcla ajustada
+- [ ] `winners.json` para la generación: los posts con mejores métricas (viene de la Fase 3). Opcional: importar como ejemplos de estilo las imágenes de posts viejos de RAdev desde Google Drive
 
 **Terminado cuando:** la app me dice qué contenido me trae clientes (RAdev) y registros (Lumus), y ajusta la mezcla en base a eso.
 
