@@ -34,10 +34,9 @@ docker compose run --rm --no-deps -e PGDATABASE="$db" -v "$work/db.dump:/tmp/db.
 echo "== media/"
 mkdir -p "$MEDIA_PATH"
 tar -C "$work" -xf "$work/media.tar"
-cp -a "$work/media/." "$MEDIA_PATH/"
-if [ -n "$(find "$MEDIA_PATH" ! -uid 1000 -print -quit)" ]; then
-  sudo chown -R 1000:1000 "$MEDIA_PATH"
-fi
+# media/ es de uid 1000 (los contenedores); en la imagen de Oracle, ubuntu es 1001: con sudo.
+sudo cp -a "$work/media/." "$MEDIA_PATH/"
+sudo chown -R 1000:1000 "$MEDIA_PATH"
 echo "  $(find "$MEDIA_PATH" -type f | wc -l) archivos"
 
 echo "== Comparando"
