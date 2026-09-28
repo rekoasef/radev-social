@@ -8,8 +8,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 4 — Producción y piloto automático (en curso, T1–T13 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T14 (cierre de la Fase 4): unos días corriendo en producción, criterio de terminado y la prueba de publicación real pendiente de la Fase 2. **La verdad ya está en producción** (https://app.gestorlumus.site, base mudada el 2026-09-28): la base local es solo para desarrollo; web y worker locales frenados (no volver a levantar el worker local con la generación automática prendida). Pendiente del operador: volver a loguearse en producción, activar ahí la generación automática cuando quiera Mañana 07:30 AR: mirar que el primer backup automático no haya avisado error por Telegram.
+- **Fase:** 5 — Publicación automática en TikTok (empezada el 2026-09-28 a pedido del operador, en paralelo con la T14 de la Fase 4, que sigue abierta: unos días corriendo y la primera publicación real). Fase 4: T1–T13 hechas.
+- **Próximo paso:** Fase 5, T1 (páginas legales públicas). En paralelo, T14 de la Fase 4: unos días corriendo en producción, criterio de terminado y la prueba de publicación real pendiente de la Fase 2. **La verdad ya está en producción** (https://app.gestorlumus.site, base mudada el 2026-09-28): la base local es solo para desarrollo; web y worker locales frenados (no volver a levantar el worker local con la generación automática prendida). Pendiente del operador: volver a loguearse en producción, activar ahí la generación automática cuando quiera Mañana 07:30 AR: mirar que el primer backup automático no haya avisado error por Telegram.
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -27,6 +27,31 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
 - **Última actualización:** 2026-09-28, T12 y T13 cerradas (producción con datos y backups)
+
+## Fase 5 — tareas
+
+Plan aprobado el 2026-09-28 (el operador pidió arrancar la Fase 5 con la T14 de la Fase 4 abierta). 👁 = termina con capturas para aprobar.
+
+Verificado en la documentación de TikTok (2026-09-28): el modo foto acepta **solo JPEG y WebP** (no PNG), "máximo 1080p" y 20 MB por imagen, hasta 35 fotos, título ≤ 90 y descripción ≤ 4000 (UTF-16), 6 pedidos por minuto por token. `PULL_FROM_URL` exige dominio o prefijo verificado y **no sigue redirecciones**. Sin auditoría: publicación directa solo `SELF_ONLY`, en cuentas privadas y hasta 5 usuarios por día. `MEDIA_UPLOAD` manda el borrador a la bandeja del usuario, que termina de publicar en la app. Publicación directa: pautas de UX obligatorias (cuenta visible, privacidad sin valor por defecto, comentarios/dúo/stitch, contenido comercial apagado por defecto, vista previa, consentimiento de "Music Usage Confirmation").
+
+Decisiones aprobadas con el plan: (1) **modo borrador** (`MEDIA_UPLOAD`) hasta aprobar la auditoría; después, publicación directa. (2) La configuración de TikTok y el consentimiento se completan **al aprobar o programar**; a la hora se publica con eso (riesgo: que la auditoría lo objete). (3) Primera cuenta: **RAdev** (Lumus todavía no tiene usuario de TikTok).
+
+| Tarea | Qué | Estado |
+|---|---|---|
+| T1 | Páginas públicas de Términos y Privacidad (las exige el registro de la app de TikTok) | ✅ (falta el OK del operador y el deploy) |
+| T2 | App en TikTok for Developers en sandbox (Login Kit + Content Posting API) y verificación de `media.gestorlumus.site` (TXT en Hostinger). Lo hace el operador, guiado | |
+| T3 | Cifrado AES-256-GCM de tokens + tabla `social_accounts` | |
+| T4 | Conectar la cuenta de TikTok de cada marca por OAuth (Marcas → Canales) | |
+| T5 | JPEG de cada slide (segunda captura de la misma página, sin dependencias nuevas); tamaño a confirmar en la prueba (1080×1350 o 864×1080) | |
+| T6 | Adaptador TikTok: borrador / directo, seguimiento de estado, idempotente, reintentos, aviso por Telegram | |
+| T7 | Pantalla de publicación según las pautas de TikTok 👁 | |
+| T8 | Job `tokens.refresh` | |
+| T9 | Prueba real en el sandbox con RAdev (4:5, tamaño, borrador) | |
+| T10 | Pedido de auditoría con video de demo (operador, guiado) | |
+
+**T1 (2026-09-28)**:
+- `/legal/privacidad` y `/legal/terminos` (`apps/web/app/legal/`, componente común `legal-page.tsx`): públicas (sumadas a las excepciones de `proxy.ts`), en español con un resumen en inglés para quienes revisan en TikTok. Dicen que es una herramienta de uso personal de un solo operador; qué datos de TikTok se guardan (identificador, nombre, foto, tokens cifrados con AES-256-GCM, estado de cada publicación), para qué, dónde (Oracle Cloud, backups cifrados en B2), que no se comparten, cómo desconectar o revocar y pedir el borrado. Contacto: `radevelopment02@gmail.com` (constante `CONTACT_EMAIL`).
+- Probado con la web local (sin worker): las dos responden 200 sin login y el panel sigue pidiéndolo (307); capturas en 390 px y escritorio, sin scroll horizontal.
 
 ## Fase 4 — tareas
 
