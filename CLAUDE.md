@@ -91,6 +91,16 @@ pnpm capture --check "/render/preview/lumus/flow?variant=extreme" -
                     # "-" como salida no guarda captura
 ```
 
+```
+# Producción (servidor; ver infra/server/README.md)
+ssh radev-oracle                                              # entrar (Host en ~/.ssh/config)
+ssh radev-oracle 'sudo bash -s' < infra/server/harden.sh      # asegurar (una vez; idempotente)
+ssh radev-oracle 'sudo bash -s' < infra/server/check.sh       # verificar la seguridad
+ssh radev-oracle 'bash -s' < infra/server/setup.sh            # Docker, repo y .env (una vez)
+ssh radev-oracle '~/radev-social/infra/server/deploy.sh'      # actualizar producción
+                    # en el servidor, compose.yaml + compose.prod.yaml (Caddy en 80/443)
+```
+
 Notas del entorno:
 - El `.env` vive en la raíz. La web y el worker lo cargan con `scripts/with-root-env.mjs`; los scripts de `packages/db`, con `load-root-env.ts`.
 - Archivos subidos: `media/` en la raíz (`MEDIA_DIR`), compartida por `pnpm dev` y Docker; la web los sirve en `/media/...`. No viajan con el repo: el seed recrea los de las marcas iniciales.

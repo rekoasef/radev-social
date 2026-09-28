@@ -1,0 +1,47 @@
+# Caddy de producción (fase 4, T11; docs/ARCHITECTURE.md §2). HTTPS automático con Let's Encrypt.
+# Los dominios vienen del entorno (compose.prod.yaml), así se prueba en local con *.localhost.
+
+{
+	email {$ACME_EMAIL}
+}
+
+# Panel: todo va a la web, menos las páginas internas de render (solo red de Docker).
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	@render path /render /render/*
+	respond @render "No encontrado" 404
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy web:3000
+}
+
+# Imágenes públicas (ADR 0012): Caddy las sirve directo de la carpeta de media, de solo lectura.
+# Mismas reglas que la ruta /media de la web: solo imágenes, rutas imposibles de adivinar que
+# nunca cambian de contenido, y un SVG abierto directo no corre scripts.
+{$MEDIA_DOMAIN} {
+	root * /srv/media
+
+	@image path_regexp \.(png|jpe?g|webp|svg)$
+	handle @image {
+		header {
+			Cache-Control "public, max-age=31536000, immutable"
+			X-Content-Type-Options "nosniff"
+			Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+			Strict-Transport-Security "max-age=31536000"
+			-Server
+		}
+		file_server {
+			hide .*
+		}
+	}
+	handle {
+		respond "No encontrado" 404
+	}
+}

@@ -9,7 +9,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 4 — Producción y piloto automático (en curso, T1–T8 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T9 de la Fase 4, **en curso**: esperando capacidad ARM en Oracle (ver "T9" abajo). Cuando llegue el aviso de Telegram con la IP: entrar por SSH, revisar el servidor y cerrar la T9; después correr `infra/server/harden.sh` y `check.sh` y cerrar la T10.
+- **Próximo paso:** T9 de la Fase 4, **en curso**: esperando capacidad ARM en Oracle (ver "T9" abajo). Cuando llegue el aviso de Telegram con la IP: entrar por SSH, revisar el servidor y cerrar la T9; después correr `infra/server/harden.sh` y `check.sh` y cerrar la T10; y seguir la T11 con los pasos de `infra/server/README.md` ("Preparar y desplegar").
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -45,7 +45,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | ✅ |
 | T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | ⏳ esperando capacidad |
 | T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | ⏳ scripts listos; falta correrlos en el servidor |
-| T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | |
+| T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | ⏳ preparado y probado en local; falta el servidor |
 | T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | |
 | T13 | Mudanza: base local y `media/` al servidor | |
 | T14 | Cierre: unos días corriendo, criterio de terminado, y la prueba de publicación real pendiente de la Fase 2 | |
@@ -132,6 +132,15 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - `infra/server/harden.sh` (idempotente, se corre por SSH con `sudo bash -s`): SSH solo con llave y sin root (`sshd_config.d/10-radev-hardening.conf`, validado con `sshd -t`; si `ubuntu` no tiene llave, no toca nada), root bloqueado, zona UTC, firewall de Ubuntu con 80 y 443 antes del REJECT de la imagen de Oracle (en vivo y en `/etc/iptables/rules.v4`; sin `ufw` ni `iptables-save`, que guardaría las cadenas de Docker), `unattended-upgrades` con reinicio a las 11:00 UTC. `infra/server/check.sh` verifica todo (solo lee). `infra/server/README.md` explica cómo entrar, correrlos y el otro firewall (Security List de Oracle).
 - Probado en un contenedor `ubuntu:24.04` con las reglas de la imagen de Oracle: primera pasada aplica todo, la segunda no agrega nada, `check.sh` en orden, y sin llaves aborta sin tocar nada.
 - Security List de la subred pública (`Default Security List for radev-vcn`): acepta TCP 22 desde cualquier lado y ping; el 2026-09-28, con el OK del operador, se sumaron **TCP 80 y 443 desde `0.0.0.0/0`** con la OCI CLI (copia de las reglas anteriores en `~/radev-oracle/ingress-backup-*.json`; verificado leyendo de Oracle).
+
+**T11 (preparada, 2026-09-28)**:
+- Decisión (aprobada por el operador): `media.` lo sirve **Caddy directo** desde la carpeta de media, de solo lectura (actualización del ADR 0012); el panel sigue con `/media` de la web.
+- `compose.prod.yaml` (se suma a `compose.yaml` con `!reset`): Postgres y web sin puertos publicados, Postgres con `restart: unless-stopped`, logs rotados (3 × 10 MB) en todos, y el servicio **Caddy** (`caddy:2`, 80/443, volúmenes para los certificados). Dominios y mail de Let's Encrypt en el `.env` (`APP_DOMAIN`, `MEDIA_DOMAIN`, `ACME_EMAIL`).
+- `infra/caddy/Caddyfile`: `app.` → `web:3000` con `/render` en 404 y HSTS; `media.` → `file_server` solo de PNG/JPEG/WebP/SVG con las cabeceras de la ruta `/media` (inmutable, `nosniff`, CSP `sandbox`), sin listados ni archivos ocultos.
+- `infra/server/setup.sh` (una vez, como `ubuntu`): Docker desde el repositorio oficial, llave de solo lectura para GitHub (`~/.ssh/github_deploy_radev`, se carga como deploy key del repo privado), clona en `~/radev-social`, `media/` para el uid 1000 y un `.env` desde `infra/server/env.production.example` con `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET` y `RENDER_TOKEN` nuevos. `infra/server/deploy.sh`: `git pull --ff-only`, `up -d --build`, limpieza de imágenes y chequeo de `https://APP_DOMAIN/login`; no arranca con valores `COMPLETAR` en el `.env`.
+- DNS: los nameservers de `gestorlumus.site` son de Hostinger (`dns-parking.com`) y la raíz apunta a Vercel (Lumus). Solo hay que **agregar** A `app` y `media`.
+- **Prueba en local** con el proyecto aislado `radev-prodtest` (base y media aparte, `app.localhost` / `media.localhost`, certificados internos de Caddy): panel 200, HTTP → HTTPS 308, `/render` 404 desde afuera aun con token y 200 desde el worker, media con sus cabeceras, 404 para inexistentes, carpetas y `..`; sin errores en los logs. Bajado con `down`: quedan sus volúmenes `radev-prodtest_*` (no son los de desarrollo) hasta que el operador diga de borrarlos. También probado: los secretos generados y que `deploy.sh` frene con la lista de lo que falta.
+- Falta (con servidor): `setup.sh`, deploy key, completar el `.env`, OAuth App de producción, los registros A en Hostinger y el primer `deploy.sh`.
 
 
 

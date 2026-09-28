@@ -37,6 +37,24 @@ ssh radev-oracle 'sudo bash -s' < infra/server/check.sh
 
 Solo lee. Dice `OK` o `FALTA` para cada punto (SSH, puertos en vivo y al reiniciar, que nada más escuche hacia afuera, actualizaciones, zona horaria) y sale con error si falta algo.
 
+## Preparar y desplegar (T11)
+
+Todo en `~/radev-social` del servidor. Producción usa `compose.yaml` + `compose.prod.yaml`: nada publica puertos salvo **Caddy** (80/443, HTTPS automático con Let's Encrypt, config en `infra/caddy/Caddyfile`), los servicios vuelven solos después de un reinicio y los logs rotan (3 × 10 MB por contenedor).
+
+- `app.gestorlumus.site` → la web. `/render` da 404 desde afuera (el worker entra por la red de Docker).
+- `media.gestorlumus.site` → Caddy sirve `media/` directo, de solo lectura: solo PNG, JPEG, WebP y SVG, con las mismas cabeceras que la ruta `/media` de la web (ADR 0012).
+
+**Una vez** (después de `harden.sh`):
+
+1. `ssh radev-oracle 'bash -s' < infra/server/setup.sh` — instala Docker (repositorio oficial), crea la llave de solo lectura para GitHub y la muestra. Cargarla en GitHub: repo → Settings → Deploy keys → Add deploy key, **sin** "Allow write access". Correr `setup.sh` de nuevo: baja el repo, crea `media/` y un `.env` con secretos nuevos (`infra/server/env.production.example`).
+2. Completar el `.env` del servidor (`ssh radev-oracle` y `nano ~/radev-social/.env`): los valores `COMPLETAR`. La OAuth App de GitHub es **nueva**, de producción (callback `https://app.gestorlumus.site/api/auth/callback/github`); Claude, OpenRouter y Telegram, los mismos que en local.
+3. DNS en Hostinger (los nameservers del dominio son de Hostinger; la raíz apunta a Vercel y no se toca): **agregar** dos registros A, `app` y `media`, con la IP del servidor.
+4. `ssh radev-oracle '~/radev-social/infra/server/deploy.sh'`.
+
+**Cada actualización**: `ssh radev-oracle '~/radev-social/infra/server/deploy.sh'` — `git pull`, build en el servidor, `up -d` (las migraciones corren solas), limpia imágenes viejas y verifica que el panel responda. No arranca si el `.env` tiene valores sin completar.
+
+**Probado en local** (2026-09-28) con otro nombre de proyecto, base y media aparte, y `app.localhost` / `media.localhost`: el panel responde, HTTP redirige a HTTPS, `/render` da 404 desde afuera aun con el token y 200 desde el worker, la media sale con sus cabeceras y rechaza rutas inexistentes, carpetas y `..`.
+
 ## El otro firewall: la red de Oracle
 
 Oracle filtra también antes de llegar al servidor, con la **Security List** de la subred (`Default Security List for radev-vcn`, de `public subnet-radev-vcn`). Tiene que dejar entrar TCP 22, 80 y 443 desde `0.0.0.0/0` (y ping). Se ve en la consola: Networking → Virtual cloud networks → `radev-vcn` → Security Lists.

@@ -1,0 +1,57 @@
+# Producción (fase 4, T11): se suma a compose.yaml. En el servidor, con infra/server/deploy.sh:
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+# Diferencias con local: nada publica puertos salvo Caddy (80/443, HTTPS automático), todos los
+# servicios vuelven solos después de un reinicio y los logs rotan para no llenar el disco.
+# Ver docs/ARCHITECTURE.md §2 e infra/server/README.md.
+
+# Hasta 3 archivos de 10 MB por contenedor.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  postgres:
+    # Sin puerto hacia afuera: solo la red de Docker (docs/ARCHITECTURE.md §2).
+    ports: !reset []
+    restart: unless-stopped
+    logging: *logging
+
+  migrate:
+    logging: *logging
+
+  web:
+    # Solo a través de Caddy.
+    ports: !reset []
+    logging: *logging
+
+  worker:
+    logging: *logging
+
+  caddy:
+    image: caddy:2
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Falta APP_DOMAIN en .env (ej. app.gestorlumus.site)}
+      MEDIA_DOMAIN: ${MEDIA_DOMAIN:?Falta MEDIA_DOMAIN en .env (ej. media.gestorlumus.site)}
+      # Let's Encrypt avisa ahí si un certificado no se puede renovar.
+      ACME_EMAIL: ${ACME_EMAIL:?Falta ACME_EMAIL en .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Las imágenes públicas (media.), de solo lectura (ADR 0012).
+      - ./media:/srv/media:ro
+      # Certificados: si se pierden, Let's Encrypt limita cuántos se pueden volver a pedir.
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_started
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  caddy-data:
+  caddy-config:
