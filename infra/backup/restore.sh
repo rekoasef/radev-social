@@ -21,8 +21,7 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE \
   -in "$work/$name" -out "$work/db.dump" || { echo "No se pudo descifrar: ¿es la misma BACKUP_PASSPHRASE?"; exit 1; }
 
 log "Cargando en ${PGDATABASE} (pisa lo que haya)…"
-pg_restore --clean --if-exists --no-owner --no-privileges --single-transaction \
-  --dbname "$PGDATABASE" "$work/db.dump"
+load-dump.sh "$work/db.dump"
 
 if [ -d "$MEDIA_DIR" ] && [ -w "$MEDIA_DIR" ]; then
   log "Trayendo media/…"

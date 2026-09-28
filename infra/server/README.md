@@ -67,7 +67,7 @@ Desde la raíz del repo, en la compu, **con `pnpm dev` frenado** (Postgres de Do
 
 1. `move-export.sh`: `pg_dump` de la base local, `media/` y los conteos de filas, en un solo `.tar` en `/tmp`.
 2. Lo manda al servidor por `scp`.
-3. `move-import.sh` en el servidor: pide escribir `MUDAR`, frena web, worker y backup, carga la base (`pg_restore` en el contenedor de backup, misma versión de Postgres), suma `media/` con el dueño de los contenedores (uid 1000), levanta todo y **compara los conteos**; si no coinciden, lo dice.
+3. `move-import.sh` en el servidor: pide escribir `MUDAR`, frena web, worker y backup, carga la base (`infra/backup/load-dump.sh` en el contenedor de backup, misma versión de Postgres: borra los esquemas y carga todo en una transacción; `pg_restore --clean` no puede con las tablas particionadas de pg-boss), suma `media/` con el dueño de los contenedores (uid 1000), levanta todo y **compara los conteos**; si no coinciden, lo dice.
 
 Después: entrar de nuevo al panel (las sesiones y los tokens de GitHub se cifraron con el `BETTER_AUTH_SECRET` de la compu; el primer login los reescribe), y **dejar de usar la base local** para trabajo real: desde ahí la verdad está en el servidor. Activar la generación automática en Ajustes del servidor, no de la compu.
 

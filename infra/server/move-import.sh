@@ -2,7 +2,7 @@
 # Mudanza, parte 2 (fase 4, T13): en el servidor, con el archivo de move-export.sh. REEMPLAZA la
 # base del servidor por la local y suma media/. Pide confirmación escrita.
 #   ~/radev-social/infra/server/move-import.sh ARCHIVO.tar
-# Frena web, worker y backup; carga la base (pg_restore en el contenedor de backup, misma versión
+# Frena web, worker y backup; carga la base (load-dump.sh en el contenedor de backup, misma versión
 # de Postgres); pone media/ con el dueño de los contenedores (uid 1000); levanta todo y compara.
 set -euo pipefail
 
@@ -28,8 +28,8 @@ echo "== Base"
 db=$(grep -E '^POSTGRES_DB=' .env | cut -d= -f2- | tr -d "'\"")
 db=${db:-radev_social}
 docker compose up -d postgres >/dev/null
-docker compose run --rm --no-deps -v "$work/db.dump:/tmp/db.dump:ro" --entrypoint pg_restore backup \
-  --clean --if-exists --no-owner --no-privileges --single-transaction -d "$db" /tmp/db.dump
+docker compose run --rm --no-deps -e PGDATABASE="$db" -v "$work/db.dump:/tmp/db.dump:ro" \
+  --entrypoint load-dump.sh backup /tmp/db.dump
 
 echo "== media/"
 mkdir -p "$MEDIA_PATH"
