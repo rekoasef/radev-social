@@ -9,7 +9,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 5 — Publicación automática en TikTok (empezada el 2026-09-28 a pedido del operador, en paralelo con la T14 de la Fase 4, que sigue abierta: unos días corriendo y la primera publicación real). Fase 4: T1–T13 hechas.
-- **Próximo paso:** Fase 5, T1 (páginas legales públicas). En paralelo, T14 de la Fase 4: unos días corriendo en producción, criterio de terminado y la prueba de publicación real pendiente de la Fase 2. **La verdad ya está en producción** (https://app.gestorlumus.site, base mudada el 2026-09-28): la base local es solo para desarrollo; web y worker locales frenados (no volver a levantar el worker local con la generación automática prendida). Pendiente del operador: volver a loguearse en producción, activar ahí la generación automática cuando quiera Mañana 07:30 AR: mirar que el primer backup automático no haya avisado error por Telegram.
+- **Próximo paso:** Fase 5, **T2 (la hace el operador en su casa)**: registrar la app en TikTok for Developers siguiendo la guía "T2 — guía" de abajo. Cuando TikTok dé el texto de verificación del dominio, pasárselo a Claude (no es secreto) para cargarlo en Hostinger y verificar la propagación. Client key y secret: **no** por el chat (van al `.env` del servidor en la T4). Pendiente decidir: ícono de 1024×1024 (Claude ofreció generarlo con el logo de RAdev). En paralelo, T14 de la Fase 4: la primera publicación real y unos días corriendo; mañana 07:30 AR mirar que el backup automático no haya avisado error.
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -38,8 +38,8 @@ Decisiones aprobadas con el plan: (1) **modo borrador** (`MEDIA_UPLOAD`) hasta a
 
 | Tarea | Qué | Estado |
 |---|---|---|
-| T1 | Páginas públicas de Términos y Privacidad (las exige el registro de la app de TikTok) | ✅ (falta el OK del operador y el deploy) |
-| T2 | App en TikTok for Developers en sandbox (Login Kit + Content Posting API) y verificación de `media.gestorlumus.site` (TXT en Hostinger). Lo hace el operador, guiado | |
+| T1 | Páginas públicas de Términos y Privacidad (las exige el registro de la app de TikTok) | ✅ (en producción) |
+| T2 | App en TikTok for Developers en sandbox (Login Kit + Content Posting API) y verificación de `media.gestorlumus.site` (TXT en Hostinger). Lo hace el operador, guiado | ⏳ guía lista; el operador lo hace en su casa |
 | T3 | Cifrado AES-256-GCM de tokens + tabla `social_accounts` | |
 | T4 | Conectar la cuenta de TikTok de cada marca por OAuth (Marcas → Canales) | |
 | T5 | JPEG de cada slide (segunda captura de la misma página, sin dependencias nuevas); tamaño a confirmar en la prueba (1080×1350 o 864×1080) | |
@@ -52,6 +52,28 @@ Decisiones aprobadas con el plan: (1) **modo borrador** (`MEDIA_UPLOAD`) hasta a
 **T1 (2026-09-28)**:
 - `/legal/privacidad` y `/legal/terminos` (`apps/web/app/legal/`, componente común `legal-page.tsx`): públicas (sumadas a las excepciones de `proxy.ts`), en español con un resumen en inglés para quienes revisan en TikTok. Dicen que es una herramienta de uso personal de un solo operador; qué datos de TikTok se guardan (identificador, nombre, foto, tokens cifrados con AES-256-GCM, estado de cada publicación), para qué, dónde (Oracle Cloud, backups cifrados en B2), que no se comparten, cómo desconectar o revocar y pedir el borrado. Contacto: `radevelopment02@gmail.com` (constante `CONTACT_EMAIL`).
 - Probado con la web local (sin worker): las dos responden 200 sin login y el panel sigue pidiéndolo (307); capturas en 390 px y escritorio, sin scroll horizontal.
+
+**T2 — guía (preparada el 2026-09-28; verificada en la documentación de TikTok ese día)**:
+
+Dato nuevo: **el sandbox no da Content Posting API para publicaciones públicas** (solo privadas). Encaja con el plan: (1) sandbox: construir y probar en privado con RAdev; (2) **revisión de la app** (video de demo) → app en vivo y los carruseles llegan como **borrador a la bandeja** (`MEDIA_UPLOAD`) y los publica el operador; (3) **auditoría de Content Posting** → publicación directa pública.
+
+Pasos (operador):
+1. https://developers.tiktok.com → Log in (sirve la cuenta de TikTok de RAdev). Tipo de dueño: **Individual**.
+2. Manage apps → **Connect an app**:
+   - App icon 1024×1024 PNG/JPG (hasta 5 MB). Claude puede generarlo con el logo de RAdev.
+   - App name: `RAdev Social` · Category: la más cercana a herramientas de redes/negocios.
+   - Description: `Herramienta personal para programar y publicar los carruseles de mis marcas.`
+   - Terms of Service URL: `https://app.gestorlumus.site/legal/terminos`
+   - Privacy Policy URL: `https://app.gestorlumus.site/legal/privacidad`
+   - Platforms: **Web**, Website URL `https://app.gestorlumus.site`
+3. Add products: **Login Kit** (Redirect URI `https://app.gestorlumus.site/api/tiktok/callback`) y **Content Posting API** (activar Direct Post si aparece).
+4. Scopes: `user.info.basic`, `video.upload`, `video.publish`.
+5. **URL properties**: agregar el dominio `media.gestorlumus.site`, verificación por **DNS**. Pasarle a Claude el texto `tiktok-developers-site-verification=...`: Claude indica cómo cargarlo como TXT en Hostinger (sin tocar los registros existentes) y verifica que se propague antes de tocar "Verify".
+6. **Sandbox mode** → Create Sandbox (`pruebas`) → Target users → Add account → la cuenta de TikTok de **RAdev** (hasta 10 cuentas).
+7. Client key y Client secret: **no pasarlos por el chat**; se cargan en el `.env` del servidor en la T4 (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`).
+8. **No** mandar la app a revisión todavía: va en la T10, con la app funcionando y el video de demo.
+
+Fuentes: developers.tiktok.com/doc/getting-started-create-an-app, /doc/add-a-sandbox, /doc/content-posting-api-media-transfer-guide.
 
 **Extra: descartar posts (2026-09-28, pedido del operador)**:
 - La transición `archive` existía desde la Fase 2 pero no tenía botón. Ahora: **Descartar** en la página del post (confirmación en línea) y en la cola Revisar (hoja inferior, como Rechazar y Editar). Core `DISCARDABLE_STATUSES` / `canDiscard`: en revisión, rechazado, aprobado, programado, publicación fallida y fallido; **no** mientras la IA genera o el worker renderiza (el job fallaría y avisaría error). En el panel el estado `archived` se llama **"Descartado"** (también en los mensajes de la máquina de estados). No se borra nada: código y versiones quedan para el historial (ARCHITECTURE: archivar vs. borrar).
