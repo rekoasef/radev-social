@@ -46,7 +46,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | ⏳ esperando capacidad |
 | T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | ⏳ scripts listos; falta correrlos en el servidor |
 | T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | ⏳ preparado y probado en local; falta el servidor |
-| T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | |
+| T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | ⏳ hecho y probado en local con MinIO; falta el bucket real y el servidor |
 | T13 | Mudanza: base local y `media/` al servidor | |
 | T14 | Cierre: unos días corriendo, criterio de terminado, y la prueba de publicación real pendiente de la Fase 2 | |
 
@@ -141,6 +141,13 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - DNS: los nameservers de `gestorlumus.site` son de Hostinger (`dns-parking.com`) y la raíz apunta a Vercel (Lumus). Solo hay que **agregar** A `app` y `media`.
 - **Prueba en local** con el proyecto aislado `radev-prodtest` (base y media aparte, `app.localhost` / `media.localhost`, certificados internos de Caddy): panel 200, HTTP → HTTPS 308, `/render` 404 desde afuera aun con token y 200 desde el worker, media con sus cabeceras, 404 para inexistentes, carpetas y `..`; sin errores en los logs. Bajado con `down`: quedan sus volúmenes `radev-prodtest_*` (no son los de desarrollo) hasta que el operador diga de borrarlos. También probado: los secretos generados y que `deploy.sh` frene con la lista de lo que falta.
 - Falta (con servidor): `setup.sh`, deploy key, completar el `.env`, OAuth App de producción, los registros A en Hostinger y el primer `deploy.sh`.
+
+**T12 (preparada, 2026-09-28)**:
+- Servicio `backup` en `compose.prod.yaml` (etapa `backup` del `Dockerfile`: `postgres:17-bookworm` + `rclone` 1.60, uid 1000): a las 10:30 UTC (07:30 AR) `pg_dump` custom cifrado con AES-256 (`openssl enc -pbkdf2`, `BACKUP_PASSPHRASE`) a `db/`, verificación de tamaño, `media/` con `rclone copy` (incremental, sin borrar) y borrado de volcados de más de 14 días. Protocolo S3 (sirve B2, R2 y MinIO), configurado solo con variables. Falla → Telegram. Sin almacenamiento configurado → avisa una vez y queda quieto (no rompe el primer deploy).
+- `infra/backup/`: `backup.sh`, `backup-loop.sh`, `restore.sh` (`--list`; `--yes [NOMBRE]` pisa la base con `pg_restore --clean --if-exists --single-transaction` y trae `media/`), `backup-common.sh` y `README.md` (cómo crear el bucket en B2: privado, *Keep only the last version*, llave solo para ese bucket). `infra/server/restore.sh`: pide escribir `RESTAURAR`, frena web y worker, restaura y los levanta.
+- Recomendación: **Backblaze B2** (10 GB gratis; verificar al crear la cuenta que no pida tarjeta). La frase de cifrado se guarda también fuera del servidor.
+- **Prueba en local** (proyecto aislado `radev-bktest`, MinIO): backup subido (volcado de 61 KB + media); base rota a propósito (nombres, documentos y una imagen) y restaurada entera con el dueño correcto en `media/`; restaurar sin `--yes` o con otra frase se niega; el ciclo calcula el próximo backup; sin configuración queda quieto. Bajado con `down`: quedan `radev-bktest_postgres-data` y los de la T11 (`radev-prodtest_*`) hasta que el operador diga de borrarlos.
+- Falta: cuenta y bucket en B2 (operador), el `.env` del servidor y un backup y una restauración reales. La T13 (mudanza) puede reusar esto: backup de la base local → `restore.sh` en el servidor.
 
 
 

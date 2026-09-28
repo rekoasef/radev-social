@@ -93,3 +93,17 @@ RUN node node_modules/playwright/cli.js install --with-deps --only-shell chromiu
 USER node
 # node directo (no pnpm/npm) para que las señales de apagado lleguen al proceso.
 CMD ["node", "--import", "tsx", "src/index.ts"]
+
+# --- backup: pg_dump + rclone (fase 4, T12) -----------------------------------------------
+# Backup diario de Postgres (cifrado) y de media/ a un almacenamiento compatible con S3 (B2, R2
+# o MinIO para probar). Misma versión mayor de Postgres que la base (17). Ver infra/backup/.
+FROM postgres:17-bookworm AS backup
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends rclone curl ca-certificates openssl \
+    && rm -rf /var/lib/apt/lists/*
+COPY --chmod=755 infra/backup/*.sh /usr/local/bin/
+# Como el usuario `node` de web y worker (uid 1000): lo que restaure en media/ lo pueden escribir.
+ENV HOME=/tmp
+USER 1000:1000
+WORKDIR /tmp
+CMD ["backup-loop.sh"]

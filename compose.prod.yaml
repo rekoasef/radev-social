@@ -52,6 +52,36 @@ services:
     restart: unless-stopped
     logging: *logging
 
+  # Backup diario de Postgres (cifrado) y media/ a B2/R2 (fase 4, T12; infra/backup/README.md).
+  backup:
+    build:
+      context: .
+      target: backup
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-radev}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-radev_social}
+      # Vacíos: el servicio avisa que los backups están apagados y no hace nada.
+      BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+      BACKUP_S3_REGION: ${BACKUP_S3_REGION:-}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      BACKUP_S3_KEY: ${BACKUP_S3_KEY:-}
+      BACKUP_S3_SECRET: ${BACKUP_S3_SECRET:-}
+      BACKUP_PASSPHRASE: ${BACKUP_PASSPHRASE:-}
+      BACKUP_TIME_UTC: ${BACKUP_TIME_UTC:-10:30}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      MEDIA_DIR: /data/media
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    volumes:
+      - ./media:/data/media:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
+
 volumes:
   caddy-data:
   caddy-config:

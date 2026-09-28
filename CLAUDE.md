@@ -98,6 +98,7 @@ ssh radev-oracle 'sudo bash -s' < infra/server/harden.sh      # asegurar (una ve
 ssh radev-oracle 'sudo bash -s' < infra/server/check.sh       # verificar la seguridad
 ssh radev-oracle 'bash -s' < infra/server/setup.sh            # Docker, repo y .env (una vez)
 ssh radev-oracle '~/radev-social/infra/server/deploy.sh'      # actualizar producción
+ssh radev-oracle '~/radev-social/infra/server/restore.sh --list'  # backups (restaurar: sin --list)
                     # en el servidor, compose.yaml + compose.prod.yaml (Caddy en 80/443)
 ```
 
