@@ -1,6 +1,6 @@
 "use server";
 
-import { REJECTION_FEEDBACK_MAX, REJECTION_FEEDBACK_MIN } from "@radev/core";
+import { canDiscard, REJECTION_FEEDBACK_MAX, REJECTION_FEEDBACK_MIN } from "@radev/core";
 import {
   addPostVersion,
   approvePost,
@@ -407,5 +407,32 @@ export async function rejectPostAction(_: RejectState, form: FormData): Promise<
   await queueGenerate(post.id);
   revalidatePath("/posts");
   revalidatePath("/review");
+  afterReview(post.publicCode, parsed.data.from);
+}
+
+export type DiscardState = { status: "idle" } | { status: "error"; message: string };
+
+const discardInput = z.object({ code: z.string().min(1).max(20), from: reviewOrigin });
+
+/**
+ * "Descartar": the post leaves the lists, the calendar and the queue for good (state machine:
+ * `archive`). A scheduled one gets its publish job cancelled and its time freed for another post.
+ * Nothing is deleted: the code and the versions stay, for the history.
+ */
+export async function discardPostAction(_: DiscardState, form: FormData): Promise<DiscardState> {
+  await requireOperator();
+  const parsed = discardInput.safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { status: "error", message: "Datos inválidos." };
+  const post = await getPostByCode(db, parsed.data.code);
+  if (!post) return { status: "error", message: "Ese post ya no existe." };
+  if (!canDiscard(post.status))
+    return { status: "error", message: "Este post no se puede descartar ahora." };
+
+  const moved = await transitionPost(db, post.id, "archive");
+  if (!moved.ok) return { status: "error", message: moved.reason };
+  await applyPostEffects(post.id, moved.effects);
+  revalidatePath("/posts");
+  revalidatePath("/review");
+  revalidatePath("/calendar");
   afterReview(post.publicCode, parsed.data.from);
 }

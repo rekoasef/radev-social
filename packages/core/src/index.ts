@@ -235,6 +235,8 @@ export {
 } from "./posts/review";
 export {
   availableEvents,
+  canDiscard,
+  DISCARDABLE_STATUSES,
   INITIAL_STATUSES,
   nextStatus,
   POST_EVENTS,

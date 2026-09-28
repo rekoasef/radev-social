@@ -263,6 +263,8 @@ async function doneNotice(code: string): Promise<string | null> {
       return `${code} rechazado: la IA escribe otra versión y vuelve a la cola.`;
     case "rendering":
       return `${code} guardado: se renderiza de nuevo y vuelve a la cola.`;
+    case "archived":
+      return `${code} descartado.`;
     default:
       return null;
   }

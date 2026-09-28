@@ -83,7 +83,7 @@ export const TRANSITIONS = {
     ],
     to: "archived",
     effects: ["cancel_publish_job"],
-    label: "archivar",
+    label: "descartar",
   },
 } as const satisfies Record<string, Transition>;
 
@@ -105,7 +105,7 @@ const STATUS_LABELS: Record<PostStatus, string> = {
   published: "publicado",
   publish_failed: "con la publicación fallida",
   failed: "fallido",
-  archived: "archivado",
+  archived: "descartado",
 };
 
 /** Where `event` takes a post that is `from`, or why it cannot happen. */
@@ -117,6 +117,18 @@ export function nextStatus(from: PostStatus, event: PostEvent): TransitionResult
   // Effects only matter when there was something to undo (a scheduled post's job).
   const effects = from === "scheduled" ? (transition.effects ?? []) : [];
   return { ok: true, to: transition.to, effects };
+}
+
+/**
+ * Statuses the operator can discard from the panel (`archive`): the ones nothing is working on.
+ * A post the AI is writing or the worker is rendering waits until its job ends.
+ */
+export const DISCARDABLE_STATUSES: readonly PostStatus[] = TRANSITIONS.archive.from.filter(
+  (status) => status !== "generating" && status !== "rendering",
+);
+
+export function canDiscard(status: PostStatus): boolean {
+  return DISCARDABLE_STATUSES.includes(status);
 }
 
 /** Events available from a status, for the panel's buttons. */

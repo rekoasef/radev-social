@@ -11,11 +11,14 @@ import { formatDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Posts · RAdev Social" };
 
+const LISTED_STATUSES = POST_STATUSES.filter((s) => s !== "archived");
+
 function isStatus(value: unknown): value is PostStatus {
   return typeof value === "string" && (POST_STATUSES as readonly string[]).includes(value);
 }
 
 // Posts of the brand the panel is tuned to (brand switcher), newest first, filtered by status.
+// "Todos" leaves the discarded ones out: they have their own tab.
 export default async function PostsPage({ searchParams }: PageProps<"/posts">) {
   const { activeBrand: brand } = await getBrandContext();
   if (!brand) {
@@ -30,10 +33,10 @@ export default async function PostsPage({ searchParams }: PageProps<"/posts">) {
   const { status } = await searchParams;
   const filter = isStatus(status) ? status : undefined;
   const [posts, counts] = await Promise.all([
-    listPosts(db, brand.id, filter ? [filter] : undefined),
+    listPosts(db, brand.id, filter ? [filter] : LISTED_STATUSES),
     countPostsByStatus(db, brand.id),
   ]);
-  const total = Object.values(counts).reduce((sum, n) => sum + (n ?? 0), 0);
+  const total = LISTED_STATUSES.reduce((sum, s) => sum + (counts[s] ?? 0), 0);
   const tabs = POST_STATUSES.filter((s) => (counts[s] ?? 0) > 0);
 
   return (

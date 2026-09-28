@@ -4,6 +4,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import type { SlideTexts, TextField } from "@radev/slides";
 import { useActionState, useState } from "react";
 import { type ApproveState, approvePostAction } from "@/app/(panel)/posts/actions";
+import { DiscardForm } from "@/components/posts/discard-form";
 import { RejectForm } from "@/components/posts/reject-form";
 import { QuickEditForm } from "./quick-edit-form";
 
@@ -18,14 +19,14 @@ const REJECT_PHRASES = [
   "Sacá la slide",
 ] as const;
 
-type Sheet = "reject" | "edit" | null;
+type Sheet = "reject" | "edit" | "discard" | null;
 
 export type QuickEditData = { post: TextField[]; slides: SlideTexts[]; hashtags: string };
 
 /**
  * The review queue's actions, fixed at the bottom of the phone within thumb reach: approve right
- * away, or open a sheet to reject (AI posts) or edit the texts. Every action comes back to the
- * queue.
+ * away, or open a sheet to reject (AI posts), edit the texts or discard. Every action comes back
+ * to the queue.
  */
 export function ReviewBar({
   code,
@@ -80,6 +81,9 @@ export function ReviewBar({
                 Editar
               </button>
             )}
+            <button type="button" className="console-button" onClick={() => setSheet("discard")}>
+              Descartar
+            </button>
             <p className="hidden self-center text-sm text-ink-faint md:ml-3 md:block">
               {approveHint}
             </p>
@@ -93,7 +97,11 @@ export function ReviewBar({
           <Dialog.Backdrop className="mockup-backdrop" />
           <Dialog.Popup className="sheet-popup">
             <Dialog.Title className="plate mb-5">
-              {sheet === "edit" ? `Editar textos · ${code}` : `Rechazar ${code}`}
+              {sheet === "edit"
+                ? `Editar textos · ${code}`
+                : sheet === "discard"
+                  ? `Descartar ${code}`
+                  : `Rechazar ${code}`}
             </Dialog.Title>
             {sheet === "reject" && (
               <RejectForm
@@ -103,6 +111,9 @@ export function ReviewBar({
                 onCancel={close}
                 suggestions={REJECT_PHRASES}
               />
+            )}
+            {sheet === "discard" && (
+              <DiscardForm code={code} scheduled={false} from="review" onCancel={close} />
             )}
             {sheet === "edit" && edit && (
               <QuickEditForm

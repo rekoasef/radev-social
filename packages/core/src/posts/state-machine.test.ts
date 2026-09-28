@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { POST_STATUSES, type PostStatus } from "./constants";
 import {
   availableEvents,
+  canDiscard,
+  DISCARDABLE_STATUSES,
   INITIAL_STATUSES,
   nextStatus,
   POST_EVENTS,
@@ -98,5 +100,40 @@ describe("post state machine: transitions", () => {
     for (const event of POST_EVENTS as PostEvent[]) {
       expect(POST_STATUSES).toContain(TRANSITIONS[event].to);
     }
+  });
+});
+
+describe("post state machine: discarding from the panel", () => {
+  it("offers it for approved and scheduled posts, and a scheduled one cancels its publish job", () => {
+    expect(canDiscard("approved")).toBe(true);
+    expect(canDiscard("scheduled")).toBe(true);
+    expect(nextStatus("scheduled", "archive")).toEqual({
+      ok: true,
+      to: "archived",
+      effects: ["cancel_publish_job"],
+    });
+    expect(nextStatus("approved", "archive")).toEqual({ ok: true, to: "archived", effects: [] });
+  });
+
+  it("waits while a job works on the post, and never touches published or publishing ones", () => {
+    for (const status of [
+      "generating",
+      "rendering",
+      "publishing",
+      "published",
+      "archived",
+    ] as const) {
+      expect(canDiscard(status)).toBe(false);
+    }
+  });
+
+  it("only offers statuses the state machine accepts", () => {
+    for (const status of DISCARDABLE_STATUSES) {
+      expect(nextStatus(status, "archive").ok).toBe(true);
+    }
+  });
+
+  it("has no way back: a discarded post stays discarded", () => {
+    expect(availableEvents("archived")).toEqual([]);
   });
 });

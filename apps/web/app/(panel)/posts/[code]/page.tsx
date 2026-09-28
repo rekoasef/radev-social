@@ -1,6 +1,7 @@
 import {
   AI_PROVIDER_LABELS,
   availableEvents,
+  canDiscard,
   canExport,
   freeOccurrences,
   MAX_QA_REGENERATIONS,
@@ -27,6 +28,7 @@ import { Plate } from "@/components/console/plate";
 import { Tally } from "@/components/console/tally";
 import { ApproveButton } from "@/components/posts/approve-button";
 import { CopyButton } from "@/components/posts/copy-button";
+import { DiscardButton } from "@/components/posts/discard-form";
 import { GenerationStatus } from "@/components/posts/generation-status";
 import { MarkPublishedForm } from "@/components/posts/mark-published-form";
 import { PostStrip } from "@/components/posts/post-strip";
@@ -298,6 +300,9 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
                 Reintentar render
               </button>
             </form>
+          )}
+          {canDiscard(post.status) && (
+            <DiscardButton code={post.publicCode} scheduled={post.status === "scheduled"} />
           )}
         </div>
         {canSchedule && (

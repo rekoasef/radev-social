@@ -13,5 +13,5 @@ export const STATUS_DISPLAY: Record<PostStatus, { tally: TallyState; label: stri
   published: { tally: "ready", label: "Publicado" },
   publish_failed: { tally: "live", label: "Falló la publicación" },
   failed: { tally: "live", label: "Falló" },
-  archived: { tally: "off", label: "Archivado" },
+  archived: { tally: "off", label: "Descartado" },
 };
