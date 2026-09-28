@@ -57,7 +57,8 @@ ssh-keygen -F github.com >/dev/null || ssh-keyscan -t ed25519 github.com >> "$HO
 
 step "Repo"
 if [ -d "$APP_DIR/.git" ]; then
-  echo "OK: ya está en ${APP_DIR}."
+  git -C "$APP_DIR" pull -q --ff-only
+  echo "OK: ya está en ${APP_DIR} (actualizado a $(git -C "$APP_DIR" log --oneline -1))."
 elif git ls-remote "$REPO_SSH" HEAD >/dev/null 2>&1; then
   git clone -q "$REPO_SSH" "$APP_DIR"
   echo "Bajado en ${APP_DIR}."

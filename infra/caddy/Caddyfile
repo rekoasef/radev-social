@@ -1,6 +1,5 @@
 # Caddy de producción (fase 4, T11; docs/ARCHITECTURE.md §2). HTTPS automático con Let's Encrypt.
 # Los dominios vienen del entorno (compose.prod.yaml), así se prueba en local con *.localhost.
-
 {
 	email {$ACME_EMAIL}
 }
