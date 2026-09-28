@@ -20,7 +20,6 @@ import {
   listVersionAssets,
 } from "@radev/db";
 import { carouselSchema } from "@radev/slides";
-import { describeQaIssue, QA_KINDS, type QaIssue } from "@radev/slides/qa";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -39,6 +38,7 @@ import { mediaUrl } from "@/lib/brand-assets";
 import { brandRenderContext } from "@/lib/carousel";
 import { db } from "@/lib/db";
 import { STATUS_DISPLAY } from "@/lib/post-status";
+import { describeRenderIssues } from "@/lib/render-issues";
 import { cityOf, formatDateTime, offsetOf } from "@/lib/time";
 import { restoreVersionAction, retryGenerationAction, retryRenderAction } from "../actions";
 import { unschedulePostAction } from "../schedule-actions";
@@ -114,20 +114,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
       slideCount: content.data.slides.length,
       renderedSlides: rendered.map((asset) => asset.slideIndex),
     }).ok;
-  // The same problem can be reported by a text and by its box: shown once, described.
-  const renderIssues = [
-    ...new Map(
-      (Array.isArray(current?.renderIssues)
-        ? (current.renderIssues as { slide: number; kind: string; text: string }[])
-        : []
-      ).map((issue) => {
-        const text = (QA_KINDS as readonly string[]).includes(issue.kind)
-          ? describeQaIssue(issue as QaIssue)
-          : issue.text || "Error al renderizar.";
-        return [`${issue.slide}|${text}`, { slide: issue.slide, text }];
-      }),
-    ).values(),
-  ];
+  const renderIssues = describeRenderIssues(current?.renderIssues);
   const currentSlides = (current?.content as { slides?: unknown[] } | undefined)?.slides;
 
   return (

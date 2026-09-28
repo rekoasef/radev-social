@@ -438,3 +438,33 @@ export async function setVersionRenderProgress(
     .set({ renderProgress: progress })
     .where(eq(postVersions.id, versionId));
 }
+
+export type ReviewQueueEntry = {
+  post: Post;
+  brand: { id: string; name: string; slug: string; timezone: string };
+  version: PostVersion | null;
+};
+
+/** Every post waiting for review, of every brand (the review queue sorts them: packages/core). */
+export async function listPostsInReview(db: Database): Promise<ReviewQueueEntry[]> {
+  const rows = await db
+    .select({
+      post: posts,
+      brand: { id: brands.id, name: brands.name, slug: brands.slug, timezone: brands.timezone },
+      version: postVersions,
+    })
+    .from(posts)
+    .innerJoin(brands, eq(brands.id, posts.brandId))
+    .leftJoin(postVersions, eq(postVersions.id, posts.currentVersionId))
+    .where(eq(posts.status, "in_review"));
+  return rows;
+}
+
+/** How many posts wait for review, of every brand (the panel's "Revisar" badge). */
+export async function countPostsInReview(db: Database): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(posts)
+    .where(eq(posts.status, "in_review"));
+  return row?.n ?? 0;
+}

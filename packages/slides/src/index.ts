@@ -57,6 +57,16 @@ export {
   slideSchema,
 } from "./content/slides";
 export {
+  type AppliedEdits,
+  applyTextEdits,
+  parseHashtags,
+  postTexts,
+  type SlideTexts,
+  slideTexts,
+  type TextEdits,
+  type TextField,
+} from "./content/text-fields";
+export {
   FONT_FAMILIES,
   type FontFamily,
   type FontSpec,

@@ -42,7 +42,7 @@ export type ReviewItem = {
 export function reviewNotice(items: readonly ReviewItem[], appUrl: string, key: string): Notice {
   const lines = items.map(
     (item) =>
-      `• ${item.code} (${item.brandName}): ${item.hook}${item.plannedFor ? ` · para ${item.plannedFor}` : ""}\n  ${url(appUrl, `/posts/${item.code}`)}`,
+      `• ${item.code} (${item.brandName}): ${item.hook}${item.plannedFor ? ` · para ${item.plannedFor}` : ""}\n  ${url(appUrl, `/review?post=${item.code}`)}`,
   );
   const head =
     items.length === 1 ? "Hay 1 post para revisar:" : `Hay ${items.length} posts para revisar:`;

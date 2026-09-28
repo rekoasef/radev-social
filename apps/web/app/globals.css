@@ -355,6 +355,23 @@
     line-height: 1;
     letter-spacing: 0.04em;
   }
+  .nav-badge,
+  .dock-badge {
+    @apply timecode;
+    min-width: 17px;
+    padding: 1px 4px;
+    font-size: 10px;
+    line-height: 14px;
+    text-align: center;
+    color: var(--color-console);
+    background: var(--color-tally-amber);
+    border-radius: 999px;
+  }
+  .dock-badge {
+    position: absolute;
+    top: 5px;
+    left: calc(50% + 6px);
+  }
   .dock-phase {
     @apply timecode;
     position: absolute;
@@ -498,6 +515,8 @@
   .mockup-backdrop {
     position: fixed;
     inset: 0;
+    /* Over the sticky top bar and the phone dock (z-index 20). */
+    z-index: 40;
     background: rgb(0 0 0 / 0.8);
     backdrop-filter: blur(4px);
     transition: opacity 160ms ease-out;
@@ -505,6 +524,7 @@
   .mockup-viewport {
     position: fixed;
     inset: 0;
+    z-index: 40;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -534,6 +554,73 @@
     .mockup-popup {
       transition: none;
     }
+  }
+
+  /* Review queue (app/(panel)/review): actions within thumb reach, sheets from the bottom. */
+  .review-bar {
+    position: fixed;
+    inset: auto 0 calc(60px + env(safe-area-inset-bottom));
+    z-index: 15;
+    padding: 10px 16px;
+    background: color-mix(in oklab, var(--color-console) 94%, transparent);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--color-bezel);
+  }
+  @media (min-width: 48rem) {
+    .review-bar {
+      position: sticky;
+      inset: auto 0 0;
+      margin: 0 -2rem;
+      padding: 12px 2rem;
+    }
+  }
+  .sheet-popup {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 40;
+    max-height: 88dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    background: var(--color-panel);
+    border-top: 1px solid var(--color-bezel-strong);
+    border-radius: 12px 12px 0 0;
+    outline: none;
+    transition:
+      opacity 180ms ease-out,
+      transform 220ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  @media (min-width: 48rem) {
+    .sheet-popup {
+      left: 50%;
+      width: min(720px, 100vw - 4rem);
+      translate: -50% 0;
+      border-inline: 1px solid var(--color-bezel-strong);
+    }
+  }
+  .sheet-popup[data-starting-style],
+  .sheet-popup[data-ending-style] {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sheet-popup {
+      transition: none;
+    }
+  }
+  .console-chip {
+    font-size: 13px;
+    padding: 8px 12px;
+    color: var(--color-ink-dim);
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 999px;
+    transition:
+      color 160ms ease-out,
+      border-color 160ms ease-out;
+  }
+  .console-chip:hover {
+    color: var(--color-ink);
+    border-color: var(--color-ink-faint);
   }
   .console-item {
     display: flex;

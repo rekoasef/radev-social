@@ -206,7 +206,13 @@ export {
   type RenderOutcome,
   renderOutcome,
 } from "./posts/regeneration";
-export { type ApprovalInput, canApprove, checkRenderedSlides } from "./posts/review";
+export {
+  type ApprovalInput,
+  canApprove,
+  checkRenderedSlides,
+  type ReviewQueueItem,
+  sortReviewQueue,
+} from "./posts/review";
 export {
   availableEvents,
   INITIAL_STATUSES,

@@ -8,11 +8,26 @@ const idle: RejectState = { status: "idle" };
 
 /**
  * "Rechazar": the operator says what to change and the AI writes a new version from this one.
- * Folded behind a button so the review screen stays about the images.
+ * Folded behind a button so the review screen stays about the images. From the review queue it
+ * comes already open inside a sheet, with quick phrases to start from (phase 4, T7).
  */
-export function RejectForm({ code, versionId }: { code: string; versionId: string }) {
+export function RejectForm({
+  code,
+  versionId,
+  from,
+  onCancel,
+  suggestions = [],
+}: {
+  code: string;
+  versionId: string;
+  /** "review": back to the queue after rejecting. */
+  from?: "review";
+  /** Given: the form starts open and "Cancelar" calls it (the sheet closes). */
+  onCancel?: () => void;
+  suggestions?: readonly string[];
+}) {
   const [state, action, pending] = useActionState(rejectPostAction, idle);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(onCancel !== undefined);
   const [feedback, setFeedback] = useState("");
   const id = useId();
   const length = feedback.trim().length;
@@ -29,6 +44,7 @@ export function RejectForm({ code, versionId }: { code: string; versionId: strin
     <form action={action} className="flex w-full max-w-3xl flex-col gap-3">
       <input type="hidden" name="code" value={code} />
       <input type="hidden" name="versionId" value={versionId} />
+      {from && <input type="hidden" name="from" value={from} />}
       <label htmlFor={id} className="flex items-baseline justify-between gap-3 text-sm">
         <span className="plate-text text-ink-faint">¿Qué cambiarías?</span>
         <span
@@ -50,6 +66,26 @@ export function RejectForm({ code, versionId }: { code: string; versionId: strin
         placeholder="Ej.: el hook es muy genérico; mencioná el costo de perder clientes y sacá la slide de pasos."
         className="console-field w-full text-sm leading-relaxed"
       />
+      {suggestions.length > 0 && (
+        <ul
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
+          aria-label="Frases rápidas"
+        >
+          {suggestions.map((phrase) => (
+            <li key={phrase}>
+              <button
+                type="button"
+                className="console-chip whitespace-nowrap"
+                onClick={() =>
+                  setFeedback((text) => (text.trim() ? `${text.trim()} ${phrase}` : phrase))
+                }
+              >
+                {phrase}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <p className="text-sm text-ink-faint">
         La IA reescribe el carrusel desde esta versión con lo que le pidas. Esta versión queda en el
         historial.
@@ -83,6 +119,7 @@ export function RejectForm({ code, versionId }: { code: string; versionId: strin
           onClick={() => {
             setOpen(false);
             setFeedback("");
+            onCancel?.();
           }}
         >
           Cancelar

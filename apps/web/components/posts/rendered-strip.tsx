@@ -9,18 +9,48 @@ export type StripSlide = MockupSlide & { width: number; height: number };
 
 /**
  * The rendered PNGs of a version, what gets published. Clicking one opens it inside a TikTok
- * phone, to see it as it will be seen before approving.
+ * phone, to see it as it will be seen before approving. `swipe` (the review queue) shows them in
+ * a row that scrolls sideways, big enough to read on a phone, with the next one peeking in.
  */
-export function RenderedStrip({ slides, post }: { slides: StripSlide[]; post: MockupPost }) {
+export function RenderedStrip({
+  slides,
+  post,
+  layout = "grid",
+}: {
+  slides: StripSlide[];
+  post: MockupPost;
+  layout?: "grid" | "swipe";
+}) {
   const [open, setOpen] = useState<number | null>(null);
+  const [seen, setSeen] = useState(0);
   const index = open ?? 0;
   const go = (to: number) => setOpen(Math.min(slides.length - 1, Math.max(0, to)));
+  const swipe = layout === "swipe";
 
   return (
     <>
-      <ol className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-8">
+      <ol
+        className={
+          swipe
+            ? "-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:scroll-px-0 sm:px-0"
+            : "grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-8"
+        }
+        onScroll={
+          swipe
+            ? (e) => {
+                const first = e.currentTarget.firstElementChild as HTMLElement | null;
+                if (!first) return;
+                const step = first.offsetWidth + 12;
+                setSeen(Math.round(e.currentTarget.scrollLeft / step));
+              }
+            : undefined
+        }
+      >
         {slides.map((slide, i) => (
-          <li key={slide.url} className="min-w-0">
+          <li
+            key={slide.url}
+            className={swipe ? "w-[84%] max-w-[380px] shrink-0 snap-start" : "min-w-0"}
+          >
             <button
               type="button"
               onClick={() => setOpen(i)}
@@ -40,6 +70,12 @@ export function RenderedStrip({ slides, post }: { slides: StripSlide[]; post: Mo
           </li>
         ))}
       </ol>
+      {swipe && (
+        <p className="plate-text text-ink-faint" aria-live="polite">
+          Slide {Math.min(seen + 1, slides.length)} de {slides.length} · deslizá · tocá una para
+          verla en TikTok
+        </p>
+      )}
 
       <Dialog.Root open={open !== null} onOpenChange={(isOpen) => !isOpen && setOpen(null)}>
         <Dialog.Portal>

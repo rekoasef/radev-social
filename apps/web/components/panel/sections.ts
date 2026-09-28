@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  ClipboardCheck,
   House,
   Layers,
   Lightbulb,
@@ -23,6 +24,7 @@ export type PanelSection = {
 // without landing on empty pages.
 export const panelSections: readonly PanelSection[] = [
   { label: "Inicio", short: "Inicio", icon: House, href: "/" },
+  { label: "Revisar", short: "Revisar", icon: ClipboardCheck, href: "/review" },
   { label: "Posts", short: "Posts", icon: Layers, href: "/posts" },
   { label: "Ideas", short: "Ideas", icon: Lightbulb, href: "/ideas" },
   { label: "Calendario", short: "Agenda", icon: CalendarDays, href: "/calendar" },

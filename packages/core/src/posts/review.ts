@@ -43,3 +43,26 @@ export function checkRenderedSlides(
   }
   return { ok: true };
 }
+
+export type ReviewQueueItem = {
+  /** The planned time (T2), or null for a post with no time yet. */
+  scheduledAt: Date | null;
+  /** Since when it waits (the post's last change). */
+  updatedAt: Date;
+  number: number;
+};
+
+/**
+ * The review queue (phase 4, T7), across brands: first the posts whose planned time is closest
+ * (a missed one first of all: approving it now forgets its time), then the ones with no time,
+ * oldest waiting first. Returns a new array.
+ */
+export function sortReviewQueue<T extends ReviewQueueItem>(items: readonly T[]): T[] {
+  return [...items].sort((a, b) => {
+    if (a.scheduledAt && b.scheduledAt)
+      return a.scheduledAt.getTime() - b.scheduledAt.getTime() || a.number - b.number;
+    if (a.scheduledAt) return -1;
+    if (b.scheduledAt) return 1;
+    return a.updatedAt.getTime() - b.updatedAt.getTime() || a.number - b.number;
+  });
+}

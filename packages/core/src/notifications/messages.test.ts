@@ -36,8 +36,8 @@ describe("messages", () => {
     );
     expect(notice.text).toBe(
       "📝 Hay 2 posts para revisar:\n\n" +
-        "• LU-0008 (Lumus): El dólar hoy · para sáb 26/09 19:00\n  https://app.gestorlumus.site/posts/LU-0008\n" +
-        "• RA-0005 (RAdev): Tu WhatsApp\n  https://app.gestorlumus.site/posts/RA-0005",
+        "• LU-0008 (Lumus): El dólar hoy · para sáb 26/09 19:00\n  https://app.gestorlumus.site/review?post=LU-0008\n" +
+        "• RA-0005 (RAdev): Tu WhatsApp\n  https://app.gestorlumus.site/review?post=RA-0005",
     );
   });
 

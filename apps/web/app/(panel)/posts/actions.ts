@@ -180,7 +180,19 @@ export async function retryRenderAction(form: FormData): Promise<void> {
 
 export type ApproveState = { status: "idle" } | { status: "error"; message: string };
 
-const approveInput = z.object({ code: z.string().min(1).max(20), versionId: z.uuid() });
+/** Where a review action came from: the review queue goes back to it (phase 4, T7). */
+const reviewOrigin = z.literal("review").optional();
+
+/** After reviewing: the post's page, or the queue with a word on what happened to this one. */
+function afterReview(code: string, origin: "review" | undefined): never {
+  redirect(origin === "review" ? `/review?listo=${encodeURIComponent(code)}` : `/posts/${code}`);
+}
+
+const approveInput = z.object({
+  code: z.string().min(1).max(20),
+  versionId: z.uuid(),
+  from: reviewOrigin,
+});
 
 /**
  * Approves the version the operator reviewed (state machine: `approve`). Refused if the post
@@ -201,7 +213,8 @@ export async function approvePostAction(_: ApproveState, form: FormData): Promis
   // It had a planned time still ahead: approving scheduled it.
   if (approved.scheduledAt) await queuePublish(post.id, approved.scheduledAt);
   revalidatePath("/posts");
-  redirect(`/posts/${post.publicCode}`);
+  revalidatePath("/review");
+  afterReview(post.publicCode, parsed.data.from);
 }
 
 export type PublishState = { status: "idle" } | { status: "error"; message: string };
@@ -361,6 +374,7 @@ const rejectInput = z.object({
     })
     .max(REJECTION_FEEDBACK_MAX, { error: `Máximo ${REJECTION_FEEDBACK_MAX} caracteres.` }),
   confirmOverLimit: z.literal("on").optional(),
+  from: reviewOrigin,
 });
 
 /**
@@ -392,5 +406,6 @@ export async function rejectPostAction(_: RejectState, form: FormData): Promise<
   if (!moved.ok) return { status: "error", message: moved.reason };
   await queueGenerate(post.id);
   revalidatePath("/posts");
-  redirect(`/posts/${post.publicCode}`);
+  revalidatePath("/review");
+  afterReview(post.publicCode, parsed.data.from);
 }

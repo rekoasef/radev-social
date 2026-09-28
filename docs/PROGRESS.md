@@ -8,8 +8,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 4 — Producción y piloto automático (en curso, T1–T6 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T7 de la Fase 4: cola de revisión para el celular. 👁
+- **Fase:** 4 — Producción y piloto automático (en curso, T1–T7 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T8 de la Fase 4: vista de jobs (pendientes, fallidos, reintentos).
+- **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
 - **Para el operador (T4):** en Ajustes → Generación automática, activarla cuando quieras que llene la semana sola (viene apagada: en la notebook generaría de madrugada con tu suscripción). Lumus tiene el banco de ideas vacío: la primera pasada pide ideas y la siguiente llena.
 - **Para el operador (T3) 👁:** aprobar el diseño del calendario (capturas en la conversación del 2026-09-25) y probarlo con login: arrastrar con el mouse, y en el celular "Mover" → tocar un horario libre.
@@ -22,7 +23,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-25, al cerrar la T6 de la Fase 4
+- **Última actualización:** 2026-09-28, al cerrar la T7 de la Fase 4
 
 ## Fase 4 — tareas
 
@@ -38,7 +39,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T4 | Ventana de generación (Ajustes, 02:00–07:00) + `slots.fill`: 7 días, pilar según la mezcla, idea del banco o pedida a la IA, respeta topes. Tests | ✅ |
 | T5 | `ideas.research` semanal automática | ✅ |
 | T6 | Bot de Telegram (grammY): posts para revisar (agrupado), recordatorio de publicación con descarga, errores, límites de IA y aviso si comprometen un post programado | ✅ |
-| T7 | Cola de revisión para el celular: ver, editar lo básico, aprobar o rechazar con feedback. 👁 | |
+| T7 | Cola de revisión para el celular: ver, editar lo básico, aprobar o rechazar con feedback. 👁 | ✅ (falta el OK del diseño) |
 | T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | |
 | T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | |
 | T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | |
@@ -95,6 +96,17 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - Tests: 608 en total (15 nuevos).
 - **Prueba real** (Docker): llegaron la prueba, un solo aviso con los 5 posts que esperaban revisión y, a su hora, "Es hora de publicar LU-0007" (post de prueba, programado a 2 min: quedó `publishing`). El operador confirmó que le llegaron.
 
+
+**T7 (2026-09-28)**:
+- Decisiones (aprobadas con el plan): la cola junta **todas las marcas**; la edición rápida es **solo de textos** (lo que el carrusel ya tiene: sin agregar textos opcionales, ni tocar íconos, datos, tipos de slide o posición; eso sigue en el editor completo).
+- Pantalla **`/review`** (sección **Revisar** del menú, primera después de Inicio, con contador de pendientes en el menú y en el dock del celular): un post por vez, `?post=CODE` para ir a uno, Anterior / Siguiente y "1 de N". Slides PNG en una fila que se desliza (tocar una abre la vista de TikTok), descripción y hashtags plegados, problemas del render arriba. Barra fija al alcance del pulgar (sobre el dock en el celular): **Aprobar** (dice si se programa y para cuándo, o si su hora ya pasó), **Rechazar** (hoja desde abajo con frases rápidas; solo posts de IA) y **Editar**. Después de cada acción vuelve a la cola con `?listo=CODE` y dice qué pasó con ese post. Si el link apunta a un post que ya no espera revisión, lo avisa y sigue con la cola.
+- Core `sortReviewQueue`: primero la hora planeada más cercana (una que ya pasó, primera de todas), después los sin hora, el que más espera primero. Queries `listPostsInReview` y `countPostsInReview`.
+- Slides `text-fields.ts`: `slideTexts` / `postTexts` (los textos de cada slide y del post, con las etiquetas y límites de la especificación del editor, `form.ts`), `applyTextEdits` (solo acepta esas rutas) y `parseHashtags`. La acción `quickEditAction` valida el resultado con `carouselSchema` (regla 4), guarda una versión `manual` con los datos de gráficos de la anterior y la manda a render.
+- `approvePostAction` y `rejectPostAction` aceptan `from=review` para volver a la cola. `RejectForm` suma frases rápidas y modo hoja; `RenderedStrip`, el modo `swipe`. `describeRenderIssues` pasó a `lib/render-issues.ts` (lo usan la página del post y la cola).
+- **Bug arreglado de paso**: la vista de TikTok de un post quedaba debajo del dock del celular (z-index); ahora está encima, igual que las hojas.
+- Telegram: el aviso "para revisar" linkea a `/review?post=CODE`.
+- Tests: 618 en total (10 nuevos).
+- Probado: capturas sin login con una ruta temporal (borrada) en 390 px y escritorio, sin scroll horizontal; con Playwright, la hoja de Rechazar (frase rápida, Cancelar) y la de Editar sobre RA-0004. Las acciones piden login: las prueba el operador.
 
 
 

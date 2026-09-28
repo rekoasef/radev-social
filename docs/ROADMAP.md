@@ -98,7 +98,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Calendario: arrastrar posts entre slots; programar, des-programar y re-programar
 - [x] Ventana de generación (por defecto 02:00–07:00) y job `slots.fill` respetando la mezcla de pilares
 - [x] `ideas.research` semanal automática (viene de la Fase 3: hoy es a mano desde /ideas)
-- [ ] Cola de revisión optimizada para celular
+- [x] Cola de revisión optimizada para celular
 - [x] Bot de Telegram (grammY): revisar, recordatorio de publicación manual, errores, límites de IA
 - [ ] Vista de jobs (pendientes, fallidos, reintentos)
 
