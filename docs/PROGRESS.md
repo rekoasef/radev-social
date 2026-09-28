@@ -8,8 +8,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 4 — Producción y piloto automático (en curso, T1–T10 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T11 de la Fase 4 con los pasos de `infra/server/README.md` ("Preparar y desplegar"). Pendiente del operador: crear el presupuesto de Oracle con alerta a USD 1 (ADR 0014) cuando la cuenta figure como Pay As You Go.
+- **Fase:** 4 — Producción y piloto automático (en curso, T1–T11 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T12 (primer backup y restauración reales en el servidor) y T13 (mudanza de la base local y `media/`). Producción ya corre en https://app.gestorlumus.site con la base del seed: **no cargar nada ahí antes de la mudanza** (la pisa). Después de la mudanza, frenar web y worker locales (si no, generan y avisan por duplicado). Pendiente del operador: presupuesto de Oracle con alerta a USD 1 (ADR 0014) y probar el login de producción.
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -26,7 +26,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-28, T10 cerrada (servidor creado y asegurado)
+- **Última actualización:** 2026-09-28, T11 cerrada (producción desplegada)
 
 ## Fase 4 — tareas
 
@@ -46,7 +46,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | ✅ |
 | T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | ✅ |
 | T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | ✅ |
-| T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | ⏳ preparado y probado en local; falta el servidor |
+| T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | ✅ (falta que el operador pruebe el login) |
 | T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | ⏳ hecho y probado en local con MinIO; falta el bucket real y el servidor |
 | T13 | Mudanza: base local y `media/` al servidor | ⏳ scripts listos y probados en local; falta el servidor |
 | T14 | Cierre: unos días corriendo, criterio de terminado, y la prueba de publicación real pendiente de la Fase 2 | |
@@ -137,14 +137,17 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - Security List de la subred pública (`Default Security List for radev-vcn`): acepta TCP 22 desde cualquier lado y ping; el 2026-09-28, con el OK del operador, se sumaron **TCP 80 y 443 desde `0.0.0.0/0`** con la OCI CLI (copia de las reglas anteriores en `~/radev-oracle/ingress-backup-*.json`; verificado leyendo de Oracle).
 - **En el servidor** (2026-09-28, con el OK del operador): `harden.sh` aplicó todo; `check.sh` marcó el puerto 111 (`rpcbind`, viene en la imagen de Oracle, solo sirve para NFS; ya lo rechazaban el firewall y la Security List). Con el OK del operador, `harden.sh` suma el paso "Servicios que no usamos", que lo apaga y desactiva; segunda pasada y `check.sh`: **todo en orden**. Probado desde afuera: sin la llave, `Permission denied (publickey)`. No se probó un reinicio (las reglas quedan en `/etc/iptables/rules.v4`; lo va a hacer solo `unattended-upgrades` a las 11:00 UTC cuando haga falta).
 
-**T11 (preparada, 2026-09-28)**:
+**T11 (2026-09-28)**:
 - Decisión (aprobada por el operador): `media.` lo sirve **Caddy directo** desde la carpeta de media, de solo lectura (actualización del ADR 0012); el panel sigue con `/media` de la web.
 - `compose.prod.yaml` (se suma a `compose.yaml` con `!reset`): Postgres y web sin puertos publicados, Postgres con `restart: unless-stopped`, logs rotados (3 × 10 MB) en todos, y el servicio **Caddy** (`caddy:2`, 80/443, volúmenes para los certificados). Dominios y mail de Let's Encrypt en el `.env` (`APP_DOMAIN`, `MEDIA_DOMAIN`, `ACME_EMAIL`).
 - `infra/caddy/Caddyfile`: `app.` → `web:3000` con `/render` en 404 y HSTS; `media.` → `file_server` solo de PNG/JPEG/WebP/SVG con las cabeceras de la ruta `/media` (inmutable, `nosniff`, CSP `sandbox`), sin listados ni archivos ocultos.
 - `infra/server/setup.sh` (una vez, como `ubuntu`): Docker desde el repositorio oficial, llave de solo lectura para GitHub (`~/.ssh/github_deploy_radev`, se carga como deploy key del repo privado), clona en `~/radev-social`, `media/` para el uid 1000 y un `.env` desde `infra/server/env.production.example` con `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET` y `RENDER_TOKEN` nuevos. `infra/server/deploy.sh`: `git pull --ff-only`, `up -d --build`, limpieza de imágenes y chequeo de `https://APP_DOMAIN/login`; no arranca con valores `COMPLETAR` en el `.env`.
 - DNS: los nameservers de `gestorlumus.site` son de Hostinger (`dns-parking.com`) y la raíz apunta a Vercel (Lumus). Solo hay que **agregar** A `app` y `media`.
 - **Prueba en local** con el proyecto aislado `radev-prodtest` (base y media aparte, `app.localhost` / `media.localhost`, certificados internos de Caddy): panel 200, HTTP → HTTPS 308, `/render` 404 desde afuera aun con token y 200 desde el worker, media con sus cabeceras, 404 para inexistentes, carpetas y `..`; sin errores en los logs. Bajado con `down`: quedan sus volúmenes `radev-prodtest_*` (no son los de desarrollo) hasta que el operador diga de borrarlos. También probado: los secretos generados y que `deploy.sh` frene con la lista de lo que falta.
-- Falta (con servidor): `setup.sh`, deploy key, completar el `.env`, OAuth App de producción, los registros A en Hostinger y el primer `deploy.sh`.
+- **En el servidor** (2026-09-28): `setup.sh` instaló Docker 29.8.1 y creó la deploy key (cargada por el operador, solo lectura). El servidor había bajado una versión vieja: **12 commits sin push** (T7 en adelante); se revisó que no tuvieran secretos y se hizo push con el OK del operador. `setup.sh` no actualiza un repo existente: se hizo `git pull` a mano.
+- `.env`: `ALLOWED_EMAILS`, Claude, OpenRouter y Telegram copiados del `.env` local por SSH sin mostrarlos; `ACME_EMAIL` el mail del operador; `BACKUP_PASSPHRASE` generada en el servidor (40 caracteres, el operador la guardó en su gestor); OAuth App de producción y llave de B2 cargadas por el operador con `nano`. Ojo: un `nano` abierto antes de un cambio por SSH lo pisa al guardar (pasó con la frase; se resolvió pegándola de nuevo).
+- DNS: registros A `app` y `media` en Hostinger (agregados por el operador), propagados en minutos.
+- Primer `deploy.sh` OK (build en el servidor ~15 min). Verificado desde afuera: panel 307 al login, HTTP → HTTPS 308, `/render` 404, `media.` con HTTPS (raíz 404), certificados de Let's Encrypt (vencen 2026-12-27, renovación automática), `gestorlumus.site` (Lumus) sin cambios; los cinco servicios arriba, 1,2 GB de RAM usados. La generación automática viene apagada en la base nueva.
 
 **T12 (preparada, 2026-09-28)**:
 - Servicio `backup` en `compose.prod.yaml` (etapa `backup` del `Dockerfile`: `postgres:17-bookworm` + `rclone` 1.60, uid 1000): a las 10:30 UTC (07:30 AR) `pg_dump` custom cifrado con AES-256 (`openssl enc -pbkdf2`, `BACKUP_PASSPHRASE`) a `db/`, verificación de tamaño, `media/` con `rclone copy` (incremental, sin borrar) y borrado de volcados de más de 14 días. Protocolo S3 (sirve B2, R2 y MinIO), configurado solo con variables. Falla → Telegram. Sin almacenamiento configurado → avisa una vez y queda quieto (no rompe el primer deploy).

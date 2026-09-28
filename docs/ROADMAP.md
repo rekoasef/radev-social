@@ -91,8 +91,8 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 
 - [x] Servidor de producción: Oracle Always Free → si no hay capacidad, máquina propia con Cloudflare Tunnel → si no, VPS ≤ USD 5
 - [x] Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas
-- [ ] DNS: `app.gestorlumus.site` y `media.gestorlumus.site` sin afectar Lumus
-- [ ] Docker Compose de producción con Caddy (HTTPS, bloqueo de `/render/*`) y volumen de media
+- [x] DNS: `app.gestorlumus.site` y `media.gestorlumus.site` sin afectar Lumus
+- [x] Docker Compose de producción con Caddy (HTTPS, bloqueo de `/render/*`) y volumen de media
 - [ ] Backup diario de Postgres y assets a R2 o B2 (capa gratuita) + prueba de restauración
 - [x] Tabla `schedule_slots` y configuración por marca (arrancar con 1 post/día en la franja 14–21 h)
 - [x] Calendario: arrastrar posts entre slots; programar, des-programar y re-programar
