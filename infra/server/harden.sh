@@ -126,5 +126,14 @@ APT
 if has_systemd; then systemctl enable --now unattended-upgrades >/dev/null 2>&1 || true; fi
 echo "OK: reinicio si hace falta a las ${REBOOT_TIME_UTC} UTC."
 
+step "Servicios que no usamos"
+# rpcbind (puerto 111) viene en la imagen de Oracle y solo sirve para NFS.
+if has_systemd && systemctl list-unit-files rpcbind.service >/dev/null 2>&1; then
+  systemctl disable --now rpcbind.socket rpcbind.service >/dev/null 2>&1 || true
+  echo "OK: rpcbind apagado y desactivado."
+else
+  echo "OK: no hay rpcbind."
+fi
+
 step "Listo"
 echo "Verificá con: ssh radev-oracle 'sudo bash -s' < infra/server/check.sh"

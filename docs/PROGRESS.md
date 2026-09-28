@@ -8,8 +8,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 4 — Producción y piloto automático (en curso, T1–T9 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T10 de la Fase 4: correr `infra/server/harden.sh` y `check.sh` en el servidor (`ssh radev-oracle`); después la T11 con los pasos de `infra/server/README.md` ("Preparar y desplegar"). Pendiente del operador: crear el presupuesto de Oracle con alerta a USD 1 (ADR 0014) cuando la cuenta figure como Pay As You Go.
+- **Fase:** 4 — Producción y piloto automático (en curso, T1–T10 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T11 de la Fase 4 con los pasos de `infra/server/README.md` ("Preparar y desplegar"). Pendiente del operador: crear el presupuesto de Oracle con alerta a USD 1 (ADR 0014) cuando la cuenta figure como Pay As You Go.
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -26,7 +26,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-28, T9 cerrada (servidor creado)
+- **Última actualización:** 2026-09-28, T10 cerrada (servidor creado y asegurado)
 
 ## Fase 4 — tareas
 
@@ -45,7 +45,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T7 | Cola de revisión para el celular: ver, editar lo básico, aprobar o rechazar con feedback. 👁 | ✅ (falta el OK del diseño) |
 | T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | ✅ |
 | T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | ✅ |
-| T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | ⏳ scripts listos; falta correrlos en el servidor |
+| T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | ✅ |
 | T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | ⏳ preparado y probado en local; falta el servidor |
 | T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | ⏳ hecho y probado en local con MinIO; falta el bucket real y el servidor |
 | T13 | Mudanza: base local y `media/` al servidor | ⏳ scripts listos y probados en local; falta el servidor |
@@ -130,11 +130,12 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - `Host radev-oracle` agregado a `~/.ssh/config` de la notebook (IP, usuario `ubuntu`, llave `id_ed25519_radev_oracle`; la IP no va al repo). En la otra máquina hay que copiar la llave y esa entrada.
 - Revisado por SSH: `aarch64`, Ubuntu 24.04.5 LTS, 2 CPU, 11 GiB de RAM, disco de 96 GB (3 % usado), `sudo` sin contraseña.
 
-**T10 (preparada, 2026-09-28)**:
+**T10 (2026-09-28)**:
 - Decisiones del operador: se usa el usuario **`ubuntu`** de la imagen de Oracle (no es root, entra solo con llave, `sudo`); no se crea otro. Reinicio automático por actualizaciones a las **08:00 de Argentina** (11:00 UTC).
 - `infra/server/harden.sh` (idempotente, se corre por SSH con `sudo bash -s`): SSH solo con llave y sin root (`sshd_config.d/10-radev-hardening.conf`, validado con `sshd -t`; si `ubuntu` no tiene llave, no toca nada), root bloqueado, zona UTC, firewall de Ubuntu con 80 y 443 antes del REJECT de la imagen de Oracle (en vivo y en `/etc/iptables/rules.v4`; sin `ufw` ni `iptables-save`, que guardaría las cadenas de Docker), `unattended-upgrades` con reinicio a las 11:00 UTC. `infra/server/check.sh` verifica todo (solo lee). `infra/server/README.md` explica cómo entrar, correrlos y el otro firewall (Security List de Oracle).
 - Probado en un contenedor `ubuntu:24.04` con las reglas de la imagen de Oracle: primera pasada aplica todo, la segunda no agrega nada, `check.sh` en orden, y sin llaves aborta sin tocar nada.
 - Security List de la subred pública (`Default Security List for radev-vcn`): acepta TCP 22 desde cualquier lado y ping; el 2026-09-28, con el OK del operador, se sumaron **TCP 80 y 443 desde `0.0.0.0/0`** con la OCI CLI (copia de las reglas anteriores en `~/radev-oracle/ingress-backup-*.json`; verificado leyendo de Oracle).
+- **En el servidor** (2026-09-28, con el OK del operador): `harden.sh` aplicó todo; `check.sh` marcó el puerto 111 (`rpcbind`, viene en la imagen de Oracle, solo sirve para NFS; ya lo rechazaban el firewall y la Security List). Con el OK del operador, `harden.sh` suma el paso "Servicios que no usamos", que lo apaga y desactiva; segunda pasada y `check.sh`: **todo en orden**. Probado desde afuera: sin la llave, `Permission denied (publickey)`. No se probó un reinicio (las reglas quedan en `/etc/iptables/rules.v4`; lo va a hacer solo `unattended-upgrades` a las 11:00 UTC cuando haga falta).
 
 **T11 (preparada, 2026-09-28)**:
 - Decisión (aprobada por el operador): `media.` lo sirve **Caddy directo** desde la carpeta de media, de solo lectura (actualización del ADR 0012); el panel sigue con `/media` de la web.
