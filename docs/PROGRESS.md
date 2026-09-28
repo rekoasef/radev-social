@@ -47,7 +47,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | ⏳ scripts listos; falta correrlos en el servidor |
 | T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | ⏳ preparado y probado en local; falta el servidor |
 | T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | ⏳ hecho y probado en local con MinIO; falta el bucket real y el servidor |
-| T13 | Mudanza: base local y `media/` al servidor | |
+| T13 | Mudanza: base local y `media/` al servidor | ⏳ scripts listos y probados en local; falta el servidor |
 | T14 | Cierre: unos días corriendo, criterio de terminado, y la prueba de publicación real pendiente de la Fase 2 | |
 
 **T1 (2026-09-25)**:
@@ -148,6 +148,12 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - Recomendación: **Backblaze B2** (10 GB gratis; verificar al crear la cuenta que no pida tarjeta). La frase de cifrado se guarda también fuera del servidor.
 - **Prueba en local** (proyecto aislado `radev-bktest`, MinIO): backup subido (volcado de 61 KB + media); base rota a propósito (nombres, documentos y una imagen) y restaurada entera con el dueño correcto en `media/`; restaurar sin `--yes` o con otra frase se niega; el ciclo calcula el próximo backup; sin configuración queda quieto. Bajado con `down`: quedan `radev-bktest_postgres-data` y los de la T11 (`radev-prodtest_*`) hasta que el operador diga de borrarlos.
 - Falta: cuenta y bucket en B2 (operador), el `.env` del servidor y un backup y una restauración reales. La T13 (mudanza) puede reusar esto: backup de la base local → `restore.sh` en el servidor.
+
+**T13 (preparada, 2026-09-28)**:
+- Directo, sin pasar por B2 (así no depende de la T12): `infra/server/move-export.sh` (en la compu: `pg_dump` del Postgres de Docker, `media/` y conteos de `move-counts.sql`, en un `.tar`), `move-import.sh` (en el servidor: pide `MUDAR`, frena web/worker/backup, `pg_restore --clean --if-exists --single-transaction` en el contenedor de backup, suma `media/` y la pasa al uid 1000, levanta todo y compara conteos) y `move-to-server.sh` (las dos más `scp`). `move-import.sh` acepta `COMPOSE_FILE`, `APP_DIR` y `MEDIA_PATH` para probarlo en local.
+- No hace falta llevar `BETTER_AUTH_SECRET`: solo cifra los tokens de GitHub del login y las sesiones; con la clave nueva del servidor se vuelve a entrar y se reescriben.
+- **Prueba en local**: export de la base de desarrollo real (solo lectura: 2 marcas, 11 posts, 16 versiones, 100 PNG, 10 ideas, 103 archivos, 25 MB) e import en un "servidor" aislado (`radev-movetest`, con su seed y sin web/worker/caddy ni avisos): conteos iguales y los 103 archivos que referencia la base, presentes. Proyecto de prueba y su volumen borrados.
+- Después de mudar: dejar de usar la base local para trabajo real y activar la generación automática en el servidor.
 
 
 

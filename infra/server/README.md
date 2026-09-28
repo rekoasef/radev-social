@@ -55,6 +55,24 @@ Todo en `~/radev-social` del servidor. Producción usa `compose.yaml` + `compose
 
 **Probado en local** (2026-09-28) con otro nombre de proyecto, base y media aparte, y `app.localhost` / `media.localhost`: el panel responde, HTTP redirige a HTTPS, `/render` da 404 desde afuera aun con el token y 200 desde el worker, la media sale con sus cabeceras y rechaza rutas inexistentes, carpetas y `..`.
 
+## Mudanza: de la compu al servidor (T13)
+
+Una sola vez, después del primer `deploy.sh`: lleva la base local (posts, versiones, ideas, marcas, horarios, ajustes, la cola de pg-boss) y `media/` al servidor. **Reemplaza** la base del servidor (que hasta ese momento solo tiene el seed).
+
+```
+infra/server/move-to-server.sh
+```
+
+Desde la raíz del repo, en la compu, **con `pnpm dev` frenado** (Postgres de Docker arriba). Hace:
+
+1. `move-export.sh`: `pg_dump` de la base local, `media/` y los conteos de filas, en un solo `.tar` en `/tmp`.
+2. Lo manda al servidor por `scp`.
+3. `move-import.sh` en el servidor: pide escribir `MUDAR`, frena web, worker y backup, carga la base (`pg_restore` en el contenedor de backup, misma versión de Postgres), suma `media/` con el dueño de los contenedores (uid 1000), levanta todo y **compara los conteos**; si no coinciden, lo dice.
+
+Después: entrar de nuevo al panel (las sesiones y los tokens de GitHub se cifraron con el `BETTER_AUTH_SECRET` de la compu; el primer login los reescribe), y **dejar de usar la base local** para trabajo real: desde ahí la verdad está en el servidor. Activar la generación automática en Ajustes del servidor, no de la compu.
+
+Probado en local (2026-09-28) contra un "servidor" aislado con su propio seed: 11 posts, 16 versiones, 100 PNG y 103 archivos; conteos iguales y todos los archivos que la base referencia, presentes.
+
 ## El otro firewall: la red de Oracle
 
 Oracle filtra también antes de llegar al servidor, con la **Security List** de la subred (`Default Security List for radev-vcn`, de `public subnet-radev-vcn`). Tiene que dejar entrar TCP 22, 80 y 443 desde `0.0.0.0/0` (y ping). Se ve en la consola: Networking → Virtual cloud networks → `radev-vcn` → Security Lists.

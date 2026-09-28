@@ -99,6 +99,7 @@ ssh radev-oracle 'sudo bash -s' < infra/server/check.sh       # verificar la seg
 ssh radev-oracle 'bash -s' < infra/server/setup.sh            # Docker, repo y .env (una vez)
 ssh radev-oracle '~/radev-social/infra/server/deploy.sh'      # actualizar producción
 ssh radev-oracle '~/radev-social/infra/server/restore.sh --list'  # backups (restaurar: sin --list)
+infra/server/move-to-server.sh                                # mudanza: base local + media al servidor (una vez)
                     # en el servidor, compose.yaml + compose.prod.yaml (Caddy en 80/443)
 ```
 
