@@ -9,7 +9,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 4 — Producción y piloto automático (en curso, T1–T8 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T9 de la Fase 4: servidor (Oracle Always Free ARM, guiado paso a paso).
+- **Próximo paso:** T9 de la Fase 4, **en curso**: esperando capacidad ARM en Oracle (ver "T9" abajo). Cuando llegue el aviso de Telegram con la IP: entrar por SSH, revisar el servidor y cerrar la T9.
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -17,14 +17,15 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador (T3) 👁:** aprobar el diseño del calendario (capturas en la conversación del 2026-09-25) y probarlo con login: arrastrar con el mouse, y en el celular "Mover" → tocar un horario libre.
 - **Para el operador (T2):** probar con login en un post aprobado: Programar (horario de la marca u otra fecha), Reprogramar, Desprogramar; y un post que llegue a su hora (queda "Publicando" hasta Marcar como publicado). Confirmar la decisión (1) de la T2.
 - **Para el operador (T1):** mirar con login Marcas → Horarios (también desde el celular). A las dos marcas se les cargó el horario de arranque (todos los días 19:00): cambialo ahí si querés otro. En la otra máquina, `pnpm db:migrate` (hasta `0015_notifications`) y cargar los horarios desde el panel (el seed solo los pone en marcas nuevas).
-- **Oracle Cloud:** cuenta creada por el operador el 2026-09-25, región principal **sa-santiago-1** (Santiago de Chile; no se puede cambiar). La instancia se crea en la T9.
+- **Oracle Cloud:** cuenta creada por el operador el 2026-09-25, región principal **sa-santiago-1** (Santiago de Chile; no se puede cambiar). La instancia se crea en la T9 (en curso).
+- **Presupuesto:** el operador dijo (2026-09-28) que acepta pagar **hasta USD 6/mes** si no queda otra; gratis sigue siendo lo ideal. No cambia la regla de costo cero todavía: si se usa, va con un ADR.
 - **Para el operador (T13):** mirar RA-0004 (prueba del criterio de RAdev, en revisión). Completar Precios y Casos de RAdev cuando puedas: siguen siendo el borrador del seed (con `[completar]`, y eso le llega a la IA).
 - **Para el operador (T11):** (1) mirar LU-0004 y LU-0005 (posts de prueba de Lumus con gráficos y cifras del dólar, en revisión) y Ajustes → Datos reales. (2) En la otra máquina, tildar Bluelytics en Marcas → Lumus → General → Fuentes de datos: el seed no toca marcas que ya existen.
 - **Para el operador (T10):** (1) en Ajustes → Ruteo de IA, cambiar (el seed ya trae el nuevo desde la T13, pero no pisa rutas existentes) `nex-agi/nex-n2.5-pro:free` (ya no existe en OpenRouter) por `nvidia/nemotron-3-super-120b-a12b:free` en `ideas.generate` (principal) y `carousel.generate` (respaldo). (2) Completar Precios de RAdev: sin rangos, los posts de la serie "¿Cuánto cuesta realmente…?" fallan a propósito (no inventan precios). (3) La serie está repetida en el documento de voz de RAdev: se puede sacar de ahí. (4) Mirar con login /ideas (pedidos a la IA) y Marcas → Series.
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-28, al cerrar la T8 de la Fase 4
+- **Última actualización:** 2026-09-28, con la T9 en curso (esperando capacidad en Oracle)
 
 ## Fase 4 — tareas
 
@@ -42,7 +43,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T6 | Bot de Telegram (grammY): posts para revisar (agrupado), recordatorio de publicación con descarga, errores, límites de IA y aviso si comprometen un post programado | ✅ |
 | T7 | Cola de revisión para el celular: ver, editar lo básico, aprobar o rechazar con feedback. 👁 | ✅ (falta el OK del diseño) |
 | T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | ✅ |
-| T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | |
+| T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | ⏳ esperando capacidad |
 | T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | |
 | T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | |
 | T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | |
@@ -116,6 +117,15 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - Pantalla: resumen (esperando, programados, corriendo, fallidos en 7 días, hechos en 24 h), pestañas, cada trabajo con su nombre, sobre qué es (con link), estado, horas en la zona de la ventana de generación, intentos y el motivo si falló. Ajustes suma la sección "Cola de trabajos" con los números y "Ver trabajos".
 - Tests: 627 en total (9 nuevos).
 - **Prueba real** (pg-boss contra la base, con `pnpm dev`): un `notify.send` de prueba apuntando a un aviso inexistente (no manda nada), marcado fallido con `boss.fail` → aparece en Fallidos con "Reintentar"; `retry` → `retry` y a los segundos el worker lo completó. Nota: pg-boss conserva la hora de arranque original al reintentar (un job creado para el futuro espera a esa hora); en un fallo real esa hora ya pasó. Capturas sin login con ruta temporal (borrada) en 390 px y escritorio. El botón pide login: lo prueba el operador.
+
+**T9 (en curso, 2026-09-28)**:
+- Red creada por el operador con el asistente de Oracle (*Create VCN with Internet Connectivity*): `radev-vcn`, con `public subnet-radev-vcn` y `private subnet-radev-vcn`. (El formulario de la instancia no deja asignar IP pública con una red nueva: hay que crearla antes.)
+- La consola da **"Out of capacity for shape VM.Standard.A1.Flex in AD-1"** (también con 1 OCPU / 6 GB). Santiago tiene un solo availability domain.
+- Reintento automático **en la notebook del operador (WSL), fuera del repo**:
+  - OCI CLI 3.94 con `pipx install oci-cli` (`~/.local/bin/oci`); config en `~/.oci/config` (usuario, tenancy, región `sa-santiago-1`, huella `09:bc:5b:…:fa:94`); llave de API en `~/.oci/oci_api_key.pem` (privada, 600), la pública cargada en el perfil de Oracle. Una llave recién cargada tarda unos minutos en funcionar (dio 401 al principio, primero en identidad y después en cómputo).
+  - Llave SSH solo para el servidor: `~/.ssh/id_ed25519_radev_oracle` (sin frase, decisión del operador).
+  - Script `~/radev-oracle/launch.sh` (log en `~/radev-oracle/launch.log`): pide `radev-social` (A1.Flex 2 OCPU / 12 GB, Ubuntu 24.04 aarch64, IP pública, 100 GB) cada 5 min si no hay capacidad (10 si Oracle pide bajar el ritmo); se frena ante cualquier otro error o si ya existe la instancia, y a las 72 h. Al conseguirla avisa por Telegram con la IP. Frenarlo: `pkill -f radev-oracle/launch.sh`. Necesita WSL abierto.
+- Falta: con la IP, sumar `Host radev-oracle` a `~/.ssh/config` (la IP no va al repo), entrar y revisar arquitectura, CPU, RAM, disco y Ubuntu. Si no aparece capacidad en unos días: plan B (máquina propia + Cloudflare Tunnel) o VPS pago con ADR.
 
 
 
