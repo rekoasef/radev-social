@@ -8,8 +8,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 4 — Producción y piloto automático (en curso, T1–T11 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T12 (primer backup y restauración reales en el servidor) y T13 (mudanza de la base local y `media/`). Producción ya corre en https://app.gestorlumus.site con la base del seed: **no cargar nada ahí antes de la mudanza** (la pisa). Después de la mudanza, frenar web y worker locales (si no, generan y avisan por duplicado). Pendiente del operador: presupuesto de Oracle con alerta a USD 1 (ADR 0014) y probar el login de producción.
+- **Fase:** 4 — Producción y piloto automático (en curso, T1–T11 y T13 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T12: primer backup real a B2 y prueba de restauración en el servidor. **La verdad ya está en producción** (https://app.gestorlumus.site, base mudada el 2026-09-28): la base local es solo para desarrollo; web y worker locales frenados (no volver a levantar el worker local con la generación automática prendida). Pendiente del operador: volver a loguearse en producción, activar ahí la generación automática cuando quiera, y el presupuesto de Oracle con alerta a USD 1 (ADR 0014).
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -26,7 +26,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-28, T11 cerrada (producción desplegada)
+- **Última actualización:** 2026-09-28, T13 cerrada (base y media mudadas a producción)
 
 ## Fase 4 — tareas
 
@@ -48,7 +48,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | ✅ |
 | T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | ✅ (falta que el operador pruebe el login) |
 | T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | ⏳ hecho y probado en local con MinIO; falta el bucket real y el servidor |
-| T13 | Mudanza: base local y `media/` al servidor | ⏳ scripts listos y probados en local; falta el servidor |
+| T13 | Mudanza: base local y `media/` al servidor | ✅ |
 | T14 | Cierre: unos días corriendo, criterio de terminado, y la prueba de publicación real pendiente de la Fase 2 | |
 
 **T1 (2026-09-25)**:
@@ -156,11 +156,12 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - **Prueba en local** (proyecto aislado `radev-bktest`, MinIO): backup subido (volcado de 61 KB + media); base rota a propósito (nombres, documentos y una imagen) y restaurada entera con el dueño correcto en `media/`; restaurar sin `--yes` o con otra frase se niega; el ciclo calcula el próximo backup; sin configuración queda quieto. Bajado con `down`: quedan `radev-bktest_postgres-data` y los de la T11 (`radev-prodtest_*`) hasta que el operador diga de borrarlos.
 - Falta: el `.env` del servidor (llave de B2 y frase) y un backup y una restauración reales. La cuenta y el bucket de B2 ya están (ver Estado actual). La T13 (mudanza) puede reusar esto: backup de la base local → `restore.sh` en el servidor.
 
-**T13 (preparada, 2026-09-28)**:
+**T13 (2026-09-28)**:
 - Directo, sin pasar por B2 (así no depende de la T12): `infra/server/move-export.sh` (en la compu: `pg_dump` del Postgres de Docker, `media/` y conteos de `move-counts.sql`, en un `.tar`), `move-import.sh` (en el servidor: pide `MUDAR`, frena web/worker/backup, `pg_restore --clean --if-exists --single-transaction` en el contenedor de backup, suma `media/` y la pasa al uid 1000, levanta todo y compara conteos) y `move-to-server.sh` (las dos más `scp`). `move-import.sh` acepta `COMPOSE_FILE`, `APP_DIR` y `MEDIA_PATH` para probarlo en local.
 - No hace falta llevar `BETTER_AUTH_SECRET`: solo cifra los tokens de GitHub del login y las sesiones; con la clave nueva del servidor se vuelve a entrar y se reescriben.
 - **Prueba en local**: export de la base de desarrollo real (solo lectura: 2 marcas, 11 posts, 16 versiones, 100 PNG, 10 ideas, 103 archivos, 25 MB) e import en un "servidor" aislado (`radev-movetest`, con su seed y sin web/worker/caddy ni avisos): conteos iguales y los 103 archivos que referencia la base, presentes. Proyecto de prueba y su volumen borrados.
 - Después de mudar: dejar de usar la base local para trabajo real y activar la generación automática en el servidor.
+- **En el servidor** (2026-09-28): `pnpm dev` local frenado antes de exportar. Tres intentos: (1) `echo MUDAR | move-to-server.sh` no llegó al `read` (lo consumió un paso anterior): cortó sin tocar nada; se corren los tres pasos por separado. (2) `pg_restore --clean` falló porque el worker de producción ya había creado `pgboss`, cuyas tablas particionadas no se pueden limpiar así (reproducido en local); se deshizo entero. Arreglo: `infra/backup/load-dump.sh` (borra los esquemas del volcado y `public`, y carga todo en una transacción), usado también por `restore.sh` (T12), que tenía el mismo problema; probado en local encima de una base con `pgboss` y con un volcado roto (queda igual). (3) La base cargó, pero `cp` de `media/` falló: en la imagen de Oracle `ubuntu` es uid 1001 y `media/` es del 1000; ahora con `sudo`. Cuarto intento: **conteos iguales**, los 103 archivos que referencia la base presentes y del uid 1000 (hay 3 más, del seed del servidor, sueltos), una imagen servida por `media.` (200), servicios arriba sin errores.
 
 
 
