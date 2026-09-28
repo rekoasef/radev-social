@@ -9,7 +9,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 4 — Producción y piloto automático (en curso, T1–T8 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T9 de la Fase 4, **en curso**: esperando capacidad ARM en Oracle (ver "T9" abajo). Cuando llegue el aviso de Telegram con la IP: entrar por SSH, revisar el servidor y cerrar la T9.
+- **Próximo paso:** T9 de la Fase 4, **en curso**: esperando capacidad ARM en Oracle (ver "T9" abajo). Cuando llegue el aviso de Telegram con la IP: entrar por SSH, revisar el servidor y cerrar la T9; después correr `infra/server/harden.sh` y `check.sh` y cerrar la T10.
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -44,7 +44,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T7 | Cola de revisión para el celular: ver, editar lo básico, aprobar o rechazar con feedback. 👁 | ✅ (falta el OK del diseño) |
 | T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | ✅ |
 | T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | ⏳ esperando capacidad |
-| T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | |
+| T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | ⏳ scripts listos; falta correrlos en el servidor |
 | T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | |
 | T12 | Backups diarios de Postgres y `media/` a R2 o B2 (capa gratuita) + prueba de restauración | |
 | T13 | Mudanza: base local y `media/` al servidor | |
@@ -126,6 +126,12 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
   - Llave SSH solo para el servidor: `~/.ssh/id_ed25519_radev_oracle` (sin frase, decisión del operador).
   - Script `~/radev-oracle/launch.sh` (log en `~/radev-oracle/launch.log`): pide `radev-social` (A1.Flex 2 OCPU / 12 GB, Ubuntu 24.04 aarch64, IP pública, 100 GB) cada 5 min si no hay capacidad (10 si Oracle pide bajar el ritmo); se frena ante cualquier otro error o si ya existe la instancia, y a las 72 h. Al conseguirla avisa por Telegram con la IP. Frenarlo: `pkill -f radev-oracle/launch.sh`. Necesita WSL abierto.
 - Falta: con la IP, sumar `Host radev-oracle` a `~/.ssh/config` (la IP no va al repo), entrar y revisar arquitectura, CPU, RAM, disco y Ubuntu. Si no aparece capacidad en unos días: plan B (máquina propia + Cloudflare Tunnel) o VPS pago con ADR.
+
+**T10 (preparada, 2026-09-28)**:
+- Decisiones del operador: se usa el usuario **`ubuntu`** de la imagen de Oracle (no es root, entra solo con llave, `sudo`); no se crea otro. Reinicio automático por actualizaciones a las **08:00 de Argentina** (11:00 UTC).
+- `infra/server/harden.sh` (idempotente, se corre por SSH con `sudo bash -s`): SSH solo con llave y sin root (`sshd_config.d/10-radev-hardening.conf`, validado con `sshd -t`; si `ubuntu` no tiene llave, no toca nada), root bloqueado, zona UTC, firewall de Ubuntu con 80 y 443 antes del REJECT de la imagen de Oracle (en vivo y en `/etc/iptables/rules.v4`; sin `ufw` ni `iptables-save`, que guardaría las cadenas de Docker), `unattended-upgrades` con reinicio a las 11:00 UTC. `infra/server/check.sh` verifica todo (solo lee). `infra/server/README.md` explica cómo entrar, correrlos y el otro firewall (Security List de Oracle).
+- Probado en un contenedor `ubuntu:24.04` con las reglas de la imagen de Oracle: primera pasada aplica todo, la segunda no agrega nada, `check.sh` en orden, y sin llaves aborta sin tocar nada.
+- Security List de la subred pública (`Default Security List for radev-vcn`): hoy acepta TCP 22 desde cualquier lado y ping. Falta sumar 80 y 443 (con confirmación del operador).
 
 
 
