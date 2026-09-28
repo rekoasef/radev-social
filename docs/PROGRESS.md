@@ -131,7 +131,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - Decisiones del operador: se usa el usuario **`ubuntu`** de la imagen de Oracle (no es root, entra solo con llave, `sudo`); no se crea otro. Reinicio automático por actualizaciones a las **08:00 de Argentina** (11:00 UTC).
 - `infra/server/harden.sh` (idempotente, se corre por SSH con `sudo bash -s`): SSH solo con llave y sin root (`sshd_config.d/10-radev-hardening.conf`, validado con `sshd -t`; si `ubuntu` no tiene llave, no toca nada), root bloqueado, zona UTC, firewall de Ubuntu con 80 y 443 antes del REJECT de la imagen de Oracle (en vivo y en `/etc/iptables/rules.v4`; sin `ufw` ni `iptables-save`, que guardaría las cadenas de Docker), `unattended-upgrades` con reinicio a las 11:00 UTC. `infra/server/check.sh` verifica todo (solo lee). `infra/server/README.md` explica cómo entrar, correrlos y el otro firewall (Security List de Oracle).
 - Probado en un contenedor `ubuntu:24.04` con las reglas de la imagen de Oracle: primera pasada aplica todo, la segunda no agrega nada, `check.sh` en orden, y sin llaves aborta sin tocar nada.
-- Security List de la subred pública (`Default Security List for radev-vcn`): hoy acepta TCP 22 desde cualquier lado y ping. Falta sumar 80 y 443 (con confirmación del operador).
+- Security List de la subred pública (`Default Security List for radev-vcn`): acepta TCP 22 desde cualquier lado y ping; el 2026-09-28, con el OK del operador, se sumaron **TCP 80 y 443 desde `0.0.0.0/0`** con la OCI CLI (copia de las reglas anteriores en `~/radev-oracle/ingress-backup-*.json`; verificado leyendo de Oracle).
 
 
 

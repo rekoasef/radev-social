@@ -142,5 +142,5 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - LinkedIn
 - Tipo de slide `code`
 - Presets de estilo adicionales
-- Video
+- Video: **convertir nuestros carruseles en video** para TikTok (idea del 2026-09-28, a evaluar después de la Fase 5). Las slides ya renderizadas, con una narración por TTS, subtítulos sincronizados y música, armado con ffmpeg en el worker. Mantiene la identidad de marca (nada de clips de stock genéricos) y el costo bajo. Referencia: MoneyPrinterTurbo (guion → voz → subtítulos → clips → música → render). Antes de decidir: el costo de ffmpeg en el servidor gratuito (2 OCPU), un TTS gratuito y estable en español (Edge TTS no es una API oficial) y la licencia si se reusa código
 - Múltiples usuarios con permisos por marca
