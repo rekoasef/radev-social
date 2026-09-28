@@ -93,6 +93,16 @@ export {
   transitionIdea,
 } from "./queries/ideas";
 export {
+  countJobs,
+  getJob,
+  type JobCounts,
+  type JobPostTarget,
+  type JobRow,
+  type JobTargets,
+  listJobs,
+  loadJobTargets,
+} from "./queries/jobs";
+export {
   getNotification,
   listRecentNotifications,
   markNotificationFailed,

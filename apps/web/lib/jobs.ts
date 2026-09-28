@@ -112,3 +112,11 @@ export async function queueNotification(notificationId: string): Promise<void> {
   const data: NotifySendJob = { notificationId };
   await (await boss()).send(JOBS.notifySend, data, { singletonKey: `notify:${notificationId}` });
 }
+
+/**
+ * Runs a failed job again (the jobs view, phase 4, T8): pg-boss puts it back in the queue with
+ * the same data. The caller checks first that it makes sense (canRetryJob, packages/core).
+ */
+export async function retryJob(name: string, id: string): Promise<void> {
+  await (await boss()).retry(name, id);
+}

@@ -159,6 +159,25 @@ export {
   REVIEW_NOTIFY_KEY,
 } from "./jobs";
 export {
+  canRetryJob,
+  isJobName,
+  isJobViewTab,
+  JOB_ERROR_MAX,
+  JOB_LABELS,
+  JOB_NAMES,
+  JOB_STATES,
+  JOB_VIEW_TAB_LABELS,
+  JOB_VIEW_TABS,
+  type JobName,
+  type JobState,
+  type JobTarget,
+  type JobViewTab,
+  jobError,
+  jobTarget,
+  type RetryCheck,
+  type RetryContext,
+} from "./jobs-view";
+export {
   capNotice,
   type FailureWhat,
   failureNotice,
@@ -167,6 +186,7 @@ export {
   limitNotice,
   limitPutsAtRisk,
   limitRiskNotice,
+  NOTIFICATION_KIND_LABELS,
   NOTIFICATION_KINDS,
   type Notice,
   type NotificationKind,

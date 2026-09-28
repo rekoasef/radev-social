@@ -9,6 +9,15 @@ import { wallClock, zonedToUtc } from "../scheduling/zoned";
 export const NOTIFICATION_KINDS = ["review", "publish", "failure", "limit", "cap", "test"] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
+export const NOTIFICATION_KIND_LABELS: Record<NotificationKind, string> = {
+  review: "Para revisar",
+  publish: "Hora de publicar",
+  failure: "Falla",
+  limit: "Límite de IA",
+  cap: "Tope de una marca",
+  test: "Prueba",
+};
+
 export type Notice = { key: string; kind: NotificationKind; text: string };
 
 /** Posts waiting for review are told together this long after the first one (more may follow). */

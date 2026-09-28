@@ -264,6 +264,10 @@ Router (`packages/ai/src/router.ts`): prueba el principal y pasa al respaldo ant
 - **Reintentos por QA**: máximo 2 regeneraciones automáticas; después queda `in_review` con las violaciones marcadas.
 - Contexto mínimo: solo últimos posts y ganadores relevantes; `carousel.generate` sin búsqueda web.
 
+### Vista de jobs (Fase 4, T8)
+
+Ajustes → Cola de trabajos (`/settings/jobs`) lee `pgboss.job` con consultas propias de solo lectura (`packages/db/src/queries/jobs.ts`) y muestra pendientes, en curso, fallidos y recientes, cada uno con sobre qué trabaja y el motivo de la falla. "Reintentar" usa la API de pg-boss y solo aparece si repetir el job haría algo (`canRetryJob`, `packages/core/src/jobs-view.ts`); los de un post o un pedido de ideas ya marcado como fallido se reintentan desde el post o desde Ideas. No hay "Cancelar".
+
 ### Generación de un carrusel (Fase 3, T7)
 
 "Generar con IA" (Nuevo post) crea el post en `generating` sin versión, con el pedido en `posts.generation_request`, y encola `carousel.generate`. El worker arma el workspace (`CLAUDE.md` de la marca, `task.json`, `slides.md` con la guía de plantillas, `recent-posts.json`), pasa por la ruta de `carousel.generate`, registra cada intento y valida con `aiCarouselSchema` (pilares de la marca; `chart` y `bigNumber` solo si la marca tiene fuentes de datos: el dataset tiene que estar en `data.json` y la cifra, en sus `figures`). OK → versión `ai` con su `generation_run_id`, `generationDone` y render. Respuesta mal armada → un reintento con los problemas como feedback. Límite → reprogramación con backoff (`generation_retry_at`). Error reintentable → reintento de pg-boss (2). Lo demás → `generationFailed`; el panel muestra los errores y "Reintentar generación".

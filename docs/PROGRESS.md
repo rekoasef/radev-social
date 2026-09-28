@@ -8,8 +8,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 4 — Producción y piloto automático (en curso, T1–T7 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
-- **Próximo paso:** T8 de la Fase 4: vista de jobs (pendientes, fallidos, reintentos).
+- **Fase:** 4 — Producción y piloto automático (en curso, T1–T8 hechas). Fase 3 cerrada el 2026-09-25 en 2 días (T12 pospuesta a la Fase 6). Fase 2 cerrada el 2026-09-24 **sin la prueba de publicación real** (ver pendientes); Fase 1 terminada el 2026-09-24 en 2 días; Fase 0 el 2026-09-23 en 1 día.
+- **Próximo paso:** T9 de la Fase 4: servidor (Oracle Always Free ARM, guiado paso a paso).
+- **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
 - **Para el operador (T4):** en Ajustes → Generación automática, activarla cuando quieras que llene la semana sola (viene apagada: en la notebook generaría de madrugada con tu suscripción). Lumus tiene el banco de ideas vacío: la primera pasada pide ideas y la siguiente llena.
@@ -23,7 +24,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-28, al cerrar la T7 de la Fase 4
+- **Última actualización:** 2026-09-28, al cerrar la T8 de la Fase 4
 
 ## Fase 4 — tareas
 
@@ -40,7 +41,7 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 | T5 | `ideas.research` semanal automática | ✅ |
 | T6 | Bot de Telegram (grammY): posts para revisar (agrupado), recordatorio de publicación con descarga, errores, límites de IA y aviso si comprometen un post programado | ✅ |
 | T7 | Cola de revisión para el celular: ver, editar lo básico, aprobar o rechazar con feedback. 👁 | ✅ (falta el OK del diseño) |
-| T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | |
+| T8 | Vista de jobs: pendientes, fallidos, reintentos, "Reintentar" | ✅ |
 | T9 | Servidor: Oracle Always Free ARM (guiado); si no hay capacidad, máquina propia + Cloudflare Tunnel (ADR 0007) | |
 | T10 | Hardening: usuario no-root, SSH con llave, firewall 22/80/443, actualizaciones automáticas | |
 | T11 | Deploy: Compose de producción con Caddy (HTTPS, `/render` bloqueado), DNS `app.` y `media.` en Hostinger (solo agregar), OAuth de GitHub de producción, `.env` del servidor, script de actualización | |
@@ -107,6 +108,14 @@ Decisiones aprobadas con el plan: (1) orden: local primero; (2) `slots.fill` con
 - Telegram: el aviso "para revisar" linkea a `/review?post=CODE`.
 - Tests: 618 en total (10 nuevos).
 - Probado: capturas sin login con una ruta temporal (borrada) en 390 px y escritorio, sin scroll horizontal; con Playwright, la hoja de Rechazar (frase rápida, Cancelar) y la de Editar sobre RA-0004. Las acciones piden login: las prueba el operador.
+
+**T8 (2026-09-28)**:
+- Decisiones (aprobadas con el plan): la vista va en **Ajustes → Cola de trabajos** (`/settings/jobs`), no en el menú; **sin "Cancelar"** (cancelar un render o una publicación a mano puede dejar un post trabado: se cancela desprogramando o editando).
+- Core `jobs-view.ts`: `JOB_LABELS`, pestañas (`JOB_VIEW_TABS`: Pendientes = `created`/`retry`, En curso, Fallidos, Recientes = `completed`/`cancelled`), `jobTarget` (sobre qué trabaja cada job, desde su payload), `jobError` (solo el `message` del error que guarda pg-boss, sin stack, cortado a 400) y `canRetryJob`: avisos, datos, llenado y aviso de revisión se reintentan siempre; publicación, si el post sigue `scheduled`; generación y render, solo si el post sigue esperándolos (`generating`, o `rendering` con esa versión: el worker se cortó a mitad); pedidos de ideas, si siguen abiertos. Si no, la vista lleva al post o a Ideas, donde está el reintento real (en el último intento el worker ya marcó el post o el pedido como fallido y el job, repetido, no haría nada). `NOTIFICATION_KIND_LABELS`.
+- Base `queries/jobs.ts`: `listJobs`, `getJob` y `countJobs` leen la tabla `pgboss.job` con SQL propio, filtrado y con límite (50), sin las colas internas `__pgboss__…`; `loadJobTargets` busca posts, versiones, pedidos de ideas y avisos en pocas consultas. Los cambios van por la API de pg-boss: `retryJob` en `lib/jobs.ts`; `retryJobAction` vuelve a chequear `canRetryJob` con datos frescos.
+- Pantalla: resumen (esperando, programados, corriendo, fallidos en 7 días, hechos en 24 h), pestañas, cada trabajo con su nombre, sobre qué es (con link), estado, horas en la zona de la ventana de generación, intentos y el motivo si falló. Ajustes suma la sección "Cola de trabajos" con los números y "Ver trabajos".
+- Tests: 627 en total (9 nuevos).
+- **Prueba real** (pg-boss contra la base, con `pnpm dev`): un `notify.send` de prueba apuntando a un aviso inexistente (no manda nada), marcado fallido con `boss.fail` → aparece en Fallidos con "Reintentar"; `retry` → `retry` y a los segundos el worker lo completó. Nota: pg-boss conserva la hora de arranque original al reintentar (un job creado para el futuro espera a esa hora); en un fallo real esa hora ya pasó. Capturas sin login con ruta temporal (borrada) en 390 px y escritorio. El botón pide login: lo prueba el operador.
 
 
 

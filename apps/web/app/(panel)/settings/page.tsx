@@ -14,6 +14,7 @@ import {
   TOOL_TASKS,
 } from "@radev/core";
 import {
+  countJobs,
   getLatestSnapshot,
   getSetting,
   listAiRoutes,
@@ -44,7 +45,7 @@ const TASK_HINTS: Record<AiTask, string> = {
 // Which provider and model each AI task uses, and its fallback (docs/ARCHITECTURE.md §7).
 // Global routes: a brand's own route (the database allows it) is for later.
 export default async function SettingsPage() {
-  const [allRoutes, brands, snapshots, storedWindow, lastFill, notices] = await Promise.all([
+  const [allRoutes, brands, snapshots, storedWindow, lastFill, notices, jobs] = await Promise.all([
     listAiRoutes(db),
     listBrands(db),
     Promise.all(
@@ -53,6 +54,7 @@ export default async function SettingsPage() {
     getSetting(db, GENERATION_WINDOW_KEY),
     getSetting(db, FILL_REPORT_KEY) as Promise<FillReport | undefined>,
     listRecentNotifications(db, 6),
+    countJobs(db, new Date()),
   ]);
   // Only whether they are there: the values never reach the page.
   const telegramReady = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
@@ -230,6 +232,33 @@ export default async function SettingsPage() {
               ))}
             </ul>
           )}
+        </div>
+      </section>
+
+      {/* The worker's queue (phase 4, T8): a summary here, the detail in /settings/jobs. */}
+      <section aria-labelledby="jobs-heading" className="flex flex-col gap-6">
+        <Plate id="jobs-heading" aside="Worker">
+          Cola de trabajos
+        </Plate>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-ink-dim">
+          <span>
+            <span className="timecode text-ink">{jobs.waiting + jobs.scheduled}</span> pendientes
+          </span>
+          <span>
+            <span className="timecode text-ink">{jobs.active}</span> corriendo
+          </span>
+          <span>
+            <span className={`timecode ${jobs.failed > 0 ? "text-tally-red" : "text-ink"}`}>
+              {jobs.failed}
+            </span>{" "}
+            fallidos en 7 días
+          </span>
+          <Link
+            href={jobs.failed > 0 ? "/settings/jobs?tab=failed" : "/settings/jobs"}
+            className="console-button"
+          >
+            Ver trabajos
+          </Link>
         </div>
       </section>
 
