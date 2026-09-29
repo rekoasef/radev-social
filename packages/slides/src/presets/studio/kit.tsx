@@ -34,6 +34,8 @@ export type LookContext = {
   type: SlideType;
   brandName: string;
   assets: SlideAssets;
+  /** The generated image of this slide (cover or close of a look that takes one, ADR 0016). */
+  art?: { url: string; background: "dark" | "light"; monochrome?: boolean };
 };
 
 export type ListItem = {

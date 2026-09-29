@@ -9,6 +9,8 @@
 // --set examples|extremes: every slide type instead of a carousel (extremes: every text at its
 //   limit, the worst case the render QA has to pass).
 // --tokens: studio tokens (a brand's palette); by default the neutral defaults.
+// --art-dir: a folder with cover-dark.jpg, cover-light.jpg, cta-dark.jpg and cta-light.jpg: the
+//   generated images, for the looks that take them (each gets the one of its background).
 // Prints the QA problems of each slide and exits with 1 when there are any.
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -22,7 +24,7 @@ import { extremeSlides } from "../src/content/extremes";
 import { SLIDE_TYPES, type Slide } from "../src/content/slides";
 import { FONT_FAMILIES, fonts } from "../src/fonts/registry";
 import { parseTheme } from "../src/presets/registry";
-import { isLookId, LOOK_IDS, type LookId } from "../src/presets/studio/look-ids";
+import { isLookId, LOOK_ART, LOOK_IDS, type LookId } from "../src/presets/studio/look-ids";
 import { checkRender, fitSlide } from "../src/qa";
 import { RenderSlide } from "../src/render-slide";
 
@@ -50,6 +52,15 @@ const parsed = parseTheme("studio", tokens);
 if (!parsed.ok) throw new Error(parsed.issues.join("\n"));
 const looks: LookId[] = (option("looks")?.split(",") ?? [...LOOK_IDS]).filter(isLookId);
 const seed = option("seed") ?? "preview";
+const artDir = option("art-dir");
+
+/** The images of a look from --art-dir, by the background of each slot. */
+function artOf(look: LookId): { cover?: string; cta?: string } | undefined {
+  const spec = LOOK_ART[look];
+  if (!artDir || !spec) return undefined;
+  const url = (slot: "cover" | "cta") => `file://${resolve(artDir)}/${slot}-${spec[slot]}.jpg`;
+  return { cover: url("cover"), cta: url("cta") };
+}
 
 /** @font-face rules of the curated fonts, pointing at the package files on disk. */
 function fontFaces(): string {
@@ -77,6 +88,7 @@ function page(look: LookId): string {
             brandName="Marca"
             datasets={exampleDatasets}
             look={look}
+            art={artOf(look)}
           />
         </div>,
       ),

@@ -24,6 +24,8 @@ export type RenderSlideProps = {
   datasets?: Datasets;
   /** The post's look (`studio`); without it, one of the brand's looks picked by the seed. */
   look?: LookId;
+  /** URLs of the post's generated images (studio looks that take them, ADR 0016). */
+  art?: { cover?: string; cta?: string };
 };
 
 export function RenderSlide({
@@ -35,6 +37,7 @@ export function RenderSlide({
   assets = {},
   datasets = {},
   look,
+  art,
 }: RenderSlideProps) {
   if (theme.preset === "studio") {
     return (
@@ -47,6 +50,7 @@ export function RenderSlide({
         brandName={brandName}
         assets={assets}
         datasets={datasets}
+        art={art}
       />
     );
   }

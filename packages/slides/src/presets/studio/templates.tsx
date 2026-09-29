@@ -85,7 +85,8 @@ function Kicker({ text, ctx }: { text: string; ctx: LookContext }) {
 }
 
 function Cover({ slide, ctx }: TemplateArgs<"cover">) {
-  const mode = ctx.kit.compose.cover;
+  // With a generated image the object takes the top and the title goes to the bottom.
+  const mode = ctx.art ? "bottom" : ctx.kit.compose.cover;
   const center = mode === "center";
   const title = (
     <Block name="title" slide={slide} gap={32} align={center ? "center" : undefined}>
@@ -93,7 +94,7 @@ function Cover({ slide, ctx }: TemplateArgs<"cover">) {
       <Title
         text={slide.title}
         ctx={ctx}
-        size={ctx.kit.compose.coverTitle ?? "hero"}
+        size={ctx.art ? "title" : (ctx.kit.compose.coverTitle ?? "hero")}
         align={center ? "center" : undefined}
       />
     </Block>
@@ -563,7 +564,7 @@ function Chart({ slide, ctx, datasets }: TemplateArgs<"chart">) {
 }
 
 function Cta({ slide, ctx }: TemplateArgs<"cta">) {
-  const mode = ctx.kit.compose.cta;
+  const mode = ctx.art ? "low" : ctx.kit.compose.cta;
   const center = mode !== "left";
   return (
     <Column
@@ -575,7 +576,7 @@ function Cta({ slide, ctx }: TemplateArgs<"cta">) {
         <Title
           text={slide.title}
           ctx={ctx}
-          size="statement"
+          size={ctx.art ? "title" : "statement"}
           align={center ? "center" : undefined}
         />
         {slide.subtitle && (

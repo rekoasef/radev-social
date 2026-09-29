@@ -79,6 +79,36 @@ describe("studio looks", () => {
   });
 });
 
+describe("generated images", () => {
+  const art = { cover: "/media/radev/p/v/art/cover.jpg", cta: "/media/radev/p/v/art/cta.jpg" };
+  const draw = (look: LookId, type: "cover" | "cta" | "steps", index: number) =>
+    renderToStaticMarkup(
+      <RenderSlide
+        theme={theme}
+        slide={exampleSlides[type]}
+        page={{ index, total: 7 }}
+        seed="post-1"
+        brandName="Marca"
+        look={look}
+        art={art}
+      />,
+    );
+
+  it("take the cover and the close of a look that takes them, blended and movable", () => {
+    const cover = draw("atmosfera", "cover", 0);
+    expect(cover).toContain('src="/media/radev/p/v/art/cover.jpg"');
+    expect(cover).toContain("mix-blend-mode:screen");
+    expect(cover).toContain('data-layer="hero"');
+    expect(draw("gradiente", "cta", 6)).toContain("mix-blend-mode:multiply");
+    expect(draw("monocromo", "cover", 0)).toContain("grayscale(1)");
+  });
+
+  it("stay out of the other slides and of the looks that take none", () => {
+    expect(draw("atmosfera", "steps", 2)).not.toContain("/art/");
+    expect(draw("recibo", "cover", 0)).not.toContain("/art/");
+  });
+});
+
 describe("LOOK_ART", () => {
   it("asks for the background of the surface each slot really has", () => {
     const background = { ink: "dark", paper: "light", accent: undefined } as const;
