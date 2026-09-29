@@ -3,6 +3,7 @@
 
 export const AI_TASKS = [
   "carousel.generate",
+  "slide.rewrite",
   "ideas.generate",
   "ideas.research",
   "caption.variants",

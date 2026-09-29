@@ -6,6 +6,7 @@ import type { AiProviderId, AiTask } from "./tasks";
 
 export const AI_TASK_LABELS: Record<AiTask, string> = {
   "carousel.generate": "Generar carrusel",
+  "slide.rewrite": "Rehacer una slide",
   "ideas.generate": "Generar ideas",
   "ideas.research": "Investigar temas",
   "caption.variants": "Variantes de descripción",

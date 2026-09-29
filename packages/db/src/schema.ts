@@ -19,6 +19,7 @@ import {
   PUBLICATION_STATUSES,
   RENDER_FORMATS,
   ROUTE_ROLES,
+  SLIDE_REWRITE_STATUSES,
   VERSION_ORIGINS,
 } from "@radev/core";
 import { sql } from "drizzle-orm";
@@ -256,6 +257,39 @@ export const ideaRequests = pgTable(
     check("idea_requests_status_valid", sql`${t.status} in (${inList(IDEA_REQUEST_STATUSES)})`),
   ],
 );
+
+/**
+ * A slide rewrite asked from the editor: the carousel as the editor had it (it may be unsaved),
+ * which slide and how. The worker leaves the rewritten slide in `result`; the editor shows it as
+ * a proposal the operator accepts or discards. Nothing here changes a post.
+ */
+export const slideRewrites = pgTable(
+  "slide_rewrites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    /** The post being edited; null for a new one (not saved yet). */
+    postId: uuid("post_id").references(() => posts.id, { onDelete: "cascade" }),
+    carousel: jsonb("carousel").$type<Record<string, unknown>>().notNull(),
+    slideIndex: integer("slide_index").notNull(),
+    /** The operator's instruction; empty: "make it better". */
+    instruction: text("instruction").notNull().default(""),
+    status: text("status", { enum: SLIDE_REWRITE_STATUSES }).notNull().default("queued"),
+    /** The rewritten slide (a `Slide`), validated inside the whole carousel. */
+    result: jsonb("result").$type<Record<string, unknown>>(),
+    error: text("error"),
+    createdAt: createdAt(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("slide_rewrites_brand_created_idx").on(t.brandId, t.createdAt),
+    check("slide_rewrites_status_valid", sql`${t.status} in (${inList(SLIDE_REWRITE_STATUSES)})`),
+  ],
+);
+
+export type SlideRewrite = typeof slideRewrites.$inferSelect;
 
 export type IdeaSourceLink = { title: string; url: string };
 

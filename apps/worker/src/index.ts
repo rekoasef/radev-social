@@ -25,8 +25,15 @@ import {
   type PostPublishJob,
   QUEUE_OPTIONS,
   SLOTS_FILL_CRON,
+  type SlideRewriteJob,
 } from "@radev/core";
-import { createDb, failGeneration, failIdeaRequest, getLatestSnapshot } from "@radev/db";
+import {
+  createDb,
+  failGeneration,
+  failIdeaRequest,
+  finishSlideRewrite,
+  getLatestSnapshot,
+} from "@radev/db";
 import { type JobWithMetadata, PgBoss } from "pg-boss";
 import { generateArt } from "./jobs/art-generate";
 import { generateCarousel, RetryableGenerationError } from "./jobs/carousel-generate";
@@ -35,6 +42,7 @@ import { refreshData } from "./jobs/data-refresh";
 import { RetryableIdeasError, runIdeaRequest } from "./jobs/ideas-request";
 import { notifyReview, sendNotification } from "./jobs/notify";
 import { publishPost } from "./jobs/post-publish";
+import { RetryableRewriteError, rewriteSlide } from "./jobs/slide-rewrite";
 import { fillSlots } from "./jobs/slots-fill";
 import { createLogger } from "./logger";
 import { createEvents, errorMessage } from "./notify/events";
@@ -269,6 +277,36 @@ async function main() {
     );
   }
 
+  // Slide rewrites from the editor: one at a time, like the carousels (same subscription). If
+  // the last try breaks, the request fails so the editor stops waiting.
+  await boss.createQueue(JOBS.slideRewrite, QUEUE_OPTIONS[JOBS.slideRewrite]);
+  await boss.work(
+    JOBS.slideRewrite,
+    { batchSize: 1, includeMetadata: true },
+    async ([job]: JobWithMetadata<SlideRewriteJob>[]) => {
+      if (!job) return;
+      const jobLog = log.child({
+        job: JOBS.slideRewrite,
+        id: job.id,
+        requestId: job.data.requestId,
+      });
+      const lastTry = job.retryCount >= QUEUE_OPTIONS[JOBS.slideRewrite].retryLimit;
+      try {
+        const outcome = await rewriteSlide({ db, log: jobLog, router, lastTry }, job.data);
+        jobLog.info("slide rewrite finished", { outcome });
+      } catch (error) {
+        jobLog.error("slide rewrite failed", {
+          error,
+          attempt: job.retryCount + 1,
+          retryable: error instanceof RetryableRewriteError,
+        });
+        if (lastTry)
+          await finishSlideRewrite(db, job.data.requestId, { error: errorMessage(error) });
+        throw error;
+      }
+    },
+  );
+
   // Real data (Bluelytics): once a day by cron, or by hand from the panel. If the worker was off
   // at that time, it catches up once when it starts; with no data at all, it fetches right away.
   await boss.createQueue(JOBS.dataRefresh, QUEUE_OPTIONS[JOBS.dataRefresh]);
@@ -385,6 +423,7 @@ async function main() {
       JOBS.carouselGenerate,
       JOBS.artGenerate,
       JOBS.carouselRender,
+      JOBS.slideRewrite,
       ...IDEA_REQUEST_TASKS,
       JOBS.dataRefresh,
       JOBS.postPublish,

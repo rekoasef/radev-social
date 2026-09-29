@@ -1,0 +1,58 @@
+import { describe, expect, it } from "vitest";
+import { buildRewriteFiles } from "./slide-rewrite";
+
+const carousel = {
+  hook: "h",
+  slides: [
+    { type: "cover", title: "Portada" },
+    { type: "statement", title: "Una afirmación", layout: { title: { x: 0, y: 120 } } },
+    { type: "cta", title: "Cierre", button: "Escribime" },
+  ],
+};
+
+const read = (files: Record<string, string>, name: string) => JSON.parse(files[name] ?? "null");
+
+describe("buildRewriteFiles", () => {
+  it("gives the slide, the instruction and the whole carousel without hand adjustments", () => {
+    const files = buildRewriteFiles({
+      carousel,
+      slideIndex: 1,
+      instruction: "más directa",
+      data: null,
+    });
+    expect(Object.keys(files).sort()).toEqual(["carousel.json", "slides.md", "task.json"]);
+    const task = read(files, "task.json");
+    expect(task).toMatchObject({
+      slide: 2,
+      totalSlides: 3,
+      currentType: "statement",
+      instruction: "más directa",
+    });
+    expect(task.rules.join(" ")).toContain("No puede ser `cover` ni `cta`");
+    expect(read(files, "carousel.json").slides[1].layout).toBeUndefined();
+  });
+
+  it("asks for a better slide without an instruction, and keeps the cover a cover", () => {
+    const task = read(
+      buildRewriteFiles({ carousel, slideIndex: 0, instruction: "", data: null }),
+      "task.json",
+    );
+    expect(task.instruction).toMatch(/^Mejorala/);
+    expect(task.rules.join(" ")).toContain("seguir siendo `cover`");
+  });
+
+  it("adds data.json and the previous problems when there are", () => {
+    const data = { asOf: "2026-09-29", datasets: {}, figures: [] };
+    const files = buildRewriteFiles({
+      carousel,
+      slideIndex: 1,
+      instruction: "",
+      data,
+      problems: ["slide.title › Tiene 90 caracteres"],
+    });
+    expect(read(files, "data.json")).toEqual(data);
+    expect(read(files, "task.json").previousProblems).toEqual([
+      "slide.title › Tiene 90 caracteres",
+    ]);
+  });
+});

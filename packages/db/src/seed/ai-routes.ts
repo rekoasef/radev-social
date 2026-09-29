@@ -16,6 +16,7 @@ export const seedAiRoutes: {
   fallback: AiRouteTarget | null;
 }[] = [
   { task: "carousel.generate", primary: claude, fallback: free },
+  { task: "slide.rewrite", primary: claude, fallback: free },
   { task: "ideas.generate", primary: free, fallback: claude },
   { task: "ideas.research", primary: claude, fallback: null },
   { task: "caption.variants", primary: free, fallback: claude },

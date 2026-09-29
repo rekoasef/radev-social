@@ -15,6 +15,7 @@ import {
   type PostPublishJob,
   postPublishKey,
   QUEUE_OPTIONS,
+  slideRewriteKey,
 } from "@radev/core";
 import { versionTakesArt } from "@radev/slides";
 import { PgBoss } from "pg-boss";
@@ -40,6 +41,7 @@ function boss(): Promise<PgBoss> {
     // Idempotent: lets the web queue before the worker has ever started.
     await client.createQueue(JOBS.carouselRender, QUEUE_OPTIONS[JOBS.carouselRender]);
     await client.createQueue(JOBS.artGenerate, QUEUE_OPTIONS[JOBS.artGenerate]);
+    await client.createQueue(JOBS.slideRewrite, QUEUE_OPTIONS[JOBS.slideRewrite]);
     await client.createQueue(JOBS.carouselGenerate, QUEUE_OPTIONS[JOBS.carouselGenerate]);
     for (const task of IDEA_REQUEST_TASKS) await client.createQueue(task, QUEUE_OPTIONS[task]);
     await client.createQueue(JOBS.dataRefresh, QUEUE_OPTIONS[JOBS.dataRefresh]);
@@ -88,6 +90,15 @@ export async function queueVersion(
     JOBS.artGenerate,
     { versionId: version.id, fresh: options.fresh ?? false },
     { singletonKey: artGenerateKey(version.id) },
+  );
+}
+
+/** Queues a slide rewrite asked from the editor (the request row holds what to rewrite). */
+export async function queueSlideRewrite(requestId: string): Promise<void> {
+  await (await boss()).send(
+    JOBS.slideRewrite,
+    { requestId },
+    { singletonKey: slideRewriteKey(requestId) },
   );
 }
 

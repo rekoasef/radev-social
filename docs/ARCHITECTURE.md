@@ -170,6 +170,7 @@ Todos idempotentes (clave `singletonKey` derivada del objetivo), con reintentos 
 | `ideas.generate` | manual / `slots.fill` (banco sin ideas para un pilar) | propone ideas desde pilares, series e historial (modelo gratuito por defecto) |
 | `ideas.research` | cron semanal por marca | investiga temas del nicho con búsqueda web (Claude) |
 | `carousel.generate` | manual, `slots.fill`, rechazo | idea → JSON validado → nueva versión |
+| `slide.rewrite` | "Rehacer con IA" en el editor (clave `rewrite:<pedido>`) | reescribe una slide con la instrucción del operador, validada dentro del carrusel completo; deja una propuesta en `slide_rewrites` (el editor la consulta y el operador la usa o la descarta) |
 | `art.generate` | tras generar o editar una versión cuyo look lleva imagen (clave `art:<versión>`) | genera las imágenes de portada y cierre con Cloudflare (ADR 0016), controla el fondo, las guarda y encola el render; nunca falla: sin imagen, el post sale con el diseño del look |
 | `carousel.render` | tras generar o editar (o tras `art.generate`) | Playwright renderiza cada slide en 4:5, QA, guarda assets |
 | `review.notify` | post entra a `in_review` (clave única, 5 min después o al terminar la ventana de generación) | un solo aviso por Telegram con los posts nuevos para revisar |
@@ -290,6 +291,13 @@ Desde el **banco de ideas** (`/ideas`, T9), "Generar" abre Nuevo post con `?idea
 - **Rechazo con feedback**: en la página de un post de IA en `in_review`, "Rechazar" pide qué cambiar (10 a 1.000 caracteres) y, en una transacción (`rejectAndRegenerate`), hace `reject` → `regenerate`, guarda `posts.rejection_feedback`, pone `posts.qa_regenerations` en 0 y encola `carousel.generate`. Mismo control de topes que "Generar con IA". Los posts armados a mano no se rechazan: se editan.
 - **QA del render**: al terminar un render, `renderOutcome` (`packages/core/src/posts/regeneration.ts`) decide. Sin problemas → `renderDone`. Error de página o versión del editor con problemas → `renderFailed`. Versión de IA con problemas de QA y menos de 2 regeneraciones → evento `qaRegenerate` (rendering → generating), `qa_regenerations + 1` y `carousel.generate`. Con 2 → `renderDone`: queda `in_review` con los problemas marcados.
 - **Qué recibe la IA**: si el post ya tiene versión, el workspace suma `previous.json` (la versión actual) y `task.json` trae `revision` con el feedback del último rechazo (mientras exista, vale para todas las regeneraciones del post) y los problemas del render de esa versión, descriptos por slide (`describeRenderProblems`). `recent-posts.json` excluye al propio post.
+
+### Rehacer una slide (2026-09-29)
+
+- En el editor, "Rehacer con IA" sobre la slide elegida, con una instrucción opcional (≤ 200 caracteres). La web crea una fila en `slide_rewrites` con el carrusel tal como está en el editor (aunque no esté guardado) y encola `slide.rewrite` (regla 5).
+- El worker usa la ruta `slide.rewrite` (por defecto Claude, con el gratuito de respaldo), con el `CLAUDE.md` de la marca, `task.json` (slide, instrucción, reglas), `carousel.json` (sin los ajustes a mano) y `slides.md`. Por defecto mantiene el tipo; si la instrucción pide otro formato, cambia al tipo que corresponde. Portada y cierre siguen siéndolo.
+- `aiSlideRewriteSchema` valida la slide **dentro del carrusel completo** con las reglas de `aiCarouselSchema` (límites, énfasis, precios, cifras reales) y devuelve como propios solo los problemas que causa la slide nueva. Un reintento con el feedback; al límite del proveedor falla con mensaje (es un pedido manual).
+- El editor consulta el pedido cada 2,5 s y muestra la propuesta al lado: **Usar** (reemplaza la slide en el editor, sin sus ajustes a mano), **Otra vez** o **Descartar**. Nada cambia en el post hasta guardar. Probado con Claude: 9–12 s y ~12.000 tokens de entrada por pedido.
 
 ### Imágenes (ADR 0016)
 

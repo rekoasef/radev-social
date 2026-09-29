@@ -36,6 +36,8 @@ export const metadata: Metadata = { title: "Ajustes · RAdev Social" };
 
 const TASK_HINTS: Record<AiTask, string> = {
   "carousel.generate": "Escribe el carrusel a partir de una idea. Conviene la mejor calidad.",
+  "slide.rewrite":
+    "Rehace una slide desde el editor con una instrucción. Conviene la misma calidad que el carrusel.",
   "ideas.generate": "Propone ideas según los pilares. Es volumen: sirve un modelo gratuito.",
   "ideas.research": "Busca temas del nicho en la web.",
   "caption.variants": "Variantes de la descripción del post.",

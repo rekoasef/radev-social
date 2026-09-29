@@ -30,6 +30,7 @@ import { SlidePreview } from "@/components/brands/slide-preview";
 import { HOOK_LABELS } from "@/lib/hooks";
 import { LayerEditor, LayerToolbar, useLayerSelection } from "./layer-editor";
 import { type DatasetOption, DatasetOptions, Fields, ICON_LIST_ID } from "./slide-fields";
+import { SlideRewrite } from "./slide-rewrite";
 
 const idle: SaveCarouselState = { status: "idle" };
 const ICONS: ReadonlySet<string> = new Set(ICON_NAMES);
@@ -625,6 +626,24 @@ export function CarouselEditor({
             (theme.preset === "soft" || Boolean(previewArt?.[slide.type]))
           }
           onChange={setLayout}
+        />
+        <SlideRewrite
+          brandId={brand.id}
+          postCode={post?.code}
+          content={content}
+          canAsk={check.success}
+          slideIndex={index}
+          total={slides.length}
+          theme={theme}
+          brandName={brand.name}
+          assets={assets}
+          datasets={datasets}
+          look={look}
+          seed={seed}
+          onUse={(at, next) =>
+            // The hand adjustments were for the old content: the new slide starts clean.
+            setSlides(slides.map((current, i) => (i === at ? next : current)))
+          }
         />
         <div className="flex flex-col gap-2">
           <button

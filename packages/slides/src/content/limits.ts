@@ -47,4 +47,6 @@ export const limits = {
     hashtags: 5,
     artSubject: { min: 15, max: 300 },
   },
+  /** The operator's instruction for "Rehacer con IA". */
+  rewrite: { instruction: 200 },
 } as const;

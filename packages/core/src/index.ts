@@ -169,6 +169,10 @@ export {
   postPublishKey,
   QUEUE_OPTIONS,
   REVIEW_NOTIFY_KEY,
+  SLIDE_REWRITE_STATUSES,
+  type SlideRewriteJob,
+  type SlideRewriteStatus,
+  slideRewriteKey,
 } from "./jobs";
 export {
   canRetryJob,

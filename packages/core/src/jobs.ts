@@ -4,6 +4,8 @@
 export const JOBS = {
   /** Render every slide of a version to PNG, run the render QA and register the files. */
   carouselRender: "carousel.render",
+  /** Rewrite one slide of a carousel from the editor, as a proposal the operator accepts. */
+  slideRewrite: "slide.rewrite",
   /** Generate the images of a version's cover and close (ADR 0016), then queue its render. */
   artGenerate: "art.generate",
   /** Write a carousel with AI for a post that is `generating` (docs/ARCHITECTURE.md §7). */
@@ -25,6 +27,12 @@ export const JOBS = {
 } as const;
 
 export type CarouselRenderJob = { versionId: string };
+
+/** A `slide_rewrites` row holds what to rewrite (the carousel as the editor had it). */
+export type SlideRewriteJob = { requestId: string };
+
+export const SLIDE_REWRITE_STATUSES = ["queued", "running", "done", "failed"] as const;
+export type SlideRewriteStatus = (typeof SLIDE_REWRITE_STATUSES)[number];
 
 /** `fresh`: new images even if an earlier version has them for the same prompt. */
 export type ArtGenerateJob = { versionId: string; fresh?: boolean };
@@ -62,6 +70,8 @@ export type IdeaRequestJob = { requestId: string };
  */
 export const QUEUE_OPTIONS = {
   [JOBS.carouselRender]: { retryLimit: 2, retryDelay: 10, retryBackoff: true },
+  // Like a carousel, shorter: one slide. The operator is waiting in the editor.
+  [JOBS.slideRewrite]: { retryLimit: 1, retryDelay: 30, expireInSeconds: 10 * 60 },
   // Never retried: the job settles every failure itself (the post renders without images).
   [JOBS.artGenerate]: { retryLimit: 0, expireInSeconds: 5 * 60 },
   // A run can take a while: claude -p up to 5 min, the fallback up to 2, and one more try when
@@ -102,6 +112,9 @@ export const QUEUE_OPTIONS = {
  * current version of a post that is `rendering`, so a second copy finds nothing to do.
  */
 export const carouselRenderKey = (versionId: string) => `render:${versionId}`;
+
+/** Key of a rewrite's job: one per request (the job skips a request that is not queued). */
+export const slideRewriteKey = (requestId: string) => `rewrite:${requestId}`;
 
 /** Key of a version's image job: the job only acts on art that is still `pending` (rule 8). */
 export const artGenerateKey = (versionId: string) => `art:${versionId}`;

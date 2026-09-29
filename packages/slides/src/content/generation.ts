@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import { z } from "zod";
 import { parseTheme } from "../presets/registry";
 import {
   isLookId as isLookIdLocal,
@@ -11,6 +11,7 @@ import { enabledLooks } from "../presets/studio/tokens";
 import { describeQaIssue, QA_KINDS, type QaIssue } from "../qa-issues";
 import { carouselSchema } from "./carousel";
 import { limits as L } from "./limits";
+import { slideSchema } from "./slides";
 
 // What the AI gets besides the JSON Schema when it writes a carousel (phase 3, T7): when to use
 // each slide type, and the schema it must meet for a given brand. The schema says which fields
@@ -295,6 +296,30 @@ export function aiCarouselSchema(
 }
 
 export type AiCarouselSchema = ReturnType<typeof aiCarouselSchema>;
+
+/**
+ * The answer of a slide rewrite (editor, "Rehacer con IA"): one slide, checked inside the whole
+ * carousel with the same rules as a generated one (limits, emphasis, prices, real figures, cover
+ * first and cta last), so it can go in as is. The carousel's issues come back as the slide's.
+ */
+export function aiSlideRewriteSchema(
+  carousel: { slides: readonly unknown[] } & Record<string, unknown>,
+  slideIndex: number,
+  rules: Parameters<typeof aiCarouselSchema>,
+) {
+  const whole = aiCarouselSchema(...rules);
+  return z.object({ slide: slideSchema }).superRefine(({ slide }, ctx) => {
+    const slides = carousel.slides.map((current, i) => (i === slideIndex ? slide : current));
+    const result = whole.safeParse({ ...carousel, slides });
+    if (result.success) return;
+    for (const issue of result.error.issues) {
+      const [first, index, ...rest] = issue.path;
+      // Only what the new slide causes: the rest of the carousel was already fine.
+      if (first !== "slides" || index !== slideIndex) continue;
+      ctx.addIssue({ code: "custom", path: ["slide", ...rest], message: issue.message });
+    }
+  });
+}
 export type AiCarousel = z.infer<AiCarouselSchema>;
 
 /** A render issue as the worker stores it on a version (`post_versions.render_issues`). */

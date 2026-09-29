@@ -3,6 +3,7 @@ import { exampleCarousel } from "./examples";
 import {
   aiCarouselSchema,
   aiSlideGuide,
+  aiSlideRewriteSchema,
   brandLooks,
   brandMakesArt,
   DATA_SLIDES,
@@ -205,6 +206,48 @@ describe("lookChoices", () => {
 
   it("never leaves the post without looks", () => {
     expect(lookChoices(["chat"], ["chat", "chat"])).toEqual(["chat"]);
+  });
+});
+
+describe("aiSlideRewriteSchema", () => {
+  const carousel = exampleCarousel;
+  const pillars = [exampleCarousel.pillarKey];
+  const question = {
+    type: "question" as const,
+    title: "¿Y si tu cliente te escribe a las 3 de la mañana?",
+    callout: { icon: "message-circle", lead: "Te pierde", text: "si nadie contesta a tiempo." },
+  };
+
+  it("takes a slide that fits the carousel, even of another type", () => {
+    const schema = aiSlideRewriteSchema(carousel, 1, [pillars]);
+    expect(schema.safeParse({ slide: question }).success).toBe(true);
+  });
+
+  it("keeps the cover and the close in their place", () => {
+    const schema = aiSlideRewriteSchema(carousel, 0, [pillars]);
+    const result = schema.safeParse({ slide: question });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((i) => i.message).join(" ")).toContain("cover");
+  });
+
+  it("reports the carousel's rules as the slide's own (prices, limits)", () => {
+    const schema = aiSlideRewriteSchema(carousel, 1, [
+      pillars,
+      { pricing: "Hosting: USD 10–20/mes" },
+    ]);
+    const costs = {
+      type: "costBreakdown" as const,
+      title: "Lo que cuesta",
+      items: [
+        { label: "Hosting", range: "USD 10–20/mes" },
+        { label: "Dominio", range: "USD 999/año" },
+        { label: "Mails", range: "USD 10–20/mes" },
+      ],
+      total: { label: "Total", range: "USD 10–20/mes" },
+    };
+    const result = schema.safeParse({ slide: costs });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["slide", "items", 1, "range"]);
   });
 });
 

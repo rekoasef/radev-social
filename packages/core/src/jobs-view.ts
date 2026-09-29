@@ -17,6 +17,7 @@ export const JOB_LABELS: Record<JobName, string> = {
   [JOBS.carouselGenerate]: "Generación con IA",
   [JOBS.carouselRender]: "Render",
   [JOBS.artGenerate]: "Imágenes con IA",
+  [JOBS.slideRewrite]: "Rehacer una slide",
   [JOBS.ideasGenerate]: "Ideas con IA",
   [JOBS.ideasResearch]: "Investigación de temas",
   [JOBS.dataRefresh]: "Datos reales",

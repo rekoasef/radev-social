@@ -182,4 +182,10 @@ export {
   updateSeries,
 } from "./queries/series";
 export { getSetting, setSetting } from "./queries/settings";
+export {
+  createSlideRewrite,
+  finishSlideRewrite,
+  getSlideRewrite,
+  startSlideRewrite,
+} from "./queries/slide-rewrites";
 export * from "./schema";
