@@ -200,10 +200,6 @@ describe("lookChoices", () => {
     expect(lookChoices(enabled, [null, "chat"])).toEqual(["editorial", "bloques", "recibo"]);
   });
 
-  it("keeps a revision's look", () => {
-    expect(lookChoices(enabled, ["chat"], "chat")).toEqual(["chat"]);
-  });
-
   it("never leaves the post without looks", () => {
     expect(lookChoices(["chat"], ["chat", "chat"])).toEqual(["chat"]);
   });

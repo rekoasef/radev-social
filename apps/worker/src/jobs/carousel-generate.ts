@@ -46,7 +46,6 @@ import {
   brandLooks,
   brandMakesArt,
   describeRenderProblems,
-  isLookId,
   type LookId,
   lookChoices,
   lookTakesArt,
@@ -135,6 +134,8 @@ export function buildTaskFiles(input: {
       revision: {
         previousFile: "previous.json",
         note: "Ya escribiste este carrusel (está en previous.json) y hay que corregirlo. Cambiá lo que se pide abajo y mantené lo que funciona.",
+        lookNote:
+          "El look: mantené el de previous.json, salvo que el operador pida cambiarlo o se queje del diseño; entonces elegí otro distinto de la lista de slides.md.",
         ...(revision.feedback && {
           operatorFeedback: revision.feedback,
           operatorFeedbackNote:
@@ -346,18 +347,19 @@ export async function generateCarousel(
     request.seriesKey ? getSeriesByKey(db, brand.id, request.seriesKey) : undefined,
     getBrandData(db, brand.id),
   ]);
-  // A studio brand: the AI picks the look among the brand's, minus the last posts' (a revision
-  // keeps the one it has).
+  // A studio brand: the AI picks the look among the brand's, minus the last posts'. A revision
+  // may take any of them, the current one included: it keeps it unless the operator's feedback
+  // asks for another ("no me gustó el look" has to be able to change it).
   const enabled = brandLooks(brand.stylePreset, brand.themeTokens);
   const makesArt = brandMakesArt(brand.stylePreset, brand.themeTokens);
-  const previousLook = (current?.content as { look?: unknown } | undefined)?.look;
   const looks =
     enabled.length > 0
-      ? lookChoices(
-          enabled,
-          recent.map((r) => r.look),
-          typeof previousLook === "string" && isLookId(previousLook) ? previousLook : undefined,
-        )
+      ? current
+        ? enabled
+        : lookChoices(
+            enabled,
+            recent.map((r) => r.look),
+          )
       : undefined;
   const series: TaskSeries | undefined = seriesRow && {
     name: seriesRow.name,

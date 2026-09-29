@@ -320,7 +320,7 @@ La descripción que lee la IA es `LOOK_GUIDE` (`look-ids.ts`).
 
 ### Elección del look
 
-- La IA lo elige entre los activos de la marca menos los de los **2** últimos posts (`lookChoices`, `LOOK_COOLDOWN`); una revisión conserva el suyo. Se valida con Zod.
+- La IA lo elige entre los activos de la marca menos los de los **2** últimos posts (`lookChoices`, `LOOK_COOLDOWN`). En una revisión (rechazo o control del render) puede elegir cualquiera de los activos: mantiene el actual salvo que el feedback pida cambiarlo. Se valida con Zod.
 - El editor del post tiene un selector de look; la galería de la marca (Marcas → Slides) muestra cada look activo.
 - Sin `look` guardado, se toma uno de los activos por el id del post (`resolveLook`): siempre el mismo para ese post.
 

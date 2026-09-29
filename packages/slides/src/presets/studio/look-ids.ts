@@ -84,15 +84,14 @@ export const LOOK_COOLDOWN = 2;
 
 /**
  * The looks the AI may choose for a new post: the brand's, minus those of its last posts
- * (`recent`, newest first), so two posts in a row never look alike. A revision keeps its look
- * (`keep`). Never empty: with few looks on, the cooldown gives way.
+ * (`recent`, newest first), so two posts in a row never look alike. Never empty: with few looks
+ * on, the cooldown gives way. (A revision may take any of the brand's looks: the worker passes
+ * them all, and the AI keeps the current one unless the feedback asks for another.)
  */
 export function lookChoices(
   enabled: readonly LookId[],
   recent: readonly (string | null)[],
-  keep?: LookId,
 ): LookId[] {
-  if (keep && enabled.includes(keep)) return [keep];
   const cooling = new Set(recent.filter((look) => look !== null).slice(0, LOOK_COOLDOWN));
   const fresh = enabled.filter((id) => !cooling.has(id));
   return fresh.length > 0 ? fresh : [...enabled];

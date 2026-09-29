@@ -195,6 +195,8 @@ describe("buildTaskFiles", () => {
       operatorFeedback: "El hook es muy genérico.",
     });
     expect(revision.renderProblems).toBeUndefined();
+    // The look may change when the operator asks for it (LU-0009: "no me gustó el look").
+    expect(revision.lookNote).toContain("salvo que el operador pida cambiarlo");
   });
 
   it("carries the render problems of the previous version", () => {
