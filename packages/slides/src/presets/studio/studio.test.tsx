@@ -6,7 +6,7 @@ import { extremeSlides } from "../../content/extremes";
 import { SLIDE_TYPES, type Slide, type SlideType } from "../../content/slides";
 import { RenderSlide } from "../../render-slide";
 import { parseTheme } from "../registry";
-import { LOOK_GUIDE, LOOK_IDS, LOOK_NAMES, type LookId } from "./look-ids";
+import { LOOK_ART, LOOK_GUIDE, LOOK_IDS, LOOK_NAMES, type LookId } from "./look-ids";
 import { LOOKS, resolveLook } from "./looks";
 import { enabledLooks, studioTokensSchema } from "./tokens";
 
@@ -79,6 +79,23 @@ describe("studio looks", () => {
   });
 });
 
+describe("LOOK_ART", () => {
+  it("asks for the background of the surface each slot really has", () => {
+    const background = { ink: "dark", paper: "light", accent: undefined } as const;
+    for (const [id, art] of Object.entries(LOOK_ART)) {
+      const kit = LOOKS[id as LookId];
+      for (const total of [5, 6, 8]) {
+        expect(background[kit.surface({ index: 0, total, type: "cover" })], `${id} cover`).toBe(
+          art?.cover,
+        );
+        expect(background[kit.surface({ index: total - 1, total, type: "cta" })], `${id} cta`).toBe(
+          art?.cta,
+        );
+      }
+    }
+  });
+});
+
 describe("resolveLook", () => {
   const enabled: LookId[] = ["editorial", "plano", "chat"];
 
@@ -112,6 +129,34 @@ describe("studio tokens", () => {
     expect(enabledLooks(studioTokensSchema.parse({ looks: { ...off, chat: true } }))).toEqual([
       "chat",
     ]);
+  });
+});
+
+describe("carousel art", () => {
+  const art = {
+    cover: "A cracked black ceramic sphere leaking warm light",
+    cta: "The same sphere mended with seams of gold",
+  };
+
+  it("takes one object for the cover and one for the close", () => {
+    expect(carouselSchema.safeParse({ ...exampleCarousel, look: "atmosfera", art }).success).toBe(
+      true,
+    );
+  });
+
+  it("rejects people and things the model would fill with made-up text", () => {
+    for (const subject of [
+      "A smiling woman holding a phone",
+      "A notebook full of handwritten orders",
+      "A glowing laptop screen with a dashboard",
+      "A neon sign that says open",
+    ]) {
+      const result = carouselSchema.safeParse({
+        ...exampleCarousel,
+        art: { ...art, cover: subject },
+      });
+      expect(result.success, subject).toBe(false);
+    }
   });
 });
 

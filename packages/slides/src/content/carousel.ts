@@ -17,6 +17,23 @@ export const HOOK_TYPES = [
 
 export type HookType = (typeof HOOK_TYPES)[number];
 
+/**
+ * Things an image subject may not have: people (DESIGN-SYSTEM §1) and anything the model would
+ * fill with made-up writing. In English, like the subject.
+ */
+const ART_FORBIDDEN =
+  /\b(person|people|man|men|woman|women|child|children|kid|kids|girl|boy|human|face|faces|hand|hands|text|letters?|words?|writing|handwritten|sign|signs|logo|logos|label|newspaper|document|book|notebook|page|pages|screen|screens|monitor|display|poster|chart|graph)\b/i;
+
+const artSubject = z
+  .string()
+  .trim()
+  .min(L.carousel.artSubject.min, { error: "Describí el objeto de la imagen con más detalle." })
+  .max(L.carousel.artSubject.max, { error: `Máximo ${L.carousel.artSubject.max} caracteres.` })
+  .refine((text) => !ART_FORBIDDEN.test(text), {
+    error:
+      "La imagen es un objeto, sin personas ni nada con texto (carteles, pantallas, libros, gráficos): describí otro objeto.",
+  });
+
 export const carouselSchema = z
   .object({
     hook: plainText(L.carousel.hook),
@@ -41,6 +58,11 @@ export const carouselSchema = z
      * it, one of the brand's looks is picked by the post id.
      */
     look: z.enum(LOOK_IDS).optional(),
+    /**
+     * Subjects of the generated images (ADR 0016), in English: one object for the cover and one
+     * for the close. Only for looks that take images (LOOK_ART); the code adds the style rules.
+     */
+    art: z.object({ cover: artSubject, cta: artSubject }).optional(),
     /** One per slide. */
     altTexts: z.array(z.string().trim().min(1, { error: "No puede estar vacío." })).optional(),
   })

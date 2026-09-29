@@ -172,6 +172,19 @@ describe("aiCarouselSchema with looks (studio)", () => {
     }
   });
 
+  it("asks for the images when the look takes them", () => {
+    const withArt = aiCarouselSchema(pillars, { looks: ["atmosfera", "chat"] });
+    const result = withArt.safeParse({ ...exampleCarousel, look: "atmosfera" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["art"]);
+    const art = {
+      cover: "A cracked black ceramic sphere",
+      cta: "The same sphere mended with gold",
+    };
+    expect(withArt.safeParse({ ...exampleCarousel, look: "atmosfera", art }).success).toBe(true);
+    expect(withArt.safeParse({ ...exampleCarousel, look: "chat" }).success).toBe(true);
+  });
+
   it("does not ask for a look for other presets", () => {
     expect(aiCarouselSchema(pillars).safeParse(exampleCarousel).success).toBe(true);
   });

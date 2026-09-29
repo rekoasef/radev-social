@@ -125,12 +125,14 @@ export {
 export { GLOW_POSITIONS, type SoftTokens, softTokensSchema } from "./presets/soft/tokens";
 export {
   isLookId,
+  LOOK_ART,
   LOOK_COOLDOWN,
   LOOK_GUIDE,
   LOOK_IDS,
   LOOK_NAMES,
   type LookId,
   lookChoices,
+  lookTakesArt,
 } from "./presets/studio/look-ids";
 export { resolveLook } from "./presets/studio/looks";
 export { enabledLooks, type StudioTokens, studioTokensSchema } from "./presets/studio/tokens";

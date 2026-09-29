@@ -40,5 +40,11 @@ export const limits = {
   bigNumber: { kicker: 30, value: 10, label: 80, context: 140, source: 90 },
   chart: { title: 60, caption: 100, source: 90 },
   cta: { title: 70, subtitle: 120, button: 50 },
-  carousel: { hook: 100, slides: { min: 5, max: 8 }, caption: 2000, hashtags: 5 },
+  carousel: {
+    hook: 100,
+    slides: { min: 5, max: 8 },
+    caption: 2000,
+    hashtags: 5,
+    artSubject: { min: 15, max: 300 },
+  },
 } as const;

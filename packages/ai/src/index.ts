@@ -1,4 +1,4 @@
-// AI providers (claude-code, openrouter), per-task routing and usage limits.
+// AI providers (claude-code, openrouter), per-task routing and usage limits; images (cloudflare).
 export { type BrandContext, buildBrandClaudeMd } from "./brand-instructions";
 export {
   CLAUDE_CREDENTIAL_VARS,
@@ -25,6 +25,17 @@ export {
   ideaProposalsSchema,
   normalizeIdeaTitle,
 } from "./ideas";
+export {
+  CLOUDFLARE_IMAGE_MODEL,
+  type CloudflareImageOptions,
+  classifyCloudflareError,
+  cloudflareCredentials,
+  createCloudflareImageProvider,
+  type ImageProvider,
+  type ImageRequest,
+  type ImageResult,
+} from "./images/cloudflare";
+export { type ArtBackground, artPrompt, colorName } from "./images/prompt";
 export {
   createOpenRouterProvider,
   OPENROUTER_URL,

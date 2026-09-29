@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import { parseTheme } from "../presets/registry";
-import { LOOK_GUIDE, type LookId } from "../presets/studio/look-ids";
+import { LOOK_ART, LOOK_GUIDE, type LookId, lookTakesArt } from "../presets/studio/look-ids";
 import { enabledLooks } from "../presets/studio/tokens";
 import { describeQaIssue, QA_KINDS, type QaIssue } from "../qa-issues";
 import { carouselSchema } from "./carousel";
@@ -69,12 +69,38 @@ Nombres de Lucide en kebab-case (ej. \`message-circle\`, \`calendar-clock\`, \`f
 Si no estás seguro de que un ícono existe, usá uno común.
 `;
 
-export { isLookId, LOOK_COOLDOWN, type LookId, lookChoices } from "../presets/studio/look-ids";
+export {
+  isLookId,
+  LOOK_ART,
+  LOOK_COOLDOWN,
+  type LookId,
+  lookChoices,
+  lookTakesArt,
+} from "../presets/studio/look-ids";
 
 /** The looks a brand has on (`studio` preset); empty for the other presets or broken tokens. */
 export function brandLooks(stylePreset: string, themeTokens: unknown): LookId[] {
   const parsed = parseTheme(stylePreset, themeTokens);
   return parsed.ok && parsed.theme.preset === "studio" ? enabledLooks(parsed.theme.tokens) : [];
+}
+
+/** How to describe the images, for the looks that take them. */
+function artGuide(looks: readonly LookId[]): string {
+  const withArt = looks.filter((id) => LOOK_ART[id]);
+  if (withArt.length === 0) return "";
+  return `
+## Imagen (solo ${withArt.map((id) => `\`${id}\``).join(", ")})
+
+Si elegís uno de estos looks, el post lleva dos imágenes generadas: una en la portada y otra en el
+cierre. En \`art\` describí **un objeto** para cada una, **en inglés**, en una o dos frases: qué es,
+de qué material, qué le pasa. Que sea una metáfora visual del tema, no una ilustración literal, y
+que la del cierre se sienta como el desenlace de la de la portada. El estilo, la luz, el color y
+el fondo los agrega el código: no los describas.
+
+- Bien: "A cracked black ceramic sphere leaking warm light through the cracks" / "The same sphere, mended with seams of gold".
+- Nunca personas, caras ni manos, ni cosas con texto (carteles, pantallas, libros, cuadernos, gráficos): el modelo inventa letras.
+- Con los demás looks no escribas \`art\`.
+`;
 }
 
 /** The look section of the guide: the looks the post may take, with what each one is for. */
@@ -87,7 +113,7 @@ al tono del post. Cambia todo (colores, tipografía, composición), así que pen
 dirección de arte. Los looks de los últimos posts no están en la lista a propósito.
 
 ${looks.map((id) => `- \`${id}\`: ${LOOK_GUIDE[id]}`).join("\n")}
-`;
+${artGuide(looks)}`;
 }
 
 /**
@@ -172,6 +198,13 @@ export function aiCarouselSchema(
         code: "custom",
         path: ["look"],
         message: `Elegí el \`look\` entre estos (ver slides.md): ${looks.join(", ")}.`,
+      });
+    }
+    if (looks && carousel.look && lookTakesArt(carousel.look) && !carousel.art) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["art"],
+        message: `El look \`${carousel.look}\` lleva imagen: describí en \`art\` el objeto de la portada y el del cierre (ver slides.md).`,
       });
     }
     if (!pillarKeys.includes(carousel.pillarKey)) {

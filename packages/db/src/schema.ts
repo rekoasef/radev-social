@@ -15,6 +15,7 @@ import {
   NETWORKS,
   NOTIFICATION_KINDS,
   POST_STATUSES,
+  type PostArt,
   PUBLICATION_STATUSES,
   RENDER_FORMATS,
   ROUTE_ROLES,
@@ -375,6 +376,8 @@ export const postVersions = pgTable(
     datasets: jsonb("datasets").$type<Record<string, DataSeries>>(),
     /** When the operator was told this version is waiting for review (Telegram, phase 4 T6). */
     reviewNotifiedAt: timestamp("review_notified_at", { withTimezone: true }),
+    /** Images of the cover and the close (ADR 0016); null when the version takes none. */
+    art: jsonb("art").$type<PostArt>(),
     createdAt: createdAt(),
   },
   (t) => [

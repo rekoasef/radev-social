@@ -97,3 +97,22 @@ export function lookChoices(
   const fresh = enabled.filter((id) => !cooling.has(id));
   return fresh.length > 0 ? fresh : [...enabled];
 }
+
+/**
+ * Looks that take a generated image on the cover and the close (ADR 0016), with the background
+ * the image needs on each: the surface of that slide (a test keeps them in sync with the kits).
+ * The others are all design (a photo would break a receipt, a chat or a blueprint).
+ */
+export const LOOK_ART: Partial<
+  Record<LookId, { cover: "dark" | "light"; cta: "dark" | "light"; monochrome?: boolean }>
+> = {
+  atmosfera: { cover: "dark", cta: "dark" },
+  neon: { cover: "dark", cta: "dark" },
+  gradiente: { cover: "light", cta: "light" },
+  revista: { cover: "light", cta: "dark" },
+  editorial: { cover: "light", cta: "dark" },
+  monocromo: { cover: "dark", cta: "light", monochrome: true },
+};
+
+export const lookTakesArt = (look: LookId | undefined): boolean =>
+  look !== undefined && LOOK_ART[look] !== undefined;
