@@ -1,6 +1,13 @@
 // pg-boss worker: generation, render, publishing and metrics jobs (docs/ARCHITECTURE.md §6).
-import { createClaudeCodeProvider, createOpenRouterProvider, createRouter } from "@radev/ai";
 import {
+  createClaudeCodeProvider,
+  createCloudflareImageProvider,
+  createOpenRouterProvider,
+  createRouter,
+} from "@radev/ai";
+import {
+  type ArtGenerateJob,
+  artGenerateKey,
   type CarouselGenerateJob,
   type CarouselRenderJob,
   carouselGenerateKey,
@@ -21,6 +28,7 @@ import {
 } from "@radev/core";
 import { createDb, failGeneration, failIdeaRequest, getLatestSnapshot } from "@radev/db";
 import { type JobWithMetadata, PgBoss } from "pg-boss";
+import { generateArt } from "./jobs/art-generate";
 import { generateCarousel, RetryableGenerationError } from "./jobs/carousel-generate";
 import { failRender, renderCarousel } from "./jobs/carousel-render";
 import { refreshData } from "./jobs/data-refresh";
@@ -33,6 +41,7 @@ import { createEvents, errorMessage } from "./notify/events";
 import { createNotifier } from "./notify/notifier";
 import { telegramConfig, telegramSender } from "./notify/telegram";
 import { closeBrowser } from "./render/browser";
+import { backgroundMatches, edgeBrightness } from "./render/image-check";
 
 const log = createLogger({ service: "worker" });
 
@@ -84,6 +93,19 @@ async function main() {
       { singletonKey: carouselRenderKey(versionId) },
     );
   };
+  // Images of the posts (ADR 0016): only with Cloudflare's credentials; without them, posts render
+  // with the look's own art and the panel says why.
+  const images = createCloudflareImageProvider();
+  if (!images) log.warn("cloudflare not configured: posts go without generated images");
+  const queueArt = images
+    ? async (versionId: string) => {
+        await boss.send(
+          JOBS.artGenerate,
+          { versionId },
+          { singletonKey: artGenerateKey(versionId) },
+        );
+      }
+    : undefined;
   const queueGenerate = async (data: CarouselGenerateJob, delayMs: number) => {
     await boss.send(JOBS.carouselGenerate, data, {
       singletonKey: carouselGenerateKey(data.postId, data.attempt),
@@ -120,6 +142,7 @@ async function main() {
             log: jobLog,
             router,
             queueRender,
+            queueArt,
             queueGenerate,
             lastTry,
             onRateLimit: events.rateLimited,
@@ -152,6 +175,28 @@ async function main() {
         }
         throw error;
       }
+    },
+  );
+
+  await boss.createQueue(JOBS.artGenerate, QUEUE_OPTIONS[JOBS.artGenerate]);
+  // One at a time, like the render (it uses the same Chromium to check the backgrounds). It
+  // settles every failure itself: the render always gets queued.
+  await boss.work(
+    JOBS.artGenerate,
+    { batchSize: 1 },
+    async ([job]: { id: string; data: ArtGenerateJob }[]) => {
+      if (!job) return;
+      await generateArt(
+        {
+          db,
+          log: log.child({ job: JOBS.artGenerate, id: job.id, versionId: job.data.versionId }),
+          images,
+          edgeBrightness,
+          backgroundMatches,
+          queueRender,
+        },
+        job.data,
+      );
     },
   );
 
@@ -338,6 +383,7 @@ async function main() {
     schemaVersion: await boss.schemaVersion(),
     queues: [
       JOBS.carouselGenerate,
+      JOBS.artGenerate,
       JOBS.carouselRender,
       ...IDEA_REQUEST_TASKS,
       JOBS.dataRefresh,

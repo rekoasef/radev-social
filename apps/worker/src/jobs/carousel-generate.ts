@@ -14,6 +14,7 @@ import {
   type DataSeries,
   findFigure,
   type GenerationRequest,
+  type PostArt,
   rateLimitDelayMs,
   resolveAiRoute,
   versionDatasets,
@@ -47,6 +48,7 @@ import {
   isLookId,
   type LookId,
   lookChoices,
+  lookTakesArt,
   type StoredRenderIssue,
 } from "@radev/slides/generation";
 import type { Logger } from "../logger";
@@ -174,6 +176,21 @@ export function stampDataSources(
   return { ...carousel, slides };
 }
 
+/**
+ * The images of a new version (ADR 0016): pending when its look takes them and the AI described
+ * them; skipped, saying why, when there is no image provider. Null when the look takes none.
+ */
+export function artPlan(content: AiCarousel, canGenerate: boolean): PostArt | null {
+  if (!content.art || !lookTakesArt(content.look)) return null;
+  return canGenerate
+    ? { status: "pending", images: {} }
+    : {
+        status: "skipped",
+        images: {},
+        note: "Faltan las credenciales de Cloudflare (CLOUDFLARE_ACCOUNT_ID y CLOUDFLARE_API_TOKEN).",
+      };
+}
+
 /** One row of generation_runs from an attempt of the route (a post's, or an idea request's). */
 export function runRow(
   attempt: RouteAttempt<unknown>,
@@ -245,6 +262,8 @@ export type GenerateDeps = {
   log: Logger;
   router: Router;
   queueRender: (versionId: string) => Promise<void>;
+  /** Queues the images of a version (ADR 0016); absent without Cloudflare credentials. */
+  queueArt?: (versionId: string) => Promise<void>;
   queueGenerate: (job: CarouselGenerateJob, delayMs: number) => Promise<void>;
   /** The job's last retry by pg-boss: a retryable error fails the post instead. */
   lastTry: boolean;
@@ -422,9 +441,11 @@ export async function generateCarousel(
               figures: data.figures,
             })
           : routed.result.data;
+        const art = artPlan(content, Boolean(deps.queueArt));
         const saved = await addGeneratedVersion(db, {
           postId: post.id,
           content,
+          art,
           generationRunId: runIds[winner] ?? null,
           datasets,
         });
@@ -432,7 +453,9 @@ export async function generateCarousel(
           log.warn("generated version not saved", { post: post.publicCode, reason: saved.reason });
           return "skipped";
         }
-        await deps.queueRender(saved.version.id);
+        // A look with images goes through art.generate, which queues the render when it is done.
+        if (art?.status === "pending" && deps.queueArt) await deps.queueArt(saved.version.id);
+        else await deps.queueRender(saved.version.id);
         return "saved";
       }
       case "retryWithFeedback":

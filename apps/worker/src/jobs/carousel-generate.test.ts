@@ -2,6 +2,7 @@ import { type AIError, providerError, rateLimited, validationError } from "@rade
 import type { AiCarousel } from "@radev/slides/generation";
 import { describe, expect, it } from "vitest";
 import {
+  artPlan,
   buildTaskFiles,
   decide,
   MAX_RATE_LIMIT_ATTEMPTS,
@@ -58,6 +59,33 @@ describe("decide", () => {
     expect(decide(result, fresh)).toEqual({ kind: "retry" });
     expect(decide(result, { ...fresh, lastTry: true })).toEqual({ kind: "fail" });
     expect(decide(failed(providerError("credencial", false)), fresh)).toEqual({ kind: "fail" });
+  });
+});
+
+describe("artPlan", () => {
+  const art = { cover: "A cracked black ceramic sphere", cta: "The same sphere mended with gold" };
+  // artPlan only reads the look and the art.
+  const base = {
+    hook: "h",
+    pillarKey: "p",
+    hookType: "warning",
+    slides: [],
+  } as unknown as AiCarousel;
+
+  it("leaves images pending for a look that takes them", () => {
+    expect(artPlan({ ...base, look: "atmosfera", art }, true)).toEqual({
+      status: "pending",
+      images: {},
+    });
+  });
+
+  it("says why there are none without the image provider", () => {
+    expect(artPlan({ ...base, look: "atmosfera", art }, false)?.status).toBe("skipped");
+  });
+
+  it("is null when the look takes no images or the AI described none", () => {
+    expect(artPlan({ ...base, look: "recibo", art }, true)).toBeNull();
+    expect(artPlan({ ...base, look: "atmosfera" }, true)).toBeNull();
   });
 });
 

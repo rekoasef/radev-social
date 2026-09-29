@@ -69,6 +69,7 @@ Nombres de Lucide en kebab-case (ej. \`message-circle\`, \`calendar-clock\`, \`f
 Si no estás seguro de que un ícono existe, usá uno común.
 `;
 
+export { parseTheme } from "../presets/registry";
 export {
   isLookId,
   LOOK_ART,

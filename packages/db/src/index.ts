@@ -13,6 +13,7 @@ export {
   setBrandAiLimits,
   toAiRoute,
 } from "./queries/ai";
+export { countArtImagesSince, listPostArtImages, setVersionArt } from "./queries/art";
 export {
   type AssetResult,
   createBrandAsset,

@@ -151,6 +151,8 @@ export {
   RESEARCH_FOCUS_MAX,
 } from "./ideas/requests";
 export {
+  type ArtGenerateJob,
+  artGenerateKey,
   type CarouselGenerateJob,
   type CarouselRenderJob,
   carouselGenerateKey,

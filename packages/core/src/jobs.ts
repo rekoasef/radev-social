@@ -4,6 +4,8 @@
 export const JOBS = {
   /** Render every slide of a version to PNG, run the render QA and register the files. */
   carouselRender: "carousel.render",
+  /** Generate the images of a version's cover and close (ADR 0016), then queue its render. */
+  artGenerate: "art.generate",
   /** Write a carousel with AI for a post that is `generating` (docs/ARCHITECTURE.md §7). */
   carouselGenerate: "carousel.generate",
   /** Propose ideas for a brand's bank from its pillars, series and history (free model). */
@@ -23,6 +25,8 @@ export const JOBS = {
 } as const;
 
 export type CarouselRenderJob = { versionId: string };
+
+export type ArtGenerateJob = { versionId: string };
 
 /**
  * `attempt` counts the reschedules after a provider's limit (0 the first time): it sets the next
@@ -57,6 +61,8 @@ export type IdeaRequestJob = { requestId: string };
  */
 export const QUEUE_OPTIONS = {
   [JOBS.carouselRender]: { retryLimit: 2, retryDelay: 10, retryBackoff: true },
+  // Never retried: the job settles every failure itself (the post renders without images).
+  [JOBS.artGenerate]: { retryLimit: 0, expireInSeconds: 5 * 60 },
   // A run can take a while: claude -p up to 5 min, the fallback up to 2, and one more try when
   // the answer comes malformed. Provider errors worth retrying get 2 more attempts from 1 min.
   [JOBS.carouselGenerate]: {
@@ -95,6 +101,9 @@ export const QUEUE_OPTIONS = {
  * current version of a post that is `rendering`, so a second copy finds nothing to do.
  */
 export const carouselRenderKey = (versionId: string) => `render:${versionId}`;
+
+/** Key of a version's image job: the job only acts on art that is still `pending` (rule 8). */
+export const artGenerateKey = (versionId: string) => `art:${versionId}`;
 
 /**
  * Key of a post's generation job. One attempt at a time: the job itself only runs for a post

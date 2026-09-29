@@ -16,6 +16,7 @@ export function isJobName(value: string): value is JobName {
 export const JOB_LABELS: Record<JobName, string> = {
   [JOBS.carouselGenerate]: "Generación con IA",
   [JOBS.carouselRender]: "Render",
+  [JOBS.artGenerate]: "Imágenes con IA",
   [JOBS.ideasGenerate]: "Ideas con IA",
   [JOBS.ideasResearch]: "Investigación de temas",
   [JOBS.dataRefresh]: "Datos reales",

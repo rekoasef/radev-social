@@ -1,4 +1,4 @@
-import { type GenerationRequest, INITIAL_STATUSES } from "@radev/core";
+import { type GenerationRequest, INITIAL_STATUSES, type PostArt } from "@radev/core";
 import { and, desc, eq, isNotNull, ne, sql } from "drizzle-orm";
 import type { Database } from "../client";
 import {
@@ -85,6 +85,8 @@ export async function addGeneratedVersion(
     content: CarouselContent;
     generationRunId: string | null;
     datasets?: VersionDatasets;
+    /** The images to generate (`pending`) or why there are none (ADR 0016). */
+    art?: PostArt | null;
   },
 ): Promise<GeneratedVersionResult> {
   return db.transaction(async (tx) => {
@@ -112,6 +114,7 @@ export async function addGeneratedVersion(
         origin: "ai",
         generationRunId: input.generationRunId,
         datasets: input.datasets ?? null,
+        art: input.art ?? null,
       })
       .returning();
     if (!version) throw new Error("No se pudo guardar la versión.");
