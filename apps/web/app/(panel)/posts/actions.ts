@@ -26,7 +26,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { applyPostEffects, queueGenerate, queuePublish, queueRender } from "@/lib/jobs";
+import {
+  applyPostEffects,
+  artFor,
+  queueGenerate,
+  queuePublish,
+  queueRender,
+  queueVersion,
+} from "@/lib/jobs";
 import { requireOperator } from "@/lib/session";
 
 export type SaveCarouselState =
@@ -38,6 +45,8 @@ const input = z.object({
   /** Public code of the post being edited; empty for a new post. */
   code: z.string().max(20).optional(),
   content: z.string().max(200_000),
+  /** "1": new images for the post, even if their description did not change (ADR 0016). */
+  freshArt: z.literal("1").optional(),
 });
 
 function parseJson(text: string): unknown {
@@ -59,7 +68,7 @@ export async function saveCarouselAction(
   await requireOperator();
   const parsed = input.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { status: "error", message: "Datos inválidos." };
-  const { brandId, code, content } = parsed.data;
+  const { brandId, code, content, freshArt } = parsed.data;
 
   const brand = await getBrandById(db, brandId);
   if (!brand || brand.archivedAt)
@@ -109,11 +118,12 @@ export async function saveCarouselAction(
       content: carousel.data,
       origin: "manual",
       datasets: datasets.datasets,
+      art: artFor(brand.stylePreset, carousel.data),
     });
     if (!result.ok) return { status: "error", message: result.reason };
     // A scheduled post loses its publish job (it keeps its time: approving schedules it again).
     await applyPostEffects(post.id, result.effects);
-    await queueRender(result.version.id);
+    await queueVersion(result.version, { fresh: freshArt === "1" });
     publicCode = post.publicCode;
   } else {
     const created = await createPost(db, {
@@ -121,8 +131,9 @@ export async function saveCarouselAction(
       content: carousel.data,
       origin: "manual",
       datasets: datasets.datasets,
+      art: artFor(brand.stylePreset, carousel.data),
     });
-    await queueRender(created.version.id);
+    await queueVersion(created.version);
     publicCode = created.post.publicCode;
   }
 
@@ -149,16 +160,18 @@ export async function restoreVersionAction(form: FormData): Promise<void> {
   if (!content.success)
     throw new Error("Esa versión ya no cumple el formato actual: abrila en el editor.");
 
+  const brand = await getBrandById(db, post.brandId);
   const result = await addPostVersion(db, {
     postId: post.id,
     content: content.data,
     origin: "manual",
-    // Its charts come back with the numbers they had.
+    // Its charts come back with the numbers they had; its images, too (same prompts: reused).
     datasets: version.datasets,
+    art: brand ? artFor(brand.stylePreset, content.data) : null,
   });
   if (!result.ok) throw new Error(result.reason);
   await applyPostEffects(post.id, result.effects);
-  await queueRender(result.version.id);
+  await queueVersion(result.version);
   revalidatePath("/posts");
   redirect(`/posts/${post.publicCode}`);
 }

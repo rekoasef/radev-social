@@ -1,5 +1,6 @@
 import "server-only";
 import {
+  artGenerateKey,
   carouselGenerateKey,
   carouselRenderKey,
   type DataSource,
@@ -9,11 +10,13 @@ import {
   ideaRequestKey,
   JOBS,
   type NotifySendJob,
+  type PostArt,
   type PostEffect,
   type PostPublishJob,
   postPublishKey,
   QUEUE_OPTIONS,
 } from "@radev/core";
+import { versionTakesArt } from "@radev/slides";
 import { PgBoss } from "pg-boss";
 import { requireEnv } from "./env";
 
@@ -36,6 +39,7 @@ function boss(): Promise<PgBoss> {
     await client.start();
     // Idempotent: lets the web queue before the worker has ever started.
     await client.createQueue(JOBS.carouselRender, QUEUE_OPTIONS[JOBS.carouselRender]);
+    await client.createQueue(JOBS.artGenerate, QUEUE_OPTIONS[JOBS.artGenerate]);
     await client.createQueue(JOBS.carouselGenerate, QUEUE_OPTIONS[JOBS.carouselGenerate]);
     for (const task of IDEA_REQUEST_TASKS) await client.createQueue(task, QUEUE_OPTIONS[task]);
     await client.createQueue(JOBS.dataRefresh, QUEUE_OPTIONS[JOBS.dataRefresh]);
@@ -52,6 +56,36 @@ export async function queueRender(versionId: string): Promise<void> {
     JOBS.carouselRender,
     { versionId },
     { singletonKey: carouselRenderKey(versionId) },
+  );
+}
+
+/**
+ * The images a new version starts with (ADR 0016): pending when its look takes them, so the
+ * worker generates them (or reuses an earlier version's) before the render. Null otherwise.
+ */
+export function artFor(
+  stylePreset: string,
+  content: { look?: string; art?: unknown },
+): PostArt | null {
+  return versionTakesArt(stylePreset, content) ? { status: "pending", images: {} } : null;
+}
+
+/**
+ * After saving a version: its images first when they are pending (art.generate queues the render
+ * when it is done), the render otherwise. `fresh`: new images even for an unchanged prompt.
+ */
+export async function queueVersion(
+  version: { id: string; art: PostArt | null },
+  options: { fresh?: boolean } = {},
+): Promise<void> {
+  if (version.art?.status !== "pending") {
+    await queueRender(version.id);
+    return;
+  }
+  await (await boss()).send(
+    JOBS.artGenerate,
+    { versionId: version.id, fresh: options.fresh ?? false },
+    { singletonKey: artGenerateKey(version.id) },
   );
 }
 

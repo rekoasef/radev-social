@@ -3,6 +3,7 @@ import {
   type DataSeries,
   INITIAL_STATUSES,
   nextStatus,
+  type PostArt,
   type PostEffect,
   type PostEvent,
   type PostStatus,
@@ -109,6 +110,8 @@ export async function createPost(
     content: CarouselContent;
     origin: VersionOrigin;
     datasets?: VersionDatasets;
+    /** The images to generate (`pending`), for a look that takes them (ADR 0016). */
+    art?: PostArt | null;
   },
 ): Promise<CreatedPost> {
   return db.transaction(async (tx) => {
@@ -135,6 +138,7 @@ export async function createPost(
         content: input.content,
         origin: input.origin,
         datasets: input.datasets ?? null,
+        art: input.art ?? null,
       })
       .returning();
     if (!version) throw new Error("No se pudo guardar la versión.");
@@ -163,6 +167,8 @@ export async function addPostVersion(
     content: CarouselContent;
     origin: VersionOrigin;
     datasets?: VersionDatasets;
+    /** The images to generate (`pending`), for a look that takes them (ADR 0016). */
+    art?: PostArt | null;
   },
 ): Promise<NewVersionResult> {
   return db.transaction(async (tx) => {
@@ -189,6 +195,7 @@ export async function addPostVersion(
         content: input.content,
         origin: input.origin,
         datasets: input.datasets ?? null,
+        art: input.art ?? null,
       })
       .returning();
     if (!version) throw new Error("No se pudo guardar la versión.");

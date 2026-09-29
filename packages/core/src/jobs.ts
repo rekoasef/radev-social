@@ -26,7 +26,8 @@ export const JOBS = {
 
 export type CarouselRenderJob = { versionId: string };
 
-export type ArtGenerateJob = { versionId: string };
+/** `fresh`: new images even if an earlier version has them for the same prompt. */
+export type ArtGenerateJob = { versionId: string; fresh?: boolean };
 
 /**
  * `attempt` counts the reschedules after a provider's limit (0 the first time): it sets the next

@@ -1,12 +1,12 @@
 "use server";
 
-import { addPostVersion, getPostByCode, getPostVersion } from "@radev/db";
+import { addPostVersion, getBrandById, getPostByCode, getPostVersion } from "@radev/db";
 import { applyTextEdits, carouselSchema } from "@radev/slides";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { applyPostEffects, queueRender } from "@/lib/jobs";
+import { applyPostEffects, artFor, queueVersion } from "@/lib/jobs";
 import { requireOperator } from "@/lib/session";
 
 export type QuickEditState =
@@ -71,16 +71,18 @@ export async function quickEditAction(_: QuickEditState, form: FormData): Promis
     return { status: "error", message: "Hay textos para corregir.", fields };
   }
 
+  const brand = await getBrandById(db, post.brandId);
   const result = await addPostVersion(db, {
     postId: post.id,
     content: carousel.data,
     origin: "manual",
-    // Only texts changed: its charts keep the numbers they had.
+    // Only texts changed: its charts keep the numbers they had, its images are reused.
     datasets: version.datasets,
+    art: brand ? artFor(brand.stylePreset, carousel.data) : null,
   });
   if (!result.ok) return { status: "error", message: result.reason };
   await applyPostEffects(post.id, result.effects);
-  await queueRender(result.version.id);
+  await queueVersion(result.version);
   revalidatePath("/posts");
   revalidatePath("/review");
   redirect(`/review?listo=${encodeURIComponent(post.publicCode)}`);

@@ -47,7 +47,7 @@ export type ArtOutcome = "done" | "skipped";
 
 export async function generateArt(
   deps: ArtDeps,
-  { versionId }: ArtGenerateJob,
+  { versionId, fresh = false }: ArtGenerateJob,
 ): Promise<ArtOutcome> {
   const { db, log } = deps;
   const now = deps.now ?? (() => new Date());
@@ -97,7 +97,7 @@ export async function generateArt(
       const prompt = artPrompt(subject, { background, accent, monochrome: spec.monochrome });
 
       // The same prompt as an earlier version of the post (a text fix): the same image.
-      const reuse = previous.find((image) => image.prompt === prompt);
+      const reuse = fresh ? undefined : previous.find((image) => image.prompt === prompt);
       if (reuse && (await readMediaFile(reuse.path))) {
         images[slot] = reuse;
         continue;

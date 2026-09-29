@@ -14,6 +14,7 @@ import {
   LOOK_NAMES,
   type LookId,
   limits,
+  lookTakesArt,
   resolveLook,
   SLIDE_FIELDS,
   SLIDE_LABELS,
@@ -34,6 +35,21 @@ const idle: SaveCarouselState = { status: "idle" };
 const ICONS: ReadonlySet<string> = new Set(ICON_NAMES);
 
 export type EditorPillar = { key: string; name: string };
+
+/** The current version's generated images (ADR 0016) and the state of their generation. */
+export type EditorArt = {
+  status: string;
+  note?: string;
+  urls: { cover?: string; cta?: string };
+};
+
+const ART_STATUS_LABELS: Record<string, string> = {
+  pending: "Generándose…",
+  ready: "Lista",
+  partial: "Solo una de las dos",
+  skipped: "Sin imagen",
+  failed: "No se pudo generar",
+};
 
 /**
  * The brand's real data for the editor (phase 3, T11): the datasets a chart can use (today's, plus
@@ -77,6 +93,7 @@ export function CarouselEditor({
   post,
   data,
   seed = "preview",
+  art,
 }: {
   brand: { id: string; slug: string; name: string };
   theme: BrandTheme;
@@ -89,6 +106,8 @@ export function CarouselEditor({
   data: EditorData | null;
   /** Seed of the deterministic variation: the post id (the render uses it too). */
   seed?: string;
+  /** The images of the version being edited, when it has them. */
+  art?: EditorArt;
 }) {
   const draftKey = `radev-social:draft:${brand.slug}:${post?.code ?? "new"}`;
   const [carousel, setCarousel] = useState<Carousel>(initial);
@@ -123,6 +142,14 @@ export function CarouselEditor({
   const look: LookId | undefined =
     looks.length > 0 ? resolveLook(carousel.look, looks, seed) : undefined;
   const content = look ? { ...carousel, look } : carousel;
+  // Images (ADR 0016): the current ones are shown while their description and the look stay
+  // the same; otherwise (or with "new images") they are made again when saving.
+  const [freshArt, setFreshArt] = useState(false);
+  const takesArt = lookTakesArt(look);
+  const artUnchanged =
+    look === (initial.look ?? look) && JSON.stringify(carousel.art) === JSON.stringify(initial.art);
+  const previewArt = takesArt && artUnchanged && !freshArt ? art?.urls : undefined;
+  const setArt = (next: Carousel["art"]) => setCarousel((c) => ({ ...c, art: next }));
   const check = useMemo(() => carouselSchema.safeParse(carousel), [carousel]);
   const errors: Record<string, string> = {};
   if (!check.success) {
@@ -185,6 +212,7 @@ export function CarouselEditor({
       <input type="hidden" name="brandId" value={brand.id} />
       {post && <input type="hidden" name="code" value={post.code} />}
       <input type="hidden" name="content" value={JSON.stringify(content)} />
+      {freshArt && takesArt && carousel.art && <input type="hidden" name="freshArt" value="1" />}
       <datalist id={ICON_LIST_ID}>
         {ICON_NAMES.map((name) => (
           <option key={name} value={name} />
@@ -273,6 +301,82 @@ export function CarouselEditor({
               ))}
             </select>
           </label>
+        )}
+        {takesArt && (
+          <fieldset className="flex flex-col gap-3 rounded-md border border-bezel p-4">
+            <legend className="px-1 text-sm text-ink-dim">
+              Imagen de portada y cierre (generada con IA)
+            </legend>
+            {art && artUnchanged && (
+              <p className="text-sm text-ink-dim">
+                Estado: {ART_STATUS_LABELS[art.status] ?? art.status}
+                {art.note ? ` · ${art.note}` : ""}
+              </p>
+            )}
+            {carousel.art ? (
+              <>
+                {(["cover", "cta"] as const).map((slot) => (
+                  <label key={slot} className="flex flex-col gap-1.5 text-sm text-ink-dim">
+                    <span className="flex justify-between">
+                      {slot === "cover" ? "Objeto de la portada" : "Objeto del cierre"} (en inglés)
+                      <span className="timecode text-xs text-ink-faint">
+                        {[...(carousel.art?.[slot] ?? "")].length}/{limits.carousel.artSubject.max}
+                      </span>
+                    </span>
+                    <textarea
+                      rows={2}
+                      value={carousel.art?.[slot] ?? ""}
+                      onChange={(e) =>
+                        setArt({
+                          cover: carousel.art?.cover ?? "",
+                          cta: carousel.art?.cta ?? "",
+                          [slot]: e.target.value,
+                        })
+                      }
+                      className="console-field"
+                      aria-invalid={errors[`art.${slot}`] ? true : undefined}
+                    />
+                    {errors[`art.${slot}`] && (
+                      <span className="text-tally-red">{errors[`art.${slot}`]}</span>
+                    )}
+                  </label>
+                ))}
+                <p className="text-xs text-ink-faint">
+                  Un objeto, sin personas ni cosas con texto. El estilo, la luz y el fondo los pone
+                  el sistema. Si cambiás la descripción, la imagen se genera de nuevo al guardar.
+                </p>
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm text-ink-dim">
+                    <input
+                      type="checkbox"
+                      checked={freshArt}
+                      onChange={(e) => setFreshArt(e.target.checked)}
+                      className="size-4 accent-[var(--color-ink)]"
+                    />
+                    Generar imágenes nuevas al guardar
+                  </label>
+                  <button
+                    type="button"
+                    className="text-sm text-ink-dim underline underline-offset-2"
+                    onClick={() => setArt(undefined)}
+                  >
+                    Quitar imagen
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-wrap items-center gap-4 text-sm text-ink-dim">
+                <span>Sin imagen: la portada y el cierre usan el diseño del look.</span>
+                <button
+                  type="button"
+                  className="underline underline-offset-2"
+                  onClick={() => setArt({ cover: "", cta: "" })}
+                >
+                  Agregar imagen
+                </button>
+              </div>
+            )}
+          </fieldset>
         )}
 
         <div className="flex flex-col gap-2">
@@ -494,6 +598,7 @@ export function CarouselEditor({
               page={{ index, total: slides.length }}
               look={look}
               seed={seed}
+              art={previewArt}
               qaOverlap
               overlay={(scale, frame) => (
                 <LayerEditor
@@ -512,7 +617,10 @@ export function CarouselEditor({
         <LayerToolbar
           layout={slide.layout}
           selected={layer}
-          hasHero={theme.preset === "soft" && (slide.type === "cover" || slide.type === "cta")}
+          hasHero={
+            (slide.type === "cover" || slide.type === "cta") &&
+            (theme.preset === "soft" || Boolean(previewArt?.[slide.type]))
+          }
           onChange={setLayout}
         />
         <div className="flex flex-col gap-2">

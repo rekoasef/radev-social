@@ -48,6 +48,7 @@ export function SlidePreview({
   datasets = exampleDatasets,
   look,
   seed = "preview",
+  art,
 }: {
   theme: BrandTheme;
   brandName: string;
@@ -75,6 +76,8 @@ export function SlidePreview({
   look?: LookId;
   /** Seed of the deterministic variation: the post id when there is one. */
   seed?: string;
+  /** URLs of the post's generated images (ADR 0016). */
+  art?: { cover?: string; cta?: string };
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(420);
@@ -105,7 +108,7 @@ export function SlidePreview({
     return () => {
       active = false;
     };
-  }, [theme, type, extreme, width, content, qaOverlap, datasets, look]);
+  }, [theme, type, extreme, width, content, qaOverlap, datasets, look, art]);
 
   const scale = width / FORMAT.width;
   const slide = content ?? (extreme ? extremeSlides : exampleSlidesByPreset[theme.preset])[type];
@@ -132,6 +135,7 @@ export function SlidePreview({
             assets={assets}
             datasets={datasets}
             look={look}
+            art={art}
           />
         </div>
         {overlay?.(

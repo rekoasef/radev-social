@@ -1,6 +1,12 @@
 import type { z } from "zod";
 import { parseTheme } from "../presets/registry";
-import { LOOK_ART, LOOK_GUIDE, type LookId, lookTakesArt } from "../presets/studio/look-ids";
+import {
+  isLookId as isLookIdLocal,
+  LOOK_ART,
+  LOOK_GUIDE,
+  type LookId,
+  lookTakesArt,
+} from "../presets/studio/look-ids";
 import { enabledLooks } from "../presets/studio/tokens";
 import { describeQaIssue, QA_KINDS, type QaIssue } from "../qa-issues";
 import { carouselSchema } from "./carousel";
@@ -102,6 +108,23 @@ el fondo los agrega el código: no los describas.
 - Nunca personas, caras ni manos, ni cosas con texto (carteles, pantallas, libros, cuadernos, gráficos): el modelo inventa letras.
 - Con los demás looks no escribas \`art\`.
 `;
+}
+
+/**
+ * Whether a version gets generated images (ADR 0016): a `studio` brand, a look that takes them
+ * and the subjects written. The web and the worker queue art.generate for it before the render.
+ */
+export function versionTakesArt(
+  stylePreset: string,
+  content: { look?: string; art?: unknown },
+): boolean {
+  return (
+    stylePreset === "studio" &&
+    Boolean(content.art) &&
+    typeof content.look === "string" &&
+    isLookIdLocal(content.look) &&
+    lookTakesArt(content.look)
+  );
 }
 
 /** The look section of the guide: the looks the post may take, with what each one is for. */

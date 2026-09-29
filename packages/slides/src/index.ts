@@ -34,6 +34,7 @@ export {
   aiCarouselSchema,
   aiSlideGuide,
   DATA_SLIDES,
+  versionTakesArt,
 } from "./content/generation";
 export { default as ICON_NAMES } from "./content/icon-names.json";
 export {
