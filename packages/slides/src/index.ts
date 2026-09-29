@@ -33,6 +33,7 @@ export {
   type AiCarouselSchema,
   aiCarouselSchema,
   aiSlideGuide,
+  brandMakesArt,
   DATA_SLIDES,
   versionTakesArt,
 } from "./content/generation";

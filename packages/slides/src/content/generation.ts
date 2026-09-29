@@ -85,6 +85,17 @@ export {
   lookTakesArt,
 } from "../presets/studio/look-ids";
 
+/**
+ * Whether a studio brand gets generated images: not when it always uses its own element
+ * (`heroAlways` with an element set, ADR 0016).
+ */
+export function brandMakesArt(stylePreset: string, themeTokens: unknown): boolean {
+  const parsed = parseTheme(stylePreset, themeTokens);
+  if (!parsed.ok || parsed.theme.preset !== "studio") return false;
+  const { heroAlways, heroAsset } = parsed.theme.tokens;
+  return !(heroAlways && heroAsset);
+}
+
 /** The looks a brand has on (`studio` preset); empty for the other presets or broken tokens. */
 export function brandLooks(stylePreset: string, themeTokens: unknown): LookId[] {
   const parsed = parseTheme(stylePreset, themeTokens);
@@ -117,9 +128,11 @@ el fondo los agrega el código: no los describas.
 export function versionTakesArt(
   stylePreset: string,
   content: { look?: string; art?: unknown },
+  themeTokens?: unknown,
 ): boolean {
   return (
     stylePreset === "studio" &&
+    (themeTokens === undefined || brandMakesArt(stylePreset, themeTokens)) &&
     Boolean(content.art) &&
     typeof content.look === "string" &&
     isLookIdLocal(content.look) &&
@@ -128,7 +141,7 @@ export function versionTakesArt(
 }
 
 /** The look section of the guide: the looks the post may take, with what each one is for. */
-function lookGuide(looks: readonly LookId[]): string {
+function lookGuide(looks: readonly LookId[], art: boolean): string {
   return `
 ## Look
 
@@ -137,7 +150,7 @@ al tono del post. Cambia todo (colores, tipografía, composición), así que pen
 dirección de arte. Los looks de los últimos posts no están en la lista a propósito.
 
 ${looks.map((id) => `- \`${id}\`: ${LOOK_GUIDE[id]}`).join("\n")}
-${artGuide(looks)}`;
+${art ? artGuide(looks) : ""}`;
 }
 
 /**
@@ -145,7 +158,12 @@ ${artGuide(looks)}`;
  * (`data.json`) and may use the data slides. With `looks` (a `studio` brand), it also picks the
  * post's look among them.
  */
-export function aiSlideGuide(options: { data: boolean; looks?: readonly LookId[] }): string {
+export function aiSlideGuide(options: {
+  data: boolean;
+  looks?: readonly LookId[];
+  /** Whether the post gets generated images (brandMakesArt); true by default. */
+  art?: boolean;
+}): string {
   const dataSlides = DATA_SLIDES.map((type) => `\`${type}\``).join(" ni ");
   const dataPart = options.data
     ? `- \`bigNumber\`: una cifra enorme de \`data.json\` con su contexto.
@@ -154,7 +172,8 @@ export function aiSlideGuide(options: { data: boolean; looks?: readonly LookId[]
 ${DATA_GUIDE}`
     : `
 No uses ${dataSlides}: sus cifras tienen que venir de datos reales que esta marca no tiene.`;
-  const looks = options.looks && options.looks.length > 0 ? lookGuide(options.looks) : "";
+  const looks =
+    options.looks && options.looks.length > 0 ? lookGuide(options.looks, options.art ?? true) : "";
   return AI_SLIDE_GUIDE_BASE.replace("{{data}}", dataPart) + looks;
 }
 
@@ -183,6 +202,8 @@ export function aiCarouselSchema(
     data?: { datasets: readonly string[]; isFigure: (value: string) => boolean };
     /** A `studio` brand: the post must take one of these looks (lookChoices). */
     looks?: readonly LookId[];
+    /** Whether the images are asked for (brandMakesArt); true by default. */
+    art?: boolean;
   } = {},
 ) {
   const looks = options.looks && options.looks.length > 0 ? options.looks : undefined;
@@ -224,7 +245,13 @@ export function aiCarouselSchema(
         message: `Elegí el \`look\` entre estos (ver slides.md): ${looks.join(", ")}.`,
       });
     }
-    if (looks && carousel.look && lookTakesArt(carousel.look) && !carousel.art) {
+    if (
+      looks &&
+      options.art !== false &&
+      carousel.look &&
+      lookTakesArt(carousel.look) &&
+      !carousel.art
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["art"],

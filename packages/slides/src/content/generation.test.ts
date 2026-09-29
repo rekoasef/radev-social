@@ -4,6 +4,7 @@ import {
   aiCarouselSchema,
   aiSlideGuide,
   brandLooks,
+  brandMakesArt,
   DATA_SLIDES,
   describeRenderProblems,
   lookChoices,
@@ -204,6 +205,31 @@ describe("lookChoices", () => {
 
   it("never leaves the post without looks", () => {
     expect(lookChoices(["chat"], ["chat", "chat"])).toEqual(["chat"]);
+  });
+});
+
+describe("brandMakesArt", () => {
+  const heroAsset = "0b9f3c2e-4a1d-4c7b-9e2f-1a2b3c4d5e6f";
+
+  it("is off for a brand that always uses its own element, and for other presets", () => {
+    expect(brandMakesArt("studio", {})).toBe(true);
+    expect(brandMakesArt("studio", { heroAsset, heroAlways: false })).toBe(true);
+    expect(brandMakesArt("studio", { heroAsset, heroAlways: true })).toBe(false);
+    // Asking for it with no element set changes nothing.
+    expect(brandMakesArt("studio", { heroAlways: true })).toBe(true);
+    expect(brandMakesArt("soft", {})).toBe(false);
+  });
+
+  it("drops the image section of the guide and the requirement", () => {
+    expect(aiSlideGuide({ data: false, looks: ["atmosfera"] })).toContain("## Imagen");
+    expect(aiSlideGuide({ data: false, looks: ["atmosfera"], art: false })).not.toContain(
+      "## Imagen",
+    );
+    const schema = aiCarouselSchema([exampleCarousel.pillarKey], {
+      looks: ["atmosfera"],
+      art: false,
+    });
+    expect(schema.safeParse({ ...exampleCarousel, look: "atmosfera" }).success).toBe(true);
   });
 });
 

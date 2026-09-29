@@ -5,6 +5,7 @@ import { createLogger } from "../logger";
 import { generateArt } from "./art-generate";
 
 const db = {
+  tokens: { colors: { accent: "#FF7A00" } } as Record<string, unknown>,
   version: undefined as Record<string, unknown> | undefined,
   saved: undefined as PostArt | undefined,
   files: new Map<string, Buffer>(),
@@ -19,7 +20,7 @@ vi.mock("@radev/db", () => ({
     id: "brand-1",
     slug: "radev",
     stylePreset: "studio",
-    themeTokens: { colors: { accent: "#FF7A00" } },
+    themeTokens: db.tokens,
   }),
   listPostArtImages: async () => db.previous,
   countArtImagesSince: async () => db.today,
@@ -88,6 +89,7 @@ function deps(images: ImageProvider | null) {
 }
 
 beforeEach(() => {
+  db.tokens = { colors: { accent: "#FF7A00" } };
   db.version = pending();
   db.saved = undefined;
   db.files.clear();
@@ -178,6 +180,20 @@ describe("art.generate", () => {
     await generateArt(deps(images).deps, { versionId: "v-1" });
     expect(prompts).toHaveLength(0);
     expect(db.saved?.note).toContain("tope diario");
+  });
+
+  it("makes none for a brand that always uses its own element", async () => {
+    db.tokens = {
+      colors: { accent: "#6E5CE8" },
+      heroAsset: "0b9f3c2e-4a1d-4c7b-9e2f-1a2b3c4d5e6f",
+      heroAlways: true,
+    };
+    const { images, prompts } = provider([]);
+    const { deps: d, queueRender } = deps(images);
+    await generateArt(d, { versionId: "v-1" });
+    expect(prompts).toHaveLength(0);
+    expect(db.saved?.status).toBe("skipped");
+    expect(queueRender).toHaveBeenCalled();
   });
 
   it("skips a look that takes no images", async () => {

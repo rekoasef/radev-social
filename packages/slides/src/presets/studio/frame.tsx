@@ -31,7 +31,11 @@ export function lookContext(props: StudioSlideProps): LookContext {
   const kit = LOOKS[props.look];
   const spec = LOOK_ART[props.look];
   const type = props.slide.type;
-  const url = spec && (type === "cover" || type === "cta") ? props.art?.[type] : undefined;
+  const slot = type === "cover" || type === "cta" ? type : undefined;
+  // The post's generated image; the brand's element when there is none, or always if asked.
+  const hero = props.tokens.heroAsset ? props.assets?.[props.tokens.heroAsset] : undefined;
+  const generated = spec && slot && !props.tokens.heroAlways ? props.art?.[slot] : undefined;
+  const url = generated ?? (spec && slot ? hero?.url : undefined);
   return {
     look: props.look,
     kit,
@@ -45,7 +49,7 @@ export function lookContext(props: StudioSlideProps): LookContext {
     ...(spec &&
       url &&
       (type === "cover" || type === "cta") && {
-        art: { url, background: spec[type], monochrome: spec.monochrome },
+        art: { url, background: spec[type], monochrome: spec.monochrome, brand: !generated },
       }),
   };
 }
@@ -57,9 +61,11 @@ export function lookContext(props: StudioSlideProps): LookContext {
  */
 function ArtLayer({ ctx, slide }: { ctx: LookContext; slide: Slide }) {
   if (!ctx.art) return null;
-  // The object fills about half of the generated square: the image runs big and fades out.
-  const size = ctx.type === "cover" ? 760 : 520;
-  const top = ctx.type === "cover" ? 20 : 60;
+  // A generated object fills about half of its square: the image runs big and fades out. The
+  // brand's element is a cut-out already: drawn as it is, at the size of soft's hero.
+  const brand = ctx.art.brand === true;
+  const size = brand ? (ctx.type === "cover" ? 420 : 280) : ctx.type === "cover" ? 760 : 520;
+  const top = brand ? (ctx.type === "cover" ? 190 : 170) : ctx.type === "cover" ? 20 : 60;
   const light = ctx.art.background === "light";
   return (
     <Layer
@@ -80,17 +86,18 @@ function ArtLayer({ ctx, slide }: { ctx: LookContext; slide: Slide }) {
           display: "block",
           width: size,
           height: size,
-          mixBlendMode: light ? "multiply" : "screen",
+          objectFit: "contain",
+          mixBlendMode: brand ? undefined : light ? "multiply" : "screen",
           // The model's "white" is a light gray with haze: lifted to white so it disappears.
           filter:
             [
               ctx.art.monochrome ? "grayscale(1) contrast(1.1)" : "",
-              light ? "brightness(1.1) contrast(1.08)" : "",
+              light && !brand ? "brightness(1.1) contrast(1.08)" : "",
             ]
               .filter(Boolean)
               .join(" ") || undefined,
-          WebkitMaskImage: "radial-gradient(circle, #000 34%, transparent 58%)",
-          maskImage: "radial-gradient(circle, #000 34%, transparent 58%)",
+          WebkitMaskImage: brand ? undefined : "radial-gradient(circle, #000 34%, transparent 58%)",
+          maskImage: brand ? undefined : "radial-gradient(circle, #000 34%, transparent 58%)",
         }}
       />
     </Layer>

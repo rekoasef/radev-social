@@ -18,7 +18,7 @@ import {
   setVersionArt,
   writeMediaFile,
 } from "@radev/db";
-import { isLookId, LOOK_ART, parseTheme } from "@radev/slides/generation";
+import { brandMakesArt, isLookId, LOOK_ART, parseTheme } from "@radev/slides/generation";
 import type { Logger } from "../logger";
 
 // art.generate (ADR 0016): the images of a version's cover and close, between the writing and
@@ -73,6 +73,13 @@ export async function generateArt(
     const theme = brand ? parseTheme(brand.stylePreset, brand.themeTokens) : undefined;
     if (!brand || !spec || !content.art || !theme?.ok || theme.theme.preset !== "studio") {
       return finish({ status: "skipped", images: {}, note: "Este post no lleva imagen." });
+    }
+    if (!brandMakesArt(brand.stylePreset, brand.themeTokens)) {
+      return finish({
+        status: "skipped",
+        images: {},
+        note: "La marca usa siempre su elemento de marca: sin imágenes generadas.",
+      });
     }
     if (!deps.images) {
       return finish({

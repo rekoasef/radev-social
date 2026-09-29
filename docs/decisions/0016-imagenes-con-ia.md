@@ -22,3 +22,6 @@
 - Columna `post_versions.art` (migración 0016): estado y rutas de las imágenes. Las imágenes viven en `media/`, junto a los PNG de la versión, y viajan con los backups como el resto de `media/`.
 - Un post nuevo con imagen tarda unos 10 segundos más antes del render.
 - La calidad depende de un modelo externo: si Cloudflare cambia el modelo o el cupo, los posts siguen saliendo sin imagen, y este ADR se revisa.
+
+**Ampliación (2026-09-29): elemento de marca.** Una marca puede cargar su propio elemento gráfico en `studio` (`heroAsset`; para Lumus, la orbe). Aparece en portada y cierre de los looks con imagen cuando el post no tiene imagen generada, en lugar de la decoración del look. Con `heroAlways`, aparece siempre, la IA no describe imágenes y no se generan: la marca conserva su firma visual sin gastar cupo.
+

@@ -44,6 +44,7 @@ import {
   aiCarouselSchema,
   aiSlideGuide,
   brandLooks,
+  brandMakesArt,
   describeRenderProblems,
   isLookId,
   type LookId,
@@ -102,8 +103,10 @@ export function buildTaskFiles(input: {
   data?: BrandData | null;
   /** The looks the post may take (`studio` brands). */
   looks?: readonly LookId[];
+  /** Whether the post gets generated images (the AI describes them). */
+  art?: boolean;
 }): Record<string, string> {
-  const { request, recent, problems, revision, series, data, looks } = input;
+  const { request, recent, problems, revision, series, data, looks, art } = input;
   const task = {
     idea: request.idea,
     ...(series && {
@@ -147,7 +150,7 @@ export function buildTaskFiles(input: {
   };
   return {
     "task.json": `${JSON.stringify(task, null, 2)}\n`,
-    "slides.md": aiSlideGuide({ data: Boolean(data), looks }),
+    "slides.md": aiSlideGuide({ data: Boolean(data), looks, art }),
     "recent-posts.json": `${JSON.stringify(recent, null, 2)}\n`,
     ...(data && { "data.json": `${JSON.stringify(data, null, 2)}\n` }),
     ...(revision && { "previous.json": `${JSON.stringify(revision.previous, null, 2)}\n` }),
@@ -180,8 +183,13 @@ export function stampDataSources(
  * The images of a new version (ADR 0016): pending when its look takes them and the AI described
  * them; skipped, saying why, when there is no image provider. Null when the look takes none.
  */
-export function artPlan(content: AiCarousel, canGenerate: boolean): PostArt | null {
-  if (!content.art || !lookTakesArt(content.look)) return null;
+export function artPlan(
+  content: AiCarousel,
+  canGenerate: boolean,
+  makesArt = true,
+): PostArt | null {
+  // A brand that always uses its own element gets no generated images, whatever the AI wrote.
+  if (!makesArt || !content.art || !lookTakesArt(content.look)) return null;
   return canGenerate
     ? { status: "pending", images: {} }
     : {
@@ -341,6 +349,7 @@ export async function generateCarousel(
   // A studio brand: the AI picks the look among the brand's, minus the last posts' (a revision
   // keeps the one it has).
   const enabled = brandLooks(brand.stylePreset, brand.themeTokens);
+  const makesArt = brandMakesArt(brand.stylePreset, brand.themeTokens);
   const previousLook = (current?.content as { look?: unknown } | undefined)?.look;
   const looks =
     enabled.length > 0
@@ -377,6 +386,7 @@ export async function generateCarousel(
           }
         : undefined,
       looks,
+      art: makesArt,
     },
   );
   const prompt = [
@@ -395,7 +405,16 @@ export async function generateCarousel(
       prompt,
       files: {
         "CLAUDE.md": claudeMd,
-        ...buildTaskFiles({ request, recent, problems, revision, series, data, looks }),
+        ...buildTaskFiles({
+          request,
+          recent,
+          problems,
+          revision,
+          series,
+          data,
+          looks,
+          art: makesArt,
+        }),
       },
       schema,
       maxTurns: MAX_TURNS,
@@ -441,7 +460,7 @@ export async function generateCarousel(
               figures: data.figures,
             })
           : routed.result.data;
-        const art = artPlan(content, Boolean(deps.queueArt));
+        const art = artPlan(content, Boolean(deps.queueArt), makesArt);
         const saved = await addGeneratedVersion(db, {
           postId: post.id,
           content,

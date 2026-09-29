@@ -9,6 +9,7 @@
 // --set examples|extremes: every slide type instead of a carousel (extremes: every text at its
 //   limit, the worst case the render QA has to pass).
 // --tokens: studio tokens (a brand's palette); by default the neutral defaults.
+// --hero: an image (the brand's element, e.g. Lumus' orb) for the looks that take one.
 // --art-dir: a folder with cover-dark.jpg, cover-light.jpg, cta-dark.jpg and cta-light.jpg: the
 //   generated images, for the looks that take them (each gets the one of its background).
 // Prints the QA problems of each slide and exits with 1 when there are any.
@@ -23,6 +24,7 @@ import { exampleCarousel, exampleDatasets, exampleSlides } from "../src/content/
 import { extremeSlides } from "../src/content/extremes";
 import { SLIDE_TYPES, type Slide } from "../src/content/slides";
 import { FONT_FAMILIES, fonts } from "../src/fonts/registry";
+import type { SlideAssets } from "../src/frame/types";
 import { parseTheme } from "../src/presets/registry";
 import { isLookId, LOOK_ART, LOOK_IDS, type LookId } from "../src/presets/studio/look-ids";
 import { checkRender, fitSlide } from "../src/qa";
@@ -47,7 +49,15 @@ const slides: Slide[] =
     : set === "examples"
       ? SLIDE_TYPES.map((type) => exampleSlides[type])
       : carousel.slides;
-const tokens = option("tokens") ? JSON.parse(readFileSync(option("tokens") as string, "utf8")) : {};
+const heroFile = option("hero");
+const HERO_ID = "00000000-0000-4000-8000-000000000001";
+const assets: SlideAssets = heroFile
+  ? { [HERO_ID]: { url: `file://${resolve(heroFile)}`, width: null, height: null } }
+  : {};
+const baseTokens = option("tokens")
+  ? JSON.parse(readFileSync(option("tokens") as string, "utf8"))
+  : {};
+const tokens = heroFile ? { ...baseTokens, heroAsset: HERO_ID } : baseTokens;
 const parsed = parseTheme("studio", tokens);
 if (!parsed.ok) throw new Error(parsed.issues.join("\n"));
 const looks: LookId[] = (option("looks")?.split(",") ?? [...LOOK_IDS]).filter(isLookId);
@@ -89,6 +99,7 @@ function page(look: LookId): string {
             datasets={exampleDatasets}
             look={look}
             art={artOf(look)}
+            assets={assets}
           />
         </div>,
       ),

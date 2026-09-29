@@ -103,6 +103,36 @@ describe("generated images", () => {
     expect(draw("monocromo", "cover", 0)).toContain("grayscale(1)");
   });
 
+  it("fall back to the brand's element, or use it always when the brand asks", () => {
+    const heroId = "0b9f3c2e-4a1d-4c7b-9e2f-1a2b3c4d5e6f";
+    const assets = { [heroId]: { url: "/media/lumus/brand/orb.png", width: 512, height: 512 } };
+    const withHero = (always: boolean) => {
+      const parsedHero = parseTheme("studio", { heroAsset: heroId, heroAlways: always });
+      if (!parsedHero.ok) throw new Error(parsedHero.issues.join("\n"));
+      return parsedHero.theme;
+    };
+    const draw = (always: boolean, postArt?: typeof art) =>
+      renderToStaticMarkup(
+        <RenderSlide
+          theme={withHero(always)}
+          slide={exampleSlides.cover}
+          page={{ index: 0, total: 7 }}
+          seed="post-1"
+          brandName="Lumus"
+          look="atmosfera"
+          assets={assets}
+          art={postArt}
+        />,
+      );
+    // No generated image: the orb, drawn as it is (no blend).
+    expect(draw(false)).toContain('src="/media/lumus/brand/orb.png"');
+    expect(draw(false)).not.toContain("mix-blend-mode:screen");
+    // A generated one wins, unless the brand always uses its element.
+    expect(draw(false, art)).toContain("/art/cover.jpg");
+    expect(draw(true, art)).toContain("orb.png");
+    expect(draw(true, art)).not.toContain("/art/cover.jpg");
+  });
+
   it("stay out of the other slides and of the looks that take none", () => {
     expect(draw("atmosfera", "steps", 2)).not.toContain("/art/");
     expect(draw("recibo", "cover", 0)).not.toContain("/art/");

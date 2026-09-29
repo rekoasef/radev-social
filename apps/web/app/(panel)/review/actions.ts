@@ -78,7 +78,7 @@ export async function quickEditAction(_: QuickEditState, form: FormData): Promis
     origin: "manual",
     // Only texts changed: its charts keep the numbers they had, its images are reused.
     datasets: version.datasets,
-    art: brand ? artFor(brand.stylePreset, carousel.data) : null,
+    art: brand ? artFor(brand, carousel.data) : null,
   });
   if (!result.ok) return { status: "error", message: result.reason };
   await applyPostEffects(post.id, result.effects);

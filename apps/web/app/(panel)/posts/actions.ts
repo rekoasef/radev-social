@@ -118,7 +118,7 @@ export async function saveCarouselAction(
       content: carousel.data,
       origin: "manual",
       datasets: datasets.datasets,
-      art: artFor(brand.stylePreset, carousel.data),
+      art: artFor(brand, carousel.data),
     });
     if (!result.ok) return { status: "error", message: result.reason };
     // A scheduled post loses its publish job (it keeps its time: approving schedules it again).
@@ -131,7 +131,7 @@ export async function saveCarouselAction(
       content: carousel.data,
       origin: "manual",
       datasets: datasets.datasets,
-      art: artFor(brand.stylePreset, carousel.data),
+      art: artFor(brand, carousel.data),
     });
     await queueVersion(created.version);
     publicCode = created.post.publicCode;
@@ -167,7 +167,7 @@ export async function restoreVersionAction(form: FormData): Promise<void> {
     origin: "manual",
     // Its charts come back with the numbers they had; its images, too (same prompts: reused).
     datasets: version.datasets,
-    art: brand ? artFor(brand.stylePreset, content.data) : null,
+    art: brand ? artFor(brand, content.data) : null,
   });
   if (!result.ok) throw new Error(result.reason);
   await applyPostEffects(post.id, result.effects);

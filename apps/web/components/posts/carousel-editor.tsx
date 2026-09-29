@@ -145,7 +145,10 @@ export function CarouselEditor({
   // Images (ADR 0016): the current ones are shown while their description and the look stay
   // the same; otherwise (or with "new images") they are made again when saving.
   const [freshArt, setFreshArt] = useState(false);
-  const takesArt = lookTakesArt(look);
+  // A brand that always uses its own element (Lumus' orb) gets no generated images.
+  const brandElementAlways =
+    theme.preset === "studio" && theme.tokens.heroAlways && Boolean(theme.tokens.heroAsset);
+  const takesArt = lookTakesArt(look) && !brandElementAlways;
   const artUnchanged =
     look === (initial.look ?? look) && JSON.stringify(carousel.art) === JSON.stringify(initial.art);
   const previewArt = takesArt && artUnchanged && !freshArt ? art?.urls : undefined;

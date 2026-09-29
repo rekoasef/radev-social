@@ -281,6 +281,7 @@ ADR 0015. Una paleta de marca, 16 direcciones de arte en código, una por post.
 | `fonts.display` / `body` / `mono` / `serif` | Títulos, texto, datos y etiquetas, títulos serif (revista) |
 | `wordmark` (`text`, `dot`) · `logoAsset` · `handle.site` | Firma (el logo reemplaza al wordmark) |
 | `looks.<id>` | Qué looks usa la marca (al menos uno) |
+| `heroAsset` · `heroAlways` | Elemento de marca (la orbe de Lumus): en portada y cierre de los looks con imagen cuando el post no tiene imagen generada; con `heroAlways`, siempre y sin imágenes generadas |
 
 Valores de RAdev (sugeridos, se cargan en el panel): ink `#0B0B0B`, paper `#EFECE6`, accent `#FF7A00`, glow `#7C3AED`.
 
@@ -329,7 +330,9 @@ La descripción que lee la IA es `LOOK_GUIDE` (`look-ids.ts`).
 - Con imagen, la portada pone el objeto arriba y el título abajo (tamaño `title`); el cierre baja su contenido (`low`) y su título a `title`. La imagen reemplaza la decoración propia del look en esa slide.
 - Se dibuja a 760 px (portada) o 520 px (cierre), centrada, con mezcla `screen` (oscuro) o `multiply` con un leve aumento de brillo (claro, para que el "blanco" del modelo desaparezca), máscara radial que desvanece los bordes y escala de grises en monocromo. Es la capa "elemento gráfico": se mueve y escala en el editor.
 - Reglas del objeto: uno solo, sin personas, caras ni manos, sin nada con texto (carteles, pantallas, libros, gráficos). Lo controla el esquema.
-- Previsualizar: `pnpm --filter @radev/slides preview <dir> --art-dir <carpeta>` con `cover-dark.jpg`, `cover-light.jpg`, `cta-dark.jpg` y `cta-light.jpg`.
+- Prioridad en portada y cierre: imagen generada del post → elemento de marca (`heroAsset`, dibujado tal cual: 420 px en portada, 280 en cierre, sin mezcla) → decoración propia del look. Con `heroAlways`, el elemento de marca siempre y la IA no describe imágenes (`brandMakesArt`).
+- Valores de Lumus en `studio` (2026-09-29): ink `#0B0B12`, paper `#F0EDF7`, accent `#6E5CE8` (el lavanda `#BDB4FF` daba 1,6:1 sobre el claro; `#6E5CE8` da 4,2:1 sobre claro y 4,1:1 sobre oscuro), glow `#FFB86E`, Hanken Grotesk 600 / Geist Sans / Geist Mono; looks sin bloques, brutalista, neón, terminal ni bauhaus; la orbe como elemento de marca.
+- Previsualizar: `pnpm --filter @radev/slides preview <dir> --art-dir <carpeta>` (y `--hero <png>` para el elemento de marca) con `cover-dark.jpg`, `cover-light.jpg`, `cta-dark.jpg` y `cta-light.jpg`.
 
 ### Sumar un look
 

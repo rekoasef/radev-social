@@ -64,10 +64,12 @@ export async function queueRender(versionId: string): Promise<void> {
  * worker generates them (or reuses an earlier version's) before the render. Null otherwise.
  */
 export function artFor(
-  stylePreset: string,
+  brand: { stylePreset: string; themeTokens: unknown },
   content: { look?: string; art?: unknown },
 ): PostArt | null {
-  return versionTakesArt(stylePreset, content) ? { status: "pending", images: {} } : null;
+  return versionTakesArt(brand.stylePreset, content, brand.themeTokens)
+    ? { status: "pending", images: {} }
+    : null;
 }
 
 /**

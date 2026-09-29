@@ -55,6 +55,13 @@ export const studioTokensSchema = z.object({
     .meta({ title: "Looks" }),
   /** Replaces the wordmark when set. */
   logoAsset: asset("Logo", "logo"),
+  /**
+   * The brand's own graphic element (Lumus' orb): on the cover and the close of the looks that
+   * take an image, when the post has no generated one (ADR 0016).
+   */
+  heroAsset: asset("Elemento de marca", "hero"),
+  /** The element always, and no generated images for the brand. */
+  heroAlways: toggle("Usar siempre el elemento de marca (sin imágenes generadas)", false),
 });
 
 export type StudioTokens = z.infer<typeof studioTokensSchema>;
