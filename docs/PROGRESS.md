@@ -27,7 +27,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
 - **Mejoras de contenido (2026-09-29, pedido del operador, en paralelo con la Fase 5):** (1) ✅ generación liviana: ~128.000 → ~1.000 tokens de entrada de base por ejecución (ver abajo). (2) Próximo: rediseño para que cada carrusel sea distinto (composiciones, tipos nuevos, looks por post). El operador eligió: tokens primero, **se puede salir del fondo oscuro** (claro, acento), y que Claude proponga direcciones visuales con capturas (no tiene referencias). Quiere que "cada imagen sea diferente, como ChatGPT". Diagnóstico sobre los carruseles de RAdev en producción: todas las slides tienen el mismo esqueleto (título arriba, diagrama chico, vacío, pie), el contenido ocupa ~30 % de la slide, la secuencia de tipos se repite y sobra decoración.
-- **Última actualización:** 2026-09-29, imágenes con IA integradas (ADR 0016); falta el `.env` del servidor y el deploy
+- **Looks e imágenes en producción (2026-09-29):** deploy hecho (`4131aa2`), claves de Cloudflare cargadas en el servidor. RAdev y Lumus pasados a `studio` por el operador (Lumus con acento `#6E5CE8` y la orbe como elemento de marca). RA-0006 re-hecho con un look desde el editor. Próximo: mirar los primeros posts que genere la IA con looks e imágenes (look elegido, calidad de las imágenes, tiempos) y ajustar; después seguir con la Fase 5 (T2, registro de la app de TikTok).
+- **Última actualización:** 2026-09-29, looks e imágenes en producción; RAdev y Lumus en `studio`
 
 ## Mejora — looks (preset `studio`, 2026-09-29)
 
@@ -38,9 +39,9 @@ Pedido del operador: que cada post se vea distinto ("como ChatGPT, que hace imá
 | 1 | Motor `studio` + 16 looks + conexión a la web (render, vista previa, galería con selector de look, editor con selector de look) | ✅ (sin probar con login: falta Docker en WSL) |
 | 2 | La IA elige el look (guía de los 16 en el prompt; no repite los de los últimos posts) | ✅ |
 | 3 | ADR de looks + `DESIGN-SYSTEM.md` §10 | ✅ ADR 0015 |
-| 4 | Pasar RAdev a `studio` desde el panel (4 colores) y probar con login | operador |
+| 4 | Pasar RAdev a `studio` desde el panel (4 colores) y probar con login | ✅ (RAdev y Lumus) |
 | 5 | Imágenes con IA (Cloudflare Workers AI, FLUX): prueba de calidad ✅ (esfera, candado y cerradura bien; el escudo salió con fondo blanco) | ✅ prueba |
-| 6 | Integración de imágenes (aprobada 2026-09-29: portada y cierre; looks atmósfera, neón, gradiente, revista, editorial y monocromo). T1 proveedor ✅ · T2 esquema ✅ · T3 job `art.generate` ✅ · T4 looks usan la imagen ✅ · T5 editor ✅ · T6 ADR 0016 ✅ · falta: credenciales en el `.env` del servidor y deploy (operador, guiado) | ✅ código |
+| 6 | Integración de imágenes (aprobada 2026-09-29: portada y cierre; looks atmósfera, neón, gradiente, revista, editorial y monocromo). T1 proveedor ✅ · T2 esquema ✅ · T3 job `art.generate` ✅ · T4 looks usan la imagen ✅ · T5 editor ✅ · T6 ADR 0016 ✅ · en producción | ✅ |
 
 Cómo está hecho (paso 1):
 - `packages/slides/src/presets/studio/`: `tokens.ts` (paleta de 4 colores ink/paper/accent/glow, tipografías display/body/mono/serif, looks activables), `look-ids.ts` (catálogo, nombres y guía para la IA), `kit.tsx` (contrato de un look y piezas comunes), `templates.tsx` (una plantilla por tipo, dibujada con las piezas del look), `looks/*.tsx` (un archivo por look), `frame.tsx` (`StudioSlide`).
