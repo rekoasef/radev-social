@@ -7,7 +7,7 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0001 | Todo en una VPS con Docker Compose | reemplazada parcialmente por 0007 |
 | 0002 | Postgres como base y como cola (pg-boss) | aceptada |
 | 0003 | Better Auth en lugar de NextAuth | aceptada |
-| 0004 | Slides con plantillas en código, no con generación de imágenes | aceptada (ampliada por 0008, 0013 y 0015) |
+| 0004 | Slides con plantillas en código, no con generación de imágenes | aceptada (ampliada por 0008, 0013, 0015 y 0016) |
 | 0005 | Generación con Claude Code headless, aislada del repo | ampliada por 0009 (modo liviano: 2026-09-29) |
 | 0006 | Multi-marca desde el día uno | ampliada por 0008 |
 | 0007 | Infraestructura de costo cero | aceptada |
@@ -18,4 +18,5 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0012 | Archivos de media en una carpeta, servidos por la web | aceptada |
 | 0013 | Ajustes a mano por arrastre, dentro de las plantillas | aceptada |
 | 0014 | Cuenta de Oracle en Pay As You Go | aceptada |
-| 0015 | Looks por post (preset `studio`) | aceptada |
+| 0015 | Looks por post (preset `studio`) | aceptada (ampliada por 0016) |
+| 0016 | Imágenes generadas con IA en portada y cierre | aceptada |

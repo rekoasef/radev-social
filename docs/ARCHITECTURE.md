@@ -170,7 +170,8 @@ Todos idempotentes (clave `singletonKey` derivada del objetivo), con reintentos 
 | `ideas.generate` | manual / `slots.fill` (banco sin ideas para un pilar) | propone ideas desde pilares, series e historial (modelo gratuito por defecto) |
 | `ideas.research` | cron semanal por marca | investiga temas del nicho con búsqueda web (Claude) |
 | `carousel.generate` | manual, `slots.fill`, rechazo | idea → JSON validado → nueva versión |
-| `carousel.render` | tras generar o editar | Playwright renderiza cada slide en 4:5, QA, guarda assets |
+| `art.generate` | tras generar o editar una versión cuyo look lleva imagen (clave `art:<versión>`) | genera las imágenes de portada y cierre con Cloudflare (ADR 0016), controla el fondo, las guarda y encola el render; nunca falla: sin imagen, el post sale con el diseño del look |
+| `carousel.render` | tras generar o editar (o tras `art.generate`) | Playwright renderiza cada slide en 4:5, QA, guarda assets |
 | `review.notify` | post entra a `in_review` (clave única, 5 min después o al terminar la ventana de generación) | un solo aviso por Telegram con los posts nuevos para revisar |
 | `notify.send` | cualquier aviso guardado | envía una fila de `notifications` a Telegram (6 reintentos); una enviada no se reenvía |
 | `post.publish` | `startAfter = scheduled_at`, clave `publish:<post>` | publica vía adaptador si el post sigue `scheduled` para esa hora (si no, se saltea) |
@@ -290,6 +291,13 @@ Desde el **banco de ideas** (`/ideas`, T9), "Generar" abre Nuevo post con `?idea
 - **QA del render**: al terminar un render, `renderOutcome` (`packages/core/src/posts/regeneration.ts`) decide. Sin problemas → `renderDone`. Error de página o versión del editor con problemas → `renderFailed`. Versión de IA con problemas de QA y menos de 2 regeneraciones → evento `qaRegenerate` (rendering → generating), `qa_regenerations + 1` y `carousel.generate`. Con 2 → `renderDone`: queda `in_review` con los problemas marcados.
 - **Qué recibe la IA**: si el post ya tiene versión, el workspace suma `previous.json` (la versión actual) y `task.json` trae `revision` con el feedback del último rechazo (mientras exista, vale para todas las regeneraciones del post) y los problemas del render de esa versión, descriptos por slide (`describeRenderProblems`). `recent-posts.json` excluye al propio post.
 
+### Imágenes (ADR 0016)
+
+- **Proveedor**: Cloudflare Workers AI, `@cf/black-forest-labs/flux-1-schnell` (`packages/ai/src/images/cloudflare.ts`), 8 pasos, 1024×1024, **sin semilla** (el modelo la rechaza). Gratis dentro del cupo diario (10.000 neuronas, ~96 por imagen). Tope propio: `ART_DAILY_CAP` = 60 por día.
+- **Prompt**: la IA escribe en `art.cover` y `art.cta` un objeto en inglés (sin personas ni cosas con texto: lo controla Zod). `artPrompt` agrega siempre las reglas (un objeto, sin texto ni personas), el fondo de la superficie de esa slide (`LOOK_ART`) y el color de acento de la marca.
+- **Flujo**: una versión cuyo look lleva imagen se guarda con `art.status = pending` (IA, editor, edición rápida, restaurar) y pasa por `art.generate` antes del render. Por cada lugar: reutiliza la imagen de otra versión del post si el prompt es idéntico (salvo "Generar imágenes nuevas"), si no genera, mide el brillo de los bordes en Chromium (oscuro ≤ 45, claro ≥ 210) y reintenta una vez si el fondo salió mal. Guarda en `media/<marca>/<post>/<versión>/art/<cover|cta>.jpg` y deja el estado final (`ready`, `partial`, `skipped`, `failed`, con `note`). Siempre encola el render.
+- **Render**: el render lee `post_versions.art` y pasa las URLs a la slide; el look la dibuja arriba (mezcla `screen` en oscuro, `multiply` con brillo en claro, grises en monocromo) en la capa "elemento gráfico" (ADR 0013).
+
 ### Registro
 Cada ejecución queda en `generation_runs` con proveedor, modelo, uso, duración, turnos, estado y error. Cada `post_version` referencia su `generation_run`, para comparar rendimiento por modelo en el tablero.
 
@@ -369,6 +377,7 @@ BETTER_AUTH_SECRET, BETTER_AUTH_URL, ALLOWED_EMAILS
 GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET
 CLAUDE_CODE_OAUTH_TOKEN          # o ANTHROPIC_API_KEY, nunca ambas
 OPENROUTER_API_KEY
+CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN   # imágenes (ADR 0016); sin ellas, posts sin imagen
 RENDER_INTERNAL_TOKEN, WEB_INTERNAL_URL=http://web:3000
 MEDIA_DIR, MEDIA_BASE_URL        # MEDIA_DIR vacío = <repo>/media (local)
 TOKEN_ENCRYPTION_KEY

@@ -323,6 +323,14 @@ La descripción que lee la IA es `LOOK_GUIDE` (`look-ids.ts`).
 - El editor del post tiene un selector de look; la galería de la marca (Marcas → Slides) muestra cada look activo.
 - Sin `look` guardado, se toma uno de los activos por el id del post (`resolveLook`): siempre el mismo para ese post.
 
+### Imágenes generadas (ADR 0016)
+
+- Looks con imagen (`LOOK_ART`): atmósfera, neón, gradiente, revista, editorial y monocromo; solo en **portada y cierre**. El fondo que se le pide al modelo es el de la superficie de esa slide (oscura → negro puro, clara → blanco puro).
+- Con imagen, la portada pone el objeto arriba y el título abajo (tamaño `title`); el cierre baja su contenido (`low`) y su título a `title`. La imagen reemplaza la decoración propia del look en esa slide.
+- Se dibuja a 760 px (portada) o 520 px (cierre), centrada, con mezcla `screen` (oscuro) o `multiply` con un leve aumento de brillo (claro, para que el "blanco" del modelo desaparezca), máscara radial que desvanece los bordes y escala de grises en monocromo. Es la capa "elemento gráfico": se mueve y escala en el editor.
+- Reglas del objeto: uno solo, sin personas, caras ni manos, sin nada con texto (carteles, pantallas, libros, gráficos). Lo controla el esquema.
+- Previsualizar: `pnpm --filter @radev/slides preview <dir> --art-dir <carpeta>` con `cover-dark.jpg`, `cover-light.jpg`, `cta-dark.jpg` y `cta-light.jpg`.
+
 ### Sumar un look
 
 1. Agregar el id, el nombre y la guía en `look-ids.ts`.
