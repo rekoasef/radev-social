@@ -10,6 +10,7 @@ import {
   type StylePreset,
   setTokenValue,
   switchPresetTokens,
+  themeColors,
   type TokenGroup,
 } from "@radev/slides";
 import { useActionState, useMemo, useRef, useState } from "react";
@@ -66,7 +67,8 @@ export function IdentityEditor({
     ...(state.status === "error" && !dirty ? (state.fields ?? {}) : {}),
     ...(check.ok ? {} : check.fields),
   };
-  const colors = (theme.tokens as { colors: { text: string; bg: string } }).colors;
+  // Main text over main background, whatever the preset calls them (studio: paper over ink).
+  const colors = themeColors(theme);
   const contrast = contrastRatio(colors.text, colors.bg);
 
   const previewAssets: SlideAssets = Object.fromEntries(
