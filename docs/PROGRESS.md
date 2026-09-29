@@ -104,8 +104,8 @@ Pasos (operador):
    - Terms of Service URL: `https://app.gestorlumus.site/legal/terminos`
    - Privacy Policy URL: `https://app.gestorlumus.site/legal/privacidad`
    - Platforms: **Web**, Website URL `https://app.gestorlumus.site`
-3. Add products: **Login Kit** (Redirect URI `https://app.gestorlumus.site/api/tiktok/callback`) y **Content Posting API** (activar Direct Post si aparece).
-4. Scopes: `user.info.basic`, `video.upload`, `video.publish`.
+3. Add products: **Login Kit** (Redirect URI `https://app.gestorlumus.site/api/tiktok/callback`), **Content Posting API** (activar Direct Post si aparece) y **Display API** (métricas; agregado el 2026-09-29: sumar permisos después obliga a otra revisión).
+4. Scopes: `user.info.basic`, `video.upload`, `video.publish`, y para métricas `video.list` (posts con vistas, likes, comentarios y compartidos) y `user.info.stats` (seguidores y likes totales).
 5. **URL properties**: agregar el dominio `media.gestorlumus.site`, verificación por **DNS**. Pasarle a Claude el texto `tiktok-developers-site-verification=...`: Claude indica cómo cargarlo como TXT en Hostinger (sin tocar los registros existentes) y verifica que se propague antes de tocar "Verify".
 6. **Sandbox mode** → Create Sandbox (`pruebas`) → Target users → Add account → la cuenta de TikTok de **RAdev** (hasta 10 cuentas).
 7. Client key y Client secret: **no pasarlos por el chat**; se cargan en el `.env` del servidor en la T4 (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`).
