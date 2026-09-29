@@ -93,7 +93,7 @@ packages/
     providers/claude-code/  ejecución aislada de claude -p
     providers/openrouter/   cliente HTTP
     router.ts               ruteo por tarea, respaldo, límites
-    workspace.ts            arma el directorio temporal con el CLAUDE.md de la marca
+    workspace.ts            arma el directorio temporal (prompt de sistema de la marca y prompt)
   publishers/
     types.ts                interfaz PublisherAdapter
     manual/ tiktok/
@@ -196,17 +196,21 @@ interface AIProvider {
 **Claude Code** (`claude-code`): ejecuta Claude Code headless con la suscripción Pro del operador.
 
 ```bash
-claude -p "<prompt de la tarea>" \
+claude -p \
   --output-format json \
   --json-schema '<JSON Schema derivado de Zod>' \
-  --max-turns 6 \
-  --allowedTools "Read" \
+  --max-turns 3 \
+  --system-prompt-file system-prompt.md \
+  --tools "" \
   --model <modelo configurado para la tarea> \
   --no-session-persistence \
   --setting-sources project \
-  --strict-mcp-config
-# ideas.research agrega WebSearch y WebFetch a --allowedTools
+  --strict-mcp-config \
+  < prompt.md
+# ideas.research: --tools y --allowedTools "WebSearch,WebFetch", hasta 30 turnos
 ```
+
+**Modo liviano (2026-09-29).** Las instrucciones de la marca **reemplazan** el prompt de sistema de Claude Code (`--system-prompt-file`) y el contexto de la tarea (`task.json`, `slides.md`, `recent-posts.json`…) va **dentro del prompt**, con el mismo formato que en OpenRouter (`packages/ai/src/inline.ts`). Sin herramientas (`--tools ""`), el modelo solo responde: 2 turnos, porque la salida estructurada usa una herramienta propia. El prompt entra por stdin (Linux corta cada argumento en 128 KB). Antes, el prompt de sistema y las herramientas de Claude Code pesaban ~27.000 tokens y se reenviaban en cada turno (4–8 turnos para leer los archivos): ~128.000 tokens de entrada por carrusel. Medido con el smoke: 982 tokens de entrada, 2 turnos, 1,9 s (antes, una tarea igual de chica: ~55.000 tokens, 3 turnos).
 
 Verificado el 2026-09-24 con Claude Code 2.1.282 (Fase 3, T0):
 - Se ejecuta con una lista de argumentos (sin shell): el JSON Schema va tal cual.
@@ -217,10 +221,9 @@ Verificado el 2026-09-24 con Claude Code 2.1.282 (Fase 3, T0):
 
 - **Autenticación**: `CLAUDE_CODE_OAUTH_TOKEN`, generado una vez con `claude setup-token` (consume de la suscripción Pro, sin costo extra). Alternativa: `ANTHROPIC_API_KEY` (pago por uso). **Nunca ambas definidas a la vez.**
 - **Aislamiento**: por ejecución, `packages/ai/workspace.ts` crea `/tmp/radev-social/runs/<runId>/` (fuera del repo) y escribe:
-  - `CLAUDE.md` — armado desde la base: voz + reglas + precios + casos de la marca.
-  - `task.json` — idea, pilar, tipo de hook sugerido, feedback de rechazo, violaciones de QA.
-  - `recent-posts.json`, `winners.json`, `data.json` (según la tarea). `data.json` (`BrandData` de `packages/core/src/data`): `asOf`, `datasets` (series para `chart`) y `figures` (cifras ya escritas para `bigNumber`), armados desde el último snapshot de cada fuente de la marca.
-  Claude Code se ejecuta con ese `cwd`, así carga el CLAUDE.md de la marca y no el de desarrollo. El directorio se borra al terminar (se conserva si falló, para depurar).
+  - `system-prompt.md` — las instrucciones de la marca armadas desde la base (voz + reglas + precios + casos): el `CLAUDE.md` de la tarea, pasado como prompt de sistema.
+  - `prompt.md` — el prompt con los archivos de contexto adentro: `task.json` (idea, pilar, tipo de hook sugerido, feedback de rechazo, violaciones de QA), `recent-posts.json`, `winners.json`, `data.json` (según la tarea). `data.json` (`BrandData` de `packages/core/src/data`): `asOf`, `datasets` (series para `chart`) y `figures` (cifras ya escritas para `bigNumber`), armados desde el último snapshot de cada fuente de la marca.
+  Claude Code se ejecuta con ese `cwd`, fuera de todo proyecto: no carga el CLAUDE.md de desarrollo. **Nunca se escribe un `CLAUDE.md` en el workspace**: se sumaría al prompt de sistema. El directorio se borra al terminar (se conserva si falló, para depurar).
 - **Salida**: sobre JSON (`is_error`, `structured_output`, `session_id`, uso). Se valida otra vez con Zod.
 - **Binario** (Fase 3, T4): `@anthropic-ai/claude-code` fijado (versión exacta) como dependencia de `packages/ai`; su script de instalación copia el binario nativo de la plataforma. Misma versión en desarrollo y en Docker, sin instalación global ni actualizaciones automáticas (`DISABLE_AUTOUPDATER=1`). Para cambiar de versión: subir el número en `packages/ai/package.json` y en las excepciones de `pnpm-workspace.yaml`.
 - **Entorno del proceso**: `claude` recibe solo `PATH`, idioma, zona horaria, proxies y la credencial; nunca `DATABASE_URL`, `RENDER_TOKEN` ni otros secretos del worker. `HOME` y `CLAUDE_CONFIG_DIR` apuntan a `/tmp/radev-social/claude-home`, así en desarrollo no lee el `~/.claude` del operador (CLAUDE.md personal, skills, plugins).

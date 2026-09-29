@@ -52,8 +52,8 @@ import type { Logger } from "../logger";
 // the version and queues its render. Only runs for a post that is still `generating`, so a
 // repeated job does nothing (rule 8).
 
-/** Turns for claude -p: read task.json, slides.md and recent-posts.json, then answer. */
-const MAX_TURNS = 8;
+/** Turns for claude -p: the context is in the prompt, so it only answers (structured output). */
+const MAX_TURNS = 3;
 /** Reschedules after a provider's limit before giving up (15 min … 240 min: about 17 h). */
 export const MAX_RATE_LIMIT_ATTEMPTS = 8;
 
@@ -355,8 +355,7 @@ export async function generateCarousel(
         ...buildTaskFiles({ request, recent, problems, revision, series, data }),
       },
       schema,
-      // One more turn to read data.json.
-      maxTurns: data ? MAX_TURNS + 1 : MAX_TURNS,
+      maxTurns: MAX_TURNS,
     });
     const runIds = [];
     for (const attempt of routed.attempts) {

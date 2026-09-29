@@ -46,7 +46,7 @@ const RUN_SETTINGS: Record<
   IdeaRequestTask,
   { prompt: string; tools?: string[]; maxTurns: number; timeoutMs?: number }
 > = {
-  "ideas.generate": { prompt: IDEAS_PROMPT, maxTurns: 6 },
+  "ideas.generate": { prompt: IDEAS_PROMPT, maxTurns: 3 },
   "ideas.research": {
     prompt: RESEARCH_PROMPT,
     tools: ["WebSearch", "WebFetch"],

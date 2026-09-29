@@ -9,15 +9,15 @@ export type GenerationTask<T> = {
   /** Instructions of this run. The brand's voice and rules travel in `files` (CLAUDE.md). */
   prompt: string;
   /**
-   * Context files by name (`CLAUDE.md`, `task.json`, `recent-posts.json`…). claude-code writes
-   * them to its temporary workspace; openrouter inlines them in the prompt.
+   * Context files by name (`CLAUDE.md`, `task.json`, `recent-posts.json`…). Both providers inline
+   * them (`inlineTask`): `CLAUDE.md` as the system prompt, the rest inside the prompt.
    */
   files: Readonly<Record<string, string>>;
   /** Shape of the output. Every result is validated with it, whatever the provider (rule 4). */
   schema: z.ZodType<T>;
   /** Model id as the provider names it; comes from the routing table, never from code. */
   model: string;
-  /** Extra tools (claude-code only), e.g. WebSearch for ideas.research. Read is always allowed. */
+  /** Extra tools (claude-code only), e.g. WebSearch for ideas.research. None by default. */
   tools?: readonly string[];
   maxTurns?: number;
   timeoutMs?: number;

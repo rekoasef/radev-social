@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   buildClaudeArgs,
+  buildClaudeFiles,
   classifyEnvelopeError,
   claudeCredential,
   createClaudeCodeProvider,
@@ -17,7 +18,9 @@ import type { GenerationResult, GenerationTask } from "./types";
 const FAKE_CLI = `#!/usr/bin/env node
 const { readdirSync, readFileSync } = require("node:fs");
 const args = process.argv.slice(2);
-const prompt = args[args.indexOf("-p") + 1];
+// The prompt comes through stdin; its first line is the task's prompt (the files follow).
+const input = readFileSync(0, "utf8");
+const prompt = input.split("\\n")[0];
 const base = {
   is_error: false, session_id: "s-1", num_turns: 2, duration_ms: 1234, total_cost_usd: 0.01,
   terminal_reason: "completed", api_error_status: null,
@@ -39,8 +42,8 @@ switch (prompt) {
   case "sleep": setInterval(() => {}, 1000); break;
   case "inspect":
     out({ structured_output: {
-      cwd: process.cwd(), args, env: process.env,
-      files: readdirSync("."), claudeMd: readFileSync("CLAUDE.md", "utf8"),
+      cwd: process.cwd(), args, env: process.env, input,
+      files: readdirSync("."), system: readFileSync("system-prompt.md", "utf8"),
     } });
 }
 `;
@@ -96,18 +99,45 @@ describe("claudeCredential", () => {
 });
 
 describe("buildClaudeArgs", () => {
-  it("passes the verified flags, the JSON Schema and Read plus the extra tools", () => {
-    const args = buildClaudeArgs(task("hola", { tools: ["WebSearch", "Read"], maxTurns: 3 }));
-    expect(args.slice(0, 2)).toEqual(["-p", "hola"]);
-    const flag = (name: string) => args[args.indexOf(name) + 1];
+  const flagOf = (args: string[]) => (name: string) =>
+    args.includes(name) ? args[args.indexOf(name) + 1] : undefined;
+
+  it("passes the verified flags, the JSON Schema and the brand's system prompt, without tools", () => {
+    const args = buildClaudeArgs(task("hola"));
+    expect(args[0]).toBe("-p");
+    expect(args).not.toContain("hola");
+    const flag = flagOf(args);
     expect(flag("--output-format")).toBe("json");
     expect(JSON.parse(flag("--json-schema") ?? "")).toMatchObject({ type: "object" });
     expect(flag("--max-turns")).toBe("3");
-    expect(flag("--allowedTools")).toBe("Read,WebSearch");
+    expect(flag("--system-prompt-file")).toBe("system-prompt.md");
+    expect(flag("--tools")).toBe("");
+    expect(flag("--allowedTools")).toBeUndefined();
     expect(flag("--model")).toBe("sonnet");
     expect(flag("--setting-sources")).toBe("project");
     expect(args).toContain("--no-session-persistence");
     expect(args).toContain("--strict-mcp-config");
+  });
+
+  it("allows only the tools the task asks for", () => {
+    const flag = flagOf(buildClaudeArgs(task("hola", { tools: ["WebSearch", "WebFetch"] })));
+    expect(flag("--tools")).toBe("WebSearch,WebFetch");
+    expect(flag("--allowedTools")).toBe("WebSearch,WebFetch");
+  });
+
+  it("keeps Claude Code's own system prompt when there are no brand instructions", () => {
+    const args = buildClaudeArgs(task("hola", { files: { "task.json": "{}" } }));
+    expect(args).not.toContain("--system-prompt-file");
+  });
+});
+
+describe("buildClaudeFiles", () => {
+  it("never writes a CLAUDE.md: the instructions go as the system prompt, the rest inline", () => {
+    const files = buildClaudeFiles(task("hola"));
+    expect(Object.keys(files).sort()).toEqual(["prompt.md", "system-prompt.md"]);
+    expect(files["system-prompt.md"]).toBe("# Marca\n");
+    expect(files["prompt.md"]).toMatch(/^hola\n/);
+    expect(files["prompt.md"]).toContain("### Archivo `task.json`");
   });
 });
 
@@ -186,21 +216,23 @@ describe("createClaudeCodeProvider", () => {
     expect(errorOf(result)?.message).toMatch(/canceló/);
   });
 
-  it("runs in the workspace with the files and only the environment the CLI needs", async () => {
+  it("runs in the workspace with the prompts and only the environment the CLI needs", async () => {
     const schemaAny = z.object({
       cwd: z.string(),
       args: z.array(z.string()),
       env: z.record(z.string(), z.string()),
+      input: z.string(),
       files: z.array(z.string()),
-      claudeMd: z.string(),
+      system: z.string(),
     });
     const leaky = { ...env, DATABASE_URL: "postgres://secret", RENDER_TOKEN: "secret" };
     const result = await provider(leaky).generate({ ...task("inspect"), schema: schemaAny });
     if (!result.ok) throw new Error(result.error.message);
     const seen = result.data;
     expect(seen.cwd.startsWith(workspaceRoot)).toBe(true);
-    expect(seen.files.sort()).toEqual(["CLAUDE.md", "task.json"]);
-    expect(seen.claudeMd).toBe("# Marca\n");
+    expect(seen.files.sort()).toEqual(["prompt.md", "system-prompt.md"]);
+    expect(seen.system).toBe("# Marca\n");
+    expect(seen.input).toContain("### Archivo `task.json`");
     expect(seen.env.CLAUDE_CODE_OAUTH_TOKEN).toBe("sk-ant-oat-test");
     expect(seen.env.HOME).toBe(join(dir, "home"));
     expect(seen.env.DISABLE_AUTOUPDATER).toBe("1");

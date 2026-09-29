@@ -1,5 +1,6 @@
 import { isFreeModel } from "@radev/core";
 import { type AIError, providerError, rateLimited } from "./errors";
+import { inlineTask } from "./inline";
 import { parseJsonText, toJsonSchema } from "./schema";
 import type { AIProvider, GenerationResult, GenerationTask, Usage } from "./types";
 
@@ -18,20 +19,11 @@ export const DEFAULT_OPENROUTER_TIMEOUT_MS = 2 * 60_000;
 export function buildOpenRouterMessages(
   task: GenerationTask<unknown>,
 ): { role: "system" | "user"; content: string }[] {
-  const { "CLAUDE.md": instructions, ...rest } = task.files;
-  const files = Object.entries(rest).map(
-    ([name, content]) => `### Archivo \`${name}\`\n\n\`\`\`\n${content}\n\`\`\``,
-  );
-  const user = [
-    task.prompt,
-    files.length > 0
-      ? `Los archivos que mencionan las instrucciones están acá:\n\n${files.join("\n\n")}`
-      : "",
-    `Respondé solo con un objeto JSON que cumpla este JSON Schema, sin texto antes ni después:\n\n${JSON.stringify(toJsonSchema(task.schema))}`,
-  ].filter(Boolean);
+  const { system, user } = inlineTask(task);
+  const schema = `Respondé solo con un objeto JSON que cumpla este JSON Schema, sin texto antes ni después:\n\n${JSON.stringify(toJsonSchema(task.schema))}`;
   return [
-    ...(instructions ? [{ role: "system" as const, content: instructions }] : []),
-    { role: "user" as const, content: user.join("\n\n") },
+    ...(system ? [{ role: "system" as const, content: system }] : []),
+    { role: "user" as const, content: `${user}\n\n${schema}` },
   ];
 }
 

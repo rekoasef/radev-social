@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { z } from "zod";
 import { type AIError, providerError, rateLimited } from "./errors";
+import { inlineTask } from "./inline";
 import { parseJsonText, parseOutput, toJsonSchema } from "./schema";
 import type { AIProvider, GenerationResult, GenerationTask, Usage } from "./types";
 import { withWorkspace } from "./workspace";
@@ -12,8 +13,12 @@ import { withWorkspace } from "./workspace";
 // claude-code provider: Claude Code headless (`claude -p`) with the operator's subscription
 // (docs/ARCHITECTURE.md §7, ADR 0005). Each run happens in its own workspace outside the repo
 // (rule 7), with an environment that carries only what the CLI needs: never the worker's secrets.
+// The brand's instructions replace Claude Code's own system prompt and the context goes inside
+// the prompt, without tools (unless the task asks for some): Claude Code's prompt and tool
+// definitions weighed ~27k tokens, resent on every turn, far more than the carousel itself.
 
-export const DEFAULT_MAX_TURNS = 6;
+/** Two turns: the answer comes through the structured-output tool, which takes one of its own. */
+export const DEFAULT_MAX_TURNS = 3;
 export const DEFAULT_TIMEOUT_MS = 5 * 60_000;
 /** Time between SIGTERM and SIGKILL when a run has to be stopped. */
 const KILL_GRACE_MS = 5_000;
@@ -86,20 +91,39 @@ export function resolveClaudeBin(): string {
   );
 }
 
-/** Arguments of `claude -p`, as verified in phase 3, T0. Passed as a list: no shell involved. */
+/** Workspace files of a run: the system prompt and the prompt, also kept to debug a failed run. */
+export const SYSTEM_PROMPT_FILE = "system-prompt.md";
+export const PROMPT_FILE = "prompt.md";
+
+/**
+ * The workspace of a run. Never a `CLAUDE.md`: Claude Code would load it on top of the system
+ * prompt. The prompt also goes through stdin (an argument is capped at 128 KB on Linux).
+ */
+export function buildClaudeFiles(task: GenerationTask<unknown>): Record<string, string> {
+  const { system, user } = inlineTask(task);
+  return { ...(system && { [SYSTEM_PROMPT_FILE]: system }), [PROMPT_FILE]: user };
+}
+
+/**
+ * Arguments of `claude -p` (phase 3 T0; lean mode verified with 2.1.282). Passed as a list: no
+ * shell involved. The prompt comes through stdin.
+ */
 export function buildClaudeArgs(task: GenerationTask<unknown>): string[] {
-  const tools = ["Read", ...(task.tools ?? []).filter((tool) => tool !== "Read")];
+  const tools = task.tools ?? [];
+  const system = inlineTask(task).system !== null;
   return [
     "-p",
-    task.prompt,
     "--output-format",
     "json",
     "--json-schema",
     JSON.stringify(toJsonSchema(task.schema)),
     "--max-turns",
     String(task.maxTurns ?? DEFAULT_MAX_TURNS),
-    "--allowedTools",
+    ...(system ? ["--system-prompt-file", SYSTEM_PROMPT_FILE] : []),
+    // "" leaves the model without tools: everything it needs is in the prompt.
+    "--tools",
     tools.join(","),
+    ...(tools.length > 0 ? ["--allowedTools", tools.join(",")] : []),
     "--model",
     task.model,
     "--no-session-persistence",
@@ -221,7 +245,13 @@ type ProcessResult = {
 function runProcess(
   bin: string,
   args: string[],
-  options: { cwd: string; env: NodeJS.ProcessEnv; timeoutMs: number; signal?: AbortSignal },
+  options: {
+    cwd: string;
+    env: NodeJS.ProcessEnv;
+    input: string;
+    timeoutMs: number;
+    signal?: AbortSignal;
+  },
 ): Promise<ProcessResult> {
   return new Promise((resolve) => {
     const result: ProcessResult = {
@@ -239,8 +269,11 @@ function runProcess(
     const child = spawn(bin, args, {
       cwd: options.cwd,
       env: options.env,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["pipe", "pipe", "pipe"],
     });
+    // A CLI that exits without reading stdin would fail the write: the exit code tells the rest.
+    child.stdin.on("error", () => {});
+    child.stdin.end(options.input);
 
     const collect = (key: "stdout" | "stderr") => (chunk: Buffer) => {
       if (result[key].length < MAX_OUTPUT_BYTES) result[key] += chunk.toString("utf8");
@@ -326,13 +359,15 @@ export function createClaudeCodeProvider(options: ClaudeCodeOptions = {}): AIPro
       const env = claudeEnv(credential, home, source);
       const timeoutMs = task.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
+      const files = buildClaudeFiles(task as GenerationTask<unknown>);
       return withWorkspace(
-        task.files,
+        files,
         async (workspace): Promise<GenerationResult<T>> => {
           const startedAt = Date.now();
           const run = await runProcess(bin, args, {
             cwd: workspace.dir,
             env,
+            input: files[PROMPT_FILE] ?? "",
             timeoutMs,
             signal: task.signal,
           });

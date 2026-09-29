@@ -26,7 +26,15 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** revisar con login las pantallas de la T9 (Ideas, Marcas → Pilares, Marcas → General → Contacto), también desde el celular, y cargar el WhatsApp de cada marca. Y la prueba real de la T8 (rechazar un post de IA y ver la v2).
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
-- **Última actualización:** 2026-09-28, T12 y T13 cerradas (producción con datos y backups)
+- **Mejoras de contenido (2026-09-29, pedido del operador, en paralelo con la Fase 5):** (1) ✅ generación liviana: ~128.000 → ~1.000 tokens de entrada de base por ejecución (ver abajo). (2) Próximo: rediseño para que cada carrusel sea distinto (composiciones, tipos nuevos, looks por post). El operador eligió: tokens primero, **se puede salir del fondo oscuro** (claro, acento), y que Claude proponga direcciones visuales con capturas (no tiene referencias). Quiere que "cada imagen sea diferente, como ChatGPT". Diagnóstico sobre los carruseles de RAdev en producción: todas las slides tienen el mismo esqueleto (título arriba, diagrama chico, vacío, pie), el contenido ocupa ~30 % de la slide, la secuencia de tipos se repite y sobra decoración.
+- **Última actualización:** 2026-09-29, generación liviana (menos tokens)
+
+## Mejora — generación liviana (2026-09-29)
+
+- `claude -p` ahora corre con las instrucciones de la marca como **prompt de sistema** (`--system-prompt-file`, reemplaza el de Claude Code), **sin herramientas** (`--tools ""`) y el contexto **dentro del prompt** por stdin (mismo formato que OpenRouter, `packages/ai/src/inline.ts`). Turnos: carrusel 8 → 3, ideas 6 → 3 (responde en 2: la salida estructurada usa una herramienta propia). `ideas.research` sigue con WebSearch y WebFetch.
+- El workspace ya no tiene `CLAUDE.md` (se sumaría al prompt de sistema): lleva `system-prompt.md` y `prompt.md`, que quedan para depurar si la ejecución falla. Aislamiento igual (carpeta temporal fuera del repo). ADR 0005 y regla 7 del CLAUDE.md actualizados.
+- Medido: con una tarea mínima, antes ~55.000 tokens de entrada y 3 turnos (6,9 s); ahora ~900 y 2 turnos (3,6 s). Smoke real: 982 tokens, 2 turnos, 1,9 s. Falta ver un carrusel real en producción (Ajustes → uso/`generation_runs`): se espera de ~128.000 a ~15.000 tokens de entrada.
+- `--bare` sigue sin servir (no lee el token OAuth); `--system-prompt-file` con `CLAUDE_CODE_OAUTH_TOKEN` sí (probado con 2.1.282).
 
 ## Fase 5 — tareas
 

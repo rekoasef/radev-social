@@ -121,7 +121,7 @@ Notas del entorno:
 4. **Todo contenido generado por IA se valida con Zod** antes de guardarse, sin importar qué proveedor o modelo lo generó.
 5. **La web nunca ejecuta IA ni Playwright**. Eso es trabajo exclusivo del worker. La web encola jobs.
 6. **Nada de una marca está hardcodeado.** Colores, tipografías, textos, assets, voz, pilares, precios y casos viven en la base y se editan desde el panel. En código solo existen los **presets de estilo** (ver `docs/DESIGN-SYSTEM.md`).
-7. **Aislamiento de la generación**: `claude -p` se ejecuta en un directorio temporal FUERA del repo, donde el worker escribe el CLAUDE.md de la marca generado desde la base. Nunca se ejecuta dentro del repo.
+7. **Aislamiento de la generación**: `claude -p` se ejecuta en un directorio temporal FUERA del repo, con las instrucciones de la marca generadas desde la base como prompt de sistema (ADR 0005, modo liviano). Nunca se ejecuta dentro del repo.
 8. **Los jobs son idempotentes**: ejecutarlos dos veces no puede publicar doble ni duplicar datos.
 9. **Los números en el contenido nunca los inventa la IA**: vienen de datos provistos por el código (precios y casos de la marca, datos de Bluelytics, métricas).
 10. **Secretos**: tokens cifrados en la base (AES-256-GCM). Nunca se loguean secretos. Solo una credencial de Claude a la vez (`CLAUDE_CODE_OAUTH_TOKEN` **o** `ANTHROPIC_API_KEY`, nunca las dos).
