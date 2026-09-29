@@ -24,5 +24,8 @@ export function SlideFrame({ theme, children, ...props }: SlideFrameProps) {
           {children}
         </SoftFrame>
       );
+    case "studio":
+      // Frame and content of a studio slide depend on each other (the look): RenderSlide.
+      throw new Error("El preset studio se dibuja con RenderSlide.");
   }
 }

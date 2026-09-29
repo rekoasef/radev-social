@@ -1,5 +1,5 @@
 import { getBrandById, getPostById, getPostVersion } from "@radev/db";
-import { carouselSchema, FORMAT, SlideContent, SlideFrame } from "@radev/slides";
+import { carouselSchema, FORMAT, RenderSlide } from "@radev/slides";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -56,23 +56,18 @@ export default async function RenderSlidePage({
         overflow: "hidden",
       }}
     >
-      <SlideFrame
+      {/* Charts draw the points frozen with the version (phase 3, T11); without them the
+          template fails, so a chart never goes out with made-up numbers. */}
+      <RenderSlide
         theme={render.theme}
-        brandName={brand.name}
+        slide={slide}
         page={{ index: parsed.data.index, total }}
         seed={post.id}
-        glow={slide.type === "cover" || slide.type === "cta"}
+        brandName={brand.name}
         assets={render.assets}
-      >
-        {/* Charts draw the points frozen with the version (phase 3, T11); without them the
-            template fails, so a chart never goes out with made-up numbers. */}
-        <SlideContent
-          theme={render.theme}
-          slide={slide}
-          datasets={version.datasets ?? {}}
-          assets={render.assets}
-        />
-      </SlideFrame>
+        datasets={version.datasets ?? {}}
+        look={carousel.data.look}
+      />
       <RenderReady />
       {/* Next's dev-tools badge would end up in the renders. */}
       <style>{"nextjs-portal{display:none!important}"}</style>

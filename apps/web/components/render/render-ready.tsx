@@ -1,6 +1,6 @@
 "use client";
 
-import { checkRender, describeQaIssue, type QaIssue } from "@radev/slides/qa";
+import { checkRender, describeQaIssue, fitSlide, type QaIssue } from "@radev/slides/qa";
 import { useEffect, useState } from "react";
 
 declare global {
@@ -26,6 +26,8 @@ export function RenderReady({ showQa = false }: { showQa?: boolean }) {
     Promise.all([document.fonts.ready, ...images]).then(() => {
       if (!active) return;
       const frame = document.querySelector("[data-slide-frame]");
+      // Studio slides that do not fit shrink first (fit.ts); the QA checks the result.
+      if (frame) fitSlide(frame);
       const found = frame ? checkRender(frame, showQa) : [];
       window.__renderQa = found;
       setIssues(found);

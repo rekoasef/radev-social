@@ -1,5 +1,5 @@
 import type { Brand } from "@radev/db";
-import { fontStack, parseTheme } from "@radev/slides";
+import { fontStack, parseTheme, themeColors } from "@radev/slides";
 import type { CSSProperties } from "react";
 import { cityOf, offsetOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -33,11 +33,12 @@ export function ChannelMonitor({
     ? Object.entries(tokens.colors).map(([name, value]) => ({ name, value }))
     : [];
   const display = tokens?.fonts.display;
+  const main = parsed.ok ? themeColors(parsed.theme) : undefined;
   const screen = {
-    "--screen-bg": tokens?.colors.bg ?? "var(--color-console)",
-    "--screen-ink": tokens?.colors.text ?? "var(--color-ink)",
-    "--screen-accent": tokens?.colors.accent ?? "var(--color-ink-dim)",
-    "--screen-muted": tokens?.colors.muted ?? "var(--color-ink-dim)",
+    "--screen-bg": main?.bg ?? "var(--color-console)",
+    "--screen-ink": main?.text ?? "var(--color-ink)",
+    "--screen-accent": main?.accent ?? "var(--color-ink-dim)",
+    "--screen-muted": main?.muted ?? "var(--color-ink-dim)",
     animationDelay: `${index * 140}ms`,
   } as CSSProperties;
   const archived = brand.archivedAt !== null;

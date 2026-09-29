@@ -1,4 +1,4 @@
-import { parseTheme, presets } from "@radev/slides";
+import { parseTheme, presets, themeColors } from "@radev/slides";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
@@ -16,13 +16,8 @@ export default async function BrandsPage() {
     <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {items.map((brand) => {
         const parsed = parseTheme(brand.stylePreset, brand.themeTokens);
-        const swatches = parsed.ok
-          ? [
-              parsed.theme.tokens.colors.bg,
-              parsed.theme.tokens.colors.accent,
-              parsed.theme.tokens.colors.text,
-            ]
-          : [];
+        const colors = parsed.ok ? themeColors(parsed.theme) : undefined;
+        const swatches = colors ? [colors.bg, colors.accent, colors.text] : [];
         const preset =
           brand.stylePreset in presets
             ? presets[brand.stylePreset as keyof typeof presets].name

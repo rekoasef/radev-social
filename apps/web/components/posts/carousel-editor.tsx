@@ -7,10 +7,14 @@ import {
   type Datasets,
   EDITOR_MIDDLE_TYPES,
   emptySlide,
+  enabledLooks,
   exampleCarouselByPreset,
   HOOK_TYPES,
   ICON_NAMES,
+  LOOK_NAMES,
+  type LookId,
   limits,
+  resolveLook,
   SLIDE_FIELDS,
   SLIDE_LABELS,
   type Slide,
@@ -72,6 +76,7 @@ export function CarouselEditor({
   initial,
   post,
   data,
+  seed = "preview",
 }: {
   brand: { id: string; slug: string; name: string };
   theme: BrandTheme;
@@ -82,6 +87,8 @@ export function CarouselEditor({
   post?: { code: string; version: number };
   /** Null when the brand uses no data source (no charts then). */
   data: EditorData | null;
+  /** Seed of the deterministic variation: the post id (the render uses it too). */
+  seed?: string;
 }) {
   const draftKey = `radev-social:draft:${brand.slug}:${post?.code ?? "new"}`;
   const [carousel, setCarousel] = useState<Carousel>(initial);
@@ -110,6 +117,12 @@ export function CarouselEditor({
     return () => clearTimeout(timer);
   }, [carousel, draftKey, initial]);
 
+  // Studio brands: the post's look, or the one the render would pick. Saved explicitly, so the
+  // render draws what the preview shows.
+  const looks = theme.preset === "studio" ? enabledLooks(theme.tokens) : [];
+  const look: LookId | undefined =
+    looks.length > 0 ? resolveLook(carousel.look, looks, seed) : undefined;
+  const content = look ? { ...carousel, look } : carousel;
   const check = useMemo(() => carouselSchema.safeParse(carousel), [carousel]);
   const errors: Record<string, string> = {};
   if (!check.success) {
@@ -171,7 +184,7 @@ export function CarouselEditor({
     >
       <input type="hidden" name="brandId" value={brand.id} />
       {post && <input type="hidden" name="code" value={post.code} />}
-      <input type="hidden" name="content" value={JSON.stringify(carousel)} />
+      <input type="hidden" name="content" value={JSON.stringify(content)} />
       <datalist id={ICON_LIST_ID}>
         {ICON_NAMES.map((name) => (
           <option key={name} value={name} />
@@ -245,6 +258,22 @@ export function CarouselEditor({
             </select>
           </label>
         </div>
+        {look && (
+          <label className="flex flex-col gap-1.5 text-sm text-ink-dim">
+            Look
+            <select
+              value={look}
+              onChange={(e) => setCarousel((c) => ({ ...c, look: e.target.value as LookId }))}
+              className="console-field"
+            >
+              {looks.map((id) => (
+                <option key={id} value={id}>
+                  {LOOK_NAMES[id]}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <div className="flex flex-col gap-2">
           <span className="flex justify-between text-sm text-ink-dim">
@@ -463,6 +492,8 @@ export function CarouselEditor({
               type={slide.type}
               content={previewSlide}
               page={{ index, total: slides.length }}
+              look={look}
+              seed={seed}
               qaOverlap
               overlay={(scale, frame) => (
                 <LayerEditor

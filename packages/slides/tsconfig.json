@@ -4,5 +4,5 @@
     "types": ["node"],
     "lib": ["DOM", "ES2023"]
   },
-  "include": ["src"]
+  "include": ["src", "scripts"]
 }

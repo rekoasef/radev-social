@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LOOK_IDS } from "../presets/studio/look-ids";
 import { key, plainText } from "./fields";
 import { limits as L } from "./limits";
 import { slideSchema } from "./slides";
@@ -35,6 +36,11 @@ export const carouselSchema = z
     hashtags: z
       .array(z.string().regex(/^[\p{L}\p{N}_]+$/u, { error: "Sin #, espacios ni signos." }))
       .max(L.carousel.hashtags, { error: `Hasta ${L.carousel.hashtags} hashtags.` }),
+    /**
+     * Look of the post, for brands on the `studio` preset (docs/DESIGN-SYSTEM.md §10). Without
+     * it, one of the brand's looks is picked by the post id.
+     */
+    look: z.enum(LOOK_IDS).optional(),
     /** One per slide. */
     altTexts: z.array(z.string().trim().min(1, { error: "No puede estar vacío." })).optional(),
   })

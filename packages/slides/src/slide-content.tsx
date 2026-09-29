@@ -30,7 +30,8 @@ const templates: { bold: TemplateSet<BoldTokens>; soft: TemplateSet<SoftTokens> 
 };
 
 export function hasTemplate(preset: StylePreset, type: SlideType): boolean {
-  return templates[preset][type] !== undefined;
+  // Studio has every type (presets/studio/templates.tsx).
+  return preset === "studio" || templates[preset][type] !== undefined;
 }
 
 export function SlideContent({
@@ -44,6 +45,9 @@ export function SlideContent({
   datasets?: Datasets;
   assets?: SlideAssets;
 }) {
+  if (theme.preset === "studio") {
+    throw new Error("El preset studio se dibuja con RenderSlide.");
+  }
   const Template = templates[theme.preset][slide.type] as
     | ((props: {
         slide: Slide;

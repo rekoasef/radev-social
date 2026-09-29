@@ -2,7 +2,11 @@
 
 import {
   type BrandTheme,
+  enabledLooks,
   exampleCarouselByPreset,
+  LOOK_GUIDE,
+  LOOK_NAMES,
+  type LookId,
   type SlideAssets,
   type SlideType,
 } from "@radev/slides";
@@ -12,7 +16,8 @@ import { Tally } from "@/components/console/tally";
 import { PREVIEW_SLIDES, SlidePreview } from "./slide-preview";
 
 // Every slide type of a brand at once, with its saved identity, and the preset's example
-// carousel. Each preview runs the render QA; the header sums up the problems.
+// carousel. Each preview runs the render QA; the header sums up the problems. A `studio` brand
+// picks which of its looks to see.
 
 export function SlideGallery({
   theme,
@@ -35,9 +40,35 @@ export function SlideGallery({
   const checked = Object.keys(qa).length;
   const failing = PREVIEW_SLIDES.filter((s) => (qa[s.type] ?? 0) > 0);
   const carousel = exampleCarouselByPreset[theme.preset];
+  const looks = theme.preset === "studio" ? enabledLooks(theme.tokens) : [];
+  const [look, setLook] = useState<LookId | undefined>(looks[0]);
 
   return (
     <div className="flex flex-col gap-14">
+      {looks.length > 0 && look && (
+        <section aria-labelledby="looks-heading" className="flex flex-col gap-3">
+          <h2 id="looks-heading" className="plate w-fit">
+            Look
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {looks.map((id) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={id === look}
+                onClick={() => {
+                  setQa({});
+                  setLook(id);
+                }}
+                className={`console-button ${id === look ? "console-button-primary" : ""}`}
+              >
+                {LOOK_NAMES[id]}
+              </button>
+            ))}
+          </div>
+          <p className="max-w-[70ch] text-sm text-ink-dim">{LOOK_GUIDE[look]}</p>
+        </section>
+      )}
       <section aria-labelledby="types-heading" className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 id="types-heading" className="plate">
@@ -77,6 +108,7 @@ export function SlideGallery({
                 type={s.type}
                 extreme={extreme}
                 onQa={report(s.type)}
+                look={look}
               />
             </li>
           ))}
@@ -103,6 +135,7 @@ export function SlideGallery({
                 type={slide.type}
                 content={slide}
                 page={{ index, total: carousel.slides.length }}
+                look={look}
               />
             </li>
           ))}

@@ -5,7 +5,9 @@ import {
   extremeSlides,
   FORMAT,
   hasTemplate,
+  isLookId,
   parseTheme,
+  RenderSlide,
   SafeZoneOverlay,
   SLIDE_TYPES,
   type SlideAssets,
@@ -26,6 +28,7 @@ import { isValidRenderToken, renderTokenFrom } from "@/lib/render-token";
 //   /render/preview/<brand>/<slide>?token=…&page=3&total=7&seed=post-1&overlay=safe|tiktok
 //     &variant=extreme (worst-case content, every text at its limit)
 //     &qa=1 (outline and list the render QA issues)
+//     &look=editorial (studio brands: the look to draw; by default one picked by the seed)
 // <slide> is a slide type, or "frame" for the frame alone.
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -72,6 +75,8 @@ export default async function PreviewSlidePage({
   const total = positiveInt(single(query.total), 7);
   const pageNumber = Math.min(positiveInt(single(query.page), 1), total);
   const overlay = single(query.overlay);
+  const look = single(query.look);
+  const seed = single(query.seed) ?? "preview";
 
   return (
     <main
@@ -83,28 +88,42 @@ export default async function PreviewSlidePage({
         overflow: "hidden",
       }}
     >
-      <SlideFrame
-        theme={parsed.theme}
-        brandName={brand.name}
-        page={{ index: pageNumber - 1, total }}
-        seed={single(query.seed) ?? "preview"}
-        glow={slide === "cover" || slide === "cta"}
-        assets={assets}
-      >
-        {type &&
-          (hasTemplate(parsed.theme.preset, type) ? (
-            <SlideContent
-              theme={parsed.theme}
-              slide={examples[type]}
-              datasets={exampleDatasets}
-              assets={assets}
-            />
-          ) : (
-            <p style={{ margin: "auto", fontSize: 28, opacity: 0.5 }}>
-              Plantilla {type}: pendiente
-            </p>
-          ))}
-      </SlideFrame>
+      {parsed.theme.preset === "studio" ? (
+        // Studio draws frame and content together: "frame" shows the cover.
+        <RenderSlide
+          theme={parsed.theme}
+          slide={examples[type ?? "cover"]}
+          page={{ index: pageNumber - 1, total }}
+          seed={seed}
+          brandName={brand.name}
+          assets={assets}
+          datasets={exampleDatasets}
+          look={look && isLookId(look) ? look : undefined}
+        />
+      ) : (
+        <SlideFrame
+          theme={parsed.theme}
+          brandName={brand.name}
+          page={{ index: pageNumber - 1, total }}
+          seed={seed}
+          glow={slide === "cover" || slide === "cta"}
+          assets={assets}
+        >
+          {type &&
+            (hasTemplate(parsed.theme.preset, type) ? (
+              <SlideContent
+                theme={parsed.theme}
+                slide={examples[type]}
+                datasets={exampleDatasets}
+                assets={assets}
+              />
+            ) : (
+              <p style={{ margin: "auto", fontSize: 28, opacity: 0.5 }}>
+                Plantilla {type}: pendiente
+              </p>
+            ))}
+        </SlideFrame>
+      )}
       {overlay === "safe" && <SafeZoneOverlay />}
       {overlay === "tiktok" && <TikTokOverlay />}
       <RenderReady showQa={single(query.qa) === "1"} />

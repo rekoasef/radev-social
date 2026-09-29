@@ -7,13 +7,13 @@ import {
   exampleSlidesByPreset,
   extremeSlides,
   FORMAT,
+  type LookId,
+  RenderSlide,
   type Slide,
   type SlideAssets,
-  SlideContent,
-  SlideFrame,
   type SlideType,
 } from "@radev/slides";
-import { checkRender, describeQaIssue, type QaIssue } from "@radev/slides/qa";
+import { checkRender, describeQaIssue, fitSlide, type QaIssue } from "@radev/slides/qa";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 // Live preview of the identity editor: the same frame and templates the render uses, with the
@@ -46,6 +46,8 @@ export function SlidePreview({
   qaOverlap = false,
   overlay,
   datasets = exampleDatasets,
+  look,
+  seed = "preview",
 }: {
   theme: BrandTheme;
   brandName: string;
@@ -69,6 +71,10 @@ export function SlidePreview({
   overlay?: (scale: number, frame: () => HTMLElement | null) => ReactNode;
   /** Points of `chart` slides; the example dollar by default (the brand gallery). */
   datasets?: Datasets;
+  /** Look of the post (`studio` brands); without it, one picked by the seed. */
+  look?: LookId;
+  /** Seed of the deterministic variation: the post id when there is one. */
+  seed?: string;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(420);
@@ -91,6 +97,7 @@ export function SlidePreview({
     const frame = box.current?.querySelector("[data-slide-frame]");
     document.fonts.ready.then(() => {
       if (!active || !frame) return;
+      fitSlide(frame);
       const found = checkRender(frame, false, { overlap: qaOverlap });
       setIssues(found);
       onQa?.(found);
@@ -98,7 +105,7 @@ export function SlidePreview({
     return () => {
       active = false;
     };
-  }, [theme, type, extreme, width, content, qaOverlap, datasets]);
+  }, [theme, type, extreme, width, content, qaOverlap, datasets, look]);
 
   const scale = width / FORMAT.width;
   const slide = content ?? (extreme ? extremeSlides : exampleSlidesByPreset[theme.preset])[type];
@@ -116,16 +123,16 @@ export function SlidePreview({
             transformOrigin: "0 0",
           }}
         >
-          <SlideFrame
+          <RenderSlide
             theme={theme}
+            slide={slide}
+            page={page ?? { index: type === "cover" ? 0 : type === "cta" ? 6 : 2, total: 7 }}
+            seed={seed}
             brandName={brandName}
-            page={page ?? { index: type === "cover" ? 0 : 2, total: 7 }}
-            seed="preview"
-            glow={type === "cover" || type === "cta"}
             assets={assets}
-          >
-            <SlideContent theme={theme} slide={slide} datasets={datasets} assets={assets} />
-          </SlideFrame>
+            datasets={datasets}
+            look={look}
+          />
         </div>
         {overlay?.(
           scale,

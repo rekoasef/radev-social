@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import { type BoldTokens, boldTokensSchema } from "./bold/tokens";
 import { type SoftTokens, softTokensSchema } from "./soft/tokens";
+import { type StudioTokens, studioTokensSchema } from "./studio/tokens";
 
 // Style presets (docs/DESIGN-SYSTEM.md §2): personality in code, values as brand tokens.
 
@@ -17,6 +18,12 @@ export const presets = {
       "Calmo y premium: títulos en oración, mucho aire, paneles de vidrio y glows suaves.",
     tokens: softTokensSchema,
   },
+  studio: {
+    name: "Studio",
+    description:
+      "Varios looks para una misma marca (editorial, bloques, atmósfera, plano, terminal, recorte…): cada post usa uno distinto.",
+    tokens: studioTokensSchema,
+  },
 } as const;
 
 export type StylePreset = keyof typeof presets;
@@ -24,7 +31,8 @@ export const STYLE_PRESETS = Object.keys(presets) as StylePreset[];
 
 export type BrandTheme =
   | { preset: "bold"; tokens: BoldTokens }
-  | { preset: "soft"; tokens: SoftTokens };
+  | { preset: "soft"; tokens: SoftTokens }
+  | { preset: "studio"; tokens: StudioTokens };
 
 export type ThemeResult = { ok: true; theme: BrandTheme } | { ok: false; issues: string[] };
 
@@ -49,6 +57,12 @@ export function parseTheme(preset: string, tokens: unknown): ThemeResult {
     }
     case "soft": {
       const result = softTokensSchema.safeParse(tokens);
+      return result.success
+        ? { ok: true, theme: { preset, tokens: result.data } }
+        : { ok: false, issues: describeIssues(result.error) };
+    }
+    case "studio": {
+      const result = studioTokensSchema.safeParse(tokens);
       return result.success
         ? { ok: true, theme: { preset, tokens: result.data } }
         : { ok: false, issues: describeIssues(result.error) };
@@ -92,6 +106,21 @@ export function switchPresetTokens(to: StylePreset, from: unknown): BrandTheme["
     if (key.endsWith("Asset") && typeof old[key] === "string") next[key] = old[key];
   }
   return next as BrandTheme["tokens"];
+}
+
+/** The main colors of a brand's identity, whatever its preset (panel swatches and cards). */
+export function themeColors(theme: BrandTheme): {
+  bg: string;
+  text: string;
+  accent: string;
+  muted: string;
+} {
+  if (theme.preset === "studio") {
+    const { ink, paper, accent } = theme.tokens.colors;
+    return { bg: ink, text: paper, accent, muted: `color-mix(in srgb, ${paper} 62%, ${ink})` };
+  }
+  const { bg, text, accent, muted } = theme.tokens.colors;
+  return { bg, text, accent, muted };
 }
 
 /** Complete tokens for a brand that just picked the preset. */

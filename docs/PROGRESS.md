@@ -27,7 +27,28 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para el operador:** el documento de voz de RAdev (y el de Lumus) arranca con una nota interna del seed ("> Seed del documento `voice`…"). Le llega a la IA: borrarla desde Marcas → Documentos.
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
 - **Mejoras de contenido (2026-09-29, pedido del operador, en paralelo con la Fase 5):** (1) ✅ generación liviana: ~128.000 → ~1.000 tokens de entrada de base por ejecución (ver abajo). (2) Próximo: rediseño para que cada carrusel sea distinto (composiciones, tipos nuevos, looks por post). El operador eligió: tokens primero, **se puede salir del fondo oscuro** (claro, acento), y que Claude proponga direcciones visuales con capturas (no tiene referencias). Quiere que "cada imagen sea diferente, como ChatGPT". Diagnóstico sobre los carruseles de RAdev en producción: todas las slides tienen el mismo esqueleto (título arriba, diagrama chico, vacío, pie), el contenido ocupa ~30 % de la slide, la secuencia de tipos se repite y sobra decoración.
-- **Última actualización:** 2026-09-29, generación liviana (menos tokens)
+- **Última actualización:** 2026-09-29, preset `studio` con 16 looks conectado a la web (falta que la IA elija el look)
+
+## Mejora — looks (preset `studio`, 2026-09-29)
+
+Pedido del operador: que cada post se vea distinto ("como ChatGPT, que hace imágenes siempre diferentes"). Aprobó 6 direcciones sobre prototipos (editorial, bloques, atmósfera, plano, terminal, recorte) y pidió 10 más (suizo, revista, neón, monocromo, bauhaus, recibo, chat, documento, gradiente, brutalista), todas vistas en capturas; "que la IA decida cuándo usar cada una".
+
+| Paso | Qué | Estado |
+|---|---|---|
+| 1 | Motor `studio` + 16 looks + conexión a la web (render, vista previa, galería con selector de look, editor con selector de look) | ✅ (sin probar con login: falta Docker en WSL) |
+| 2 | La IA elige el look (guía de los 16 en el prompt; no repite los de los últimos posts) | |
+| 3 | ADR de looks + `DESIGN-SYSTEM.md` §10 | |
+| 4 | Pasar RAdev a `studio` desde el panel (4 colores) y probar con login | operador |
+| 5 | Imágenes con IA (Cloudflare Workers AI, FLUX): prueba de calidad con el `.env` local | |
+
+Cómo está hecho (paso 1):
+- `packages/slides/src/presets/studio/`: `tokens.ts` (paleta de 4 colores ink/paper/accent/glow, tipografías display/body/mono/serif, looks activables), `look-ids.ts` (catálogo, nombres y guía para la IA), `kit.tsx` (contrato de un look y piezas comunes), `templates.tsx` (una plantilla por tipo, dibujada con las piezas del look), `looks/*.tsx` (un archivo por look), `frame.tsx` (`StudioSlide`).
+- Cada slide cae en una superficie (ink, paper o accent) según el ritmo del look; el marco la traduce a variables CSS. El carrusel guarda `look` (opcional); sin él, se elige uno de los activos por el id del post (`resolveLook`).
+- `RenderSlide` (`render-slide.tsx`) dibuja cualquier preset: la usan el render, la vista previa, la galería y el editor. `SlideFrame`/`SlideContent` siguen para `bold`/`soft`.
+- Ajuste de densidad (`fit.ts`, `fitSlide`): en el navegador, antes del control de calidad, si el contenido de una slide `studio` no entra se achica con `zoom` (hasta 0,6) y el texto se reacomoda. Lo corren `RenderReady` (worker), la vista previa del panel y la herramienta de previsualización.
+- Tipografía nueva: Fraunces (serif, OFL, `@fontsource-variable/fraunces` 5.3.0) con itálicas, para `revista`. Métricas medidas.
+- `pnpm --filter @radev/slides preview <dir> [--carousel c.json] [--tokens t.json] [--looks a,b] [--set examples|extremes]`: renderiza sin web ni base (React + Playwright) y corre ajuste + control de calidad. Verificado: 16 looks × 12 tipos, con textos de ejemplo y al límite: 0 problemas.
+- Tokens de prueba de RAdev usados en las capturas: ink `#0B0B0B`, paper `#EFECE6`, accent `#FF7A00`, glow `#7C3AED`, wordmark "RAdev", sitio "radev.tech".
 
 ## Mejora — generación liviana (2026-09-29)
 

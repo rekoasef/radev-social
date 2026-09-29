@@ -16,6 +16,7 @@ export const FONT_FAMILIES = [
   "Manrope",
   "DM Sans",
   "JetBrains Mono",
+  "Fraunces",
 ] as const;
 
 export type FontFamily = (typeof FONT_FAMILIES)[number];
@@ -27,7 +28,7 @@ export type FontSpec = {
   cssFamily: string;
   /** Range of the variable weight axis. */
   weights: { min: number; max: number };
-  category: "sans" | "mono";
+  category: "sans" | "mono" | "serif";
 };
 
 export const fonts: Record<FontFamily, FontSpec> = {
@@ -85,11 +86,18 @@ export const fonts: Record<FontFamily, FontSpec> = {
     weights: { min: 100, max: 800 },
     category: "mono",
   },
+  Fraunces: {
+    package: "@fontsource-variable/fraunces",
+    cssFamily: "Fraunces Variable",
+    weights: { min: 100, max: 900 },
+    category: "serif",
+  },
 };
 
 const fallbacks: Record<FontSpec["category"], string> = {
   sans: "system-ui, sans-serif",
   mono: "ui-monospace, monospace",
+  serif: "Georgia, serif",
 };
 
 export function isFontFamily(value: string): value is FontFamily {

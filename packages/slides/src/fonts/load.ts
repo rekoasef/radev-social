@@ -9,3 +9,6 @@ import "@fontsource-variable/space-grotesk";
 import "@fontsource-variable/manrope";
 import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/jetbrains-mono";
+import "@fontsource-variable/fraunces";
+// Italics too: the `revista` look sets its emphasis in italic.
+import "@fontsource-variable/fraunces/wght-italic.css";

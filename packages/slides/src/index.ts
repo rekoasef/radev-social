@@ -120,6 +120,11 @@ export {
   switchPresetTokens,
   type ThemeCheck,
   type ThemeResult,
+  themeColors,
 } from "./presets/registry";
 export { GLOW_POSITIONS, type SoftTokens, softTokensSchema } from "./presets/soft/tokens";
+export { isLookId, LOOK_GUIDE, LOOK_IDS, LOOK_NAMES, type LookId } from "./presets/studio/look-ids";
+export { resolveLook } from "./presets/studio/looks";
+export { enabledLooks, type StudioTokens, studioTokensSchema } from "./presets/studio/tokens";
+export { RenderSlide, type RenderSlideProps } from "./render-slide";
 export { hasTemplate, SlideContent } from "./slide-content";

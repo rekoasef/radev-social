@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { exampleDatasets, exampleSlidesByPreset } from "../content/examples";
 import { SLIDE_TYPES, type Slide } from "../content/slides";
 import { type BrandTheme, defaultTokens, parseTheme, STYLE_PRESETS } from "../presets/registry";
-import { SlideContent } from "../slide-content";
+import { RenderSlide } from "../render-slide";
 import type { SlideAssets } from "./types";
 
 const heroId = "0b9f3c2e-4a1d-4c7b-9e2f-1a2b3c4d5e6f";
@@ -17,7 +17,15 @@ function theme(preset: (typeof STYLE_PRESETS)[number]): BrandTheme {
 
 const render = (t: BrandTheme, slide: Slide) =>
   renderToStaticMarkup(
-    <SlideContent theme={t} slide={slide} datasets={exampleDatasets} assets={assets} />,
+    <RenderSlide
+      theme={t}
+      slide={slide}
+      page={{ index: 2, total: 7 }}
+      seed="post-1"
+      brandName="Marca"
+      datasets={exampleDatasets}
+      assets={assets}
+    />,
   );
 
 describe("movable layers (ADR 0013)", () => {

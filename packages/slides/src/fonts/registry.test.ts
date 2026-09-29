@@ -23,7 +23,10 @@ describe("font registry", () => {
 
   it("loads every registered package, and nothing else", () => {
     const load = readFileSync(new URL("./load.ts", import.meta.url), "utf8");
-    const imported = [...load.matchAll(/^import "([^"]+)";$/gm)].map((match) => match[1]);
+    // Package entries only: extra style sheets (Fraunces' italics) are not families of their own.
+    const imported = [...load.matchAll(/^import "([^"]+)";$/gm)]
+      .map((match) => match[1])
+      .filter((path) => !path?.endsWith(".css"));
     expect(imported.sort()).toEqual(FONT_FAMILIES.map((family) => fonts[family].package).sort());
   });
 

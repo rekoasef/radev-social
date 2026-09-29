@@ -12,6 +12,7 @@
 
 import type { QaIssue } from "./qa-issues";
 
+export { fitSlide } from "./fit";
 export { describeQaIssue, QA_KINDS, type QaIssue } from "./qa-issues";
 
 /**

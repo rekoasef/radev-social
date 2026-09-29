@@ -4,8 +4,8 @@ import { defaultTokens, isStylePreset, parseTheme, STYLE_PRESETS } from "./regis
 import { softTokensSchema } from "./soft/tokens";
 
 describe("preset registry", () => {
-  it("lists bold and soft", () => {
-    expect(STYLE_PRESETS).toEqual(["bold", "soft"]);
+  it("lists bold, soft and studio", () => {
+    expect(STYLE_PRESETS).toEqual(["bold", "soft", "studio"]);
     expect(isStylePreset("bold")).toBe(true);
     expect(isStylePreset("toString")).toBe(false);
   });

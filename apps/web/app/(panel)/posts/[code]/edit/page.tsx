@@ -56,6 +56,7 @@ export default async function EditPostPage({ params }: PageProps<"/posts/[code]/
           pillars={pillars.map((p) => ({ key: p.key, name: p.name }))}
           initial={content.data}
           post={{ code: post.publicCode, version: version.number }}
+          seed={post.id}
           data={data}
         />
       )}

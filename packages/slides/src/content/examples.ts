@@ -259,6 +259,7 @@ const softOverrides: { [T in SlideType]?: SlideOf<T> } = {
 export const exampleSlidesByPreset = {
   bold: exampleSlides,
   soft: { ...exampleSlides, ...softOverrides } as typeof exampleSlides,
+  studio: exampleSlides,
 };
 
 /**
@@ -311,4 +312,8 @@ export const softExampleCarousel: Carousel = {
 };
 
 /** Example carousel for each preset. */
-export const exampleCarouselByPreset = { bold: exampleCarousel, soft: softExampleCarousel };
+export const exampleCarouselByPreset = {
+  bold: exampleCarousel,
+  soft: softExampleCarousel,
+  studio: exampleCarousel,
+};
