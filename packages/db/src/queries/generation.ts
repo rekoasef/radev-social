@@ -213,7 +213,15 @@ export function listGenerationRuns(db: Database, postId: string): Promise<Genera
     .orderBy(desc(generationRuns.createdAt));
 }
 
-export type RecentPost = { hook: string; hookType: string | null; pillarKey: string | null };
+export type RecentPost = {
+  hook: string;
+  hookType: string | null;
+  pillarKey: string | null;
+  /** Look of the post (`studio` brands), so the next one does not repeat it. */
+  look: string | null;
+  /** Its slide types in order, so the next one varies the structure. */
+  slides: string[];
+};
 
 /**
  * The brand's latest posts that have content, for recent-posts.json: the AI reads them so as
@@ -244,7 +252,16 @@ export async function listRecentPostHooks(
     .orderBy(desc(posts.number))
     .limit(limit);
   return rows.flatMap(({ content, hookType, pillarKey }) => {
-    const hook = (content as { hook?: unknown }).hook;
-    return typeof hook === "string" ? [{ hook, hookType, pillarKey }] : [];
+    const { hook, look, slides } = content as { hook?: unknown; look?: unknown; slides?: unknown };
+    if (typeof hook !== "string") return [];
+    const types = Array.isArray(slides)
+      ? slides.flatMap((slide) => {
+          const type = (slide as { type?: unknown } | null)?.type;
+          return typeof type === "string" ? [type] : [];
+        })
+      : [];
+    return [
+      { hook, hookType, pillarKey, look: typeof look === "string" ? look : null, slides: types },
+    ];
   });
 }

@@ -1,4 +1,7 @@
 import type { z } from "zod";
+import { parseTheme } from "../presets/registry";
+import { LOOK_GUIDE, type LookId } from "../presets/studio/look-ids";
+import { enabledLooks } from "../presets/studio/tokens";
 import { describeQaIssue, QA_KINDS, type QaIssue } from "../qa-issues";
 import { carouselSchema } from "./carousel";
 import { limits as L } from "./limits";
@@ -37,6 +40,8 @@ límites de caracteres están en el JSON Schema; respetalos, porque un texto má
 - \`hook\` es el título del post en TikTok: el mismo gancho de la portada, dicho para quien scrollea.
 - \`caption\`: el texto del post. \`hashtags\`: hasta ${L.carousel.hashtags}, sin "#".
 - Variá los tipos: no repitas el mismo tipo de slide dos veces seguidas salvo que haga falta.
+- Variá la estructura entre posts: \`recent-posts.json\` trae la secuencia de tipos (\`slides\`) de
+  los últimos. No copies la de ninguno; si el tema lo permite, usá tipos que vienen usándose poco.
 
 ## Tipos
 
@@ -64,11 +69,33 @@ Nombres de Lucide en kebab-case (ej. \`message-circle\`, \`calendar-clock\`, \`f
 Si no estás seguro de que un ícono existe, usá uno común.
 `;
 
+export { isLookId, LOOK_COOLDOWN, type LookId, lookChoices } from "../presets/studio/look-ids";
+
+/** The looks a brand has on (`studio` preset); empty for the other presets or broken tokens. */
+export function brandLooks(stylePreset: string, themeTokens: unknown): LookId[] {
+  const parsed = parseTheme(stylePreset, themeTokens);
+  return parsed.ok && parsed.theme.preset === "studio" ? enabledLooks(parsed.theme.tokens) : [];
+}
+
+/** The look section of the guide: the looks the post may take, with what each one is for. */
+function lookGuide(looks: readonly LookId[]): string {
+  return `
+## Look
+
+El diseño del carrusel lo da su \`look\`: elegí **uno** de estos, el que mejor le quede al tema y
+al tono del post. Cambia todo (colores, tipografía, composición), así que pensalo como la
+dirección de arte. Los looks de los últimos posts no están en la lista a propósito.
+
+${looks.map((id) => `- \`${id}\`: ${LOOK_GUIDE[id]}`).join("\n")}
+`;
+}
+
 /**
  * What the AI reads about the templates (`slides.md`). With `data`, the brand has real data
- * (`data.json`) and may use the data slides.
+ * (`data.json`) and may use the data slides. With `looks` (a `studio` brand), it also picks the
+ * post's look among them.
  */
-export function aiSlideGuide(options: { data: boolean }): string {
+export function aiSlideGuide(options: { data: boolean; looks?: readonly LookId[] }): string {
   const dataSlides = DATA_SLIDES.map((type) => `\`${type}\``).join(" ni ");
   const dataPart = options.data
     ? `- \`bigNumber\`: una cifra enorme de \`data.json\` con su contexto.
@@ -77,7 +104,8 @@ export function aiSlideGuide(options: { data: boolean }): string {
 ${DATA_GUIDE}`
     : `
 No uses ${dataSlides}: sus cifras tienen que venir de datos reales que esta marca no tiene.`;
-  return AI_SLIDE_GUIDE_BASE.replace("{{data}}", dataPart);
+  const looks = options.looks && options.looks.length > 0 ? lookGuide(options.looks) : "";
+  return AI_SLIDE_GUIDE_BASE.replace("{{data}}", dataPart) + looks;
 }
 
 /** A range as written, for comparing: no case, no spaces, one kind of dash. */
@@ -103,8 +131,11 @@ export function aiCarouselSchema(
     requiredSlides?: readonly string[];
     pricing?: string;
     data?: { datasets: readonly string[]; isFigure: (value: string) => boolean };
+    /** A `studio` brand: the post must take one of these looks (lookChoices). */
+    looks?: readonly LookId[];
   } = {},
 ) {
+  const looks = options.looks && options.looks.length > 0 ? options.looks : undefined;
   const data = options.data;
   const required = options.requiredSlides ?? [];
   const pricing = options.pricing === undefined ? undefined : normalizeRange(options.pricing);
@@ -134,6 +165,13 @@ export function aiCarouselSchema(
         code: "custom",
         path: ["slides"],
         message: `La serie exige estas slides y faltan: ${missing.map((t) => `\`${t}\``).join(", ")}.`,
+      });
+    }
+    if (looks && (!carousel.look || !looks.includes(carousel.look))) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["look"],
+        message: `Elegí el \`look\` entre estos (ver slides.md): ${looks.join(", ")}.`,
       });
     }
     if (!pillarKeys.includes(carousel.pillarKey)) {

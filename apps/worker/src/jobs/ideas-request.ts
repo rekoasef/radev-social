@@ -114,7 +114,12 @@ export function buildIdeaFiles(input: {
   return {
     "task.json": `${JSON.stringify(brief, null, 2)}\n`,
     "series.md": seriesMd,
-    "recent-posts.json": `${JSON.stringify(recent, null, 2)}\n`,
+    // Topics only: looks and structures are for writing a carousel, not for ideas.
+    "recent-posts.json": `${JSON.stringify(
+      recent.map(({ hook, hookType, pillarKey }) => ({ hook, hookType, pillarKey })),
+      null,
+      2,
+    )}\n`,
     "existing-ideas.json": `${JSON.stringify(existing, null, 2)}\n`,
   };
 }

@@ -123,7 +123,15 @@ export {
   themeColors,
 } from "./presets/registry";
 export { GLOW_POSITIONS, type SoftTokens, softTokensSchema } from "./presets/soft/tokens";
-export { isLookId, LOOK_GUIDE, LOOK_IDS, LOOK_NAMES, type LookId } from "./presets/studio/look-ids";
+export {
+  isLookId,
+  LOOK_COOLDOWN,
+  LOOK_GUIDE,
+  LOOK_IDS,
+  LOOK_NAMES,
+  type LookId,
+  lookChoices,
+} from "./presets/studio/look-ids";
 export { resolveLook } from "./presets/studio/looks";
 export { enabledLooks, type StudioTokens, studioTokensSchema } from "./presets/studio/tokens";
 export { RenderSlide, type RenderSlideProps } from "./render-slide";

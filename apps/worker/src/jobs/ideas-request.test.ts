@@ -20,7 +20,13 @@ describe("buildIdeaFiles", () => {
       params,
       series,
       recent: [
-        { hook: "Tu negocio pierde clientes", hookType: "warning", pillarKey: "business-problems" },
+        {
+          hook: "Tu negocio pierde clientes",
+          hookType: "warning",
+          pillarKey: "business-problems",
+          look: "chat",
+          slides: ["cover", "cta"],
+        },
       ],
       existing: [{ title: "Bots de WhatsApp", status: "discarded", seriesKey: null }],
     });
@@ -29,6 +35,10 @@ describe("buildIdeaFiles", () => {
       "recent-posts.json",
       "series.md",
       "task.json",
+    ]);
+    // Topics only: the looks and structures of the posts are for writing carousels.
+    expect(read(files, "recent-posts.json")).toEqual([
+      { hook: "Tu negocio pierde clientes", hookType: "warning", pillarKey: "business-problems" },
     ]);
     const task = read(files, "task.json");
     expect(task.count).toBe(5);

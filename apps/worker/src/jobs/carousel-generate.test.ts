@@ -63,7 +63,13 @@ describe("decide", () => {
 
 describe("buildTaskFiles", () => {
   const recent = [
-    { hook: "¿Cuánto cuesta una app?", hookType: "cost", pillarKey: "business-problems" },
+    {
+      hook: "¿Cuánto cuesta una app?",
+      hookType: "cost",
+      pillarKey: "business-problems",
+      look: "recibo",
+      slides: ["cover", "costBreakdown", "cta"],
+    },
   ];
 
   it("writes the request, the slide guide and the recent posts", () => {
@@ -105,6 +111,16 @@ describe("buildTaskFiles", () => {
     const without = buildTaskFiles({ request, recent, data: null });
     expect(without["data.json"]).toBeUndefined();
     expect(without["slides.md"]).toContain("No uses `chart` ni `bigNumber`");
+  });
+
+  it("lists the looks the post may take in the guide (studio brands)", () => {
+    const request = { idea: "Automatizar WhatsApp", pillarKey: null, hookType: null };
+    const files = buildTaskFiles({ request, recent, looks: ["chat", "terminal"] });
+    expect(files["slides.md"]).toContain("## Look");
+    expect(files["slides.md"]).toContain("- `chat`:");
+    expect(files["slides.md"]).toContain("- `terminal`:");
+    expect(files["slides.md"]).not.toContain("- `recibo`:");
+    expect(buildTaskFiles({ request, recent })["slides.md"]).not.toContain("## Look");
   });
 
   it("lets the AI choose the pillar and hook when the operator didn't", () => {

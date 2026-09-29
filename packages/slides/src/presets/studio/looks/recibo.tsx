@@ -149,7 +149,7 @@ export const recibo: Look = {
                 lineHeight: 1.3,
               }}
             >
-              {item.lead ? `${item.lead} ` : ""}
+              {item.lead && <span style={{ opacity: 0.55, fontWeight: 400 }}>{item.lead} </span>}
               <RichText text={item.title} ctx={ctx} />
             </span>
             <span

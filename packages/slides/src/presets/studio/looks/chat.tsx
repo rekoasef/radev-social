@@ -166,7 +166,7 @@ export const chat: Look = {
                   lineHeight: 1.2,
                 }}
               >
-                {item.lead ? `${item.lead} ` : ""}
+                {item.lead && <span style={{ opacity: 0.55, fontWeight: 400 }}>{item.lead} </span>}
                 <RichText text={item.title} ctx={ctx} />
               </span>
               {item.text && (

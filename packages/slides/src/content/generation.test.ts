@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { exampleCarousel } from "./examples";
-import { aiCarouselSchema, aiSlideGuide, DATA_SLIDES, describeRenderProblems } from "./generation";
+import {
+  aiCarouselSchema,
+  aiSlideGuide,
+  brandLooks,
+  DATA_SLIDES,
+  describeRenderProblems,
+  lookChoices,
+} from "./generation";
 
 describe("aiCarouselSchema", () => {
   const pillar = exampleCarousel.pillarKey;
@@ -146,6 +153,52 @@ describe("aiCarouselSchema with the brand's data", () => {
       ["slides", 1, "value"],
       ["slides", 2, "datasetRef"],
     ]);
+  });
+});
+
+describe("aiCarouselSchema with looks (studio)", () => {
+  const pillars = [exampleCarousel.pillarKey];
+  const schema = aiCarouselSchema(pillars, { looks: ["chat", "terminal"] });
+
+  it("takes one of the allowed looks", () => {
+    expect(schema.safeParse({ ...exampleCarousel, look: "chat" }).success).toBe(true);
+  });
+
+  it("rejects a missing look or one the post may not take, saying which ones it can", () => {
+    for (const carousel of [exampleCarousel, { ...exampleCarousel, look: "recibo" }]) {
+      const result = schema.safeParse(carousel);
+      expect(result.success).toBe(false);
+      expect(result.error?.issues.map((i) => i.message).join(" ")).toContain("chat, terminal");
+    }
+  });
+
+  it("does not ask for a look for other presets", () => {
+    expect(aiCarouselSchema(pillars).safeParse(exampleCarousel).success).toBe(true);
+  });
+});
+
+describe("lookChoices", () => {
+  const enabled = ["editorial", "bloques", "chat", "recibo"] as const;
+
+  it("leaves out the looks of the last two posts", () => {
+    expect(lookChoices(enabled, ["chat", "recibo", "editorial"])).toEqual(["editorial", "bloques"]);
+    expect(lookChoices(enabled, [null, "chat"])).toEqual(["editorial", "bloques", "recibo"]);
+  });
+
+  it("keeps a revision's look", () => {
+    expect(lookChoices(enabled, ["chat"], "chat")).toEqual(["chat"]);
+  });
+
+  it("never leaves the post without looks", () => {
+    expect(lookChoices(["chat"], ["chat", "chat"])).toEqual(["chat"]);
+  });
+});
+
+describe("brandLooks", () => {
+  it("lists the looks a studio brand has on, and none for other presets", () => {
+    expect(brandLooks("studio", { looks: { chat: false } })).not.toContain("chat");
+    expect(brandLooks("studio", {}).length).toBe(16);
+    expect(brandLooks("bold", {})).toEqual([]);
   });
 });
 

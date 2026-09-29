@@ -42,7 +42,11 @@ import {
   type AiCarousel,
   aiCarouselSchema,
   aiSlideGuide,
+  brandLooks,
   describeRenderProblems,
+  isLookId,
+  type LookId,
+  lookChoices,
   type StoredRenderIssue,
 } from "@radev/slides/generation";
 import type { Logger } from "../logger";
@@ -63,6 +67,10 @@ export const GENERATION_PROMPT =
 /** Added to the prompt when the brand has real data (phase 3, T11). */
 export const DATA_PROMPT =
   "`data.json` trae datos reales del día: si el tema lo pide, usalos, y son los únicos números que podés mostrar.";
+
+/** Added to the prompt when the brand draws its posts with looks (`studio` preset). */
+export const LOOK_PROMPT =
+  "Elegí también el `look` del carrusel: la sección Look de `slides.md` dice para qué sirve cada uno.";
 
 /** Added to the prompt when the run rewrites an existing version (phase 3, T8). */
 export const REVISION_PROMPT =
@@ -90,8 +98,10 @@ export function buildTaskFiles(input: {
   series?: TaskSeries;
   /** The brand's real data (`data.json`), when it has data sources. */
   data?: BrandData | null;
+  /** The looks the post may take (`studio` brands). */
+  looks?: readonly LookId[];
 }): Record<string, string> {
-  const { request, recent, problems, revision, series, data } = input;
+  const { request, recent, problems, revision, series, data, looks } = input;
   const task = {
     idea: request.idea,
     ...(series && {
@@ -135,7 +145,7 @@ export function buildTaskFiles(input: {
   };
   return {
     "task.json": `${JSON.stringify(task, null, 2)}\n`,
-    "slides.md": aiSlideGuide({ data: Boolean(data) }),
+    "slides.md": aiSlideGuide({ data: Boolean(data), looks }),
     "recent-posts.json": `${JSON.stringify(recent, null, 2)}\n`,
     ...(data && { "data.json": `${JSON.stringify(data, null, 2)}\n` }),
     ...(revision && { "previous.json": `${JSON.stringify(revision.previous, null, 2)}\n` }),
@@ -309,6 +319,18 @@ export async function generateCarousel(
     request.seriesKey ? getSeriesByKey(db, brand.id, request.seriesKey) : undefined,
     getBrandData(db, brand.id),
   ]);
+  // A studio brand: the AI picks the look among the brand's, minus the last posts' (a revision
+  // keeps the one it has).
+  const enabled = brandLooks(brand.stylePreset, brand.themeTokens);
+  const previousLook = (current?.content as { look?: unknown } | undefined)?.look;
+  const looks =
+    enabled.length > 0
+      ? lookChoices(
+          enabled,
+          recent.map((r) => r.look),
+          typeof previousLook === "string" && isLookId(previousLook) ? previousLook : undefined,
+        )
+      : undefined;
   const series: TaskSeries | undefined = seriesRow && {
     name: seriesRow.name,
     brief: seriesRow.brief,
@@ -335,11 +357,13 @@ export async function generateCarousel(
             isFigure: (value) => findFigure(data.figures, value) !== undefined,
           }
         : undefined,
+      looks,
     },
   );
   const prompt = [
     GENERATION_PROMPT,
     ...(data ? [DATA_PROMPT] : []),
+    ...(looks ? [LOOK_PROMPT] : []),
     ...(revision ? [REVISION_PROMPT] : []),
   ].join(" ");
   const context = { brandId: brand.id, postId: post.id };
@@ -352,7 +376,7 @@ export async function generateCarousel(
       prompt,
       files: {
         "CLAUDE.md": claudeMd,
-        ...buildTaskFiles({ request, recent, problems, revision, series, data }),
+        ...buildTaskFiles({ request, recent, problems, revision, series, data, looks }),
       },
       schema,
       maxTurns: MAX_TURNS,
