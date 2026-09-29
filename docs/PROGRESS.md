@@ -37,7 +37,7 @@ Pedido del operador: que cada post se vea distinto ("como ChatGPT, que hace imá
 |---|---|---|
 | 1 | Motor `studio` + 16 looks + conexión a la web (render, vista previa, galería con selector de look, editor con selector de look) | ✅ (sin probar con login: falta Docker en WSL) |
 | 2 | La IA elige el look (guía de los 16 en el prompt; no repite los de los últimos posts) | ✅ |
-| 3 | ADR de looks + `DESIGN-SYSTEM.md` §10 | |
+| 3 | ADR de looks + `DESIGN-SYSTEM.md` §10 | ✅ ADR 0015 |
 | 4 | Pasar RAdev a `studio` desde el panel (4 colores) y probar con login | operador |
 | 5 | Imágenes con IA (Cloudflare Workers AI, FLUX): prueba de calidad con el `.env` local | |
 

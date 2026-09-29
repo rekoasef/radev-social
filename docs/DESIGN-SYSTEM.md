@@ -9,7 +9,7 @@ Aplican a todas las marcas:
 - Estética editorial tecnológica, **premium y minimalista**.
 - **Mucho espacio negativo.** Tipografía fuerte y composición limpia.
 - **Sin personas, sin fotos, sin ilustraciones infantiles, sin 3D innecesario.** Las plantillas solo aceptan íconos (Lucide), diagramas propios y assets de la marca.
-- **Layout consistente** en todas las slides de un carrusel.
+- **Layout consistente dentro de un carrusel**: todas sus slides comparten estilo (en `studio`, el look del post). **Entre posts, variedad**: con `studio` cada post tiene su look (§10, ADR 0015).
 - Lo que en un prompt de IA era un deseo, acá es una restricción del código.
 
 ## 2. Presets y tokens: qué es código y qué es dato
@@ -23,7 +23,7 @@ Una identidad visual = **preset de estilo** (código) + **tokens** (datos editab
 - **Marca nueva = elegir preset + cargar tokens y assets. Cero código.** Un estilo visual completamente distinto = un preset nuevo (código), que queda disponible para todas las marcas.
 
 ### Tipografías disponibles (lista curada)
-Todas libres, auto-hospedadas en el proyecto (no se cargan de internet al renderizar): Inter, Inter Tight, Hanken Grotesk, Geist Sans, Geist Mono, Space Grotesk, Manrope, DM Sans, JetBrains Mono. Vienen de paquetes `@fontsource-variable` (fuentes variables). Para sumar una: instalar su paquete en `packages/slides`, registrarla en `src/fonts/registry.ts` y `src/fonts/load.ts`, y correr `pnpm --filter @radev/slides fonts:measure` (mide el ancho de sus letras en cada peso: `src/fonts/metrics.json`).
+Todas libres, auto-hospedadas en el proyecto (no se cargan de internet al renderizar): Inter, Inter Tight, Hanken Grotesk, Geist Sans, Geist Mono, Space Grotesk, Manrope, DM Sans, JetBrains Mono y Fraunces (serif, con itálicas; la usa el look `revista`). Vienen de paquetes `@fontsource-variable` (fuentes variables). Para sumar una: instalar su paquete en `packages/slides`, registrarla en `src/fonts/registry.ts` y `src/fonts/load.ts`, y correr `pnpm --filter @radev/slides fonts:measure` (mide el ancho de sus letras en cada peso: `src/fonts/metrics.json`).
 
 - **Ancho de las tipografías**: los títulos se calculan con la tipografía de referencia de cada preset (Inter Tight 900 en `bold`, Hanken Grotesk 600 en `soft`). Si la marca elige una más ancha, el título se achica en la misma proporción (`--title-scale`, entre 0,7 y 1), así ocupa las líneas previstas. Probado con las 9 tipografías en los dos presets y los 12 tipos, con textos normales y al límite (T12).
 - **Monoespaciadas (Geist Mono, JetBrains Mono) como texto: no recomendadas.** Son un 20–25 % más anchas: en `flow` con 4 nodos las etiquetas no entran ni al tamaño mínimo, y en algunos extremos el texto no entra. El editor de identidad lo avisa ("Probar con textos al límite"). Para cifras (`fonts.numeric` de `soft`) sí se usan.
@@ -34,6 +34,7 @@ Todas libres, auto-hospedadas en el proyecto (no se cargan de internet al render
 |---|---|---|
 | `bold` | Fuerte y directa: títulos enormes en mayúsculas, acento brillante, tarjetas con borde luminoso, lenguaje de workflows | RAdev |
 | `soft` | Calma y premium: títulos en oración normal, mucho aire, paneles de vidrio, glows radiales, elemento protagonista (hero) | Lumus |
+| `studio` | 16 looks sobre una paleta de 4 colores: cada post usa uno distinto (§10, ADR 0015) | RAdev (a pasar desde el panel) |
 
 ## 3. Formatos y zonas seguras
 
@@ -258,8 +259,74 @@ Referencias: `docs/references/radev/`. Cuando una referencia contradice estas re
 
 Hacia abajo se toleran hasta media altura de letra: la caja de algunas fuentes (Manrope, DM Sans) pasa unos píxeles el interlineado sin cortar nada; una línea de más sí es un desborde. A lo ancho, cualquier píxel cuenta.
 
+**Antes** de los puntos 1 y 2, en `studio`, el ajuste de densidad (`fitSlide`, `packages/slides/src/fit.ts`) achica con `zoom` el bloque de contenido que no entra (pasos de 0,04, hasta 0,6, con 28 px de tolerancia para piezas rotadas y sombras) y el texto se reacomoda. Si ni al mínimo entra, el control lo marca igual.
+
 Los puntos 1 y 2 los hace `checkRender` (`packages/slides/src/qa.ts`), autocontenida para poder pasarla a Playwright tal cual. La usan la preview (`?qa=1` marca y lista los problemas), `pnpm capture --check`, el editor de identidad (aviso bajo la vista previa, con la opción de probar textos al límite) y, desde la Fase 2, el render del worker.
 3. **Fuentes y assets cargados**: se espera `document.fonts.ready` y la carga de imágenes; si algo falla, el render falla.
 4. **Contraste mínimo** entre `text` y `bg` en el editor de identidad: advertencia (no bloquea) si queda debajo de 4,5:1 (WCAG AA; `contrastRatio` en `packages/core`).
 5. **Énfasis**: máximo 2 por slide (validado en el schema).
 6. **Capas encimadas** (solo en el editor, ADR 0013): si una capa movida a mano queda encima de otra, aviso bajo la vista previa. Mide líneas de texto, cajas con fondo o borde e imágenes sin su margen transparente. No bloquea ni hace fallar el render (`checkRender(frame, mark, { overlap: true })`).
+
+## 10. Preset `studio` — looks por post
+
+ADR 0015. Una paleta de marca, 16 direcciones de arte en código, una por post.
+
+### Tokens
+
+| Token | Uso |
+|---|---|
+| `colors.ink` / `colors.paper` | Oscuro y claro: fondo o texto según la superficie |
+| `colors.accent` | Énfasis, números, botones; fondo de las slides de acento |
+| `colors.glow` | Segundo acento para luces y degradados (atmósfera, neón, gradiente, bauhaus) |
+| `fonts.display` / `body` / `mono` / `serif` | Títulos, texto, datos y etiquetas, títulos serif (revista) |
+| `wordmark` (`text`, `dot`) · `logoAsset` · `handle.site` | Firma (el logo reemplaza al wordmark) |
+| `looks.<id>` | Qué looks usa la marca (al menos uno) |
+
+Valores de RAdev (sugeridos, se cargan en el panel): ink `#0B0B0B`, paper `#EFECE6`, accent `#FF7A00`, glow `#7C3AED`.
+
+### Superficies
+
+Cada slide cae en una superficie: `ink` (fondo oscuro, texto claro), `paper` (al revés) o `accent` (fondo de acento, texto oscuro; el énfasis pasa a oscuro). El look decide la superficie según la posición (portada y cierre fijos, el medio con un ritmo) y las slides de datos nunca caen en `accent`. El marco convierte la superficie en variables CSS (`--bg`, `--fg`, `--hl`, `--muted`, `--line`, `--panel`); plantillas y looks solo leen esas variables. Una pieza sobre otro color (una tarjeta naranja en una slide negra) usa `onSurface`.
+
+### Kit de un look
+
+`packages/slides/src/presets/studio/kit.tsx` (tipo `Look`): tipografía del título (fuente, peso, mayúsculas, tracking, interlineado), `surface`, `Backdrop` (fondo a sangre: grillas, luces, texturas), `Header`, `Footer`, `emphasis`, `Panel` (recuadros; `strong` = destacado), `List` (pasos, tarjetas, nodos), `Button`, `Decor` (elementos grandes por tipo: un "?" gigante, un sticker), `vars` (variables propias, ej. monocromo sin acento), `wrapTitle` (ej. el título en una burbuja de chat) y `compose` (cómo se ordenan portada, pregunta y cierre).
+
+Las plantillas (`templates.tsx`) son comunes: una por tipo de slide, con las capas título y contenido (ADR 0013) y los textos marcados para el control del render. Las slides de listas y datos se centran en vertical como grupo (sin franja vacía en el medio). Tamaños de título por rol (`hero`, `statement`, `title`, `small`), estimados con las métricas de la fuente (§2).
+
+### Catálogo
+
+| Look | Qué es | Para qué (lo lee la IA) |
+|---|---|---|
+| `editorial` | Papel y tinta, títulos enormes, listas con filetes, fondos que alternan | Reflexiones, opiniones, temas serios |
+| `bloques` | Color a sangre, mayúsculas gigantes, sticker, tarjetas de colores | Hooks fuertes, advertencias, errores |
+| `atmosfera` | Luces difusas en panorama continuo, grano, vidrio, aro protagonista | Aspiracional, visión, tecnología |
+| `plano` | Grilla, cruces, tablas con casillas, rótulo de plano | Procesos, arquitecturas, checklists |
+| `terminal` | Ventanas de editor, prompt, el CTA como comando | Técnico, desarrollo, seguridad, IA |
+| `recorte` | Papel rasgado, cinta, resaltador, notas rotadas | Historias, detrás de escena, casos |
+| `suizo` | Grilla estricta, barra de acento, números de sección gigantes | Guías ordenadas, listas |
+| `revista` | Serif con itálicas, cabecera con filete doble, números romanos | Ensayos, tendencias |
+| `neon` | Trazos que brillan, grilla retro en perspectiva | Novedades, trucos, curiosidades |
+| `monocromo` | Solo blanco y negro, centrado, énfasis subrayado | Frases fuertes, mitos |
+| `bauhaus` | Círculos, semicírculos, triángulos en color plano | Conceptos, comparaciones |
+| `recibo` | Ticket con bordes dentados, mono, renglones punteados, código de barras | Costos, precios, presupuestos |
+| `chat` | Barra de contacto, burbujas, el CTA como caja de mensaje | WhatsApp, atención, preguntas frecuentes |
+| `documento` | Página sobre escritorio, casillas, resaltados, callouts | Planes, procesos internos, productividad |
+| `gradiente` | Nubes de color claras, tarjetas blancas, botón con degradé | Beneficios, primeros pasos, educación |
+| `brutalista` | Bordes gruesos, sombras duras, resaltado invertido | Opiniones filosas, comparaciones sin filtro |
+
+La descripción que lee la IA es `LOOK_GUIDE` (`look-ids.ts`).
+
+### Elección del look
+
+- La IA lo elige entre los activos de la marca menos los de los **2** últimos posts (`lookChoices`, `LOOK_COOLDOWN`); una revisión conserva el suyo. Se valida con Zod.
+- El editor del post tiene un selector de look; la galería de la marca (Marcas → Slides) muestra cada look activo.
+- Sin `look` guardado, se toma uno de los activos por el id del post (`resolveLook`): siempre el mismo para ese post.
+
+### Sumar un look
+
+1. Agregar el id, el nombre y la guía en `look-ids.ts`.
+2. Escribir el kit en `looks/<id>.tsx` y registrarlo en `looks/index.ts`.
+3. `pnpm --filter @radev/slides preview <dir> --tokens <paleta.json> --looks <id> --set examples` y `--set extremes`: tiene que dar 0 problemas.
+4. Capturas para aprobar (un carrusel real). Los tests de `studio.test.tsx` recorren todos los looks solos.
+

@@ -81,6 +81,9 @@ pnpm --filter @radev/ai smoke [claude-code|openrouter] [modelo]
 # Slides
 pnpm --filter @radev/slides icons:sync   # regenerar la lista de íconos tras actualizar lucide-react
 pnpm --filter @radev/slides fonts:measure # medir el ancho de las tipografías (tras sumar una)
+pnpm --filter @radev/slides preview /tmp/looks --tokens t.json [--looks chat,recibo] [--set examples|extremes] [--carousel c.json]
+                    # renderizar los looks de `studio` sin web ni base (Playwright) + ajuste y control
+                    # del render; falla si hay problemas. Para diseñar o revisar looks (DESIGN-SYSTEM §10)
 pnpm capture "/render/preview/radev/frame?overlay=tiktok" /tmp/x.png
                     # captura de una slide con Playwright (web levantada + RENDER_TOKEN en .env;
                     # el token va por cabecera X-Render-Token, no en la URL)
