@@ -10,8 +10,8 @@ import {
   type StylePreset,
   setTokenValue,
   switchPresetTokens,
-  themeColors,
   type TokenGroup,
+  themeColors,
 } from "@radev/slides";
 import { useActionState, useMemo, useRef, useState } from "react";
 import {
