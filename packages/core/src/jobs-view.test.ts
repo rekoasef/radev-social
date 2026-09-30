@@ -10,6 +10,7 @@ import {
   jobError,
   jobTarget,
 } from "./jobs-view";
+import type { PostStatus } from "./posts/constants";
 
 describe("job names", () => {
   it("labels every job", () => {
@@ -89,7 +90,7 @@ describe("canRetryJob", () => {
   });
 
   it("retries a post's job only while the post still waits for it", () => {
-    const post = (status: "generating" | "rendering" | "failed" | "scheduled" | "approved") => ({
+    const post = (status: PostStatus) => ({
       post: { status, currentVersionId: "v2" },
     });
     expect(canRetryJob(JOBS.carouselGenerate, "failed", post("generating")).ok).toBe(true);
@@ -107,6 +108,8 @@ describe("canRetryJob", () => {
     expect(canRetryJob(JOBS.postPublish, "failed", post("scheduled")).ok).toBe(true);
     expect(canRetryJob(JOBS.postPublish, "failed", post("approved")).ok).toBe(false);
     expect(canRetryJob(JOBS.postPublish, "failed", { post: null }).ok).toBe(false);
+    expect(canRetryJob(JOBS.tiktokPublish, "failed", post("publishing")).ok).toBe(true);
+    expect(canRetryJob(JOBS.tiktokPublish, "failed", post("publish_failed")).ok).toBe(false);
   });
 
   it("retries an idea request's job only while the request is open", () => {

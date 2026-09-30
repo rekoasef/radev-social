@@ -10,6 +10,7 @@ import {
   reviewNotice,
   reviewNoticeAt,
   shortDateTime,
+  tiktokInboxNotice,
 } from "./messages";
 
 const BA = "America/Argentina/Buenos_Aires";
@@ -49,6 +50,18 @@ describe("messages", () => {
     );
     expect(notice.key).toBe("publish:p1:2026-09-26T22:00:00.000Z");
     expect(notice.text).toContain("https://app.gestorlumus.site/posts/LU-0007/download");
+  });
+
+  it("tells once per post that a draft is in the TikTok inbox", () => {
+    const notice = tiktokInboxNotice(
+      { id: "p1", code: "RA-0007", brandName: "RAdev", hook: "Tu web" },
+      APP,
+    );
+    expect(notice.key).toBe("tiktok-inbox:p1");
+    expect(notice.kind).toBe("publish");
+    expect(notice.text).toContain("bandeja de TikTok");
+    expect(notice.text).toContain("https://app.gestorlumus.site/posts/RA-0007");
+    expect(notice.text).not.toContain("download");
   });
 
   it("cuts long errors and keys failures by what failed", () => {

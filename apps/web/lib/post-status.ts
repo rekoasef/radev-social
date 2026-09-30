@@ -8,7 +8,7 @@ export const STATUS_DISPLAY: Record<PostStatus, { tally: TallyState; label: stri
   in_review: { tally: "cued", label: "En revisión" },
   rejected: { tally: "off", label: "Rechazado" },
   approved: { tally: "ready", label: "Aprobado" },
-  scheduled: { tally: "ready", label: "Programado" },
+  scheduled: { tally: "timed", label: "Programado" },
   publishing: { tally: "standby", label: "Publicando" },
   published: { tally: "ready", label: "Publicado" },
   publish_failed: { tally: "live", label: "Falló la publicación" },

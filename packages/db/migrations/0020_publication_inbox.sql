@@ -1,0 +1,2 @@
+ALTER TABLE "publications" DROP CONSTRAINT "publications_status_valid";--> statement-breakpoint
+ALTER TABLE "publications" ADD CONSTRAINT "publications_status_valid" CHECK ("publications"."status" in ('pending', 'inbox', 'published', 'failed'));

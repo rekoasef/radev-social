@@ -38,7 +38,11 @@ export type SocialNetwork = (typeof SOCIAL_NETWORKS)[number];
 export const SOCIAL_ACCOUNT_STATUSES = ["active", "reauth_required"] as const;
 export type SocialAccountStatus = (typeof SOCIAL_ACCOUNT_STATUSES)[number];
 
-export const PUBLICATION_STATUSES = ["pending", "published", "failed"] as const;
+/**
+ * `inbox`: TikTok left it as a draft in the account's inbox (MEDIA_UPLOAD, until TikTok's audit);
+ * the operator finishes it in the app and then marks it published.
+ */
+export const PUBLICATION_STATUSES = ["pending", "inbox", "published", "failed"] as const;
 export type PublicationStatus = (typeof PUBLICATION_STATUSES)[number];
 
 /** Public code of a post: brand prefix and a 4-digit number, e.g. RA-0142. */

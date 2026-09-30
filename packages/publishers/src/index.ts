@@ -14,4 +14,16 @@ export {
   type TikTokUser,
   tiktokAuthorizeUrl,
 } from "./tiktok/oauth";
+export {
+  fetchPostState,
+  fitUtf16,
+  initPhotoPost,
+  isTiktokAuthError,
+  isTiktokPermanentError,
+  TIKTOK_DESCRIPTION_MAX,
+  TIKTOK_MAX_PHOTOS,
+  TIKTOK_TITLE_MAX,
+  type TikTokPostMode,
+  type TikTokPostState,
+} from "./tiktok/posting";
 export type { PublisherAdapter, PublishInput, PublishResult } from "./types";

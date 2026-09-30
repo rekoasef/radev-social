@@ -18,6 +18,11 @@ export const JOBS = {
   dataRefresh: "data.refresh",
   /** At a scheduled post's time: publish it through its adapter (manual: wait for the operator). */
   postPublish: "post.publish",
+  /**
+   * A post of a brand with TikTok connected, already `publishing`: send it to TikTok and follow
+   * it until TikTok takes it (inbox draft or published) or fails (phase 5 T6).
+   */
+  tiktokPublish: "tiktok.publish",
   /** Every 15 min: inside the generation window, give free slots a post for the AI (phase 4, T4). */
   slotsFill: "slots.fill",
   /** Tell the operator the posts that got to review, in one Telegram message (phase 4, T6). */
@@ -100,6 +105,15 @@ export const QUEUE_OPTIONS = {
   [JOBS.dataRefresh]: { retryLimit: 3, retryDelay: 300, retryBackoff: true },
   // Quick (the manual adapter only marks it); a network hiccup is tried again soon.
   [JOBS.postPublish]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
+  // TikTok down, its rate limit (6 posts/min per account) or still processing the photos: tried
+  // again from 30 s for about 8 min. The publish id is saved first, so a retry follows the same
+  // post instead of sending another one.
+  [JOBS.tiktokPublish]: {
+    retryLimit: 4,
+    retryDelay: 30,
+    retryBackoff: true,
+    expireInSeconds: 10 * 60,
+  },
   // Only database work and queueing; the next run (15 min) is the retry.
   [JOBS.slotsFill]: { retryLimit: 0, expireInSeconds: 10 * 60 },
   [JOBS.reviewNotify]: { retryLimit: 2, retryDelay: 60 },
@@ -140,6 +154,11 @@ export const dataRefreshKey = (source: string) => `data:${source}`;
  * it; the job also checks the post's planned time, so a stale copy never publishes (rule 8).
  */
 export const postPublishKey = (postId: string) => `publish:${postId}`;
+
+export type TiktokPublishJob = { postId: string };
+
+/** Key of a post's TikTok job: one at a time per post (it only acts on a pending publication). */
+export const tiktokPublishKey = (postId: string) => `tiktok:${postId}`;
 
 export type NotifySendJob = { notificationId: string };
 

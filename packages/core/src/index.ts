@@ -173,6 +173,8 @@ export {
   type SlideRewriteJob,
   type SlideRewriteStatus,
   slideRewriteKey,
+  type TiktokPublishJob,
+  tiktokPublishKey,
 } from "./jobs";
 export {
   canRetryJob,
@@ -212,6 +214,7 @@ export {
   reviewNotice,
   reviewNoticeAt,
   shortDateTime,
+  tiktokInboxNotice,
 } from "./notifications/messages";
 export {
   NETWORKS,

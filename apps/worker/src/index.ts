@@ -26,6 +26,8 @@ import {
   QUEUE_OPTIONS,
   SLOTS_FILL_CRON,
   type SlideRewriteJob,
+  type TiktokPublishJob,
+  tiktokPublishKey,
 } from "@radev/core";
 import {
   createDb,
@@ -44,12 +46,14 @@ import { notifyReview, sendNotification } from "./jobs/notify";
 import { publishPost } from "./jobs/post-publish";
 import { RetryableRewriteError, rewriteSlide } from "./jobs/slide-rewrite";
 import { fillSlots } from "./jobs/slots-fill";
+import { failTiktokPublish, publishToTiktok } from "./jobs/tiktok-publish";
 import { createLogger } from "./logger";
 import { createEvents, errorMessage } from "./notify/events";
 import { createNotifier } from "./notify/notifier";
 import { telegramConfig, telegramSender } from "./notify/telegram";
 import { closeBrowser } from "./render/browser";
 import { backgroundMatches, edgeBrightness } from "./render/image-check";
+import { jpegFromPng } from "./render/jpeg";
 
 const log = createLogger({ service: "worker" });
 
@@ -336,6 +340,58 @@ async function main() {
     }
   }
 
+  // TikTok (phase 5 T6): a brand with its account connected publishes through it. Without the app's
+  // keys or MEDIA_DOMAIN (TikTok pulls the photos from there) its posts fail with that reason.
+  const tiktokClient =
+    process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET
+      ? {
+          clientKey: process.env.TIKTOK_CLIENT_KEY,
+          clientSecret: process.env.TIKTOK_CLIENT_SECRET,
+        }
+      : null;
+  const mediaBaseUrl = process.env.MEDIA_DOMAIN ? `https://${process.env.MEDIA_DOMAIN}` : null;
+  if (!tiktokClient) log.warn("tiktok not configured: brands with it connected will fail to post");
+  const tiktokRetries = QUEUE_OPTIONS[JOBS.tiktokPublish].retryLimit;
+  await boss.createQueue(JOBS.tiktokPublish, QUEUE_OPTIONS[JOBS.tiktokPublish]);
+  await boss.work(
+    JOBS.tiktokPublish,
+    { batchSize: 1, includeMetadata: true },
+    async ([job]: JobWithMetadata<TiktokPublishJob>[]) => {
+      if (!job) return;
+      const jobLog = log.child({ job: JOBS.tiktokPublish, id: job.id, postId: job.data.postId });
+      const onFailed = ({ postId, error }: { postId: string; error: string }) =>
+        events.postFailed({ what: "publish", postId, id: job.id, error });
+      try {
+        const outcome = await publishToTiktok(
+          {
+            db,
+            log: jobLog,
+            client: tiktokClient,
+            mediaBaseUrl,
+            jpegFromPng,
+            notify: notifier.notify,
+            onFailed,
+            appUrl: notifier.appUrl,
+          },
+          job.data,
+        );
+        jobLog.info("tiktok job finished", { outcome });
+      } catch (error) {
+        const lastTry = job.retryCount >= tiktokRetries;
+        jobLog.error("tiktok publish error", { error, attempt: job.retryCount + 1, lastTry });
+        // Out of retries: the post leaves `publishing` as failed, and the operator is told.
+        if (lastTry) {
+          await failTiktokPublish(
+            { db, log: jobLog, onFailed },
+            job.data.postId,
+            errorMessage(error),
+          );
+        }
+        throw error;
+      }
+    },
+  );
+
   // Scheduled posts: queued by the web for their time (startAfter). A post whose job is gone or
   // stale is not published: the job checks its planned time first.
   await boss.createQueue(JOBS.postPublish, QUEUE_OPTIONS[JOBS.postPublish]);
@@ -347,7 +403,19 @@ async function main() {
       const jobLog = log.child({ job: JOBS.postPublish, id: job.id, postId: job.data.postId });
       try {
         const outcome = await publishPost(
-          { db, log: jobLog, notify: notifier.notify, appUrl: notifier.appUrl },
+          {
+            db,
+            log: jobLog,
+            notify: notifier.notify,
+            appUrl: notifier.appUrl,
+            queueTiktok: async (postId) => {
+              await boss.send(
+                JOBS.tiktokPublish,
+                { postId },
+                { singletonKey: tiktokPublishKey(postId) },
+              );
+            },
+          },
           job.data,
         );
         jobLog.info("publish job finished", { outcome });
@@ -427,6 +495,7 @@ async function main() {
       ...IDEA_REQUEST_TASKS,
       JOBS.dataRefresh,
       JOBS.postPublish,
+      JOBS.tiktokPublish,
       JOBS.slotsFill,
       JOBS.notifySend,
       JOBS.reviewNotify,

@@ -13,6 +13,7 @@ import {
 import {
   getBrandById,
   getPostByCode,
+  getSocialAccount,
   listGenerationRuns,
   listPlannedTimes,
   listPostVersions,
@@ -53,12 +54,13 @@ export async function generateMetadata({ params }: PageProps<"/posts/[code]">): 
 export default async function PostPage({ params, searchParams }: PageProps<"/posts/[code]">) {
   const post = await getPostByCode(db, (await params).code);
   if (!post) notFound();
-  const [brand, versions, publications, runs, query] = await Promise.all([
+  const [brand, versions, publications, runs, query, tiktokAccount] = await Promise.all([
     getBrandById(db, post.brandId),
     listPostVersions(db, post.id),
     listPublications(db, post.id),
     listGenerationRuns(db, post.id),
     searchParams,
+    getSocialAccount(db, post.brandId, "tiktok"),
   ]);
   if (!brand) notFound();
   const current = versions.find((v) => v.id === post.currentVersionId);
@@ -97,16 +99,23 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
     !viewingOld &&
     post.generationRequest !== null &&
     availableEvents(post.status).includes("reject");
-  // Approved or scheduled (published by hand before its time), or waiting since its time came.
+  // Approved or scheduled (published by hand before its time), waiting since its time came, or
+  // published by hand after TikTok couldn't take it.
   const canMarkPublished =
     !viewingOld &&
-    (post.status === "publishing" || availableEvents(post.status).includes("startPublishing"));
+    (post.status === "publishing" ||
+      post.status === "publish_failed" ||
+      availableEvents(post.status).includes("startPublishing"));
   const canSchedule =
     !viewingOld &&
     (post.status === "approved" || post.status === "scheduled") &&
     content?.success === true;
   const slotChoices = canSchedule ? await scheduleChoices(brand, post.id) : [];
   const published = publications.find((p) => p.status === "published");
+  // Phase 5 T6: at its time, a brand with TikTok connected sends the post to the TikTok inbox.
+  const viaTiktok =
+    tiktokAccount?.status === "active" && tiktokAccount.scopes.includes("video.upload");
+  const tiktokPublication = publications.find((p) => p.network === "tiktok");
   // Export is about the current version: hidden while looking at an older one.
   const exportable =
     !viewingOld &&
@@ -223,7 +232,9 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
             <p className="max-w-[60ch] text-sm text-ink">
               Programado para el{" "}
               <span className="timecode">{formatDateTime(post.scheduledAt, brand.timezone)}</span>.
-              A esa hora queda listo para que lo publiques a mano.
+              {viaTiktok
+                ? "A esa hora se manda como borrador a tu bandeja de TikTok."
+                : "A esa hora queda listo para que lo publiques a mano."}
             </p>
             <form action={unschedulePostAction}>
               <input type="hidden" name="code" value={post.publicCode} />
@@ -235,7 +246,17 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
         )}
         {post.status === "publishing" && (
           <p role="status" className="max-w-[60ch] text-sm text-ink">
-            Llegó su hora: descargalo, publicalo a mano y marcalo como publicado.
+            {tiktokPublication?.status === "inbox"
+              ? "Está en tu bandeja de TikTok: abrí la app, publicalo desde la notificación y marcalo como publicado."
+              : tiktokPublication?.status === "pending"
+                ? "Mandándolo a TikTok… En un par de minutos queda en tu bandeja."
+                : "Llegó su hora: descargalo, publicalo a mano y marcalo como publicado."}
+          </p>
+        )}
+        {post.status === "publish_failed" && tiktokPublication?.status === "failed" && (
+          <p role="alert" className="max-w-[60ch] text-sm text-tally-red">
+            No se pudo mandar a TikTok: {tiktokPublication.error ?? "sin detalle"}. Podés
+            descargarlo y publicarlo a mano, o descartarlo.
           </p>
         )}
         {post.scheduledAt && ["generating", "rendering", "in_review"].includes(post.status) && (

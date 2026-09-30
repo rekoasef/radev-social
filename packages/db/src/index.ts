@@ -200,5 +200,13 @@ export {
   saveSocialAccount,
   updateSocialAccountTokens,
 } from "./queries/social-accounts";
+export {
+  getTiktokPublishContext,
+  setAssetJpeg,
+  setTiktokPublishId,
+  settleTiktokPublication,
+  type TiktokOutcome,
+  type TiktokPublishContext,
+} from "./queries/tiktok-publishing";
 export * from "./schema";
 export { decryptToken, encryptToken, tokenEncryptionKey } from "./token-crypto";

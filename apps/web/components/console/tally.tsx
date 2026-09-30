@@ -1,14 +1,16 @@
 import { cn } from "@/lib/utils";
 
-export type TallyState = "live" | "cued" | "ready" | "standby" | "off";
+export type TallyState = "live" | "cued" | "ready" | "timed" | "standby" | "off";
 
 const tallies: Record<
   TallyState,
-  { tone: string; shape: "dot" | "triangle" | "square" | "ring" | "dash" }
+  { tone: string; shape: "dot" | "triangle" | "square" | "diamond" | "ring" | "dash" }
 > = {
   live: { tone: "text-tally-red", shape: "dot" },
   cued: { tone: "text-tally-amber", shape: "triangle" },
   ready: { tone: "text-tally-green", shape: "square" },
+  // Waiting for its time (scheduled): not confused with done.
+  timed: { tone: "text-tally-blue", shape: "diamond" },
   standby: { tone: "text-ink-dim", shape: "ring" },
   off: { tone: "text-ink-faint", shape: "dash" },
 };
@@ -19,6 +21,7 @@ function Lamp({ shape }: { shape: (typeof tallies)[TallyState]["shape"] }) {
       {shape === "dot" && <circle cx="5" cy="5" r="4" fill="currentColor" />}
       {shape === "triangle" && <path d="M5 1 9.2 8.8H.8Z" fill="currentColor" />}
       {shape === "square" && <rect x="1.2" y="1.2" width="7.6" height="7.6" fill="currentColor" />}
+      {shape === "diamond" && <path d="M5 .6 9.4 5 5 9.4.6 5Z" fill="currentColor" />}
       {shape === "ring" && (
         <circle cx="5" cy="5" r="3.4" fill="none" stroke="currentColor" strokeWidth="1.4" />
       )}

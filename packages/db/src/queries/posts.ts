@@ -26,6 +26,7 @@ import {
   type RenderedAsset,
 } from "../schema";
 import type { Executor } from "./brand-assets";
+import { publishTiktokInboxDraft } from "./publications";
 
 // Posts and their versions. `transitionPost` is the only code that writes `posts.status`
 // (CLAUDE.md, rule 2): it applies the state machine of packages/core inside a transaction.
@@ -395,31 +396,39 @@ export async function markPublishedManually(
       .where(eq(posts.id, input.postId))
       .for("update");
     // A scheduled post reached its time and is already waiting (post.publish): only confirm it.
+    // One that TikTok couldn't take (phase 5 T6) was published by hand instead.
     const started: TransitionOutcome =
       post?.status === "publishing"
         ? { ok: true, from: "publishing", to: "publishing", effects: [] }
-        : await transitionPost(tx, input.postId, "startPublishing");
+        : await transitionPost(
+            tx,
+            input.postId,
+            post?.status === "publish_failed" ? "retryPublish" : "startPublishing",
+          );
     if (!started.ok) return started;
-    await tx
-      .insert(publications)
-      .values({
-        postId: input.postId,
-        network: "manual",
-        status: "published",
-        url: input.url,
-        attempts: 1,
-        publishedAt: input.publishedAt,
-      })
-      .onConflictDoUpdate({
-        target: [publications.postId, publications.network],
-        set: {
+    // Sent to TikTok as a draft (phase 5 T6): the operator published it from the app's inbox.
+    if (!(await publishTiktokInboxDraft(tx, input))) {
+      await tx
+        .insert(publications)
+        .values({
+          postId: input.postId,
+          network: "manual",
           status: "published",
           url: input.url,
-          error: null,
-          attempts: sql`${publications.attempts} + 1`,
+          attempts: 1,
           publishedAt: input.publishedAt,
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: [publications.postId, publications.network],
+          set: {
+            status: "published",
+            url: input.url,
+            error: null,
+            attempts: sql`${publications.attempts} + 1`,
+            publishedAt: input.publishedAt,
+          },
+        });
+    }
     const done = await transitionPost(tx, input.postId, "publishDone");
     // Cannot fail right after startPublishing; if it did, roll everything back.
     if (!done.ok) throw new Error(done.reason);

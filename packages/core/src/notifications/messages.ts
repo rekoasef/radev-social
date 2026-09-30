@@ -76,6 +76,24 @@ export function publishNotice(
   };
 }
 
+/** TikTok took the post as a draft: the operator publishes it from the app's inbox. */
+export function tiktokInboxNotice(
+  post: { id: string; code: string; brandName: string; hook: string },
+  appUrl: string,
+): Notice {
+  return {
+    key: `tiktok-inbox:${post.id}`,
+    kind: "publish",
+    text: [
+      `📥 ${post.code} (${post.brandName}) está en tu bandeja de TikTok:`,
+      post.hook,
+      "",
+      "Abrí TikTok, tocá la notificación y publicalo.",
+      `Después marcalo como publicado: ${url(appUrl, `/posts/${post.code}`)}`,
+    ].join("\n"),
+  };
+}
+
 export type FailureWhat = "generation" | "render" | "publish" | "ideas";
 
 const FAILURE_LABELS: Record<FailureWhat, string> = {

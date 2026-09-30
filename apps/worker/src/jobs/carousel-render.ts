@@ -14,6 +14,8 @@ import {
 } from "@radev/db";
 import type { Logger } from "../logger";
 import { getBrowser } from "../render/browser";
+// TikTok photo mode takes JPEG or WebP (≤ 20 MB, "max 1080p"): 1080×1350 at 90 is ~0.1–1 MB.
+import { JPEG_QUALITY } from "../render/jpeg";
 
 // carousel.render (docs/ARCHITECTURE.md §8): opens each slide of a version in the web's internal
 // render page, waits until fonts and images are in, reads the render QA the page ran, takes the
@@ -26,8 +28,6 @@ import { getBrowser } from "../render/browser";
 const [FORMAT] = RENDER_FORMATS;
 const SIZE = { width: 1080, height: 1350 };
 const READY_TIMEOUT_MS = 30_000;
-/** TikTok photo mode takes JPEG or WebP (≤ 20 MB, "max 1080p"): 1080×1350 at 90 is ~0.3–1 MB. */
-const JPEG_QUALITY = 90;
 
 const sha256 = (data: Buffer) => createHash("sha256").update(data).digest("hex");
 

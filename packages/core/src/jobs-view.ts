@@ -22,6 +22,7 @@ export const JOB_LABELS: Record<JobName, string> = {
   [JOBS.ideasResearch]: "Investigación de temas",
   [JOBS.dataRefresh]: "Datos reales",
   [JOBS.postPublish]: "Publicación",
+  [JOBS.tiktokPublish]: "Envío a TikTok",
   [JOBS.slotsFill]: "Llenado automático",
   [JOBS.reviewNotify]: "Aviso de revisión",
   [JOBS.notifySend]: "Aviso de Telegram",
@@ -76,7 +77,8 @@ const text = (data: unknown, key: string): string | undefined => {
 export function jobTarget(name: string, data: unknown): JobTarget {
   switch (name) {
     case JOBS.carouselGenerate:
-    case JOBS.postPublish: {
+    case JOBS.postPublish:
+    case JOBS.tiktokPublish: {
       const postId = text(data, "postId");
       return postId ? { kind: "post", postId } : { kind: "none" };
     }
@@ -155,6 +157,11 @@ export function canRetryJob(name: string, state: string, context: RetryContext =
       return context.post?.status === "scheduled"
         ? { ok: true }
         : { ok: false, reason: "El post ya no está programado.", open: "post" };
+    // The job itself only acts on a pending (or inbox) TikTok publication.
+    case JOBS.tiktokPublish:
+      return context.post?.status === "publishing"
+        ? { ok: true }
+        : { ok: false, reason: "El post ya no se está publicando.", open: "post" };
     case JOBS.carouselGenerate:
       return context.post?.status === "generating"
         ? { ok: true }
