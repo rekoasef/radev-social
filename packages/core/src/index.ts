@@ -223,6 +223,10 @@ export {
   publicCode,
   RENDER_FORMATS,
   type RenderFormat,
+  SOCIAL_ACCOUNT_STATUSES,
+  SOCIAL_NETWORKS,
+  type SocialAccountStatus,
+  type SocialNetwork,
   VERSION_ORIGINS,
   type VersionOrigin,
 } from "./posts/constants";

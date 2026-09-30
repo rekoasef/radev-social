@@ -188,4 +188,17 @@ export {
   getSlideRewrite,
   startSlideRewrite,
 } from "./queries/slide-rewrites";
+export {
+  deleteSocialAccount,
+  getSocialAccount,
+  getSocialAccountTokens,
+  listSocialAccounts,
+  markSocialAccountReauth,
+  type SaveSocialAccountResult,
+  type SocialAccount,
+  type SocialTokens,
+  saveSocialAccount,
+  updateSocialAccountTokens,
+} from "./queries/social-accounts";
 export * from "./schema";
+export { decryptToken, encryptToken, tokenEncryptionKey } from "./token-crypto";

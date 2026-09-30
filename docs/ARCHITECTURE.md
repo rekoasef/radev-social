@@ -352,7 +352,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `post_versions` | id, post_id, number, content (jsonb `Carousel`), schema_version, origin (`ai` \| `manual`), generation_run_id, review_notified_at (ya avisada por Telegram), datasets (jsonb: puntos de sus `chart` por `datasetRef`, congelados al guardarla), created_at |
 | `assets` | id, post_version_id, format (`4x5`; enum ampliable), slide_index, path, width, height, checksum |
 | `schedule_slots` | id, brand_id, weekday (0 = domingo … 6), local_time (`time`, hora de pared en la zona de la marca), active, created_at. Única por marca, día y hora |
-| `social_accounts` | id, brand_id, network, external_id, handle, access_token_enc, refresh_token_enc, expires_at, status |
+| `social_accounts` | id, brand_id, network (`tiktok`), external_id (TikTok: `open_id`), handle, display_name, scopes (text[]: los otorgados), access_token_enc, access_expires_at, refresh_token_enc, refresh_expires_at, status (`active` \| `reauth_required`), last_error, created_at, updated_at. Única por marca y red, y por red y cuenta (una cuenta no puede estar en dos marcas). Desconectar borra la fila |
 | `publications` | id, post_id, social_account_id, network, status, external_id, url, error, attempts, published_at |
 | `ai_routes` | id, task, brand_id (nullable = global), provider, model, fallback_provider, fallback_model. Única por tarea y marca, con una sola global por tarea (`NULLS NOT DISTINCT`) |
 | `generation_runs` | id, brand_id, post_id (null en pedidos de ideas), task, role (`primary` \| `fallback`), provider, model, status (`succeeded` \| `failed`), error_kind, error, input_tokens, output_tokens, cost_usd (nullable), duration_ms, num_turns, session_id, created_at. Una fila por intento |
@@ -370,7 +370,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 ## 11. Seguridad
 
 - Better Auth con GitHub + lista blanca `ALLOWED_EMAILS`.
-- Tokens de redes cifrados con AES-256-GCM (`TOKEN_ENCRYPTION_KEY`).
+- Tokens de redes cifrados con AES-256-GCM (`TOKEN_ENCRYPTION_KEY`, 32 bytes en base64): `packages/db/src/token-crypto.ts`, formato `v1.<iv|tag|cifrado>` con la red, la cuenta y el tipo de token como datos autenticados (un token no se puede cambiar por otro). Solo `queries/social-accounts.ts` los lee o escribe; el resto recibe `SocialAccount`, sin tokens. La clave no viaja en los backups: sin ella hay que volver a conectar las cuentas.
 - `/render` bloqueado en Caddy y protegido con token interno.
 - Postgres sin puertos expuestos. Firewall: 22 (llave), 80, 443.
 - Uploads de assets: tipo detectado por el contenido y hasta 5 MB; solo PNG, JPEG, WebP y SVG. Los SVG se sirven con `Content-Security-Policy: sandbox` y se cargan con `<img>`, así que sus scripts no corren (ADR 0012).

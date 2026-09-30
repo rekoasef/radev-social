@@ -27,6 +27,17 @@ export type RenderFormat = (typeof RENDER_FORMATS)[number];
 export const NETWORKS = ["manual", "tiktok"] as const;
 export type Network = (typeof NETWORKS)[number];
 
+/** Networks that publish through a connected account (`manual` needs none). */
+export const SOCIAL_NETWORKS = ["tiktok"] as const satisfies readonly Network[];
+export type SocialNetwork = (typeof SOCIAL_NETWORKS)[number];
+
+/**
+ * `active`: its tokens work. `reauth_required`: the network rejected them (revoked, or the refresh
+ * token expired); the operator has to connect the account again.
+ */
+export const SOCIAL_ACCOUNT_STATUSES = ["active", "reauth_required"] as const;
+export type SocialAccountStatus = (typeof SOCIAL_ACCOUNT_STATUSES)[number];
+
 export const PUBLICATION_STATUSES = ["pending", "published", "failed"] as const;
 export type PublicationStatus = (typeof PUBLICATION_STATUSES)[number];
 

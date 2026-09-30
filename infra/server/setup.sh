@@ -90,6 +90,7 @@ else
     -e "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" \
     -e "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$(openssl rand -base64 32)|" \
     -e "s|^RENDER_TOKEN=.*|RENDER_TOKEN=$(openssl rand -hex 24)|" \
+    -e "s|^TOKEN_ENCRYPTION_KEY=.*|TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32)|" \
     "$env_file"
   echo "Creado con secretos nuevos. Faltan los valores marcados con COMPLETAR (ver infra/server/README.md)."
 fi

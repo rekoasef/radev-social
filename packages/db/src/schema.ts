@@ -20,6 +20,8 @@ import {
   RENDER_FORMATS,
   ROUTE_ROLES,
   SLIDE_REWRITE_STATUSES,
+  SOCIAL_ACCOUNT_STATUSES,
+  SOCIAL_NETWORKS,
   VERSION_ORIGINS,
 } from "@radev/core";
 import { sql } from "drizzle-orm";
@@ -446,6 +448,44 @@ export const assets = pgTable(
   ],
 );
 
+/**
+ * A brand's account on a network, connected by OAuth (phase 5). Tokens are stored encrypted with
+ * AES-256-GCM (token-crypto.ts); only queries/social-accounts.ts reads or writes them.
+ */
+export const socialAccounts = pgTable(
+  "social_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    network: text("network", { enum: SOCIAL_NETWORKS }).notNull(),
+    /** The account's id on the network (TikTok: open_id). */
+    externalId: text("external_id").notNull(),
+    /** Username, e.g. "radev.tech" (shown to confirm which account is connected). */
+    handle: text("handle"),
+    displayName: text("display_name"),
+    /** Scopes the operator granted (may be fewer than the app asked for). */
+    scopes: text("scopes").array().notNull().default(sql`'{}'::text[]`),
+    accessTokenEnc: text("access_token_enc").notNull(),
+    accessExpiresAt: timestamp("access_expires_at", { withTimezone: true }).notNull(),
+    refreshTokenEnc: text("refresh_token_enc"),
+    refreshExpiresAt: timestamp("refresh_expires_at", { withTimezone: true }),
+    status: text("status", { enum: SOCIAL_ACCOUNT_STATUSES }).notNull().default("active"),
+    /** Why it needs to be connected again (never contains a token). */
+    lastError: text("last_error"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    // One account per brand and network; the same account can't belong to two brands.
+    uniqueIndex("social_accounts_brand_network_unique").on(t.brandId, t.network),
+    uniqueIndex("social_accounts_network_external_unique").on(t.network, t.externalId),
+    check("social_accounts_network_valid", sql`${t.network} in (${inList(SOCIAL_NETWORKS)})`),
+    check("social_accounts_status_valid", sql`${t.status} in (${inList(SOCIAL_ACCOUNT_STATUSES)})`),
+  ],
+);
+
 /** A post published (or being published) on a network. One per post and network (rule 8). */
 export const publications = pgTable(
   "publications",
@@ -611,6 +651,7 @@ export type Post = typeof posts.$inferSelect;
 export type PostVersion = typeof postVersions.$inferSelect;
 export type RenderedAsset = typeof assets.$inferSelect;
 export type Publication = typeof publications.$inferSelect;
+export type SocialAccountRow = typeof socialAccounts.$inferSelect;
 export type NewBrandAsset = typeof brandAssets.$inferInsert;
 export type BrandDocument = typeof brandDocuments.$inferSelect;
 export type AiRouteRow = typeof aiRoutes.$inferSelect;
