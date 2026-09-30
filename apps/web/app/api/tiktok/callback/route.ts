@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { requireEnv } from "@/lib/env";
 import { requireOperator } from "@/lib/session";
 import {
   channelsPath,
@@ -18,8 +19,9 @@ import {
 
 const pending = z.object({ state: z.string().min(16), slug: z.string().min(1).max(64) });
 
-function back(request: NextRequest, path: string, outcome: TiktokOutcome) {
-  const url = new URL(path, request.nextUrl.origin);
+function back(path: string, outcome: TiktokOutcome) {
+  // The public address: behind Caddy, the request's own origin is the container's (0.0.0.0:3000).
+  const url = new URL(path, requireEnv("BETTER_AUTH_URL"));
   url.searchParams.set("tiktok", outcome);
   const response = NextResponse.redirect(url);
   response.cookies.delete({ name: TIKTOK_OAUTH_COOKIE, path: "/api/tiktok" });
@@ -39,18 +41,18 @@ export async function GET(request: NextRequest) {
     // A tampered or broken cookie is the same as none.
   }
   if (!started || params.get("state") !== started.state) {
-    return back(request, started ? channelsPath(started.slug) : "/brands", "expired");
+    return back(started ? channelsPath(started.slug) : "/brands", "expired");
   }
   const path = channelsPath(started.slug);
 
-  if (params.get("error")) return back(request, path, "denied");
+  if (params.get("error")) return back(path, "denied");
   const code = params.get("code");
-  if (!code) return back(request, path, "failed");
+  if (!code) return back(path, "failed");
 
   const client = tiktokClient();
-  if (!client) return back(request, path, "not_configured");
+  if (!client) return back(path, "not_configured");
   const brand = await getBrandBySlug(db, started.slug);
-  if (!brand || brand.archivedAt !== null) return back(request, "/brands", "failed");
+  if (!brand || brand.archivedAt !== null) return back("/brands", "failed");
 
   try {
     const tokens = await exchangeTiktokCode(client, { code, redirectUri: tiktokRedirectUri() });
@@ -65,7 +67,7 @@ export async function GET(request: NextRequest) {
       scopes: tokens.scopes,
       tokens,
     });
-    return back(request, path, saved.ok ? "connected" : "other_brand");
+    return back(path, saved.ok ? "connected" : "other_brand");
   } catch (error) {
     // Only TikTok's code and log id: enough to look it up, nothing secret.
     console.error(
@@ -83,6 +85,6 @@ export async function GET(request: NextRequest) {
               : "unknown",
       }),
     );
-    return back(request, path, "failed");
+    return back(path, "failed");
   }
 }
