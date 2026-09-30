@@ -78,7 +78,7 @@ Decisiones aprobadas con el plan: (1) **modo borrador** (`MEDIA_UPLOAD`) hasta a
 |---|---|---|
 | T1 | Páginas públicas de Términos y Privacidad (las exige el registro de la app de TikTok) | ✅ (en producción) |
 | T2 | App en TikTok for Developers en sandbox (Login Kit + Content Posting API) y verificación de `media.gestorlumus.site` (TXT en Hostinger). Lo hace el operador, guiado | ✅ (sandbox `pruebas`) |
-| T3 | Cifrado AES-256-GCM de tokens + tabla `social_accounts` | ✅ (migración sin aplicar: falta Docker en WSL) |
+| T3 | Cifrado AES-256-GCM de tokens + tabla `social_accounts` | ✅ |
 | T4 | Conectar la cuenta de TikTok de cada marca por OAuth (Marcas → Canales) | |
 | T5 | JPEG de cada slide (segunda captura de la misma página, sin dependencias nuevas); tamaño a confirmar en la prueba (1080×1350 o 864×1080) | |
 | T6 | Adaptador TikTok: borrador / directo, seguimiento de estado, idempotente, reintentos, aviso por Telegram | |
@@ -125,7 +125,8 @@ Fuentes: developers.tiktok.com/doc/getting-started-create-an-app, /doc/add-a-san
 - Tabla `social_accounts` (migración `0018_social_accounts`: solo crea la tabla). Amplía lo que decía ARCHITECTURE: `display_name`, `scopes`, vencimiento del access y del refresh token por separado (`expires_at` → `access_expires_at` + `refresh_expires_at`), `last_error`. Estados en core: `SOCIAL_ACCOUNT_STATUSES` (`active`, `reauth_required`) y `SOCIAL_NETWORKS` (`tiktok`).
 - Consultas (`queries/social-accounts.ts`), las únicas que tocan tokens: `saveSocialAccount` (conectar o reconectar; rechaza una cuenta ya conectada a otra marca), `getSocialAccountTokens` (worker), `updateSocialAccountTokens` (refresh, T8), `markSocialAccountReauth`, `deleteSocialAccount` (desconectar borra la fila), `listSocialAccounts`/`getSocialAccount` (sin tokens).
 - `TOKEN_ENCRYPTION_KEY`: en `.env.example`, `env.production.example` y `setup.sh` (se genera sola en un servidor nuevo). Generada en el `.env` local de esta máquina; **la del servidor se genera en la T4** y va también al gestor de contraseñas (los backups no la llevan). En la otra máquina, generar una propia (`openssl rand -base64 32`).
-- Verificado: 753 tests, typecheck, lint. **Sin probar contra Postgres** (no hay Docker en WSL): `pnpm db:migrate` (hasta `0018`) cuando esté, y en producción lo aplica el deploy.
+- Verificado: 753 tests, typecheck, lint, y contra Postgres local (script descartable): guardar, reconectar (misma fila), otra marca rechazada, cifrado en la base, descifrar, `reauth_required` → refresh → `active`, desconectar. En producción la migración la aplica el deploy.
+- **Docker en WSL (2026-09-30)**: la integración de Docker Desktop ya anda en esta máquina. No había volumen: se creó el Postgres local vacío (`docker compose up -d postgres`), `pnpm db:migrate` (hasta `0018`) y `pnpm db:seed`. Los datos reales están en producción.
 
 **Extra: descartar posts (2026-09-28, pedido del operador)**:
 - La transición `archive` existía desde la Fase 2 pero no tenía botón. Ahora: **Descartar** en la página del post (confirmación en línea) y en la cola Revisar (hoja inferior, como Rechazar y Editar). Core `DISCARDABLE_STATUSES` / `canDiscard`: en revisión, rechazado, aprobado, programado, publicación fallida y fallido; **no** mientras la IA genera o el worker renderiza (el job fallaría y avisaría error). En el panel el estado `archived` se llama **"Descartado"** (también en los mensajes de la máquina de estados). No se borra nada: código y versiones quedan para el historial (ARCHITECTURE: archivar vs. borrar).
