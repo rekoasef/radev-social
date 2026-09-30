@@ -33,6 +33,7 @@ import {
   listAiRoutes,
   listCurrentBrandDocuments,
   listPillars,
+  listPostVersions,
   listRecentPostHooks,
   type NewGenerationRun,
   type RecentPost,
@@ -76,7 +77,7 @@ export const LOOK_PROMPT =
 
 /** Added to the prompt when the run rewrites an existing version (phase 3, T8). */
 export const REVISION_PROMPT =
-  "Es una revisión: `task.json` trae `revision` y `previous.json` es el carrusel anterior. Corregí lo que se pide y mantené lo que funciona.";
+  "Es una revisión: `task.json` trae `revision` y `previous.json` es el carrusel anterior. Corregí lo que se pide y mantené lo que funciona; si el operador pide rehacer o regenerar todo, escribilo de nuevo desde cero.";
 
 /** A regeneration: the post's current version and why it has to change. */
 export type Revision = {
@@ -85,7 +86,28 @@ export type Revision = {
   feedback: string | null;
   /** Render QA problems of the previous version (describeRenderProblems). */
   renderProblems: readonly string[];
+  /** Looks of the post's earlier versions, besides the current one: rejected, not to repeat. */
+  triedLooks?: readonly string[];
 };
+
+/**
+ * The looks a regenerated post may take: the brand's, minus the ones its earlier versions already
+ * had (RA-0008 went back to the look rejected two versions before). The current one stays, so a
+ * rejection about the text can keep it. All of them when nothing would be left.
+ */
+export function revisionLooks(
+  enabled: readonly LookId[],
+  tried: readonly string[],
+): readonly LookId[] {
+  const left = enabled.filter((look) => !tried.includes(look));
+  return left.length > 0 ? left : enabled;
+}
+
+/** The look a stored carousel was drawn with, if any. */
+function lookOf(content: unknown): string | null {
+  const look = (content as { look?: unknown } | null | undefined)?.look;
+  return typeof look === "string" ? look : null;
+}
 
 /** The series a post belongs to, as the AI gets it (phase 3, T10). */
 export type TaskSeries = { name: string; brief: string; requiredSlides: readonly string[] };
@@ -133,9 +155,15 @@ export function buildTaskFiles(input: {
     ...(revision && {
       revision: {
         previousFile: "previous.json",
-        note: "Ya escribiste este carrusel (está en previous.json) y hay que corregirlo. Cambiá lo que se pide abajo y mantené lo que funciona.",
+        note: "Ya escribiste este carrusel (está en previous.json) y hay que corregirlo. Cambiá lo que se pide abajo y mantené lo que funciona. Si el operador pide rehacer, regenerar o cambiar todo, escribilo de nuevo desde cero: otro hook, otros textos, otra estructura y otro look; previous.json solo te dice qué no repetir.",
         lookNote:
           "El look: mantené el de previous.json, salvo que el operador pida cambiarlo o se queje del diseño; entonces elegí otro distinto de la lista de slides.md.",
+        ...(revision.triedLooks &&
+          revision.triedLooks.length > 0 && {
+            triedLooks: revision.triedLooks,
+            triedLooksNote:
+              "Estos looks ya se probaron en este post y el operador los rechazó: no vuelvas a ninguno.",
+          }),
         ...(revision.feedback && {
           operatorFeedback: revision.feedback,
           operatorFeedbackNote:
@@ -351,11 +379,21 @@ export async function generateCarousel(
   // may take any of them, the current one included: it keeps it unless the operator's feedback
   // asks for another ("no me gustó el look" has to be able to change it).
   const enabled = brandLooks(brand.stylePreset, brand.themeTokens);
+  const currentLook = lookOf(current?.content);
+  const triedLooks = current
+    ? [
+        ...new Set(
+          (await listPostVersions(db, post.id))
+            .map((version) => lookOf(version.content))
+            .filter((look): look is string => look !== null && look !== currentLook),
+        ),
+      ]
+    : [];
   const makesArt = brandMakesArt(brand.stylePreset, brand.themeTokens);
   const looks =
     enabled.length > 0
       ? current
-        ? enabled
+        ? revisionLooks(enabled, triedLooks)
         : lookChoices(
             enabled,
             recent.map((r) => r.look),
@@ -374,6 +412,7 @@ export async function generateCarousel(
         renderProblems: describeRenderProblems(
           Array.isArray(current.renderIssues) ? (current.renderIssues as StoredRenderIssue[]) : [],
         ),
+        triedLooks,
       }
     : undefined;
   const schema = aiCarouselSchema(

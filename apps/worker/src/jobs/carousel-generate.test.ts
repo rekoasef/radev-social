@@ -6,6 +6,7 @@ import {
   buildTaskFiles,
   decide,
   MAX_RATE_LIMIT_ATTEMPTS,
+  revisionLooks,
   runRow,
   stampDataSources,
 } from "./carousel-generate";
@@ -199,6 +200,23 @@ describe("buildTaskFiles", () => {
     expect(revision.lookNote).toContain("salvo que el operador pida cambiarlo");
   });
 
+  it("tells the looks the post already had, and allows a rewrite from scratch (RA-0008)", () => {
+    const files = buildTaskFiles({
+      request: { idea: "x", pillarKey: "a", hookType: null },
+      recent,
+      revision: {
+        previous: { hook: "h", slides: [], look: "plano" },
+        feedback: "regenerame todo el carrusel con un look más moderno",
+        renderProblems: [],
+        triedLooks: ["terminal"],
+      },
+    });
+    const { revision } = JSON.parse(files["task.json"] ?? "");
+    expect(revision.triedLooks).toEqual(["terminal"]);
+    expect(revision.triedLooksNote).toMatch(/no vuelvas/);
+    expect(revision.note).toContain("desde cero");
+  });
+
   it("carries the render problems of the previous version", () => {
     const files = buildTaskFiles({
       request: { idea: "x", pillarKey: "a", hookType: null },
@@ -350,5 +368,23 @@ describe("runRow", () => {
       { brandId: "brand-1", postId: null, task: "ideas.research" },
     );
     expect(row).toMatchObject({ postId: null, task: "ideas.research", errorKind: "rate_limited" });
+  });
+});
+
+describe("revisionLooks", () => {
+  it("leaves out the looks the post already had, keeping the current one", () => {
+    // RA-0008: terminal (v1) → plano (v2, current); terminal can't come back.
+    expect(revisionLooks(["terminal", "plano", "neon", "suizo"], ["terminal"])).toEqual([
+      "plano",
+      "neon",
+      "suizo",
+    ]);
+  });
+
+  it("offers every look when all were tried", () => {
+    expect(revisionLooks(["terminal", "plano"], ["terminal", "plano"])).toEqual([
+      "terminal",
+      "plano",
+    ]);
   });
 });
