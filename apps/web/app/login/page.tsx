@@ -1,6 +1,7 @@
 import { isOperator } from "@radev/core";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { SignInButton } from "@/components/auth/sign-in-button";
 import { Tally } from "@/components/console/tally";
@@ -35,6 +36,14 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           )}
 
           <div className="flex flex-col gap-4">
+            <Image
+              src="/app-mark.png"
+              alt=""
+              width={72}
+              height={72}
+              preload
+              className="size-16 rounded-2xl ring-1 ring-white/10 sm:size-[72px]"
+            />
             <h1 className="text-5xl font-semibold tracking-[-0.035em] text-ink sm:text-6xl">
               RAdev Social
             </h1>

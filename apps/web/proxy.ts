@@ -14,6 +14,8 @@ export const config = {
   // Everything except the login page, the public legal pages (TikTok asks for them), Better
   // Auth's endpoints, static files, /render (internal render pages: they check RENDER_TOKEN, and
   // Caddy blocks them in production) and /media (public files with unguessable names, loaded by
-  // the render pages).
-  matcher: ["/((?!login|legal|api/auth|render|media|_next/static|_next/image|favicon.ico).*)"],
+  // the render pages) and the app's icons and logo (the login page shows them).
+  matcher: [
+    "/((?!login|legal|api/auth|render|media|_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|app-mark.png).*)",
+  ],
 };

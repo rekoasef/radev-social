@@ -1,4 +1,5 @@
 import { countPostsInReview } from "@radev/db";
+import Image from "next/image";
 import Link from "next/link";
 import { ConsoleClock } from "@/components/console/console-clock";
 import { Tally } from "@/components/console/tally";
@@ -26,13 +27,22 @@ export default async function PanelLayout({ children }: LayoutProps<"/">) {
       <header className="console-bar sticky top-0 z-20">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 pt-3 pb-3 sm:px-8 md:pb-2.5">
           <div className="flex min-w-0 items-center gap-4 sm:gap-6">
-            <Link href="/" className="flex flex-col gap-1.5">
-              <span className="text-[15px] font-semibold tracking-[-0.01em] whitespace-nowrap text-ink">
-                RAdev Social
+            <Link href="/" className="flex items-center gap-3">
+              <Image
+                src="/app-mark.png"
+                alt=""
+                width={36}
+                height={36}
+                className="size-9 shrink-0 rounded-lg ring-1 ring-white/10"
+              />
+              <span className="flex flex-col gap-1.5">
+                <span className="text-[15px] font-semibold tracking-[-0.01em] whitespace-nowrap text-ink">
+                  RAdev Social
+                </span>
+                <Tally state="ready" className="hidden sm:inline-flex">
+                  Base en línea
+                </Tally>
               </span>
-              <Tally state="ready" className="hidden sm:inline-flex">
-                Base en línea
-              </Tally>
             </Link>
             {activeBrand ? (
               <BrandSwitcher brands={switchable} activeSlug={activeBrand.slug} />
