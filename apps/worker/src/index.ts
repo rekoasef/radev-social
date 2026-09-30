@@ -27,6 +27,7 @@ import {
   SLOTS_FILL_CRON,
   type SlideRewriteJob,
   type TiktokPublishJob,
+  TOKENS_REFRESH_CRON,
   tiktokPublishKey,
 } from "@radev/core";
 import {
@@ -47,6 +48,7 @@ import { publishPost } from "./jobs/post-publish";
 import { RetryableRewriteError, rewriteSlide } from "./jobs/slide-rewrite";
 import { fillSlots } from "./jobs/slots-fill";
 import { failTiktokPublish, publishToTiktok } from "./jobs/tiktok-publish";
+import { refreshTokens } from "./jobs/tokens-refresh";
 import { createLogger } from "./logger";
 import { createEvents, errorMessage } from "./notify/events";
 import { createNotifier } from "./notify/notifier";
@@ -432,6 +434,29 @@ async function main() {
     },
   );
 
+  // Daily renewal of the connected accounts' tokens (phase 5 T8), at night in Buenos Aires.
+  await boss.createQueue(JOBS.tokensRefresh, QUEUE_OPTIONS[JOBS.tokensRefresh]);
+  await boss.work(
+    JOBS.tokensRefresh,
+    { batchSize: 1, includeMetadata: true },
+    async ([job]: JobWithMetadata<object>[]) => {
+      if (!job) return;
+      await refreshTokens({
+        db,
+        log: log.child({ job: JOBS.tokensRefresh, id: job.id }),
+        client: tiktokClient,
+        notify: notifier.notify,
+        appUrl: notifier.appUrl,
+      });
+    },
+  );
+  await boss.schedule(
+    JOBS.tokensRefresh,
+    TOKENS_REFRESH_CRON,
+    {},
+    { tz: DATA_REFRESH_TZ, key: "tokens-refresh" },
+  );
+
   // Automatic filling: every 15 min by cron; it only acts inside the generation window (Settings).
   // One run at a time (a single cron job per tick, one worker at a time on it).
   await boss.createQueue(JOBS.slotsFill, QUEUE_OPTIONS[JOBS.slotsFill]);
@@ -496,6 +521,7 @@ async function main() {
       JOBS.dataRefresh,
       JOBS.postPublish,
       JOBS.tiktokPublish,
+      JOBS.tokensRefresh,
       JOBS.slotsFill,
       JOBS.notifySend,
       JOBS.reviewNotify,

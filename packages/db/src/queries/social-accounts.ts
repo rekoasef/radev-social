@@ -1,5 +1,6 @@
 import type { SocialNetwork } from "@radev/core";
 import { and, asc, eq } from "drizzle-orm";
+import type { Database } from "../client";
 import { type SocialAccountRow, socialAccounts } from "../schema";
 import { decryptToken, encryptToken } from "../token-crypto";
 import type { Executor } from "./brand-assets";
@@ -165,6 +166,44 @@ export async function updateSocialAccountTokens(
       lastError: null,
     })
     .where(eq(socialAccounts.id, accountId));
+}
+
+/**
+ * Renews the account's tokens when `due` says so, holding the account's row while it does: two
+ * renewals at once (tokens.refresh and a TikTok send) would spend the same refresh token, and the
+ * network may rotate it, leaving the loser with a dead one. The second waits and sees the fresh
+ * tokens instead. `renew` gets the refresh token (null if there is none) and returns the new
+ * tokens; its errors propagate and nothing is saved.
+ */
+export async function renewSocialAccountTokens(
+  db: Database,
+  accountId: string,
+  due: (tokens: SocialTokens) => boolean,
+  renew: (refreshToken: string | null) => Promise<SocialTokens>,
+): Promise<{ tokens: SocialTokens; renewed: boolean }> {
+  return db.transaction(async (tx) => {
+    const [locked] = await tx
+      .select({ id: socialAccounts.id })
+      .from(socialAccounts)
+      .where(eq(socialAccounts.id, accountId))
+      .for("update");
+    if (!locked) throw new Error("La cuenta ya no existe.");
+    const stored = await getSocialAccountTokens(tx, accountId);
+    if (!stored) throw new Error("La cuenta ya no existe.");
+    if (!due(stored.tokens)) return { tokens: stored.tokens, renewed: false };
+    const tokens = await renew(stored.tokens.refreshToken);
+    await updateSocialAccountTokens(tx, accountId, tokens);
+    return { tokens, renewed: true };
+  });
+}
+
+/** Accounts whose tokens the daily renewal keeps alive (the ones that still work). */
+export function listActiveSocialAccounts(db: Executor): Promise<SocialAccount[]> {
+  return db
+    .select(publicColumns)
+    .from(socialAccounts)
+    .where(eq(socialAccounts.status, "active"))
+    .orderBy(asc(socialAccounts.createdAt));
 }
 
 /** The network rejected its tokens: the operator has to connect it again. */

@@ -7,6 +7,7 @@ const db = {
   getTiktokPublishContext: vi.fn(),
   getSocialAccount: vi.fn(),
   getSocialAccountTokens: vi.fn(),
+  renewSocialAccountTokens: vi.fn(),
   updateSocialAccountTokens: vi.fn(),
   markSocialAccountReauth: vi.fn(),
   setTiktokPublishId: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock("@radev/db", () => ({
   getTiktokPublishContext: (...a: unknown[]) => db.getTiktokPublishContext(...a),
   getSocialAccount: (...a: unknown[]) => db.getSocialAccount(...a),
   getSocialAccountTokens: (...a: unknown[]) => db.getSocialAccountTokens(...a),
+  renewSocialAccountTokens: (...a: unknown[]) => db.renewSocialAccountTokens(...a),
   updateSocialAccountTokens: (...a: unknown[]) => db.updateSocialAccountTokens(...a),
   markSocialAccountReauth: (...a: unknown[]) => db.markSocialAccountReauth(...a),
   setTiktokPublishId: (...a: unknown[]) => db.setTiktokPublishId(...a),
@@ -74,6 +76,21 @@ beforeEach(() => {
   for (const fn of Object.values(db)) fn.mockReset();
   db.settleTiktokPublication.mockResolvedValue(true);
   db.readMediaFile.mockResolvedValue(Buffer.from("png"));
+  // Like the real one (which holds the row): renew only if due, and save what came back.
+  db.renewSocialAccountTokens.mockImplementation(
+    async (
+      _db: unknown,
+      id: string,
+      due: (t: unknown) => boolean,
+      renew: (r: string | null) => Promise<unknown>,
+    ) => {
+      const { tokens: stored } = await db.getSocialAccountTokens({}, id);
+      if (!due(stored)) return { tokens: stored, renewed: false };
+      const tokens = await renew(stored.refreshToken);
+      await db.updateSocialAccountTokens({}, id, tokens);
+      return { tokens, renewed: true };
+    },
+  );
   db.getTiktokPublishContext.mockResolvedValue(context());
   db.getSocialAccount.mockResolvedValue({ id: "acc", status: "active", scopes: ["video.upload"] });
   db.getSocialAccountTokens.mockResolvedValue(tokens());

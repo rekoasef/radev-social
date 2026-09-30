@@ -109,6 +109,7 @@ describe("canRetryJob", () => {
     expect(canRetryJob(JOBS.postPublish, "failed", post("approved")).ok).toBe(false);
     expect(canRetryJob(JOBS.postPublish, "failed", { post: null }).ok).toBe(false);
     expect(canRetryJob(JOBS.tiktokPublish, "failed", post("publishing")).ok).toBe(true);
+    expect(canRetryJob(JOBS.tokensRefresh, "failed").ok).toBe(true);
     expect(canRetryJob(JOBS.tiktokPublish, "failed", post("publish_failed")).ok).toBe(false);
   });
 

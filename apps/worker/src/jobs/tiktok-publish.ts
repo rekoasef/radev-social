@@ -8,16 +8,15 @@ import {
 import {
   type Database,
   getSocialAccount,
-  getSocialAccountTokens,
   getTiktokPublishContext,
   markSocialAccountReauth,
   readMediaFile,
+  renewSocialAccountTokens,
   type SocialTokens,
   setAssetJpeg,
   setTiktokPublishId,
   settleTiktokPublication,
   type TiktokPublishContext,
-  updateSocialAccountTokens,
   writeMediaFile,
 } from "@radev/db";
 import {
@@ -32,6 +31,7 @@ import {
 } from "@radev/publishers";
 import { z } from "zod";
 import type { Logger } from "../logger";
+import { expiresSoon, tiktokRenewer } from "../tiktok/renew";
 
 // tiktok.publish (phase 5 T6, docs/ARCHITECTURE.md §9): a post of a brand with TikTok connected,
 // already `publishing`. Sends the slides' JPEGs as a photo post (MEDIA_UPLOAD: a draft in the
@@ -42,7 +42,6 @@ import type { Logger } from "../logger";
 // it follows that post instead of sending another one. The only way to send twice is dying in the
 // instant between TikTok's answer and saving the id.
 
-const REFRESH_MARGIN_MS = 10 * 60_000;
 /** TikTok allows 30 status fetches per minute per token: one every 5 s stays well below. */
 const POLL_INTERVAL_MS = 5_000;
 /** About 2 min per run; the job's retries keep following it for a few more. */
@@ -206,50 +205,44 @@ export async function failTiktokPublish(
   if (settled) await deps.onFailed?.({ postId, error });
 }
 
-/** The access token, refreshed when close to expiring, or once when TikTok rejects it. */
+/** The access token, renewed when close to expiring, or once when TikTok rejects it. */
 class TokenSource {
   private current: SocialTokens | undefined;
+  private readonly renew: (refreshToken: string | null) => Promise<SocialTokens>;
 
   constructor(
     private readonly db: Database,
-    private readonly client: TikTokClient,
+    client: TikTokClient,
     private readonly accountId: string,
-    private readonly api: TiktokApi,
+    api: TiktokApi,
     private readonly now: () => Date,
-  ) {}
+  ) {
+    this.renew = tiktokRenewer(client, api.refreshTiktokToken, now);
+  }
 
   async use<T>(call: (accessToken: string) => Promise<T>): Promise<T> {
-    const tokens = await this.get(false);
+    const tokens = await this.get();
     try {
       return await call(tokens.accessToken);
     } catch (error) {
       if (!(error instanceof TikTokError) || error.code !== "access_token_invalid") throw error;
-      return call((await this.get(true)).accessToken);
+      // Renewed unless someone else already did (then the stored token is a different one).
+      return call((await this.get(tokens.accessToken)).accessToken);
     }
   }
 
-  private async get(force: boolean): Promise<SocialTokens> {
-    if (!this.current) {
-      const stored = await getSocialAccountTokens(this.db, this.accountId);
-      if (!stored) throw new PermanentFailure("La cuenta de TikTok ya no existe.");
-      this.current = stored.tokens;
+  private async get(rejected?: string): Promise<SocialTokens> {
+    if (this.current && rejected === undefined && !expiresSoon(this.current, this.now())) {
+      return this.current;
     }
-    const expiresSoon =
-      this.current.accessExpiresAt.getTime() - this.now().getTime() < REFRESH_MARGIN_MS;
-    if (!force && !expiresSoon) return this.current;
-    const { refreshToken, refreshExpiresAt } = this.current;
-    if (!refreshToken || (refreshExpiresAt && refreshExpiresAt <= this.now())) {
-      throw new TikTokError("El permiso de TikTok venció.", "invalid_grant", null);
-    }
-    const fresh = await this.api.refreshTiktokToken(this.client, refreshToken, { now: this.now() });
-    this.current = {
-      accessToken: fresh.accessToken,
-      accessExpiresAt: fresh.accessExpiresAt,
-      refreshToken: fresh.refreshToken,
-      refreshExpiresAt: fresh.refreshExpiresAt,
-    };
-    await updateSocialAccountTokens(this.db, this.accountId, this.current);
-    return this.current;
+    const { tokens } = await renewSocialAccountTokens(
+      this.db,
+      this.accountId,
+      (stored) => stored.accessToken === rejected || expiresSoon(stored, this.now()),
+      this.renew,
+    );
+    this.current = tokens;
+    return tokens;
   }
 }
 

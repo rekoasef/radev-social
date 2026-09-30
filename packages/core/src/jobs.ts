@@ -23,6 +23,11 @@ export const JOBS = {
    * it until TikTok takes it (inbox draft or published) or fails (phase 5 T6).
    */
   tiktokPublish: "tiktok.publish",
+  /**
+   * Daily: renews the tokens of every connected account, so one that goes weeks without posting
+   * doesn't lose its access, and a revoked one is found before its next post (phase 5 T8).
+   */
+  tokensRefresh: "tokens.refresh",
   /** Every 15 min: inside the generation window, give free slots a post for the AI (phase 4, T4). */
   slotsFill: "slots.fill",
   /** Tell the operator the posts that got to review, in one Telegram message (phase 4, T6). */
@@ -65,6 +70,9 @@ export type DataRefreshJob = { source: string };
 /** When the daily refresh runs (cron, in DATA_REFRESH_TZ): Bluelytics updates during the day. */
 export const DATA_REFRESH_CRON = "0 19 * * *";
 export const DATA_REFRESH_TZ = "America/Argentina/Buenos_Aires";
+
+/** When the daily token renewal runs (cron, in DATA_REFRESH_TZ): at night, away from the posts. */
+export const TOKENS_REFRESH_CRON = "30 4 * * *";
 
 /** Both idea jobs run an `idea_requests` row that holds their parameters. */
 export type IdeaRequestJob = { requestId: string };
@@ -114,6 +122,8 @@ export const QUEUE_OPTIONS = {
     retryBackoff: true,
     expireInSeconds: 10 * 60,
   },
+  // TikTok down: tried again twice, 10 min apart; the next day's run is the real retry.
+  [JOBS.tokensRefresh]: { retryLimit: 2, retryDelay: 600, expireInSeconds: 10 * 60 },
   // Only database work and queueing; the next run (15 min) is the retry.
   [JOBS.slotsFill]: { retryLimit: 0, expireInSeconds: 10 * 60 },
   [JOBS.reviewNotify]: { retryLimit: 2, retryDelay: 60 },

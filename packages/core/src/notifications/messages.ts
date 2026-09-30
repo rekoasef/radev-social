@@ -94,6 +94,40 @@ export function tiktokInboxNotice(
   };
 }
 
+/** TikTok stopped accepting a brand's account: told once per account and day. */
+export function tiktokReauthNotice(
+  account: { id: string; brandName: string; brandSlug: string; reason: string; day: string },
+  appUrl: string,
+): Notice {
+  return {
+    key: `tiktok-reauth:${account.id}:${account.day}`,
+    kind: "failure",
+    text: [
+      `❗ TikTok dejó de aceptar la cuenta de ${account.brandName} (${account.reason}).`,
+      "Hasta que la reconectes, sus posts se publican a mano.",
+      "",
+      `Reconectala: ${url(appUrl, `/brands/${account.brandSlug}/channels`)}`,
+    ].join("\n"),
+  };
+}
+
+/** A brand's TikTok permission ends soon (TikTok's refresh token lasts a year): told once. */
+export function tiktokExpiringNotice(
+  account: { id: string; brandName: string; brandSlug: string; expiresAt: Date; timeZone: string },
+  appUrl: string,
+): Notice {
+  return {
+    key: `tiktok-expiring:${account.id}:${account.expiresAt.toISOString().slice(0, 10)}`,
+    kind: "failure",
+    text: [
+      `⚠️ El permiso de TikTok de ${account.brandName} vence el ${shortDateTime(account.expiresAt, account.timeZone)}.`,
+      "Reconectá la cuenta antes para que no se corte la publicación.",
+      "",
+      url(appUrl, `/brands/${account.brandSlug}/channels`),
+    ].join("\n"),
+  };
+}
+
 export type FailureWhat = "generation" | "render" | "publish" | "ideas";
 
 const FAILURE_LABELS: Record<FailureWhat, string> = {
