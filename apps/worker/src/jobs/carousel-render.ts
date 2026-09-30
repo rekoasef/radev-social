@@ -17,7 +17,7 @@ import { getBrowser } from "../render/browser";
 
 // carousel.render (docs/ARCHITECTURE.md §8): opens each slide of a version in the web's internal
 // render page, waits until fonts and images are in, reads the render QA the page ran, takes the
-// PNG and registers it. All slides fine → in_review. Problems stay on the version so the panel
+// PNG and a JPEG (for TikTok) and registers them. All slides fine → in_review. Problems stay on the version so the panel
 // (and the AI) can see them: an AI version goes back to the AI to fix them (max. 2, then to
 // review with them marked); a version from the editor, or a broken render → failed. Runs only
 // for the current version of a post that is `rendering`, so a repeated or outdated job does
@@ -26,6 +26,10 @@ import { getBrowser } from "../render/browser";
 const [FORMAT] = RENDER_FORMATS;
 const SIZE = { width: 1080, height: 1350 };
 const READY_TIMEOUT_MS = 30_000;
+/** TikTok photo mode takes JPEG or WebP (≤ 20 MB, "max 1080p"): 1080×1350 at 90 is ~0.3–1 MB. */
+const JPEG_QUALITY = 90;
+
+const sha256 = (data: Buffer) => createHash("sha256").update(data).digest("hex");
 
 export type RenderIssue = { slide: number; kind: string; text: string };
 
@@ -100,16 +104,22 @@ export async function renderCarousel(
       const qa = await page.evaluate(() => (globalThis as RenderWindow).__renderQa ?? []);
       for (const issue of qa) issues.push({ slide: index, kind: issue.kind, text: issue.text });
 
-      const png = await page.locator("[data-render-root]").screenshot({ type: "png" });
-      const path = `${brand.slug}/${post.id}/${version.id}/${FORMAT}/${index}.png`;
-      await writeMediaFile(path, png);
+      // The PNG for the panel and manual publishing; the JPEG of the same page for TikTok.
+      const root = page.locator("[data-render-root]");
+      const png = await root.screenshot({ type: "png" });
+      const jpeg = await root.screenshot({ type: "jpeg", quality: JPEG_QUALITY });
+      const base = `${brand.slug}/${post.id}/${version.id}/${FORMAT}/${index}`;
+      await writeMediaFile(`${base}.png`, png);
+      await writeMediaFile(`${base}.jpg`, jpeg);
       await saveRenderedAsset(db, {
         postVersionId: version.id,
         format: FORMAT,
         slideIndex: index,
-        path,
+        path: `${base}.png`,
         ...SIZE,
-        checksum: createHash("sha256").update(png).digest("hex"),
+        checksum: sha256(png),
+        jpegPath: `${base}.jpg`,
+        jpegChecksum: sha256(jpeg),
       });
       await setVersionRenderProgress(
         db,

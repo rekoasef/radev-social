@@ -422,7 +422,7 @@ export const postVersions = pgTable(
   ],
 );
 
-/** Rendered slides of a version: one PNG per slide and format, in MEDIA_DIR. */
+/** Rendered slides of a version: one PNG (and its JPEG) per slide and format, in MEDIA_DIR. */
 export const assets = pgTable(
   "assets",
   {
@@ -438,6 +438,12 @@ export const assets = pgTable(
     height: integer("height").notNull(),
     /** SHA-256 of the file. */
     checksum: text("checksum").notNull(),
+    /**
+     * Same slide as JPEG, for TikTok (photo mode takes JPEG or WebP, not PNG; phase 5 T5), next to
+     * the PNG: <index>.jpg. Null in versions rendered before it.
+     */
+    jpegPath: text("jpeg_path"),
+    jpegChecksum: text("jpeg_checksum"),
     createdAt: createdAt(),
   },
   (t) => [

@@ -290,7 +290,7 @@ export function listPillars(db: Database, brandId: string) {
     .orderBy(desc(contentPillars.targetShare), contentPillars.name);
 }
 
-/** Stores (or replaces) the PNG of one slide: rendering twice never duplicates (rule 8). */
+/** Stores (or replaces) the PNG and JPEG of one slide: rendering twice never duplicates (rule 8). */
 export async function saveRenderedAsset(
   db: Executor,
   values: Omit<RenderedAsset, "id" | "createdAt">,
@@ -305,6 +305,8 @@ export async function saveRenderedAsset(
         width: values.width,
         height: values.height,
         checksum: values.checksum,
+        jpegPath: values.jpegPath,
+        jpegChecksum: values.jpegChecksum,
       },
     });
 }

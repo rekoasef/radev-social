@@ -316,7 +316,7 @@ Cada ejecución queda en `generation_runs` con proveedor, modelo, uso, duración
 3. Expone `window.__renderReady = true` cuando cargaron fuentes y assets.
 4. **QA** en la página: desborde de texto (`data-qa="text"`), contenido fuera de la zona segura (`data-qa="content"`), fuentes cargadas. Devuelve violaciones.
 5. Violaciones: si la versión vino de IA → regeneración con las violaciones como feedback (máx. 2); si vino de edición manual → error visible en el editor.
-6. OK: PNG en `MEDIA_DIR/<brand>/<postId>/<versionId>/<format>/<index>.png`, registrado en `assets`.
+6. OK: PNG en `MEDIA_DIR/<brand>/<postId>/<versionId>/<format>/<index>.png` y, de la misma página, un JPEG (calidad 90, 1080×1350) en `<index>.jpg` para TikTok (el modo foto no acepta PNG), registrados en la misma fila de `assets`.
 
 Render determinista: las decoraciones variables usan una semilla derivada del id del post.
 
@@ -352,7 +352,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `content_series` | id, brand_id, key, name, pillar_id, hook_type, brief (Markdown), required_slides (jsonb), archived_at, created_at, updated_at |
 | `posts` | id, brand_id, public_code, idea_id, pillar_id, hook_type, status, current_version_id, scheduled_at (hora planeada), slot_id (horario de la marca del que salió; null si se eligió a mano), rejection_feedback, created_at, updated_at |
 | `post_versions` | id, post_id, number, content (jsonb `Carousel`), schema_version, origin (`ai` \| `manual`), generation_run_id, review_notified_at (ya avisada por Telegram), datasets (jsonb: puntos de sus `chart` por `datasetRef`, congelados al guardarla), created_at |
-| `assets` | id, post_version_id, format (`4x5`; enum ampliable), slide_index, path, width, height, checksum |
+| `assets` | id, post_version_id, format (`4x5`; enum ampliable), slide_index, path (PNG), width, height, checksum, jpeg_path, jpeg_checksum (el mismo slide en JPEG para TikTok; null en versiones renderizadas antes de la F5 T5) |
 | `schedule_slots` | id, brand_id, weekday (0 = domingo … 6), local_time (`time`, hora de pared en la zona de la marca), active, created_at. Única por marca, día y hora |
 | `social_accounts` | id, brand_id, network (`tiktok`), external_id (TikTok: `open_id`), handle, display_name, scopes (text[]: los otorgados), access_token_enc, access_expires_at, refresh_token_enc, refresh_expires_at, status (`active` \| `reauth_required`), last_error, created_at, updated_at. Única por marca y red, y por red y cuenta (una cuenta no puede estar en dos marcas). Desconectar borra la fila |
 | `publications` | id, post_id, social_account_id, network, status, external_id, url, error, attempts, published_at |

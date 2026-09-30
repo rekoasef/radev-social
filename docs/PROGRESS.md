@@ -9,7 +9,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 5 — Publicación automática en TikTok (empezada el 2026-09-28 a pedido del operador, en paralelo con la T14 de la Fase 4, que sigue abierta: unos días corriendo y la primera publicación real). Fase 4: T1–T13 hechas.
-- **Próximo paso:** Fase 5, **T5**: JPEG de cada slide (segunda captura de la misma página). En paralelo, T14 de la Fase 4.
+- **Próximo paso:** Fase 5, **T6**: adaptador TikTok (borrador a la bandeja con `MEDIA_UPLOAD`, `PULL_FROM_URL` desde `media.gestorlumus.site`, seguimiento de estado, idempotente, aviso por Telegram). Los posts renderizados antes de la T5 no tienen JPEG: re-renderizarlos antes de publicar. En paralelo, T14 de la Fase 4.
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -28,7 +28,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
 - **Mejoras de contenido (2026-09-29, pedido del operador, en paralelo con la Fase 5):** (1) ✅ generación liviana: ~128.000 → ~1.000 tokens de entrada de base por ejecución (ver abajo). (2) Próximo: rediseño para que cada carrusel sea distinto (composiciones, tipos nuevos, looks por post). El operador eligió: tokens primero, **se puede salir del fondo oscuro** (claro, acento), y que Claude proponga direcciones visuales con capturas (no tiene referencias). Quiere que "cada imagen sea diferente, como ChatGPT". Diagnóstico sobre los carruseles de RAdev en producción: todas las slides tienen el mismo esqueleto (título arriba, diagrama chico, vacío, pie), el contenido ocupa ~30 % de la slide, la secuencia de tipos se repite y sobra decoración.
 - **Looks e imágenes en producción (2026-09-29):** deploy hecho (`4131aa2`), claves de Cloudflare cargadas en el servidor. RAdev y Lumus pasados a `studio` por el operador (Lumus con acento `#6E5CE8` y la orbe como elemento de marca). RA-0006 re-hecho con un look desde el editor. Próximo: mirar los primeros posts que genere la IA con looks e imágenes (look elegido, calidad de las imágenes, tiempos) y ajustar; después seguir con la Fase 5 (T2, registro de la app de TikTok).
-- **Última actualización:** 2026-09-30, Fase 5 T4 (TikTok de RAdev conectado en producción)
+- **Última actualización:** 2026-09-30, Fase 5 T5 (JPEG de cada slide; sin deploy)
 
 ## Mejora — rehacer una slide con IA (2026-09-29)
 
@@ -80,7 +80,7 @@ Decisiones aprobadas con el plan: (1) **modo borrador** (`MEDIA_UPLOAD`) hasta a
 | T2 | App en TikTok for Developers en sandbox (Login Kit + Content Posting API) y verificación de `media.gestorlumus.site` (TXT en Hostinger). Lo hace el operador, guiado | ✅ (sandbox `pruebas`) |
 | T3 | Cifrado AES-256-GCM de tokens + tabla `social_accounts` | ✅ |
 | T4 | Conectar la cuenta de TikTok de cada marca por OAuth (Marcas → Canales) | ✅ (RAdev conectada en producción) |
-| T5 | JPEG de cada slide (segunda captura de la misma página, sin dependencias nuevas); tamaño a confirmar en la prueba (1080×1350 o 864×1080) | |
+| T5 | JPEG de cada slide (segunda captura de la misma página, sin dependencias nuevas); tamaño a confirmar en la prueba (1080×1350 o 864×1080) | ✅ 1080×1350 (sin deploy; va con la T6) |
 | T6 | Adaptador TikTok: borrador / directo, seguimiento de estado, idempotente, reintentos, aviso por Telegram | |
 | T7 | Pantalla de publicación según las pautas de TikTok 👁 | |
 | T8 | Job `tokens.refresh` | |
@@ -135,6 +135,12 @@ Fuentes: developers.tiktok.com/doc/getting-started-create-an-app, /doc/add-a-san
 - **Producción (2026-09-30)**: deploy de T2–T4 (entró también "rehacer una slide", migraciones `0017` y `0018`). En el `.env` del servidor: `TOKEN_ENCRYPTION_KEY` generada allá (copia de respaldo `.env.bak-*` al lado; el operador la guarda en su gestor) y las claves **del sandbox**, pegadas por el operador. **RAdev conectada**: `active`, los 5 permisos, reconectar antes del 2027-09-30.
 - Bug encontrado en la prueba real: la vuelta del callback armaba la URL con el origen del pedido, que detrás de Caddy es el del contenedor (`https://0.0.0.0:3000/...`). Ahora usa `BETTER_AUTH_URL`. La cuenta se había guardado bien igual.
 - Verificado: 765 tests, typecheck, lint, build. Pantalla capturada sin login con ruta temporal (borrada) y cuentas falsas en la base local (borradas): sin conectar, conectada, a reconectar con permisos faltantes; escritorio y 390 px, sin scroll horizontal. **El ida y vuelta real con TikTok no se probó**: la Redirect URI es https (producción).
+
+**T5 (2026-09-30)**:
+- El worker, en `carousel.render`, saca del mismo `[data-render-root]` el PNG y un **JPEG calidad 90** (`<index>.jpg` al lado del PNG). Se guarda en la misma fila de `assets`: columnas nuevas `jpeg_path` y `jpeg_checksum` (migración `0019_asset_jpeg`: solo agrega columnas). Panel, cola y descarga siguen usando el PNG sin cambios.
+- Tamaño: **1080×1350**. TikTok solo dice "máximo 1080p" (sin píxeles; revisado el 2026-09-30); 1080 es el lado corto. Si en la T9 TikTok lo rechaza, plan B: 864×1080.
+- Versiones renderizadas antes: `jpeg_path` null. La T6 tiene que re-renderizar (o no publicar) un post sin JPEG.
+- Verificado con un render real local (web + worker, RA-0001 de la base local): 6 slides en 10 s, JPEG válidos de 1080×1350 y 84–141 KB (límite de TikTok: 20 MB), a la vista iguales al PNG. 765 tests, typecheck, lint.
 
 **Extra: descartar posts (2026-09-28, pedido del operador)**:
 - La transición `archive` existía desde la Fase 2 pero no tenía botón. Ahora: **Descartar** en la página del post (confirmación en línea) y en la cola Revisar (hoja inferior, como Rechazar y Editar). Core `DISCARDABLE_STATUSES` / `canDiscard`: en revisión, rechazado, aprobado, programado, publicación fallida y fallido; **no** mientras la IA genera o el worker renderiza (el job fallaría y avisaría error). En el panel el estado `archived` se llama **"Descartado"** (también en los mensajes de la máquina de estados). No se borra nada: código y versiones quedan para el historial (ARCHITECTURE: archivar vs. borrar).
