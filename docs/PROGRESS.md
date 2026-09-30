@@ -9,7 +9,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 5 — Publicación automática en TikTok (empezada el 2026-09-28 a pedido del operador, en paralelo con la T14 de la Fase 4, que sigue abierta: unos días corriendo y la primera publicación real). Fase 4: T1–T13 hechas.
-- **Próximo paso:** deploy de la T8. Con eso la Fase 5 queda usable en modo borrador; **T7** (pantalla según las pautas) y **T10** (revisión/auditoría) quedan para cuando el operador quiera publicación directa (decisión del 2026-09-30). Lumus: cuando tenga cuenta de TikTok, agregarla como target user del sandbox y conectarla en Canales. En paralelo, T14 de la Fase 4.
+- **Próximo paso:** deploy de la T8 y, a la mañana siguiente, confirmar en los logs la primera renovación de las 04:30. Con eso la **Fase 5 queda terminada** (ADR 0017: el borrador en la bandeja es el modo definitivo; T7 y T10 pasan a "Después de la v1" del roadmap). Lumus: cuando tenga cuenta de TikTok, agregarla como target user del sandbox y conectarla en Canales. En paralelo, T14 de la Fase 4.
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -70,6 +70,8 @@ Cómo está hecho (paso 1):
 
 Plan aprobado el 2026-09-28 (el operador pidió arrancar la Fase 5 con la T14 de la Fase 4 abierta). 👁 = termina con capturas para aprobar.
 
+**Cambio de alcance (2026-09-30, ADR 0017):** el operador prefiere el borrador en la bandeja como modo definitivo ("me gusta ver cómo se subió y solamente apretar post": revisar slides, título y copy antes de publicar). T7 y T10 salen de la fase.
+
 Verificado en la documentación de TikTok (2026-09-28): el modo foto acepta **solo JPEG y WebP** (no PNG), "máximo 1080p" y 20 MB por imagen, hasta 35 fotos, título ≤ 90 y descripción ≤ 4000 (UTF-16), 6 pedidos por minuto por token. `PULL_FROM_URL` exige dominio o prefijo verificado y **no sigue redirecciones**. Sin auditoría: publicación directa solo `SELF_ONLY`, en cuentas privadas y hasta 5 usuarios por día. `MEDIA_UPLOAD` manda el borrador a la bandeja del usuario, que termina de publicar en la app. Publicación directa: pautas de UX obligatorias (cuenta visible, privacidad sin valor por defecto, comentarios/dúo/stitch, contenido comercial apagado por defecto, vista previa, consentimiento de "Music Usage Confirmation").
 
 Decisiones aprobadas con el plan: (1) **modo borrador** (`MEDIA_UPLOAD`) hasta aprobar la auditoría; después, publicación directa. (2) La configuración de TikTok y el consentimiento se completan **al aprobar o programar**; a la hora se publica con eso (riesgo: que la auditoría lo objete). (3) Primera cuenta: **RAdev** (Lumus todavía no tiene usuario de TikTok).
@@ -82,10 +84,10 @@ Decisiones aprobadas con el plan: (1) **modo borrador** (`MEDIA_UPLOAD`) hasta a
 | T4 | Conectar la cuenta de TikTok de cada marca por OAuth (Marcas → Canales) | ✅ (RAdev conectada en producción) |
 | T5 | JPEG de cada slide (segunda captura de la misma página, sin dependencias nuevas); tamaño a confirmar en la prueba (1080×1350 o 864×1080) | ✅ 1080×1350 (sin deploy; va con la T6) |
 | T6 | Adaptador TikTok: borrador / directo, seguimiento de estado, idempotente, reintentos, aviso por Telegram | ✅ borrador (el directo llega con la auditoría, T10); sin deploy |
-| T7 | Pantalla de publicación según las pautas de TikTok 👁 | ⏸ para más adelante (solo hace falta para publicación directa) |
+| T7 | Pantalla de publicación según las pautas de TikTok 👁 | ⏸ fuera de alcance (ADR 0017); en "Después de la v1" |
 | T8 | Job `tokens.refresh` | ✅ (sin deploy) |
 | T9 | Prueba real en el sandbox con RAdev (4:5, tamaño, borrador) | ✅ borrador en la bandeja y publicado **público** desde la app |
-| T10 | Pedido de auditoría con video de demo (operador, guiado) | ⏸ para más adelante (con la T7) |
+| T10 | Pedido de auditoría con video de demo (operador, guiado) | ⏸ fuera de alcance (ADR 0017); en "Después de la v1" |
 
 **T1 (2026-09-28)**:
 - `/legal/privacidad` y `/legal/terminos` (`apps/web/app/legal/`, componente común `legal-page.tsx`): públicas (sumadas a las excepciones de `proxy.ts`), en español con un resumen en inglés para quienes revisan en TikTok. Dicen que es una herramienta de uso personal de un solo operador; qué datos de TikTok se guardan (identificador, nombre, foto, tokens cifrados con AES-256-GCM, estado de cada publicación), para qué, dónde (Oracle Cloud, backups cifrados en B2), que no se comparten, cómo desconectar o revocar y pedir el borrado. Contacto: `radevelopment02@gmail.com` (constante `CONTACT_EMAIL`).

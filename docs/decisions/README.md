@@ -20,3 +20,4 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0014 | Cuenta de Oracle en Pay As You Go | aceptada |
 | 0015 | Looks por post (preset `studio`) | aceptada (ampliada por 0016) |
 | 0016 | Imágenes generadas con IA en portada y cierre | aceptada |
+| 0017 | TikTok: borrador en la bandeja como modo definitivo | aceptada |

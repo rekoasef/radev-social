@@ -94,7 +94,7 @@ Cada requerimiento indica la fase del roadmap en la que se implementa.
 
 ### Publicación
 - **RF-34** (F2) Adaptador manual: a la hora programada avisa y deja todo listo; se marca como publicado con un toque.
-- **RF-35** (F5) Publicación automática en TikTok (modo foto) una vez aprobada la auditoría; antes, modo borrador en la bandeja de TikTok.
+- **RF-35** (F5) Publicación en TikTok (modo foto): a su horario, el carrusel llega solo como borrador a la bandeja de la cuenta de la marca y el operador lo publica desde la app después de revisarlo (ADR 0017). La publicación directa queda para después de la v1.
 - **RF-36** (F5) Conectar cuentas de TikTok por marca (OAuth), con renovación de tokens.
 
 ### Medición y aprendizaje

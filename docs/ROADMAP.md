@@ -108,16 +108,14 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 
 ## Fase 5 — Publicación automática en TikTok
 
-- [ ] Verificar `media.gestorlumus.site` en TikTok
-- [ ] Tablas `social_accounts` (tokens cifrados) y `publications`
-- [ ] Conexión de cuentas de TikTok por OAuth desde el panel
-- [ ] Adaptador TikTok (modo foto, `PULL_FROM_URL`, 4:5; si la API no lo acepta, 9:16 derivado según ADR 0011); modo borrador hasta aprobar la auditoría
-- [ ] Pantalla de publicación que cumpla las pautas de UX de TikTok (vista previa, edición del texto, consentimiento)
-- [ ] Job `post.publish` idempotente con reintentos; `publish_failed` notificado
-- [ ] Job `tokens.refresh`
-- [ ] Solicitar la auditoría de TikTok con la app funcionando
+- [x] Verificar `media.gestorlumus.site` en TikTok (dominio raíz `gestorlumus.site`, en el sandbox)
+- [x] Tablas `social_accounts` (tokens cifrados) y `publications`
+- [x] Conexión de cuentas de TikTok por OAuth desde el panel
+- [x] Adaptador TikTok (modo foto, `PULL_FROM_URL`, 4:5 aceptado en 1080×1350); modo borrador en la bandeja (definitivo, ADR 0017)
+- [x] Job `post.publish` idempotente con reintentos; `publish_failed` notificado (y "Reintentar en TikTok")
+- [x] Job `tokens.refresh`
 
-**Terminado cuando:** un post aprobado sale solo a su horario en TikTok, sin abrir la app.
+**Terminado cuando:** un post aprobado llega solo a su horario a la bandeja de TikTok de la marca, listo para publicar con un toque, y los permisos se renuevan solos (ADR 0017).
 
 ---
 
@@ -144,3 +142,4 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - Presets de estilo adicionales
 - Video: **convertir nuestros carruseles en video** para TikTok (idea del 2026-09-28, a evaluar después de la Fase 5). Las slides ya renderizadas, con una narración por TTS, subtítulos sincronizados y música, armado con ffmpeg en el worker. Mantiene la identidad de marca (nada de clips de stock genéricos) y el costo bajo. Referencia: MoneyPrinterTurbo (guion → voz → subtítulos → clips → música → render). Antes de decidir: el costo de ffmpeg en el servidor gratuito (2 OCPU), un TTS gratuito y estable en español (Edge TTS no es una API oficial) y la licencia si se reusa código
 - Múltiples usuarios con permisos por marca
+- TikTok con publicación directa, sin pasar por la bandeja (ADR 0017: hoy se prefiere revisar antes de publicar): pantalla de publicación según las pautas de UX de TikTok (cuenta, privacidad sin valor por defecto, comentarios/dúo/stitch, contenido comercial, vista previa, consentimiento de música) y revisión + auditoría de la app con video de demo. Solo si el sandbox deja de alcanzar o se quiere publicar sin abrir la app
