@@ -202,6 +202,8 @@ export {
 } from "./queries/social-accounts";
 export {
   getTiktokPublishContext,
+  type RetryTiktokResult,
+  retryTiktokPublication,
   setAssetJpeg,
   setTiktokPublishId,
   settleTiktokPublication,

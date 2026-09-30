@@ -16,6 +16,8 @@ import {
   postPublishKey,
   QUEUE_OPTIONS,
   slideRewriteKey,
+  type TiktokPublishJob,
+  tiktokPublishKey,
 } from "@radev/core";
 import { versionTakesArt } from "@radev/slides";
 import { PgBoss } from "pg-boss";
@@ -46,6 +48,7 @@ function boss(): Promise<PgBoss> {
     for (const task of IDEA_REQUEST_TASKS) await client.createQueue(task, QUEUE_OPTIONS[task]);
     await client.createQueue(JOBS.dataRefresh, QUEUE_OPTIONS[JOBS.dataRefresh]);
     await client.createQueue(JOBS.postPublish, QUEUE_OPTIONS[JOBS.postPublish]);
+    await client.createQueue(JOBS.tiktokPublish, QUEUE_OPTIONS[JOBS.tiktokPublish]);
     await client.createQueue(JOBS.notifySend, QUEUE_OPTIONS[JOBS.notifySend]);
     return client;
   })();
@@ -147,6 +150,12 @@ export async function queuePublish(postId: string, at: Date): Promise<void> {
     singletonKey: postPublishKey(postId),
     startAfter: at,
   });
+}
+
+/** Sends a post that is `publishing` with a pending TikTok publication (phase 5 T6). */
+export async function queueTiktokPublish(postId: string): Promise<void> {
+  const data: TiktokPublishJob = { postId };
+  await (await boss()).send(JOBS.tiktokPublish, data, { singletonKey: tiktokPublishKey(postId) });
 }
 
 /** What a transition asks the queue to undo (state machine effects). */

@@ -146,3 +146,41 @@ export async function settleTiktokPublication(
     }
   });
 }
+
+export type RetryTiktokResult = { ok: true } | { ok: false; reason: string };
+
+/**
+ * "Reintentar en TikTok" on a post whose TikTok send failed: back to `publishing` through the state
+ * machine (`retryPublish`), with the TikTok publication pending again and without the old publish
+ * id, so tiktok.publish sends it anew. Refused for anything else.
+ */
+export async function retryTiktokPublication(
+  db: Database,
+  postId: string,
+): Promise<RetryTiktokResult> {
+  return db.transaction(async (tx) => {
+    const [post] = await tx
+      .select({ status: posts.status })
+      .from(posts)
+      .where(eq(posts.id, postId))
+      .for("update");
+    if (post?.status !== "publish_failed") {
+      return { ok: false, reason: "Solo se reintenta un post con la publicación fallida." };
+    }
+    const where = and(eq(publications.postId, postId), eq(publications.network, "tiktok"));
+    const [publication] = await tx
+      .select({ status: publications.status, attempts: publications.attempts })
+      .from(publications)
+      .where(where);
+    if (publication?.status !== "failed") {
+      return { ok: false, reason: "Este post no falló en TikTok." };
+    }
+    const moved = await transitionPost(tx, postId, "retryPublish");
+    if (!moved.ok) return moved;
+    await tx
+      .update(publications)
+      .set({ status: "pending", error: null, externalId: null, attempts: publication.attempts + 1 })
+      .where(where);
+    return { ok: true };
+  });
+}

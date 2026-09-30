@@ -13,11 +13,13 @@ import {
   getPostByCode,
   getPostVersion,
   getSeriesByKey,
+  getSocialAccount,
   listPillars,
   markPublishedManually,
   rejectAndRegenerate,
   resolveVersionDatasets,
   retryGeneration,
+  retryTiktokPublication,
   transitionPost,
 } from "@radev/db";
 import { confirmManualPublication } from "@radev/publishers";
@@ -32,6 +34,7 @@ import {
   queueGenerate,
   queuePublish,
   queueRender,
+  queueTiktokPublish,
   queueVersion,
 } from "@/lib/jobs";
 import { requireOperator } from "@/lib/session";
@@ -187,6 +190,26 @@ export async function retryRenderAction(form: FormData): Promise<void> {
   const moved = await transitionPost(db, post.id, "retryRender");
   if (!moved.ok) throw new Error(moved.reason);
   await queueRender(post.currentVersionId);
+  revalidatePath("/posts");
+  redirect(`/posts/${post.publicCode}`);
+}
+
+/**
+ * TikTok couldn't take the post (phase 5 T6): send it again now, through the state machine
+ * (`retryPublish`). Only with the brand's TikTok still usable.
+ */
+export async function retryTiktokAction(form: FormData): Promise<void> {
+  await requireOperator();
+  const { code } = retryInput.parse(Object.fromEntries(form));
+  const post = await getPostByCode(db, code);
+  if (!post) throw new Error("Ese post ya no existe.");
+  const account = await getSocialAccount(db, post.brandId, "tiktok");
+  if (account?.status !== "active" || !account.scopes.includes("video.upload")) {
+    throw new Error("La marca no tiene TikTok listo para publicar: revisalo en Marcas → Canales.");
+  }
+  const retried = await retryTiktokPublication(db, post.id);
+  if (!retried.ok) throw new Error(retried.reason);
+  await queueTiktokPublish(post.id);
   revalidatePath("/posts");
   redirect(`/posts/${post.publicCode}`);
 }

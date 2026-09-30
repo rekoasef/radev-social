@@ -43,7 +43,12 @@ import { db } from "@/lib/db";
 import { STATUS_DISPLAY } from "@/lib/post-status";
 import { describeRenderIssues } from "@/lib/render-issues";
 import { cityOf, formatDateTime, offsetOf } from "@/lib/time";
-import { restoreVersionAction, retryGenerationAction, retryRenderAction } from "../actions";
+import {
+  restoreVersionAction,
+  retryGenerationAction,
+  retryRenderAction,
+  retryTiktokAction,
+} from "../actions";
 import { unschedulePostAction } from "../schedule-actions";
 
 export async function generateMetadata({ params }: PageProps<"/posts/[code]">): Promise<Metadata> {
@@ -254,10 +259,35 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
           </p>
         )}
         {post.status === "publish_failed" && tiktokPublication?.status === "failed" && (
-          <p role="alert" className="max-w-[60ch] text-sm text-tally-red">
-            No se pudo mandar a TikTok: {tiktokPublication.error ?? "sin detalle"}. Podés
-            descargarlo y publicarlo a mano, o descartarlo.
-          </p>
+          <div className="flex flex-col gap-3">
+            <p role="alert" className="max-w-[60ch] text-sm text-tally-red">
+              No se pudo mandar a TikTok: {tiktokPublication.error ?? "sin detalle"}.
+            </p>
+            <p className="max-w-[60ch] text-sm text-ink-dim">
+              {viaTiktok ? (
+                "Reintentalo cuando esté resuelto, o descargalo y publicalo a mano."
+              ) : (
+                <>
+                  Para reintentar, reconectá TikTok en{" "}
+                  <Link
+                    href={`/brands/${brand.slug}/channels`}
+                    className="text-ink underline underline-offset-4 hover:text-ink-dim"
+                  >
+                    Marcas → Canales
+                  </Link>
+                  . También podés descargarlo y publicarlo a mano.
+                </>
+              )}
+            </p>
+            {viaTiktok && !viewingOld && (
+              <form action={retryTiktokAction}>
+                <input type="hidden" name="code" value={post.publicCode} />
+                <button type="submit" className="console-button console-button-primary">
+                  Reintentar en TikTok
+                </button>
+              </form>
+            )}
+          </div>
         )}
         {post.scheduledAt && ["generating", "rendering", "in_review"].includes(post.status) && (
           <p className="max-w-[60ch] text-sm text-ink-dim">
