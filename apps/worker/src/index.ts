@@ -552,6 +552,7 @@ async function main() {
       JOBS.postPublish,
       JOBS.tiktokPublish,
       JOBS.tokensRefresh,
+      JOBS.metricsSync,
       JOBS.slotsFill,
       JOBS.notifySend,
       JOBS.reviewNotify,

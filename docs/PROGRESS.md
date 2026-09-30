@@ -10,7 +10,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 - **Fase:** 6 — Medición y aprendizaje (empezada el 2026-09-30 a pedido del operador, con la Fase 5 casi cerrada: solo falta confirmar `tokens.refresh`). Fase 4: T1–T13 hechas, T14 abierta.
 - **Próximo paso:** el 2026-10-01 a la mañana, confirmar en los logs del worker la primera corrida de `tokens.refresh` (04:30 AR: "tokens refresh finished" con `renewed: 1` y RAdev sigue Conectada en Canales). Con eso la **Fase 5 queda terminada** (ADR 0017). Lumus: conectada en Canales el 2026-09-30 (target user del mismo sandbox `pruebas`); falta ver su primer borrador real en la bandeja. En paralelo, T14 de la Fase 4.
-- **Fase 6, próximo paso:** commit + deploy de T1–T3 (migración `0021`, solo crea tablas). Al arrancar, el worker lee las métricas solo; después mirar Métricas con login (RAdev y Lumus, escritorio y celular) y la ficha de RA-0006/RA-0007 ("En TikTok"). Sigue: T4 (capturas → IA, RF-39).
+- **Fase 6, próximo paso:** T1–T3 en producción desde el 2026-09-30 (`9299fd3`, migración `0021`). Primera lectura al arrancar el worker: 2 cuentas, 64 posts, 64 portadas, RA-0006 y RA-0007 vinculados, sin fallas. Falta que el operador mire **Métricas** con login (RAdev y Lumus, escritorio y celular) y la ficha de RA-0007 ("En TikTok"). Sigue: T4 (capturas → IA, RF-39).
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -75,7 +75,7 @@ Decisión aprobada con el plan: **métricas de toda la cuenta**, no solo de los 
 |---|---|---|
 | T1 | Lectura de la Display API (`fetchTiktokStats`, `listTiktokVideos` paginado, ids exactos con `postIdsFrom`) + tablas `network_posts`, `post_metrics`, `audience_snapshots` (migración `0021`) | ✅ |
 | T2 | Job `metrics.sync` cada 4 h + "Actualizar ahora"; vincula nuestros posts con el suyo y baja las portadas | ✅ |
-| T3 | Sección **Métricas** (cifras, vistas por post, seguidores, cuándo publicar, qué funciona por pilar/gancho/modelo, tabla de posts) + bloque "En TikTok" en la ficha del post | ✅ (local con datos reales de la prueba; falta verla en producción) |
+| T3 | Sección **Métricas** (cifras, vistas por post, seguidores, cuándo publicar, qué funciona por pilar/gancho/modelo, tabla de posts) + bloque "En TikTok" en la ficha del post | ✅ (en producción; falta que la mire el operador 👁) |
 | T4 | Capturas → IA (`metrics.extract`) → guardados, visitas al perfil, audiencia | pendiente |
 | T5 | Página de links `/l/[brand]`, botón de WhatsApp con código, registro de leads | pendiente |
 | T6 | Recomendaciones de horarios y mezcla; `winners` para la generación | pendiente |
