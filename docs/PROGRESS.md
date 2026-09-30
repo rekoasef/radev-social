@@ -9,7 +9,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 5 — Publicación automática en TikTok (empezada el 2026-09-28 a pedido del operador, en paralelo con la T14 de la Fase 4, que sigue abierta: unos días corriendo y la primera publicación real). Fase 4: T1–T13 hechas.
-- **Próximo paso:** deploy de la T8 y, a la mañana siguiente, confirmar en los logs la primera renovación de las 04:30. Con eso la **Fase 5 queda terminada** (ADR 0017: el borrador en la bandeja es el modo definitivo; T7 y T10 pasan a "Después de la v1" del roadmap). Lumus: cuando tenga cuenta de TikTok, agregarla como target user del sandbox y conectarla en Canales. En paralelo, T14 de la Fase 4.
+- **Próximo paso:** el 2026-10-01 a la mañana, confirmar en los logs del worker la primera corrida de `tokens.refresh` (04:30 AR: "tokens refresh finished" con `renewed: 1` y RAdev sigue Conectada en Canales). Con eso la **Fase 5 queda terminada** (ADR 0017). Lumus: cuando tenga cuenta de TikTok, agregarla como target user del sandbox y conectarla en Canales. En paralelo, T14 de la Fase 4.
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -28,7 +28,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
 - **Mejoras de contenido (2026-09-29, pedido del operador, en paralelo con la Fase 5):** (1) ✅ generación liviana: ~128.000 → ~1.000 tokens de entrada de base por ejecución (ver abajo). (2) Próximo: rediseño para que cada carrusel sea distinto (composiciones, tipos nuevos, looks por post). El operador eligió: tokens primero, **se puede salir del fondo oscuro** (claro, acento), y que Claude proponga direcciones visuales con capturas (no tiene referencias). Quiere que "cada imagen sea diferente, como ChatGPT". Diagnóstico sobre los carruseles de RAdev en producción: todas las slides tienen el mismo esqueleto (título arriba, diagrama chico, vacío, pie), el contenido ocupa ~30 % de la slide, la secuencia de tipos se repite y sobra decoración.
 - **Looks e imágenes en producción (2026-09-29):** deploy hecho (`4131aa2`), claves de Cloudflare cargadas en el servidor. RAdev y Lumus pasados a `studio` por el operador (Lumus con acento `#6E5CE8` y la orbe como elemento de marca). RA-0006 re-hecho con un look desde el editor. Próximo: mirar los primeros posts que genere la IA con looks e imágenes (look elegido, calidad de las imágenes, tiempos) y ajustar; después seguir con la Fase 5 (T2, registro de la app de TikTok).
-- **Última actualización:** 2026-09-30, Fase 5 T8 (`tokens.refresh`; sin deploy)
+- **Última actualización:** 2026-09-30, Fase 5 T8 en producción (`72dc456`); falta ver la primera renovación
 
 ## Mejora — rehacer una slide con IA (2026-09-29)
 
@@ -85,7 +85,7 @@ Decisiones aprobadas con el plan: (1) **modo borrador** (`MEDIA_UPLOAD`) hasta a
 | T5 | JPEG de cada slide (segunda captura de la misma página, sin dependencias nuevas); tamaño a confirmar en la prueba (1080×1350 o 864×1080) | ✅ 1080×1350 (sin deploy; va con la T6) |
 | T6 | Adaptador TikTok: borrador / directo, seguimiento de estado, idempotente, reintentos, aviso por Telegram | ✅ borrador (el directo llega con la auditoría, T10); sin deploy |
 | T7 | Pantalla de publicación según las pautas de TikTok 👁 | ⏸ fuera de alcance (ADR 0017); en "Después de la v1" |
-| T8 | Job `tokens.refresh` | ✅ (sin deploy) |
+| T8 | Job `tokens.refresh` | ✅ en producción (falta ver la primera corrida) |
 | T9 | Prueba real en el sandbox con RAdev (4:5, tamaño, borrador) | ✅ borrador en la bandeja y publicado **público** desde la app |
 | T10 | Pedido de auditoría con video de demo (operador, guiado) | ⏸ fuera de alcance (ADR 0017); en "Después de la v1" |
 
