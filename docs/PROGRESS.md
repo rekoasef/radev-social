@@ -9,7 +9,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 ## Estado actual
 
 - **Fase:** 5 — Publicación automática en TikTok (empezada el 2026-09-28 a pedido del operador, en paralelo con la T14 de la Fase 4, que sigue abierta: unos días corriendo y la primera publicación real). Fase 4: T1–T13 hechas.
-- **Próximo paso:** Fase 5, **T4**: conectar la cuenta de TikTok de cada marca por OAuth (Marcas → Canales), con las claves del **sandbox**. En paralelo, T14 de la Fase 4: la primera publicación real y unos días corriendo.
+- **Próximo paso:** Fase 5, **T4 — cierre**: deploy y cargar en el `.env` del servidor `TIKTOK_CLIENT_KEY`/`TIKTOK_CLIENT_SECRET` **del sandbox** (los pega el operador) y `TOKEN_ENCRYPTION_KEY` (se genera allá; copia al gestor de contraseñas). Después el operador conecta RAdev desde Marcas → Canales. Luego T5 (JPEG de cada slide). En paralelo, T14 de la Fase 4.
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -28,7 +28,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Para retomar en otra máquina:** después del `git pull`, correr `pnpm install` (baja el binario de Claude Code), `pnpm db:migrate` (hasta `0015_notifications`) y `pnpm db:seed` (carga las rutas de IA). El `.env` necesita `CLAUDE_CODE_OAUTH_TOKEN` y `OPENROUTER_API_KEY` (ver `.env.example`, entre comillas simples). Mirar la pestaña Marcas → Documentos, que no se revisó con login.
 - **Mejoras de contenido (2026-09-29, pedido del operador, en paralelo con la Fase 5):** (1) ✅ generación liviana: ~128.000 → ~1.000 tokens de entrada de base por ejecución (ver abajo). (2) Próximo: rediseño para que cada carrusel sea distinto (composiciones, tipos nuevos, looks por post). El operador eligió: tokens primero, **se puede salir del fondo oscuro** (claro, acento), y que Claude proponga direcciones visuales con capturas (no tiene referencias). Quiere que "cada imagen sea diferente, como ChatGPT". Diagnóstico sobre los carruseles de RAdev en producción: todas las slides tienen el mismo esqueleto (título arriba, diagrama chico, vacío, pie), el contenido ocupa ~30 % de la slide, la secuencia de tipos se repite y sobra decoración.
 - **Looks e imágenes en producción (2026-09-29):** deploy hecho (`4131aa2`), claves de Cloudflare cargadas en el servidor. RAdev y Lumus pasados a `studio` por el operador (Lumus con acento `#6E5CE8` y la orbe como elemento de marca). RA-0006 re-hecho con un look desde el editor. Próximo: mirar los primeros posts que genere la IA con looks e imágenes (look elegido, calidad de las imágenes, tiempos) y ajustar; después seguir con la Fase 5 (T2, registro de la app de TikTok).
-- **Última actualización:** 2026-09-30, Fase 5 T3 (cifrado de tokens y `social_accounts`)
+- **Última actualización:** 2026-09-30, Fase 5 T4 (conectar TikTok por OAuth; falta el deploy)
 
 ## Mejora — rehacer una slide con IA (2026-09-29)
 
@@ -79,7 +79,7 @@ Decisiones aprobadas con el plan: (1) **modo borrador** (`MEDIA_UPLOAD`) hasta a
 | T1 | Páginas públicas de Términos y Privacidad (las exige el registro de la app de TikTok) | ✅ (en producción) |
 | T2 | App en TikTok for Developers en sandbox (Login Kit + Content Posting API) y verificación de `media.gestorlumus.site` (TXT en Hostinger). Lo hace el operador, guiado | ✅ (sandbox `pruebas`) |
 | T3 | Cifrado AES-256-GCM de tokens + tabla `social_accounts` | ✅ |
-| T4 | Conectar la cuenta de TikTok de cada marca por OAuth (Marcas → Canales) | |
+| T4 | Conectar la cuenta de TikTok de cada marca por OAuth (Marcas → Canales) | ⏳ código listo; falta deploy + claves en el servidor + conectar RAdev |
 | T5 | JPEG de cada slide (segunda captura de la misma página, sin dependencias nuevas); tamaño a confirmar en la prueba (1080×1350 o 864×1080) | |
 | T6 | Adaptador TikTok: borrador / directo, seguimiento de estado, idempotente, reintentos, aviso por Telegram | |
 | T7 | Pantalla de publicación según las pautas de TikTok 👁 | |
@@ -127,6 +127,12 @@ Fuentes: developers.tiktok.com/doc/getting-started-create-an-app, /doc/add-a-san
 - `TOKEN_ENCRYPTION_KEY`: en `.env.example`, `env.production.example` y `setup.sh` (se genera sola en un servidor nuevo). Generada en el `.env` local de esta máquina; **la del servidor se genera en la T4** y va también al gestor de contraseñas (los backups no la llevan). En la otra máquina, generar una propia (`openssl rand -base64 32`).
 - Verificado: 753 tests, typecheck, lint, y contra Postgres local (script descartable): guardar, reconectar (misma fila), otra marca rechazada, cifrado en la base, descifrar, `reauth_required` → refresh → `active`, desconectar. En producción la migración la aplica el deploy.
 - **Docker en WSL (2026-09-30)**: la integración de Docker Desktop ya anda en esta máquina. No había volumen: se creó el Postgres local vacío (`docker compose up -d postgres`), `pnpm db:migrate` (hasta `0018`) y `pnpm db:seed`. Los datos reales están en producción.
+
+**T4 (2026-09-30)**:
+- `packages/publishers/src/tiktok/oauth.ts`: URL de autorización, canje del `code`, refresh (para la T8), revocar y nombre de la cuenta, con Zod sobre las respuestas y errores `TikTokError` (código y `log_id` de TikTok, nunca tokens). Verificado contra la documentación de TikTok ese día: web sin PKCE, scopes separados por coma, access 24 h, refresh 365 días (puede cambiar al renovar). 12 tests con `fetch` simulado.
+- Web: pestaña **Canales** (`/brands/[slug]/channels`), Server Actions conectar/desconectar, callback `/api/tiktok/callback` (flujo en ARCHITECTURE §9). Sin claves en el `.env`, la pantalla lo avisa y el botón queda deshabilitado. Avisos: cuenta a reconectar (con el error) y permisos destildados (sin `video.upload` no publica nada; sin `video.publish` solo borradores).
+- `TIKTOK_CLIENT_KEY`/`TIKTOK_CLIENT_SECRET` en `.env.example` y `env.production.example` (vacías = no configurado).
+- Verificado: 765 tests, typecheck, lint, build. Pantalla capturada sin login con ruta temporal (borrada) y cuentas falsas en la base local (borradas): sin conectar, conectada, a reconectar con permisos faltantes; escritorio y 390 px, sin scroll horizontal. **El ida y vuelta real con TikTok no se probó**: la Redirect URI es https (producción).
 
 **Extra: descartar posts (2026-09-28, pedido del operador)**:
 - La transición `archive` existía desde la Fase 2 pero no tenía botón. Ahora: **Descartar** en la página del post (confirmación en línea) y en la cola Revisar (hoja inferior, como Rechazar y Editar). Core `DISCARDABLE_STATUSES` / `canDiscard`: en revisión, rechazado, aprobado, programado, publicación fallida y fallido; **no** mientras la IA genera o el worker renderiza (el job fallaría y avisaría error). En el panel el estado `archived` se llama **"Descartado"** (también en los mensajes de la máquina de estados). No se borra nada: código y versiones quedan para el historial (ARCHITECTURE: archivar vs. borrar).

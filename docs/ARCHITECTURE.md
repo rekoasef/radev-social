@@ -335,6 +335,8 @@ interface PublisherAdapter {
 - `tiktok`: Content Posting API, modo foto, `PULL_FROM_URL` desde `media.gestorlumus.site` (formato 4:5; verificar que la API lo acepte, ver ADR 0011). Antes de la auditoría: modo borrador a la bandeja.
 - Instagram queda fuera de la v1; la interfaz ya lo contempla.
 
+**Conectar la cuenta de TikTok (Login Kit, F5 T4).** Marcas → Canales → "Conectar TikTok": una Server Action guarda una cookie `tiktok_oauth` (httpOnly, `SameSite=Lax`, 10 min, solo `/api/tiktok`) con un `state` al azar y la marca, y redirige a TikTok con los scopes de `TIKTOK_SCOPES`. TikTok vuelve a `/api/tiktok/callback` (pide sesión del operador): se compara el `state`, se canjea el `code` por tokens (`packages/publishers/src/tiktok/oauth.ts`), se lee el nombre de la cuenta (`user.info.basic`; `username` pediría `user.info.profile`) y se guarda con `saveSocialAccount` (cifrado). El resultado vuelve como `?tiktok=` a Canales. Desconectar revoca el acceso en TikTok (si falla, igual borra) y borra la fila. La Redirect URI es `<BETTER_AUTH_URL>/api/tiktok/callback`: tiene que ser https, así que solo se prueba en producción. Esto corre en la web (solo llamadas HTTP; nada de IA ni Playwright).
+
 ## 10. Modelo de datos
 
 Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamptz`).

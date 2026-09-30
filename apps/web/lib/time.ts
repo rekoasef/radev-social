@@ -25,3 +25,16 @@ export function formatDateTime(at: Date, timeZone: string): string {
   const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
   return `${get("day")} ${get("month").replace(".", "")} ${get("hour")}:${get("minute")}`;
 }
+
+/** Date with the year, in a brand's time zone, e.g. "30 sept 2027" (CLAUDE.md, rule 11). */
+export function formatDate(at: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("es-AR", {
+    timeZone,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
+    .format(at)
+    .replace(/ de /g, " ")
+    .replace(".", "");
+}
