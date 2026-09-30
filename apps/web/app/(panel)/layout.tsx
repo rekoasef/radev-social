@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ConsoleClock } from "@/components/console/console-clock";
 import { Tally } from "@/components/console/tally";
+import appMark from "@/components/panel/app-mark.png";
 import { BrandSwitcher } from "@/components/panel/brand-switcher";
 import { PanelDock, PanelNav } from "@/components/panel/panel-nav";
 import { UserMenu } from "@/components/panel/user-menu";
@@ -29,7 +30,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/">) {
           <div className="flex min-w-0 items-center gap-4 sm:gap-6">
             <Link href="/" className="flex items-center gap-3">
               <Image
-                src="/app-mark.png"
+                src={appMark}
                 alt=""
                 width={36}
                 height={36}

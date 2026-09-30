@@ -5,6 +5,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { SignInButton } from "@/components/auth/sign-in-button";
 import { Tally } from "@/components/console/tally";
+import appMark from "@/components/panel/app-mark.png";
 import { allowedEmails, auth, NOT_ALLOWED } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Entrar · RAdev Social" };
@@ -37,7 +38,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
           <div className="flex flex-col gap-4">
             <Image
-              src="/app-mark.png"
+              src={appMark}
               alt=""
               width={72}
               height={72}
