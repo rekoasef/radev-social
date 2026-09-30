@@ -1,5 +1,13 @@
-// Publishing adapters (manual; tiktok in phase 5).
+// Publishing adapters (manual; tiktok in phase 5) and TikTok's metrics (phase 6).
 export { confirmManualPublication, manualPublisher } from "./manual/manual";
+export {
+  cleanShareUrl,
+  fetchTiktokStats,
+  listTiktokVideos,
+  type TikTokAccountStats,
+  type TikTokVideo,
+  tiktokIdFromUrl,
+} from "./tiktok/display";
 export {
   exchangeTiktokCode,
   fetchTiktokUser,
@@ -20,6 +28,7 @@ export {
   initPhotoPost,
   isTiktokAuthError,
   isTiktokPermanentError,
+  postIdsFrom,
   TIKTOK_DESCRIPTION_MAX,
   TIKTOK_MAX_PHOTOS,
   TIKTOK_TITLE_MAX,

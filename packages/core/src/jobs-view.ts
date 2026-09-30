@@ -24,6 +24,7 @@ export const JOB_LABELS: Record<JobName, string> = {
   [JOBS.postPublish]: "Publicación",
   [JOBS.tiktokPublish]: "Envío a TikTok",
   [JOBS.tokensRefresh]: "Renovar permisos de TikTok",
+  [JOBS.metricsSync]: "Métricas de TikTok",
   [JOBS.slotsFill]: "Llenado automático",
   [JOBS.reviewNotify]: "Aviso de revisión",
   [JOBS.notifySend]: "Aviso de Telegram",
@@ -154,6 +155,7 @@ export function canRetryJob(name: string, state: string, context: RetryContext =
     case JOBS.slotsFill:
     case JOBS.reviewNotify:
     case JOBS.tokensRefresh:
+    case JOBS.metricsSync:
       return { ok: true };
     case JOBS.postPublish:
       return context.post?.status === "scheduled"

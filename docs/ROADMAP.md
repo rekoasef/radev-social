@@ -121,12 +121,12 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 
 ## Fase 6 — Medición y aprendizaje
 
-- [ ] Job `metrics.sync` y tabla `post_metrics`
+- [x] Job `metrics.sync` y tabla `post_metrics` (toda la cuenta: `network_posts` y `audience_snapshots`, ADR 0018)
 - [ ] Carga de capturas → extracción con IA → `audience_snapshots` / `post_metrics`
 - [ ] Página de links pública por marca (`/l/[brand]`) con seguimiento de clics
 - [ ] Botón de WhatsApp con mensaje precargado que incluye el código del post
 - [ ] Registro de leads (carga rápida, búsqueda por código de post)
-- [ ] Tablero por pilar, tipo de hook, horario y proveedor/modelo de IA
+- [ ] Tablero por pilar, tipo de hook, horario y proveedor/modelo de IA (sección Métricas hecha; falta proveedor y lo que traigan los leads)
 - [ ] Recomendaciones de horarios y de mezcla; `slots.fill` usa la mezcla ajustada
 - [ ] `winners.json` para la generación y reciclado de posts con buen rendimiento (RF-13): los dos necesitan métricas (vienen de la Fase 3). Opcional: importar como ejemplos de estilo las imágenes de posts viejos de RAdev desde Google Drive
 

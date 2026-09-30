@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { type Fetch, tiktokCall } from "./http";
 import { TikTokError } from "./oauth";
 
 // Content Posting API, photo mode (developers.tiktok.com/doc/content-posting-api-reference-photo-post
@@ -12,8 +13,6 @@ const STATUS_URL = "https://open.tiktokapis.com/v2/post/publish/status/fetch/";
 export const TIKTOK_TITLE_MAX = 90;
 export const TIKTOK_DESCRIPTION_MAX = 4000;
 export const TIKTOK_MAX_PHOTOS = 35;
-
-type Fetch = typeof fetch;
 
 /** Cuts to `max` UTF-16 units without splitting a surrogate pair (an emoji). */
 export function fitUtf16(text: string, max: number): string {
@@ -29,52 +28,6 @@ export function fitUtf16(text: string, max: number): string {
  * only mode before TikTok's audit). `DIRECT_POST` arrives after the audit (phase 5 T10).
  */
 export type TikTokPostMode = "MEDIA_UPLOAD";
-
-const apiError = z.object({
-  code: z.string(),
-  message: z.string().optional(),
-  log_id: z.string().optional(),
-});
-
-async function call(
-  url: string,
-  accessToken: string,
-  body: unknown,
-  fetchImpl: Fetch,
-): Promise<{ status: number; data: unknown }> {
-  const response = await fetchImpl(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json; charset=UTF-8",
-    },
-    body: JSON.stringify(body),
-  });
-  const text = await response.text();
-  let json: unknown;
-  try {
-    json = text ? JSON.parse(text) : {};
-  } catch {
-    throw new TikTokError(
-      `TikTok respondió algo que no es JSON (HTTP ${response.status}).`,
-      null,
-      null,
-    );
-  }
-  const error = z.object({ error: apiError }).safeParse(json);
-  if (error.success && error.data.error.code !== "ok") {
-    const { code, message, log_id } = error.data.error;
-    throw new TikTokError(
-      `TikTok: ${message || code} (HTTP ${response.status})`,
-      code,
-      log_id ?? null,
-    );
-  }
-  if (!response.ok) {
-    throw new TikTokError(`TikTok respondió HTTP ${response.status}.`, null, null);
-  }
-  return { status: response.status, data: json };
-}
 
 const initResponse = z.object({ data: z.object({ publish_id: z.string().min(1) }) });
 
@@ -93,7 +46,7 @@ export async function initPhotoPost(
   if (input.photoUrls.length > TIKTOK_MAX_PHOTOS) {
     throw new Error(`TikTok acepta hasta ${TIKTOK_MAX_PHOTOS} fotos por post.`);
   }
-  const { data } = await call(
+  const { data } = await tiktokCall(
     INIT_URL,
     accessToken,
     {
@@ -122,15 +75,30 @@ const statusResponse = z.object({
   data: z.object({
     status: z.string(),
     fail_reason: z.string().optional(),
-    publicaly_available_post_id: z.array(z.union([z.string(), z.number()])).optional(),
   }),
 });
+
+/**
+ * The public post ids in a status answer, read from the raw text: TikTok sends them as JSON
+ * numbers of 19 digits, which JSON.parse rounds (7691331151528545557 → …545000).
+ */
+export function postIdsFrom(text: string): string[] {
+  const list = /"publicaly_available_post_id"\s*:\s*\[([^\]]*)\]/.exec(text)?.[1];
+  if (!list) return [];
+  return list
+    .split(",")
+    .map((id) => id.trim().replace(/^"|"$/g, ""))
+    .filter((id) => /^\d+$/.test(id));
+}
 
 export type TikTokPostState =
   /** TikTok is still pulling or processing the photos: ask again later. */
   | { kind: "processing"; status: string }
-  /** A draft in the account's inbox: the operator finishes it in the app. */
-  | { kind: "inbox" }
+  /**
+   * A draft in the account's inbox: the operator finishes it in the app. Once they post it,
+   * TikTok keeps saying "inbox" but hands the public post's id (phase 6).
+   */
+  | { kind: "inbox"; postId: string | null }
   | { kind: "published"; postId: string | null }
   /** `retryable`: TikTok's own hiccup (`internal`); sending it again may work. */
   | { kind: "failed"; reason: string; retryable: boolean };
@@ -141,19 +109,23 @@ export async function fetchPostState(
   publishId: string,
   { fetchImpl = fetch }: { fetchImpl?: Fetch } = {},
 ): Promise<TikTokPostState> {
-  const { data } = await call(STATUS_URL, accessToken, { publish_id: publishId }, fetchImpl);
+  const { data, text } = await tiktokCall(
+    STATUS_URL,
+    accessToken,
+    { publish_id: publishId },
+    fetchImpl,
+  );
   const parsed = statusResponse.safeParse(data);
   if (!parsed.success) {
     throw new TikTokError("TikTok respondió el estado con un formato inesperado.", null, null);
   }
-  const { status, fail_reason, publicaly_available_post_id } = parsed.data.data;
+  const { status, fail_reason } = parsed.data.data;
+  const postId = postIdsFrom(text)[0] ?? null;
   switch (status) {
     case "SEND_TO_USER_INBOX":
-      return { kind: "inbox" };
-    case "PUBLISH_COMPLETE": {
-      const id = publicaly_available_post_id?.[0];
-      return { kind: "published", postId: id === undefined ? null : String(id) };
-    }
+      return { kind: "inbox", postId };
+    case "PUBLISH_COMPLETE":
+      return { kind: "published", postId };
     case "FAILED": {
       const reason = fail_reason || "sin motivo";
       return { kind: "failed", reason, retryable: reason === "internal" };

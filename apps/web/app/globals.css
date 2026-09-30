@@ -70,6 +70,11 @@
   --input: var(--color-bezel-strong);
   --ring: var(--color-ink-dim);
   --radius: 0.5rem;
+  /* Métricas: validated against the panel surface (dataviz validator, dark): orange for the
+     system's posts (the app's mark), blue for the rest of the account, hairline grid. */
+  --chart-ours: #e06c12;
+  --chart-rest: #5a8fd6;
+  --chart-grid: var(--color-bezel);
 }
 
 @layer base {

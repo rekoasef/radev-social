@@ -21,6 +21,8 @@ import {
   type IdeaRequestJob,
   ideaRequestKey,
   JOBS,
+  METRICS_SYNC_CRON,
+  METRICS_SYNC_KEY,
   type NotifySendJob,
   type PostPublishJob,
   QUEUE_OPTIONS,
@@ -36,6 +38,7 @@ import {
   failIdeaRequest,
   finishSlideRewrite,
   getLatestSnapshot,
+  hasNetworkPosts,
 } from "@radev/db";
 import { type JobWithMetadata, PgBoss } from "pg-boss";
 import { generateArt } from "./jobs/art-generate";
@@ -43,6 +46,7 @@ import { generateCarousel, RetryableGenerationError } from "./jobs/carousel-gene
 import { failRender, renderCarousel } from "./jobs/carousel-render";
 import { refreshData } from "./jobs/data-refresh";
 import { RetryableIdeasError, runIdeaRequest } from "./jobs/ideas-request";
+import { downloadCover, syncMetrics } from "./jobs/metrics-sync";
 import { notifyReview, sendNotification } from "./jobs/notify";
 import { publishPost } from "./jobs/post-publish";
 import { RetryableRewriteError, rewriteSlide } from "./jobs/slide-rewrite";
@@ -456,6 +460,32 @@ async function main() {
     {},
     { tz: DATA_REFRESH_TZ, key: "tokens-refresh" },
   );
+
+  // Metrics (phase 6): every 4 h in Buenos Aires, and by hand from Métricas → "Actualizar ahora".
+  // With no metrics yet (first start after the deploy), it reads them right away.
+  await boss.createQueue(JOBS.metricsSync, QUEUE_OPTIONS[JOBS.metricsSync]);
+  await boss.work(
+    JOBS.metricsSync,
+    { batchSize: 1, includeMetadata: true },
+    async ([job]: JobWithMetadata<object>[]) => {
+      if (!job) return;
+      await syncMetrics({
+        db,
+        log: log.child({ job: JOBS.metricsSync, id: job.id }),
+        client: tiktokClient,
+        download: downloadCover,
+      });
+    },
+  );
+  await boss.schedule(
+    JOBS.metricsSync,
+    METRICS_SYNC_CRON,
+    {},
+    { tz: DATA_REFRESH_TZ, key: METRICS_SYNC_KEY, singletonKey: METRICS_SYNC_KEY },
+  );
+  if (tiktokClient && !(await hasNetworkPosts(db))) {
+    await boss.send(JOBS.metricsSync, {}, { singletonKey: METRICS_SYNC_KEY });
+  }
 
   // Automatic filling: every 15 min by cron; it only acts inside the generation window (Settings).
   // One run at a time (a single cron job per tick, one worker at a time on it).

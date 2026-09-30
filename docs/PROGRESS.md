@@ -8,8 +8,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-- **Fase:** 5 — Publicación automática en TikTok (empezada el 2026-09-28 a pedido del operador, en paralelo con la T14 de la Fase 4, que sigue abierta: unos días corriendo y la primera publicación real). Fase 4: T1–T13 hechas.
-- **Próximo paso:** el 2026-10-01 a la mañana, confirmar en los logs del worker la primera corrida de `tokens.refresh` (04:30 AR: "tokens refresh finished" con `renewed: 1` y RAdev sigue Conectada en Canales). Con eso la **Fase 5 queda terminada** (ADR 0017). Lumus: cuando tenga cuenta de TikTok, agregarla como target user del sandbox y conectarla en Canales. En paralelo, T14 de la Fase 4.
+- **Fase:** 6 — Medición y aprendizaje (empezada el 2026-09-30 a pedido del operador, con la Fase 5 casi cerrada: solo falta confirmar `tokens.refresh`). Fase 4: T1–T13 hechas, T14 abierta.
+- **Próximo paso:** el 2026-10-01 a la mañana, confirmar en los logs del worker la primera corrida de `tokens.refresh` (04:30 AR: "tokens refresh finished" con `renewed: 1` y RAdev sigue Conectada en Canales). Con eso la **Fase 5 queda terminada** (ADR 0017). Lumus: conectada en Canales el 2026-09-30 (target user del mismo sandbox `pruebas`); falta ver su primer borrador real en la bandeja. En paralelo, T14 de la Fase 4.
+- **Fase 6, próximo paso:** commit + deploy de T1–T3 (migración `0021`, solo crea tablas). Al arrancar, el worker lee las métricas solo; después mirar Métricas con login (RAdev y Lumus, escritorio y celular) y la ficha de RA-0006/RA-0007 ("En TikTok"). Sigue: T4 (capturas → IA, RF-39).
 - **Para el operador (T8):** mirar con login Ajustes → Cola de trabajos → Ver trabajos (también desde el celular).
 - **Para el operador (T7) 👁:** aprobar el diseño de la cola **Revisar** (capturas en la conversación del 2026-09-28) y probarla con login, también desde el celular: aprobar un post, rechazar uno de IA con una frase rápida, y Editar → cambiar un texto → Guardar (vuelve a la cola cuando termina el render). El aviso de Telegram de "para revisar" ahora lleva a la cola.
 - **Telegram:** bot `@RadevSocial_bot` ("Radev social"), creado por el operador el 2026-09-25; `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en el `.env` (copiarlos al `.env` de la otra máquina y del servidor). Para sacar el chat id: mandarle un mensaje al bot y leer `getUpdates` (sin imprimir el token).
@@ -65,6 +66,34 @@ Cómo está hecho (paso 1):
 - El workspace ya no tiene `CLAUDE.md` (se sumaría al prompt de sistema): lleva `system-prompt.md` y `prompt.md`, que quedan para depurar si la ejecución falla. Aislamiento igual (carpeta temporal fuera del repo). ADR 0005 y regla 7 del CLAUDE.md actualizados.
 - Medido: con una tarea mínima, antes ~55.000 tokens de entrada y 3 turnos (6,9 s); ahora ~900 y 2 turnos (3,6 s). Smoke real: 982 tokens, 2 turnos, 1,9 s. Falta ver un carrusel real en producción (Ajustes → uso/`generation_runs`): se espera de ~128.000 a ~15.000 tokens de entrada.
 - `--bare` sigue sin servir (no lee el token OAuth); `--system-prompt-file` con `CLAUDE_CODE_OAUTH_TOKEN` sí (probado con 2.1.282).
+
+## Fase 6 — tareas
+
+Decisión aprobada con el plan: **métricas de toda la cuenta**, no solo de los posts del sistema (ADR 0018).
+
+| # | Tarea | Estado |
+|---|---|---|
+| T1 | Lectura de la Display API (`fetchTiktokStats`, `listTiktokVideos` paginado, ids exactos con `postIdsFrom`) + tablas `network_posts`, `post_metrics`, `audience_snapshots` (migración `0021`) | ✅ |
+| T2 | Job `metrics.sync` cada 4 h + "Actualizar ahora"; vincula nuestros posts con el suyo y baja las portadas | ✅ |
+| T3 | Sección **Métricas** (cifras, vistas por post, seguidores, cuándo publicar, qué funciona por pilar/gancho/modelo, tabla de posts) + bloque "En TikTok" en la ficha del post | ✅ (local con datos reales de la prueba; falta verla en producción) |
+| T4 | Capturas → IA (`metrics.extract`) → guardados, visitas al perfil, audiencia | pendiente |
+| T5 | Página de links `/l/[brand]`, botón de WhatsApp con código, registro de leads | pendiente |
+| T6 | Recomendaciones de horarios y mezcla; `winners` para la generación | pendiente |
+
+Notas de T1–T3 (2026-09-30):
+- Colores de los gráficos validados con el validador de dataviz contra el fondo del panel: naranja `#e06c12` (posts del sistema, el color del logo) y azul `#5a8fd6` (resto de la cuenta), tokens `--chart-*` en `globals.css`.
+- `TokenSource` (renovar el token cerca de vencer o si TikTok lo rechaza) pasó a `apps/worker/src/tiktok/renew.ts`: lo usan `tiktok.publish` y `metrics.sync`.
+- `fetchPostState` ya no redondea el id público (antes usaba el número de `JSON.parse`) y en `inbox` también devuelve `postId`.
+- Identidad: el logo "RA" (el ícono de la app de TikTok) quedó como favicon, ícono de la app (`icon.png`, `apple-icon.png`), en el login y en la barra del panel (`public/app-mark.png`); el proxy los deja pasar sin login.
+
+### Prueba previa de métricas (2026-09-30)
+
+Script de solo lectura corrido en el worker de producción, con los tokens de RAdev y Lumus (sin imprimirlos). Resultados:
+- **La Display API anda en sandbox** para las cuentas de prueba: `user.info` (seguidores, likes totales, cantidad de posts) y `video.list` (por post: vistas, likes, comentarios, compartidos, fecha, link). No da guardados, visitas al perfil ni audiencia: eso queda para las capturas (RF-39).
+- **Los carruseles de fotos aparecen en `video.list`** (con `duration: 0`). RAdev tiene 62 posts, incluidos los viejos (sirven para `winners`, RF-37); la lista pagina con `cursor`/`has_more`.
+- **El borrador publicado desde la bandeja se puede relacionar con nuestro post**: `status/fetch` con el `publish_id` guardado sigue diciendo `SEND_TO_USER_INBOX`, pero ya trae `publicaly_available_post_id` (RA-0006 y RA-0007).
+- **Ojo:** ese id viene como **número JSON de 19 dígitos** y `JSON.parse` lo redondea (`7691331151528545000` en vez de `…545557`). Hay que leerlo del texto crudo como string. `fetchPostState` (`packages/publishers/src/tiktok/posting.ts`) tiene el mismo problema en `PUBLISH_COMPLETE` (hoy no se usa: el modo es borrador).
+- La columna `handle` de `social_accounts` quedó `null` en las dos cuentas (TikTok no la devolvió al conectar).
 
 ## Fase 5 — tareas
 

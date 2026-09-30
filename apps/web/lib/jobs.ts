@@ -9,6 +9,7 @@ import {
   type IdeaRequestTask,
   ideaRequestKey,
   JOBS,
+  METRICS_SYNC_KEY,
   type NotifySendJob,
   type PostArt,
   type PostEffect,
@@ -50,6 +51,7 @@ function boss(): Promise<PgBoss> {
     await client.createQueue(JOBS.postPublish, QUEUE_OPTIONS[JOBS.postPublish]);
     await client.createQueue(JOBS.tiktokPublish, QUEUE_OPTIONS[JOBS.tiktokPublish]);
     await client.createQueue(JOBS.notifySend, QUEUE_OPTIONS[JOBS.notifySend]);
+    await client.createQueue(JOBS.metricsSync, QUEUE_OPTIONS[JOBS.metricsSync]);
     return client;
   })();
   return globalForBoss.radevBoss;
@@ -122,6 +124,11 @@ export async function queueIdeaRequest(task: IdeaRequestTask, requestId: string)
 /** Queues a refresh of a data source ("Actualizar ahora"). One waiting at a time per source. */
 export async function queueDataRefresh(source: DataSource): Promise<void> {
   await (await boss()).send(JOBS.dataRefresh, { source }, { singletonKey: dataRefreshKey(source) });
+}
+
+/** Queues a metrics read of every connected account ("Actualizar ahora"). One waiting at a time. */
+export async function queueMetricsSync(): Promise<void> {
+  await (await boss()).send(JOBS.metricsSync, {}, { singletonKey: METRICS_SYNC_KEY });
 }
 
 /**

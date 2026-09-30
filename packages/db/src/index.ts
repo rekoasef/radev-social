@@ -104,6 +104,21 @@ export {
   loadJobTargets,
 } from "./queries/jobs";
 export {
+  getLastMetricsAt,
+  getPostNetworkMetrics,
+  hasNetworkPosts,
+  linkNetworkPost,
+  listAccountDays,
+  listMetricsPosts,
+  listUnlinkedPublications,
+  listViewTotals,
+  type MetricsPostRow,
+  type NetworkPostInput,
+  saveAccountStats,
+  saveNetworkPostCounts,
+  setNetworkPostCover,
+} from "./queries/metrics";
+export {
   getNotification,
   listRecentNotifications,
   markNotificationFailed,

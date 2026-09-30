@@ -13,6 +13,7 @@ import {
 import {
   getBrandById,
   getPostByCode,
+  getPostNetworkMetrics,
   getSocialAccount,
   listGenerationRuns,
   listPlannedTimes,
@@ -27,6 +28,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plate } from "@/components/console/plate";
 import { Tally } from "@/components/console/tally";
+import { PostMetrics } from "@/components/metrics/post-metrics";
 import { ApproveButton } from "@/components/posts/approve-button";
 import { CopyButton } from "@/components/posts/copy-button";
 import { DiscardButton } from "@/components/posts/discard-form";
@@ -59,13 +61,14 @@ export async function generateMetadata({ params }: PageProps<"/posts/[code]">): 
 export default async function PostPage({ params, searchParams }: PageProps<"/posts/[code]">) {
   const post = await getPostByCode(db, (await params).code);
   if (!post) notFound();
-  const [brand, versions, publications, runs, query, tiktokAccount] = await Promise.all([
+  const [brand, versions, publications, runs, query, tiktokAccount, metrics] = await Promise.all([
     getBrandById(db, post.brandId),
     listPostVersions(db, post.id),
     listPublications(db, post.id),
     listGenerationRuns(db, post.id),
     searchParams,
     getSocialAccount(db, post.brandId, "tiktok"),
+    getPostNetworkMetrics(db, post.id),
   ]);
   if (!brand) notFound();
   const current = versions.find((v) => v.id === post.currentVersionId);
@@ -366,6 +369,10 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
         )}
         {canMarkPublished && exportable && <MarkPublishedForm code={post.publicCode} />}
       </section>
+
+      {metrics && (
+        <PostMetrics metrics={metrics} timeZone={brand.timezone} code={post.publicCode} />
+      )}
 
       {version && (
         <section aria-labelledby="slides-heading" className="flex flex-col gap-6">

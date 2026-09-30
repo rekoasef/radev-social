@@ -28,6 +28,11 @@ export const JOBS = {
    * doesn't lose its access, and a revoked one is found before its next post (phase 5 T8).
    */
   tokensRefresh: "tokens.refresh",
+  /**
+   * Every few hours and from "Actualizar ahora": the connected accounts' totals and every post's
+   * counts, linking our posts to the network's (phase 6).
+   */
+  metricsSync: "metrics.sync",
   /** Every 15 min: inside the generation window, give free slots a post for the AI (phase 4, T4). */
   slotsFill: "slots.fill",
   /** Tell the operator the posts that got to review, in one Telegram message (phase 4, T6). */
@@ -124,6 +129,8 @@ export const QUEUE_OPTIONS = {
   },
   // TikTok down: tried again twice, 10 min apart; the next day's run is the real retry.
   [JOBS.tokensRefresh]: { retryLimit: 2, retryDelay: 600, expireInSeconds: 10 * 60 },
+  // TikTok down or its rate limit: two more tries 5 min apart; the next run (4 h) is the real one.
+  [JOBS.metricsSync]: { retryLimit: 2, retryDelay: 300, expireInSeconds: 15 * 60 },
   // Only database work and queueing; the next run (15 min) is the retry.
   [JOBS.slotsFill]: { retryLimit: 0, expireInSeconds: 10 * 60 },
   [JOBS.reviewNotify]: { retryLimit: 2, retryDelay: 60 },
@@ -169,6 +176,9 @@ export type TiktokPublishJob = { postId: string };
 
 /** Key of a post's TikTok job: one at a time per post (it only acts on a pending publication). */
 export const tiktokPublishKey = (postId: string) => `tiktok:${postId}`;
+
+/** All the connected accounts; one sync waiting at a time, the job only upserts (rule 8). */
+export const METRICS_SYNC_KEY = "metrics-sync";
 
 export type NotifySendJob = { notificationId: string };
 

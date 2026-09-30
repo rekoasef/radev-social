@@ -179,7 +179,7 @@ Todos idempotentes (clave `singletonKey` derivada del objetivo), con reintentos 
 | `tiktok.publish` | lo encola `post.publish`, clave `tiktok:<post>`; 4 reintentos desde 30 s | manda los JPEG a TikTok como borrador (`MEDIA_UPLOAD`), guarda el `publish_id` y consulta el estado hasta la bandeja (aviso por Telegram), publicado o fallido (ver §9) |
 | `slots.fill` | cron cada 15 min; actúa solo **dentro de la ventana de generación** | llena los slots libres de los próximos 7 días respetando la mezcla (ver §7) |
 | `data.refresh` | cron diario (19:00 de Buenos Aires; al arrancar el worker si no hay datos) o "Actualizar ahora" en Ajustes | snapshot de Bluelytics |
-| `metrics.sync` | cron (F6) | métricas por publicación |
+| `metrics.sync` | cron cada 4 h (Buenos Aires; al arrancar el worker si no hay métricas) o "Actualizar ahora" en Métricas, clave `metrics-sync` | por cada cuenta de TikTok conectada (con `video.list`): totales del día (`user.info.stats`), todos los posts con sus conteos (`network_posts` + fila del día en `post_metrics`), portadas descargadas a `media/metrics/tiktok/`, y vincula nuestros posts de los últimos 60 días con el suyo (id público que devuelve `status/fetch` para el borrador, o el link pegado al marcarlo publicado). Todo por upsert: correrlo dos veces no duplica (ADR 0018) |
 | `tokens.refresh` | cron diario 04:30 (Buenos Aires) | renueva los tokens de cada cuenta `active`; si TikTok la rechaza, `reauth_required` + aviso "reconectá" (una vez por día); avisa 14 días antes de que venza el permiso (el refresh token dura un año); TikTok caído → sigue con las demás y reintenta |
 | `backup.run` | cron diario | lo ejecuta el contenedor de backup |
 
@@ -364,8 +364,9 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `notifications` | id, key (única: nunca se guarda ni se envía dos veces la misma), kind (`review` \| `publish` \| `failure` \| `limit` \| `cap` \| `test`), text, silent, created_at, sent_at, error |
 | `settings` | clave/valor global: `generation_window`, `slots_fill_last` (resultado de la última pasada del llenado) |
 | `data_snapshots` | id, source (`bluelytics`), as_of (fecha del dato), fetched_at, payload (jsonb, validado al bajarlo). Uno por fuente y día: otro refresh el mismo día lo reemplaza |
-| `post_metrics` (F6) | id, publication_id, captured_at, views, likes, comments, shares, saves, source (`api` \| `screenshot` \| `manual`) |
-| `audience_snapshots` (F6) | id, brand_id, network, captured_at, data (jsonb), source |
+| `network_posts` (F6, ADR 0018) | id, brand_id, network, external_id (id del post en la red, texto), post_id (nuestro post, si es uno), caption, url, kind (`photo` \| `video`), cover_path, published_at, views, likes, comments, shares (últimos), metrics_at. Única por red y external_id; un post nuestro tiene a lo sumo uno por red |
+| `post_metrics` (F6) | id, network_post_id, captured_on (día en la zona de la marca), captured_at, views, likes, comments, shares, saves (solo capturas o a mano), source (`api` \| `screenshot` \| `manual`). Única por post, fuente y día: la última lectura del día gana |
+| `audience_snapshots` (F6) | id, brand_id, network, captured_on, captured_at, data (jsonb: `followers`, `following`, `likes`, `videos`; las capturas pueden sumar más), source. Única por marca, red, fuente y día |
 | `links`, `link_clicks` (F6) | slug, destination, brand_id, post_id / link_id, clicked_at, referrer |
 | `leads` (F6) | id, brand_id, name, contact, channel, post_code, source_post_id, status, notes, created_at |
 | Better Auth | `user`, `session`, `account`, `verification` |

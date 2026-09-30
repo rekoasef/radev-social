@@ -6,6 +6,7 @@ import {
   initPhotoPost,
   isTiktokAuthError,
   isTiktokPermanentError,
+  postIdsFrom,
   TIKTOK_DESCRIPTION_MAX,
   TIKTOK_TITLE_MAX,
 } from "./posting";
@@ -126,7 +127,7 @@ describe("fetchPostState", () => {
       kind: "processing",
       status: "PROCESSING_DOWNLOAD",
     });
-    expect(await state({ status: "SEND_TO_USER_INBOX" })).toEqual({ kind: "inbox" });
+    expect(await state({ status: "SEND_TO_USER_INBOX" })).toEqual({ kind: "inbox", postId: null });
     expect(
       await state({ status: "PUBLISH_COMPLETE", publicaly_available_post_id: [7123456789] }),
     ).toEqual({ kind: "published", postId: "7123456789" });
@@ -143,6 +144,37 @@ describe("fetchPostState", () => {
       kind: "failed",
       reason: "internal",
       retryable: true,
+    });
+  });
+});
+
+describe("postIdsFrom", () => {
+  it("keeps TikTok's 19-digit ids exact (JSON.parse rounds them)", () => {
+    const text =
+      '{"data":{"publicaly_available_post_id":[7691331151528545557],"status":"SEND_TO_USER_INBOX"}}';
+    expect(String(JSON.parse(text).data.publicaly_available_post_id[0])).not.toBe(
+      "7691331151528545557",
+    );
+    expect(postIdsFrom(text)).toEqual(["7691331151528545557"]);
+  });
+
+  it("reads quoted ids, several, or none", () => {
+    expect(postIdsFrom('{"publicaly_available_post_id": ["1", 22 ]}')).toEqual(["1", "22"]);
+    expect(postIdsFrom('{"publicaly_available_post_id":[]}')).toEqual([]);
+    expect(postIdsFrom('{"data":{"status":"PROCESSING_UPLOAD"}}')).toEqual([]);
+  });
+
+  it("gives the draft's public id once the operator posts it", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          '{"data":{"publicaly_available_post_id":[7691333995828743430],"status":"SEND_TO_USER_INBOX"},"error":{"code":"ok"}}',
+          { status: 200 },
+        ),
+    );
+    expect(await fetchPostState("act.X", "pub-1", { fetchImpl })).toEqual({
+      kind: "inbox",
+      postId: "7691333995828743430",
     });
   });
 });

@@ -1,4 +1,5 @@
 import {
+  type AccountStats,
   AI_PROVIDERS,
   AI_TASKS,
   ASSET_ROLES,
@@ -12,6 +13,7 @@ import {
   IDEA_SOURCES,
   IDEA_STATUSES,
   type IdeaRequestParams,
+  METRIC_SOURCES,
   NETWORKS,
   NOTIFICATION_KINDS,
   POST_STATUSES,
@@ -518,6 +520,107 @@ export const publications = pgTable(
 );
 
 /**
+ * Every post of a connected account as the network shows it (phase 6, ADR 0018): ours and the ones
+ * made outside the system. `post_id` links it to our post when metrics.sync finds which one it is.
+ * Its counts are the latest; `post_metrics` keeps how they grew.
+ */
+export const networkPosts = pgTable(
+  "network_posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    network: text("network", { enum: SOCIAL_NETWORKS }).notNull(),
+    /** The post's id on the network (TikTok: 19 digits, kept as text). */
+    externalId: text("external_id").notNull(),
+    postId: uuid("post_id").references(() => posts.id, { onDelete: "set null" }),
+    caption: text("caption").notNull().default(""),
+    url: text("url"),
+    /** `photo` (carousel) or `video`. */
+    kind: text("kind").notNull().default("photo"),
+    /** Cover downloaded to MEDIA_DIR (the network's link expires); null until then. */
+    coverPath: text("cover_path"),
+    publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
+    views: integer("views").notNull().default(0),
+    likes: integer("likes").notNull().default(0),
+    comments: integer("comments").notNull().default(0),
+    shares: integer("shares").notNull().default(0),
+    /** When the counts above were read. */
+    metricsAt: timestamp("metrics_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("network_posts_network_external_unique").on(t.network, t.externalId),
+    // One network post per post of ours and network.
+    uniqueIndex("network_posts_post_network_unique")
+      .on(t.postId, t.network)
+      .where(sql`${t.postId} is not null`),
+    index("network_posts_brand_published_idx").on(t.brandId, t.publishedAt),
+    check("network_posts_network_valid", sql`${t.network} in (${inList(SOCIAL_NETWORKS)})`),
+    check("network_posts_kind_valid", sql`${t.kind} in ('photo', 'video')`),
+  ],
+);
+
+/**
+ * A post's counts on a day, in the brand's zone: one row per post, source and day, the latest read
+ * of the day wins (rule 8). How a post grew after it went out.
+ */
+export const postMetrics = pgTable(
+  "post_metrics",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    networkPostId: uuid("network_post_id")
+      .notNull()
+      .references(() => networkPosts.id, { onDelete: "cascade" }),
+    capturedOn: date("captured_on").notNull(),
+    capturedAt: timestamp("captured_at", { withTimezone: true }).notNull().defaultNow(),
+    views: integer("views").notNull(),
+    likes: integer("likes").notNull(),
+    comments: integer("comments").notNull(),
+    shares: integer("shares").notNull(),
+    /** Not in TikTok's API: only from screenshots or by hand. */
+    saves: integer("saves"),
+    source: text("source", { enum: METRIC_SOURCES }).notNull(),
+  },
+  (t) => [
+    uniqueIndex("post_metrics_post_source_day_unique").on(t.networkPostId, t.source, t.capturedOn),
+    check("post_metrics_source_valid", sql`${t.source} in (${inList(METRIC_SOURCES)})`),
+  ],
+);
+
+/**
+ * The account's totals on a day, in the brand's zone (followers, likes, posts). One per brand,
+ * network, source and day; the latest read of the day wins (rule 8).
+ */
+export const audienceSnapshots = pgTable(
+  "audience_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    network: text("network", { enum: SOCIAL_NETWORKS }).notNull(),
+    capturedOn: date("captured_on").notNull(),
+    capturedAt: timestamp("captured_at", { withTimezone: true }).notNull().defaultNow(),
+    /** AccountStats from the API; screenshots (RF-39) may add more keys. */
+    data: jsonb("data").$type<AccountStats & Record<string, unknown>>().notNull(),
+    source: text("source", { enum: METRIC_SOURCES }).notNull(),
+  },
+  (t) => [
+    uniqueIndex("audience_snapshots_brand_network_source_day_unique").on(
+      t.brandId,
+      t.network,
+      t.source,
+      t.capturedOn,
+    ),
+    check("audience_snapshots_network_valid", sql`${t.network} in (${inList(SOCIAL_NETWORKS)})`),
+    check("audience_snapshots_source_valid", sql`${t.source} in (${inList(METRIC_SOURCES)})`),
+  ],
+);
+
+/**
  * Provider and model of each AI task, with an optional fallback (docs/ARCHITECTURE.md §7).
  * `brand_id` null is the global route; a brand's own route wins over it. Checked with
  * checkAiRoute (packages/core) before saving.
@@ -663,6 +766,9 @@ export type BrandDocument = typeof brandDocuments.$inferSelect;
 export type AiRouteRow = typeof aiRoutes.$inferSelect;
 export type DataSnapshot = typeof dataSnapshots.$inferSelect;
 export type GenerationRun = typeof generationRuns.$inferSelect;
+export type NetworkPost = typeof networkPosts.$inferSelect;
+export type PostMetric = typeof postMetrics.$inferSelect;
+export type AudienceSnapshot = typeof audienceSnapshots.$inferSelect;
 export type NewGenerationRun = typeof generationRuns.$inferInsert;
 
 export * from "./auth-schema";

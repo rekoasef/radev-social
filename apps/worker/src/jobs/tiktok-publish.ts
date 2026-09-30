@@ -11,8 +11,6 @@ import {
   getTiktokPublishContext,
   markSocialAccountReauth,
   readMediaFile,
-  renewSocialAccountTokens,
-  type SocialTokens,
   setAssetJpeg,
   setTiktokPublishId,
   settleTiktokPublication,
@@ -31,7 +29,7 @@ import {
 } from "@radev/publishers";
 import { z } from "zod";
 import type { Logger } from "../logger";
-import { expiresSoon, tiktokRenewer } from "../tiktok/renew";
+import { TokenSource } from "../tiktok/renew";
 
 // tiktok.publish (phase 5 T6, docs/ARCHITECTURE.md §9): a post of a brand with TikTok connected,
 // already `publishing`. Sends the slides' JPEGs as a photo post (MEDIA_UPLOAD: a draft in the
@@ -115,7 +113,7 @@ export async function publishToTiktok(
       );
     }
 
-    const tokens = new TokenSource(db, client, account.id, api, now);
+    const tokens = new TokenSource(db, client, account.id, api.refreshTiktokToken, now);
     let publishId = context.publication.externalId;
     if (!publishId) {
       const photoUrls = await jpegUrls(deps, context, mediaBaseUrl);
@@ -203,47 +201,6 @@ export async function failTiktokPublish(
   });
   deps.log.warn("tiktok publish failed", { postId, error, settled });
   if (settled) await deps.onFailed?.({ postId, error });
-}
-
-/** The access token, renewed when close to expiring, or once when TikTok rejects it. */
-class TokenSource {
-  private current: SocialTokens | undefined;
-  private readonly renew: (refreshToken: string | null) => Promise<SocialTokens>;
-
-  constructor(
-    private readonly db: Database,
-    client: TikTokClient,
-    private readonly accountId: string,
-    api: TiktokApi,
-    private readonly now: () => Date,
-  ) {
-    this.renew = tiktokRenewer(client, api.refreshTiktokToken, now);
-  }
-
-  async use<T>(call: (accessToken: string) => Promise<T>): Promise<T> {
-    const tokens = await this.get();
-    try {
-      return await call(tokens.accessToken);
-    } catch (error) {
-      if (!(error instanceof TikTokError) || error.code !== "access_token_invalid") throw error;
-      // Renewed unless someone else already did (then the stored token is a different one).
-      return call((await this.get(tokens.accessToken)).accessToken);
-    }
-  }
-
-  private async get(rejected?: string): Promise<SocialTokens> {
-    if (this.current && rejected === undefined && !expiresSoon(this.current, this.now())) {
-      return this.current;
-    }
-    const { tokens } = await renewSocialAccountTokens(
-      this.db,
-      this.accountId,
-      (stored) => stored.accessToken === rejected || expiresSoon(stored, this.now()),
-      this.renew,
-    );
-    this.current = tokens;
-    return tokens;
-  }
 }
 
 /** Public URLs of the slides' JPEGs, making the ones missing from older renders. */
