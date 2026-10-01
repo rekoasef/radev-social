@@ -9,7 +9,7 @@ export type RankRow = {
   medianViews: number | null;
   posts: number;
   engagement: number | null;
-  /** Leads its posts brought (links page and typed leads). */
+  /** Leads its posts brought (typed by the operator). */
   leads?: number;
 };
 

@@ -3,7 +3,6 @@ import {
   addDays,
   byHour,
   byWeekday,
-  clickRate,
   groupPosts,
   isMetricsRange,
   localDateOf,
@@ -18,7 +17,6 @@ import {
   countPostOutcomes,
   getLastMetricsAt,
   getLeadTotals,
-  getLinkTotals,
   getSocialAccount,
   listAccountDays,
   listMetricsPosts,
@@ -110,16 +108,14 @@ export default async function MetricsPage({ searchParams }: PageProps<"/metrics"
         getLastMetricsAt(db, { brandId: brand.id, network: "tiktok" }),
       ])
     : [[], [], null];
-  const [linkTotals, leadTotals, outcomes] = await Promise.all([
-    getLinkTotals(db, { brandId: brand.id, from }),
+  const [leadTotals, outcomes] = await Promise.all([
     getLeadTotals(db, { brandId: brand.id, from }),
     countPostOutcomes(
       db,
       rows.map((row) => row.id),
     ),
   ]);
-  const outcomeOf = (id: string) => outcomes.get(id) ?? { clicks: 0, leads: 0, clients: 0 };
-  const clicks = linkTotals.whatsapp + linkTotals.links;
+  const outcomeOf = (id: string) => outcomes.get(id) ?? { leads: 0, clients: 0 };
 
   const posts = rows.map(toMetricsPost);
   const summary = summarize(posts);
@@ -147,9 +143,6 @@ export default async function MetricsPage({ searchParams }: PageProps<"/metrics"
         { label: "Likes", value: formatNumber(row.likes) },
         { label: "Comentarios", value: formatNumber(row.comments) },
         { label: "Compartidos", value: formatNumber(row.shares) },
-        ...(outcomeOf(row.id).clicks > 0
-          ? [{ label: "Clics en la página", value: formatNumber(outcomeOf(row.id).clicks) }]
-          : []),
         ...(outcomeOf(row.id).leads > 0
           ? [{ label: "Leads", value: formatNumber(outcomeOf(row.id).leads) }]
           : []),
@@ -193,7 +186,7 @@ export default async function MetricsPage({ searchParams }: PageProps<"/metrics"
     keyOf: (post: (typeof ours)[number]) => string | null,
     labelOf: (key: string) => string,
   ) => {
-    // Leads of each group: what the links page and the typed leads say of its posts.
+    // Leads of each group: what the typed leads say of its posts.
     const leadsBy = new Map<string, number>();
     for (const post of ours) {
       const key = keyOf(post);
@@ -336,22 +329,12 @@ export default async function MetricsPage({ searchParams }: PageProps<"/metrics"
         )}
         <div className="flex flex-col gap-3">
           <h2 className="plate-text text-ink-dim">
-            De la página de links a clientes ·{" "}
-            <Link href={`/brands/${brand.slug}/links`} className="underline hover:text-ink">
-              configurar
+            Leads y clientes ·{" "}
+            <Link href="/metrics/leads" className="underline hover:text-ink">
+              anotar
             </Link>
           </h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile
-              label="Visitas a la página"
-              value={formatCompact(linkTotals.views)}
-              hint="desde el link del perfil"
-            />
-            <StatTile
-              label="Clics"
-              value={formatCompact(clicks)}
-              hint={`${formatCompact(linkTotals.whatsapp)} a WhatsApp · ${formatPercent(clickRate(linkTotals.views, clicks))} de las visitas`}
-            />
+          <div className="grid grid-cols-2 gap-3 sm:max-w-md">
             <StatTile
               label="Leads"
               value={formatCompact(leadTotals.leads)}

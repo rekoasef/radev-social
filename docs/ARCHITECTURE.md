@@ -74,7 +74,6 @@ apps/
     app/(panel)/ideas/      banco de ideas
     app/(panel)/settings/   ruteo de IA, límites, integraciones
     app/render/             páginas de render (solo red interna)
-    app/l/[brand]/          página de links pública (F6)
   worker/
     src/jobs/               un archivo por job
     src/render/             Playwright + QA
@@ -159,7 +158,7 @@ Invariantes con test obligatorio:
 
 **Programación (F4, T2)**: `posts.scheduled_at` es la **hora planeada** y `scheduled` quiere decir que el job `post.publish` está encolado. Editar un post programado le cancela el job pero conserva la hora; al aprobarlo de nuevo, si la hora no pasó, se programa solo (si pasó, se olvida y queda `approved`). Una hora por marca: índice único `(brand_id, scheduled_at)` sin contar archivados. El job, antes de publicar, confirma que el post siga `scheduled` para esa misma hora (`isPublishJobCurrent`), así un job viejo nunca publica. Reglas en `packages/core/src/scheduling/publish.ts`. El calendario (F4, T3) también mueve la hora planeada de posts que todavía se generan o revisan (`PLANNABLE_STATUSES`): no cambian de estado ni tienen job hasta que se aprueban.
 
-Cada post tiene un **código público** corto e inmutable (`<prefijo de marca>-<número>`, ej. `RA-0142`, `LU-0031`) usado en el mensaje precargado de WhatsApp y en los links.
+Cada post tiene un **código público** corto e inmutable (`<prefijo de marca>-<número>`, ej. `RA-0142`, `LU-0031`) con el que se anotan los leads (Métricas → Leads).
 
 ## 6. Jobs (pg-boss)
 
@@ -366,7 +365,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `network_posts` (F6, ADR 0018) | id, brand_id, network, external_id (id del post en la red, texto), post_id (nuestro post, si es uno), caption, url, kind (`photo` \| `video`), cover_path, published_at, views, likes, comments, shares (últimos), metrics_at. Única por red y external_id; un post nuestro tiene a lo sumo uno por red |
 | `post_metrics` (F6) | id, network_post_id, captured_on (día en la zona de la marca), captured_at, views, likes, comments, shares, saves (solo capturas o a mano), source (`api` \| `screenshot` \| `manual`). Única por post, fuente y día: la última lectura del día gana |
 | `audience_snapshots` (F6) | id, brand_id, network, captured_on, captured_at, data (jsonb: `followers`, `following`, `likes`, `videos`; las capturas pueden sumar más), source. Única por marca, red, fuente y día |
-| `links`, `link_clicks` (F6) | slug, destination, brand_id, post_id / link_id, clicked_at, referrer |
+| `leads` (F6) | id, brand_id, name, contact, channel, post_ref, network_post_id, status (`new` \| `talking` \| `client` \| `lost`), notes, created_at, updated_at |
 | `leads` (F6) | id, brand_id, name, contact, channel, post_code, source_post_id, status, notes, created_at |
 | Better Auth | `user`, `session`, `account`, `verification` |
 

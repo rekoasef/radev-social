@@ -48,7 +48,7 @@ export function toMetricsPost(row: MetricsPostRow): MetricsPost {
   };
 }
 
-export type PostOutcome = { clicks: number; leads: number; clients: number };
+export type PostOutcome = { leads: number; clients: number };
 
 export function PostsTable({
   rows,
@@ -58,12 +58,12 @@ export function PostsTable({
 }: {
   rows: MetricsPostRow[];
   timeZone: string;
-  /** Clicks on the links page and leads of each post. */
+  /** Leads of each post. */
   outcomes: ReadonlyMap<string, PostOutcome>;
   /** Posts above it are marked: they did better than the usual post of the range. */
   medianViews: number | null;
 }) {
-  const outcomeOf = (id: string) => outcomes.get(id) ?? { clicks: 0, leads: 0, clients: 0 };
+  const outcomeOf = (id: string) => outcomes.get(id) ?? { leads: 0, clients: 0 };
   return (
     <>
       {/* Phone: one card per post, the four counts in a row. */}
@@ -81,7 +81,6 @@ export function PostsTable({
                     ["Likes", row.likes],
                     ["Coment.", row.comments],
                     ["Compart.", row.shares],
-                    ["Clics", outcomeOf(row.id).clicks],
                     ["Leads", outcomeOf(row.id).leads],
                   ] as const
                 ).map(([label, value]) => (

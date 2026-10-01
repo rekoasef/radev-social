@@ -10,8 +10,7 @@ type Tab =
   | "documents"
   | "pillars"
   | "schedule"
-  | "channels"
-  | "links";
+  | "channels";
 
 /** Header of a brand's pages: back to the list, name, status and the brand's sections. */
 export function BrandTabs({ brand, current }: { brand: Brand; current: Tab }) {
@@ -24,7 +23,6 @@ export function BrandTabs({ brand, current }: { brand: Brand; current: Tab }) {
     { id: "pillars", label: "Pilares", href: `/brands/${brand.slug}/pillars` },
     { id: "schedule", label: "Horarios", href: `/brands/${brand.slug}/schedule` },
     { id: "channels", label: "Canales", href: `/brands/${brand.slug}/channels` },
-    { id: "links", label: "Links", href: `/brands/${brand.slug}/links` },
   ];
   return (
     <div className="flex flex-col gap-5">

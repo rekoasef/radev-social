@@ -101,8 +101,8 @@ Cada requerimiento indica la fase del roadmap en la que se implementa.
 - **RF-37** (F6, pospuesto desde F3: no hay historial con métricas) Usar los posts con mejores métricas como ejemplos para la generación.
 - **RF-38** (F6) Sincronizar métricas por post desde la API de TikTok.
 - **RF-39** (F6) Cargar capturas de analíticas y extraer datos con IA.
-- **RF-40** (F6) Página de links propia por marca con seguimiento de clics.
-- **RF-41** (F6) Botón de WhatsApp con mensaje precargado que incluye el código del post (`RA-0142`) para atribuir cada lead.
+- ~~**RF-40** (F6) Página de links propia por marca con seguimiento de clics.~~ Quitado (ADR 0022).
+- ~~**RF-41** (F6) Botón de WhatsApp con mensaje precargado que incluye el código del post (`RA-0142`) para atribuir cada lead.~~ Quitado (ADR 0022).
 - **RF-42** (F6) Registro de leads (manual rápido o a partir del código recibido).
 - **RF-43** (F6) Tablero por pilar, tipo de hook, horario, proveedor/modelo de IA; recomendaciones de horarios y mezcla.
 

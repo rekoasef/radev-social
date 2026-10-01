@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clickRate, isLeadStatus, normalizePostRef, postRef } from "./links";
+import { isLeadStatus, normalizePostRef, postRef } from "./leads";
 
 describe("postRef", () => {
   it("uses our code, or TK- and the end of TikTok's id", () => {
@@ -17,9 +17,7 @@ describe("normalizePostRef", () => {
 });
 
 describe("small rules", () => {
-  it("clickRate and lead statuses", () => {
-    expect(clickRate(200, 30)).toBe(0.15);
-    expect(clickRate(0, 3)).toBeNull();
+  it("lead statuses", () => {
     expect(isLeadStatus("client")).toBe(true);
     expect(isLeadStatus("won")).toBe(false);
   });

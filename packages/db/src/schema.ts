@@ -15,7 +15,6 @@ import {
   type IdeaRequestParams,
   LEAD_CHANNELS,
   LEAD_STATUSES,
-  LINK_EVENT_KINDS,
   METRIC_SOURCES,
   NETWORKS,
   NOTIFICATION_KINDS,
@@ -602,59 +601,6 @@ export const audienceSnapshots = pgTable(
 );
 
 /**
- * Links a brand's links page shows besides WhatsApp (phase 6 T5): web, portfolio, the app. The
- * `primary` one (at most one per brand) takes the visitor's post as `?ref=` when the brand has no
- * WhatsApp (Lumus: the app's sign-up).
- */
-export const brandLinks = pgTable(
-  "brand_links",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    brandId: uuid("brand_id")
-      .notNull()
-      .references(() => brands.id, { onDelete: "cascade" }),
-    title: text("title").notNull(),
-    url: text("url").notNull(),
-    position: integer("position").notNull().default(0),
-    primary: boolean("primary").notNull().default(false),
-    active: boolean("active").notNull().default(true),
-    createdAt: createdAt(),
-    updatedAt: updatedAt(),
-  },
-  (t) => [
-    index("brand_links_brand_position_idx").on(t.brandId, t.position),
-    uniqueIndex("brand_links_brand_primary_unique").on(t.brandId).where(sql`${t.primary}`),
-  ],
-);
-
-/**
- * What happened on a brand's links page: a visit, a WhatsApp opened or a link followed, and for
- * which post the visitor came. Nothing personal is stored: no IP, no cookie.
- */
-export const linkEvents = pgTable(
-  "link_events",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    brandId: uuid("brand_id")
-      .notNull()
-      .references(() => brands.id, { onDelete: "cascade" }),
-    kind: text("kind", { enum: LINK_EVENT_KINDS }).notNull(),
-    networkPostId: uuid("network_post_id").references(() => networkPosts.id, {
-      onDelete: "set null",
-    }),
-    linkId: uuid("link_id").references(() => brandLinks.id, { onDelete: "set null" }),
-    /** The site that sent the visitor (host only, e.g. "www.tiktok.com"). */
-    referrer: text("referrer"),
-    createdAt: createdAt(),
-  },
-  (t) => [
-    index("link_events_brand_created_idx").on(t.brandId, t.createdAt),
-    index("link_events_network_post_idx").on(t.networkPostId),
-    check("link_events_kind_valid", sql`${t.kind} in (${inList(LINK_EVENT_KINDS)})`),
-  ],
-);
-
-/**
  * Someone who wrote to the brand (RF-42), typed by the operator. `post_ref` is what the message
  * said (RA-0142, TK-545557); `network_post_id` the post it points to, when it's one of the account.
  */
@@ -833,7 +779,6 @@ export type GenerationRun = typeof generationRuns.$inferSelect;
 export type NetworkPost = typeof networkPosts.$inferSelect;
 export type PostMetric = typeof postMetrics.$inferSelect;
 export type AudienceSnapshot = typeof audienceSnapshots.$inferSelect;
-export type BrandLink = typeof brandLinks.$inferSelect;
 export type Lead = typeof leads.$inferSelect;
 export type NewGenerationRun = typeof generationRuns.$inferInsert;
 

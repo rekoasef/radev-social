@@ -5,7 +5,7 @@ import {
   LEAD_STATUSES,
   type LeadStatus,
 } from "@radev/core";
-import { getLeadTotals, listLeads, listLinksPagePosts } from "@radev/db";
+import { getLeadTotals, listLeads, listRecentNetworkPosts } from "@radev/db";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
@@ -46,7 +46,7 @@ export default async function LeadsPage({ searchParams }: PageProps<"/metrics/le
   const [leads, totals, posts] = await Promise.all([
     listLeads(db, { brandId: brand.id, status, search }),
     getLeadTotals(db, { brandId: brand.id, from: null }),
-    listLinksPagePosts(db, { brandId: brand.id, network: "tiktok", limit: 30 }),
+    listRecentNetworkPosts(db, { brandId: brand.id, network: "tiktok", limit: 30 }),
   ]);
   const suggestions = posts.map((post) => ({ ref: post.ref, caption: post.caption }));
   const filterHref = (next: LeadStatus | undefined) => {

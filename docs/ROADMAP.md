@@ -123,8 +123,8 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 
 - [x] Job `metrics.sync` y tabla `post_metrics` (toda la cuenta: `network_posts` y `audience_snapshots`, ADR 0018)
 - [ ] Carga de capturas → extracción con IA → `audience_snapshots` / `post_metrics`
-- [x] Página de links pública por marca (`/l/[brand]`) con seguimiento de clics
-- [x] Botón de WhatsApp con mensaje precargado que incluye el código del post
+- [x] ~~Página de links pública por marca (`/l/[brand]`) con seguimiento de clics~~ (quitada, ADR 0022)
+- [x] ~~Botón de WhatsApp con mensaje precargado que incluye el código del post~~ (quitado con la página, ADR 0022)
 - [x] Registro de leads (carga rápida, búsqueda por código de post)
 - [ ] Tablero por pilar, tipo de hook, horario y proveedor/modelo de IA (sección Métricas hecha; falta proveedor y lo que traigan los leads)
 - [ ] Recomendaciones de horarios y de mezcla; `slots.fill` usa la mezcla ajustada

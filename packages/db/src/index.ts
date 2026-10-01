@@ -105,25 +105,16 @@ export {
 } from "./queries/jobs";
 export {
   countPostOutcomes,
-  deleteBrandLink,
   deleteLead,
   findNetworkPostByRef,
-  getBrandLink,
-  getBrandNetworkPost,
   getLeadTotals,
-  getLinkTotals,
   type LeadRow,
-  type LinksPagePost,
-  type LinkTotals,
-  listBrandLinks,
   listLeads,
-  listLinksPagePosts,
-  moveBrandLink,
-  recordLinkEvent,
-  saveBrandLink,
+  listRecentNetworkPosts,
+  type NetworkPostRef,
   saveLead,
   setLeadStatus,
-} from "./queries/links";
+} from "./queries/leads";
 export {
   getLastMetricsAt,
   getPostNetworkMetrics,
