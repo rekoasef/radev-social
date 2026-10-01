@@ -4,7 +4,12 @@ import {
   canDeletePillar,
   canRemovePillar,
   checkPillarMix,
+  PILLAR_AVOID_MAX,
+  PILLAR_CLOSING_MAX,
   PILLAR_DESCRIPTION_MAX,
+  PILLAR_GOALS,
+  PILLAR_GUIDE_MAX,
+  PILLAR_HOOKS_MAX,
   PILLAR_NAME_MAX,
   percentToShare,
   slugify,
@@ -14,9 +19,11 @@ import {
   deletePillar,
   getBrandBySlug,
   getPillar,
+  savePillarGuide,
   savePillarMix,
   setPillarArchived,
 } from "@radev/db";
+import { HOOK_TYPES } from "@radev/slides";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -175,4 +182,57 @@ export async function deletePillarAction(form: FormData): Promise<void> {
   for (const rule of rules) if (!rule.ok) throw new Error(rule.reason);
   await deletePillar(db, pillar.id);
   revalidatePath(pillarsPath(brand.slug));
+}
+
+const text = (max: number, label: string) =>
+  z
+    .string()
+    .trim()
+    .max(max, { error: `${label} tiene como máximo ${max} caracteres.` });
+
+const guideInput = z.object({
+  slug,
+  pillar: z.uuid(),
+  // Empty: not set yet.
+  goal: z.union([z.enum(PILLAR_GOALS), z.literal("")]),
+  hookTypes: z
+    .array(z.enum(HOOK_TYPES))
+    .max(PILLAR_HOOKS_MAX, { error: `Elegí hasta ${PILLAR_HOOKS_MAX} ganchos.` }),
+  guide: text(PILLAR_GUIDE_MAX, '"Cómo se cuenta"'),
+  closing: text(PILLAR_CLOSING_MAX, '"Cómo cierra"'),
+  avoid: text(PILLAR_AVOID_MAX, '"Evitar"'),
+});
+
+/** How the AI writes one pillar's posts (ADR 0021). Its name and share stay in the mix form. */
+export async function savePillarGuideAction(
+  _: PillarFormState,
+  form: FormData,
+): Promise<PillarFormState> {
+  await requireOperator();
+  const parsed = guideInput.safeParse({
+    slug: form.get("slug"),
+    pillar: form.get("pillar"),
+    goal: form.get("goal") ?? "",
+    hookTypes: form.getAll("hookTypes"),
+    guide: form.get("guide") ?? "",
+    closing: form.get("closing") ?? "",
+    avoid: form.get("avoid") ?? "",
+  });
+  if (!parsed.success) return firstIssue(parsed.error);
+  const { pillar: id, goal, hookTypes, guide, closing, avoid } = parsed.data;
+  const brand = await activeBrand(parsed.data.slug);
+  const pillar = await getPillar(db, id);
+  if (!brand || !pillar || pillar.brandId !== brand.id) {
+    return { status: "error", message: "Ese pilar no existe." };
+  }
+
+  await savePillarGuide(db, pillar.id, {
+    goal: goal || null,
+    hookTypes: [...new Set(hookTypes)],
+    guide,
+    closing,
+    avoid,
+  });
+  revalidatePath(pillarsPath(brand.slug));
+  return { status: "ok", message: `Guardado: así escribe la IA los posts de "${pillar.name}".` };
 }

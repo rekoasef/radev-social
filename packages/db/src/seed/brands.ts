@@ -126,7 +126,18 @@ export function pendingSeedDocuments(
   return onDisk.filter((kind) => !existing.includes(kind));
 }
 
-export type SeedPillar = Pick<NewContentPillar, "key" | "name" | "description" | "targetShare">;
+export type SeedPillar = Pick<
+  NewContentPillar,
+  | "key"
+  | "name"
+  | "description"
+  | "targetShare"
+  | "goal"
+  | "hookTypes"
+  | "guide"
+  | "closing"
+  | "avoid"
+>;
 
 /**
  * Content pillars from each brand's voice document (seeds/brands/<slug>/voice.md, "Pilares y
@@ -139,30 +150,60 @@ export const seedPillars: Record<string, SeedPillar[]> = {
       name: "Problemas de negocio",
       description: "Dolores típicos de negocios y cómo se resuelven con procesos y software",
       targetShare: 0.4,
+      goal: "reach",
+      hookTypes: ["warning", "question", "myth", "cost"],
+      guide:
+        "Un dolor concreto de un tipo de negocio (turnos por WhatsApp, planillas que nadie entiende, stock a ojo), lo que cuesta no resolverlo y cómo se resuelve con un proceso o un software. Sin tecnicismos: se habla del negocio, no de la tecnología.",
+      closing: 'Una pregunta para que comenten si les pasa ("¿te pasa?").',
+      avoid: "Nombrar tecnologías, prometer resultados y mostrar precios.",
     },
     {
       key: "built-by-radev",
       name: "Hecho por RAdev",
       description: "Casos reales, antes y después, proyectos terminados (solo de la sección Casos)",
       targetShare: 0.2,
+      goal: "trust",
+      hookTypes: ["story", "howto"],
+      guide:
+        "Un caso de la sección Casos por post: problema, solución y resultado, como un antes y después. Al cliente se lo nombra solo si Casos lo permite.",
+      closing: '"¿Querés algo así para tu negocio? Escribime."',
+      avoid: "Casos o resultados que no estén en Casos.",
     },
     {
       key: "build-in-public",
       name: "Construcción en público",
       description: "Detrás de escena de construir Lumus y otros proyectos, con la parte técnica",
       targetShare: 0.15,
+      goal: "trust",
+      hookTypes: ["story", "howto", "comparison"],
+      guide:
+        "Una decisión o un error real construyendo Lumus, Nexora u otro proyecto propio, con la parte técnica explicada en simple: qué pasó, qué se decidió y qué se aprendió.",
+      closing: "Invitar a seguir la cuenta para ver cómo sigue.",
+      avoid: "Métricas o números de Lumus que no estén en los datos.",
     },
     {
       key: "programming-explained",
       name: "Programación explicada",
       description: "Conceptos técnicos contados en simple, siempre ligados a un problema real",
       targetShare: 0.15,
+      goal: "reach",
+      hookTypes: ["myth", "comparison", "question"],
+      guide:
+        "Un concepto (API, base de datos, hosting, dominio, automatización) contado en simple y atado a un problema de negocio. Las comparaciones van con un criterio concreto para elegir.",
+      closing: "Invitar a guardar el post o a comentar una duda.",
+      avoid: 'Jerga sin explicar y "ganadores absolutos".',
     },
     {
       key: "call-to-action",
       name: "Llamado a la acción",
       description: "Servicios, contacto, y promoción de Lumus",
       targetShare: 0.1,
+      goal: "sales",
+      hookTypes: ["question", "story"],
+      guide:
+        "Un servicio concreto (web, sistema a medida, automatización, bot de WhatsApp) presentado desde el problema que resuelve, con un caso de Casos como prueba.",
+      closing: "Escribir por WhatsApp.",
+      avoid: "Listas genéricas de servicios y precios.",
     },
   ],
   lumus: [
@@ -171,30 +212,60 @@ export const seedPillars: Record<string, SeedPillar[]> = {
       name: "Peso vs. dólar",
       description: 'Datos reales de devaluación y poder de compra ("tus 100 mil de 2020, hoy")',
       targetShare: 0.35,
+      goal: "reach",
+      hookTypes: ["data", "comparison"],
+      guide:
+        "Un dato real de los datos de la marca (dólar, poder de compra) contado como lo que le pasa a la plata de todos los días.",
+      closing: '"Lumus te lo muestra con tus números."',
+      avoid:
+        "Política o culpables, decir que conviene comprar dólares y números que no estén en los datos.",
     },
     {
       key: "money-habits",
       name: "Hábitos con la plata",
       description: "Ordenar gastos, presupuestos, cuotas, gastos hormiga, vencimientos",
       targetShare: 0.3,
+      goal: "reach",
+      hookTypes: ["howto", "warning", "question"],
+      guide:
+        "Un hábito concreto (gastos hormiga, cuotas, vencimientos, presupuesto mensual) con pasos para aplicar hoy. Lumus aparece al final como la herramienta que lo hace fácil, sin forzarlo.",
+      closing: "Invitar a guardar el post.",
+      avoid: "Recomendar inversiones y prometer ahorro.",
     },
     {
       key: "money-myths",
       name: "Mitos de la plata",
       description: "Creencias comunes sobre la plata diaria, desmentidas con claridad",
       targetShare: 0.15,
+      goal: "reach",
+      hookTypes: ["myth", "question"],
+      guide:
+        'Una creencia común sobre la plata diaria ("las cuotas sin interés son gratis") desmentida con claridad.',
+      closing: "Una pregunta para que comenten.",
+      avoid: "Asesoramiento financiero y tono de sermón.",
     },
     {
       key: "inside-lumus",
       name: "Lumus por dentro",
       description: "Qué hace Lumus y cómo, mostrando funciones concretas",
       targetShare: 0.1,
+      goal: "trust",
+      hookTypes: ["howto", "story"],
+      guide:
+        "Una función real de Lumus en uso (informe mensual con IA, pesos y dólares, metas, vencimientos) y por qué está hecha así: las cuentas las hace el sistema y la IA solo las explica.",
+      closing: '"Probalo 30 días gratis."',
+      avoid: "Funciones que Lumus no tiene, como la conexión con bancos.",
     },
     {
       key: "try-lumus",
       name: "Probá Lumus",
       description: "Invitación a la prueba gratis",
       targetShare: 0.1,
+      goal: "sales",
+      hookTypes: ["question", "story"],
+      guide: "Un solo problema que Lumus resuelve y la prueba gratis de 30 días sin tarjeta.",
+      closing: "Empezar la prueba gratis.",
+      avoid: "Prometer resultados y criticar otras apps.",
     },
   ],
 };

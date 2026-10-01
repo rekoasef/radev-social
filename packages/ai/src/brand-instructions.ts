@@ -1,4 +1,4 @@
-import type { BrandDocumentKind } from "@radev/core";
+import type { BrandDocumentKind, PillarGoal } from "@radev/core";
 
 // The brand's CLAUDE.md for a generation run (docs/ARCHITECTURE.md §7): who writes, how the brand
 // talks, its limits, and the only figures it may use. Built from plain data (the worker loads it
@@ -9,10 +9,45 @@ export type BrandContext = {
   /** Current version of each document the brand has. */
   documents: Partial<Record<BrandDocumentKind, string>>;
   /** Active pillars only (archived ones are left out by the caller). */
-  pillars: readonly { key: string; name: string; description: string; targetShare: number }[];
+  pillars: readonly BrandPillar[];
   /** WhatsApp the `cta` points to, when the brand has one. */
   whatsappNumber?: string | null;
 };
+
+export type BrandPillar = {
+  key: string;
+  name: string;
+  description: string;
+  targetShare: number;
+  /** How its posts are written (ADR 0021); every field may be empty. */
+  goal?: PillarGoal | null;
+  hookTypes?: readonly string[];
+  guide?: string;
+  closing?: string;
+  avoid?: string;
+};
+
+const GOALS: Record<PillarGoal, string> = {
+  reach:
+    "alcance, que lo vea y lo guarde gente que no conoce la marca; la venta, como mucho, suave y al final",
+  trust: "confianza, mostrar con hechos concretos que la marca sabe y cumple",
+  sales: "venta, llevar a la acción del cierre con una sola razón clara",
+};
+
+/** A pillar's line, plus its guide below when it has one. */
+function pillarLines(p: BrandPillar): string[] {
+  const head = `- \`${p.key}\` — **${p.name}** (${percent(p.targetShare)})${p.description ? `: ${p.description}` : ""}`;
+  const details = [
+    p.goal && `Objetivo: ${GOALS[p.goal]}.`,
+    p.hookTypes &&
+      p.hookTypes.length > 0 &&
+      `Ganchos preferidos: ${p.hookTypes.map((h) => `\`${h}\``).join(", ")} (si \`task.json\` no fija otro).`,
+    p.guide?.trim() && `Cómo se cuenta: ${p.guide.trim()}`,
+    p.closing?.trim() && `Cómo cierra: ${p.closing.trim()}`,
+    p.avoid?.trim() && `Evitar: ${p.avoid.trim()}`,
+  ].filter((line): line is string => Boolean(line));
+  return [head, ...details.map((line) => `  - ${line.replace(/\s*\n\s*/g, " ")}`)];
+}
 
 const SECTIONS: { kind: BrandDocumentKind; title: string; lead: string }[] = [
   {
@@ -73,12 +108,9 @@ export function buildBrandClaudeMd(brand: BrandContext): string {
       [
         "## Pilares de contenido",
         "",
-        "Cada post pertenece a uno (`pillarKey`). Entre paréntesis, la parte de los posts que le toca.",
+        "Cada post pertenece a uno (`pillarKey`). Entre paréntesis, la parte de los posts que le toca. Si un pilar dice cómo se escribe, seguilo en sus posts: objetivo, ganchos, cómo se cuenta, cómo cierra y qué evitar.",
         "",
-        ...pillars.map(
-          (p) =>
-            `- \`${p.key}\` — **${p.name}** (${percent(p.targetShare)})${p.description ? `: ${p.description}` : ""}`,
-        ),
+        ...pillars.flatMap(pillarLines),
       ].join("\n"),
     );
   }

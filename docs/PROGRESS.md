@@ -89,6 +89,8 @@ Decisión aprobada con el plan: **métricas de toda la cuenta**, no solo de los 
 | T5 | Página de links `/l/[brand]`, botón de WhatsApp con código, registro de leads (migración `0022`) | ✅ (en local; falta deploy y que la mire el operador 👁) |
 | T6 | Recomendaciones de horarios y mezcla; `winners` para la generación | pendiente |
 
+Instrucciones por pilar (2026-10-01, ADR 0021): objetivo, ganchos preferidos, cómo se cuenta, cómo cierra y qué evitar, en `content_pillars` (migración `0024`, solo agrega). Van al `CLAUDE.md` de la marca debajo de cada pilar. Panel: Marcas → Pilares → "Cómo se escribe cada pilar" (un plegable por pilar). Seed con los textos aprobados para RAdev y Lumus. **Para producción**, después del deploy: correr el SQL que completa los pilares existentes (solo los que están vacíos; no toca nombres ni porcentajes). **Para el operador 👁:** mirar la sección con login, también en el celular.
+
 Series quitadas (2026-10-01, ADR 0020): el operador no las usa y RAdev no tiene precios fijos (la serie de costos exigía rangos de Precios). Fuera del panel, worker, `core`, `db`, `ai`, `slides` (`requiredSlides`) y seed; migración `0023_drop_series` (borra `content_series` e `ideas.series_key`; ideas `series` → `ai`), probada en local. `costBreakdown` y su validación contra Precios se quedan. Casos de RAdev completados y cargados en producción (versión 2 de `cases`); la voz de RAdev sin la sección de la serie (versión 2 de `voice`).
 
 Notas de T5 (2026-10-01):

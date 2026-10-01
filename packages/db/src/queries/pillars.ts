@@ -78,6 +78,13 @@ export async function savePillarMix(
   });
 }
 
+/** How the AI writes a pillar's posts (ADR 0021); name, share and key don't change here. */
+export type PillarGuide = Pick<ContentPillar, "goal" | "hookTypes" | "guide" | "closing" | "avoid">;
+
+export async function savePillarGuide(db: Database, id: string, guide: PillarGuide) {
+  await db.update(contentPillars).set(guide).where(eq(contentPillars.id, id));
+}
+
 /** A pillar leaves the mix at 0 % and comes back at 0 %, so the active ones keep adding up to 100. */
 export async function setPillarArchived(db: Database, id: string, archived: boolean) {
   await db

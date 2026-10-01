@@ -317,12 +317,19 @@ export async function brandContext(db: Database, brand: Brand) {
     claudeMd: buildBrandClaudeMd({
       name: brand.name,
       documents: texts,
-      pillars: pillars.map(({ key, name, description, targetShare }) => ({
-        key,
-        name,
-        description,
-        targetShare,
-      })),
+      pillars: pillars.map(
+        ({ key, name, description, targetShare, goal, hookTypes, guide, closing, avoid }) => ({
+          key,
+          name,
+          description,
+          targetShare,
+          goal,
+          hookTypes,
+          guide,
+          closing,
+          avoid,
+        }),
+      ),
       whatsappNumber: brand.whatsappNumber,
     }),
   };

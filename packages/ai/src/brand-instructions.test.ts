@@ -14,6 +14,11 @@ const brand: BrandContext = {
       name: "Problemas de negocio",
       description: "Dolores reales",
       targetShare: 0.4,
+      goal: "reach",
+      hookTypes: ["warning", "question"],
+      guide: "Un dolor concreto\nde un tipo de negocio.",
+      closing: "Pregunta para comentar.",
+      avoid: "",
     },
     { key: "how-to", name: "Cómo se hace", description: "", targetShare: 0.25 },
   ],
@@ -50,6 +55,18 @@ describe("buildBrandClaudeMd", () => {
   it("lists the pillars with their keys and shares", () => {
     expect(md).toContain("`business-problems` — **Problemas de negocio** (40 %): Dolores reales");
     expect(md).toContain("`how-to` — **Cómo se hace** (25 %)");
+  });
+
+  it("gives each pillar its guide below, leaving out what it doesn't have", () => {
+    const [, block] = md.split("`business-problems`");
+    const lines = block?.split("\n- `how-to`")[0] ?? "";
+    expect(lines).toContain("  - Objetivo: alcance");
+    expect(lines).toContain("  - Ganchos preferidos: `warning`, `question`");
+    // One line per field, even when the operator wrote it in several.
+    expect(lines).toContain("  - Cómo se cuenta: Un dolor concreto de un tipo de negocio.");
+    expect(lines).toContain("  - Cómo cierra: Pregunta para comentar.");
+    expect(lines).not.toContain("Evitar");
+    expect(md).toContain("`how-to` — **Cómo se hace** (25 %)\n");
   });
 
   it("mentions WhatsApp for the cta without writing the number", () => {

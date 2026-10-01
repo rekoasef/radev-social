@@ -152,9 +152,11 @@ export {
   deletePillar,
   getPillar,
   listBrandPillars,
+  type PillarGuide,
   type PillarMixRow,
   type PillarWithPosts,
   type PillarWriteResult,
+  savePillarGuide,
   savePillarMix,
   setPillarArchived,
 } from "./queries/pillars";

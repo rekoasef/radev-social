@@ -52,7 +52,7 @@ Cada requerimiento indica la fase del roadmap en la que se implementa.
 - **RF-02** (F1) Identidad visual por marca: elegir un preset de estilo y editar sus tokens (colores, tipografías de una lista curada, radios, textos de encabezado y pie, wordmark) con vista previa en vivo.
 - **RF-03** (F1) Assets por marca: subir, reemplazar y borrar logos y elementos gráficos (ej. el orbe de Lumus).
 - **RF-04** (F3) Documentos de marca editables: voz (guía para la IA), precios, casos y reglas duras. Con historial de versiones.
-- **RF-05** (F3) Pilares de contenido por marca con porcentaje objetivo (CRUD; archivar si tienen posts).
+- **RF-05** (F3) Pilares de contenido por marca con porcentaje objetivo (CRUD; archivar si tienen posts), con instrucciones para la IA: objetivo, ganchos preferidos, cómo se cuenta, cómo cierra y qué evitar (ADR 0021).
 - **RF-06** (F4) Slots de publicación por marca (día + hora local).
 - **RF-07** (F3) Datos de contacto por marca (WhatsApp) para los llamados a la acción.
 - **RF-08** (F0) Login con GitHub solo para emails en lista blanca.

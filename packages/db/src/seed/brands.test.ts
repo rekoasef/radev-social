@@ -3,11 +3,16 @@ import { fileURLToPath } from "node:url";
 import {
   checkAssetFile,
   isBrandDocumentKind,
+  isPillarGoal,
   MAX_BRAND_DOCUMENT_CHARS,
   normalizeBrandDocument,
   normalizeLocalTime,
+  PILLAR_AVOID_MAX,
+  PILLAR_CLOSING_MAX,
+  PILLAR_GUIDE_MAX,
+  PILLAR_HOOKS_MAX,
 } from "@radev/core";
-import { parseTheme } from "@radev/slides";
+import { HOOK_TYPES, parseTheme } from "@radev/slides";
 import { describe, expect, it } from "vitest";
 import {
   pendingSeedAssets,
@@ -81,6 +86,18 @@ describe("seed pillars", () => {
       expect(total).toBeCloseTo(1, 5);
     },
   );
+
+  it.each(Object.entries(seedPillars))("%s: guides the panel would accept", (_, pillars) => {
+    for (const p of pillars) {
+      expect(p.goal === null || p.goal === undefined || isPillarGoal(p.goal)).toBe(true);
+      const hooks = p.hookTypes ?? [];
+      expect(hooks.length).toBeLessThanOrEqual(PILLAR_HOOKS_MAX);
+      for (const hook of hooks) expect(HOOK_TYPES).toContain(hook);
+      expect((p.guide ?? "").length).toBeLessThanOrEqual(PILLAR_GUIDE_MAX);
+      expect((p.closing ?? "").length).toBeLessThanOrEqual(PILLAR_CLOSING_MAX);
+      expect((p.avoid ?? "").length).toBeLessThanOrEqual(PILLAR_AVOID_MAX);
+    }
+  });
 });
 
 describe("seed brand documents", () => {

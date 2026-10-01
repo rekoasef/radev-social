@@ -169,6 +169,13 @@
       "when": 1790874618061,
       "tag": "0023_drop_series",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790875915286,
+      "tag": "0024_pillar_guides",
+      "breakpoints": true
     }
   ]
 }

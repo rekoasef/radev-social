@@ -24,3 +24,4 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0018 | Métricas de toda la cuenta, no solo de los posts del sistema | aceptada |
 | 0019 | SSH con contraseña además de llave, con fail2ban | aceptada |
 | 0020 | Sin series recurrentes | aceptada |
+| 0021 | Instrucciones por pilar para la IA | aceptada |

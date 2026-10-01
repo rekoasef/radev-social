@@ -19,6 +19,7 @@ import {
   METRIC_SOURCES,
   NETWORKS,
   NOTIFICATION_KINDS,
+  PILLAR_GOALS,
   POST_STATUSES,
   type PostArt,
   PUBLICATION_STATUSES,
@@ -170,6 +171,16 @@ export const contentPillars = pgTable(
     description: text("description").notNull().default(""),
     /** 0 to 1: share of the brand's posts this pillar should get. */
     targetShare: real("target_share").notNull().default(0),
+    /** What its posts are for (PILLAR_GOALS); null until the operator sets it (ADR 0021). */
+    goal: text("goal", { enum: PILLAR_GOALS }),
+    /** Preferred hook types (HOOK_TYPES of packages/slides): a preference for the AI. */
+    hookTypes: jsonb("hook_types").$type<string[]>().notNull().default([]),
+    /** How its posts are told: angle, formats that suit it, example topics. */
+    guide: text("guide").notNull().default(""),
+    /** What its posts ask of the viewer at the end. */
+    closing: text("closing").notNull().default(""),
+    /** What doesn't go in this pillar. */
+    avoid: text("avoid").notNull().default(""),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -178,6 +189,7 @@ export const contentPillars = pgTable(
     uniqueIndex("content_pillars_brand_key_unique").on(t.brandId, t.key),
     check("content_pillars_key_format", sql`${t.key} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     check("content_pillars_share_range", sql`${t.targetShare} >= 0 and ${t.targetShare} <= 1`),
+    check("content_pillars_goal_valid", sql`${t.goal} in (${inList(PILLAR_GOALS)})`),
   ],
 );
 

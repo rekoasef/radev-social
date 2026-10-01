@@ -7,6 +7,30 @@ import type { RuleCheck } from "./brand-rules";
 export const PILLAR_NAME_MAX = 60;
 export const PILLAR_DESCRIPTION_MAX = 400;
 
+/**
+ * What a pillar's posts are for (ADR 0021): reach new people, earn trust or sell. The AI writes
+ * and closes each post accordingly.
+ */
+export const PILLAR_GOALS = ["reach", "trust", "sales"] as const;
+export type PillarGoal = (typeof PILLAR_GOALS)[number];
+
+export const PILLAR_GOAL_LABELS: Record<PillarGoal, string> = {
+  reach: "Alcance",
+  trust: "Confianza",
+  sales: "Venta",
+};
+
+export function isPillarGoal(value: unknown): value is PillarGoal {
+  return typeof value === "string" && (PILLAR_GOALS as readonly string[]).includes(value);
+}
+
+/** The pillar's guide for the AI: how its posts are told, how they close and what they avoid. */
+export const PILLAR_GUIDE_MAX = 800;
+export const PILLAR_CLOSING_MAX = 200;
+export const PILLAR_AVOID_MAX = 300;
+/** Preferred hook types of a pillar (HOOK_TYPES of packages/slides): a preference, not a rule. */
+export const PILLAR_HOOKS_MAX = 4;
+
 /** Whole percentage (0–100) of a stored share. */
 export function shareToPercent(share: number): number {
   return Math.round(share * 100);

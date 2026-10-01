@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BrandTabs } from "@/components/brands/brand-tabs";
 import { NewPillarForm } from "@/components/brands/new-pillar-form";
+import { PillarGuideForm } from "@/components/brands/pillar-guide-form";
 import { PillarMixForm } from "@/components/brands/pillar-mix-form";
 import { Plate } from "@/components/console/plate";
 import { db } from "@/lib/db";
@@ -53,6 +54,37 @@ export default async function BrandPillarsPage({ params }: PageProps<"/brands/[s
           />
         )}
       </section>
+
+      {active.length > 0 && (
+        <section aria-labelledby="pillar-guides-heading" className="flex flex-col gap-6">
+          <Plate id="pillar-guides-heading" aside="IA">
+            Cómo se escribe cada pilar
+          </Plate>
+          <p className="max-w-3xl text-sm text-ink-dim">
+            Lo que la IA sigue en los posts de cada pilar, además de la voz y las reglas de la
+            marca. Todo es opcional.
+          </p>
+          <ul className="flex max-w-3xl flex-col divide-y divide-bezel rounded-md border border-bezel">
+            {active.map((pillar) => (
+              <li key={pillar.id}>
+                <PillarGuideForm
+                  brandSlug={brand.slug}
+                  pillar={{
+                    id: pillar.id,
+                    name: pillar.name,
+                    goal: pillar.goal,
+                    hookTypes: pillar.hookTypes,
+                    guide: pillar.guide,
+                    closing: pillar.closing,
+                    avoid: pillar.avoid,
+                  }}
+                  readOnly={readOnly}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {!readOnly && (
         <section aria-labelledby="new-pillar-heading" className="flex flex-col gap-6">
