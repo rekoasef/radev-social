@@ -22,7 +22,7 @@ import {
   listScheduleSlots,
   listVersionAssets,
 } from "@radev/db";
-import { carouselSchema } from "@radev/slides";
+import { carouselSchema, enabledLooks, resolveLook } from "@radev/slides";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -33,6 +33,7 @@ import { ApproveButton } from "@/components/posts/approve-button";
 import { CopyButton } from "@/components/posts/copy-button";
 import { DiscardButton } from "@/components/posts/discard-form";
 import { GenerationStatus } from "@/components/posts/generation-status";
+import { LookExplorer } from "@/components/posts/look-explorer";
 import { MarkPublishedForm } from "@/components/posts/mark-published-form";
 import { PostStrip } from "@/components/posts/post-strip";
 import { RejectForm } from "@/components/posts/reject-form";
@@ -135,6 +136,11 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
     }).ok;
   const renderIssues = describeRenderIssues(current?.renderIssues);
   const currentSlides = (current?.content as { slides?: unknown[] } | undefined)?.slides;
+  // Studio brands: the same carousel in the brand's other looks (drawn in the browser, no AI).
+  const looks =
+    !viewingOld && render.ok && render.theme.preset === "studio"
+      ? enabledLooks(render.theme.tokens)
+      : [];
 
   return (
     <>
@@ -410,9 +416,27 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
               theme={render.theme}
               assets={render.assets}
               brandName={brand.name}
+              seed={post.id}
+              datasets={version.datasets ?? {}}
+              art={versionArt(version.art)}
             />
           ) : (
             <p className="text-sm text-ink-dim">No se pudo dibujar esta versión.</p>
+          )}
+          {looks.length > 1 && render.ok && content?.success && version && (
+            <LookExplorer
+              code={post.publicCode}
+              carousel={content.data}
+              current={resolveLook(content.data.look, looks, post.id)}
+              looks={looks}
+              theme={render.theme}
+              assets={render.assets}
+              brandName={brand.name}
+              seed={post.id}
+              datasets={version.datasets ?? {}}
+              art={versionArt(version.art)}
+              canApply={canEdit}
+            />
           )}
         </section>
       )}
@@ -495,6 +519,17 @@ async function scheduleChoices(
     value: `${occurrence.slotId}|${occurrence.at.toISOString()}`,
     label: `${WEEKDAY_LABELS[occurrence.weekday]} ${occurrence.localDate.slice(8, 10)}/${occurrence.localDate.slice(5, 7)} · ${occurrence.localTime}`,
   }));
+}
+
+/** URLs of a version's generated images, as the render page passes them (ADR 0016). */
+function versionArt(
+  art: { images?: { cover?: { path: string }; cta?: { path: string } } } | null,
+): { cover?: string; cta?: string } {
+  const images = art?.images ?? {};
+  return {
+    ...(images.cover && { cover: mediaUrl(images.cover.path) }),
+    ...(images.cta && { cta: mediaUrl(images.cta.path) }),
+  };
 }
 
 /** Who wrote a version: the editor, or the AI with the provider and model that answered. */

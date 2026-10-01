@@ -49,6 +49,7 @@ export function SlidePreview({
   look,
   seed = "preview",
   art,
+  quiet = false,
 }: {
   theme: BrandTheme;
   brandName: string;
@@ -78,6 +79,8 @@ export function SlidePreview({
   seed?: string;
   /** URLs of the post's generated images (ADR 0016). */
   art?: { cover?: string; cta?: string };
+  /** Without the list of render problems below (small thumbnails). */
+  quiet?: boolean;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(420);
@@ -143,7 +146,7 @@ export function SlidePreview({
           () => box.current?.querySelector<HTMLElement>("[data-slide-frame]") ?? null,
         )}
       </div>
-      {issues.length > 0 && (
+      {!quiet && issues.length > 0 && (
         <ul
           role="status"
           className="mt-3 flex flex-col gap-1 border-l border-tally-amber pl-3 text-sm text-ink"

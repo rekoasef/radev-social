@@ -32,6 +32,14 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **SSH con contraseña (2026-10-01, ADR 0019):** el operador no podía entrar desde su casa (la llave está solo en la notebook). `harden.sh` ahora permite contraseña para `ubuntu` y suma fail2ban (5 fallos en 10 min → 1 h de bloqueo); aplicado en el servidor. La contraseña la pone el operador (`ssh -t radev-oracle sudo passwd ubuntu`) y va a su gestor. Desde otra compu: `ssh ubuntu@<IP>`.
 - **Última actualización:** 2026-09-30, Fase 5 T8 en producción (`72dc456`); falta ver la primera renovación
 
+## Mejora — probar otros looks (2026-10-01)
+
+Pedido del operador: ver cómo quedaría un carrusel con los otros looks y quedarse con el que más le guste.
+- Ficha del post → **Probar otros looks** (marcas `studio`, plegado por defecto): las portadas del carrusel en cada look activo, el carrusel completo del elegido y **Usar <look>**, que crea una versión nueva con ese look (`applyLookAction`; vuelve a render y revisión). No usa la IA: el look es código. Las imágenes generadas se muestran y se reutilizan solo en los looks que las llevan; pasar a un look con imagen desde uno sin ella no genera imagen (se pide desde el editor). Componente `components/posts/look-explorer.tsx`.
+- **Bug corregido**: mientras se renderizaba, la vista previa de la ficha (`PostStrip`) no recibía el look del post y dibujaba otro (el mismo para todos los posts); al terminar el render aparecían los PNG con el look real y "cambiaba el estilo". Ahora recibe look, id del post, datos e imágenes, como la página de render.
+- Verificado con login en local (Playwright, escritorio y celular): 16 portadas, carrusel completo, "Usar Revista" crea la v2 con `look: revista` y pasa a render. 841 tests. Pendiente: deploy.
+- Anotado para más adelante (pedido del operador): indicaciones propias al generar (campo aparte del tema, para los posts automáticos, o elegir el look al generar).
+
 ## Mejora — rehacer una slide con IA (2026-09-29)
 
 Elegida por el operador entre las mejoras propuestas (las otras: posts externos con video, métricas simples de la Fase 6, Instagram, carrusel → video). Decisiones: la IA puede cambiar el tipo si la instrucción lo pide; el resultado es una **propuesta** que se acepta (no reemplaza sola). Detalle en `docs/ARCHITECTURE.md` §7 ("Rehacer una slide"). Tabla `slide_rewrites` (migración `0017_slide_rewrites`: crea la tabla y amplía los CHECK de `ai_routes`/`generation_runs` con la tarea nueva; no borra datos) y ruta de IA `slide.rewrite` sembrada (Claude + gratuito). Verificado con Claude real (sin base). Falta probarlo con login tras el deploy.

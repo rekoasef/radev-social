@@ -23,7 +23,7 @@ import {
   transitionPost,
 } from "@radev/db";
 import { confirmManualPublication } from "@radev/publishers";
-import { carouselSchema, HOOK_TYPES } from "@radev/slides";
+import { carouselSchema, enabledLooks, HOOK_TYPES, isLookId, parseTheme } from "@radev/slides";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -171,6 +171,47 @@ export async function restoreVersionAction(form: FormData): Promise<void> {
     // Its charts come back with the numbers they had; its images, too (same prompts: reused).
     datasets: version.datasets,
     art: brand ? artFor(brand, content.data) : null,
+  });
+  if (!result.ok) throw new Error(result.reason);
+  await applyPostEffects(post.id, result.effects);
+  await queueVersion(result.version);
+  revalidatePath("/posts");
+  redirect(`/posts/${post.publicCode}`);
+}
+
+const lookInput = z.object({ code: z.string().min(1).max(20), look: z.string().refine(isLookId) });
+
+/**
+ * "Usar este look" from the post page: a new version with the same content in another look (no
+ * AI involved), back to render and review like any edit. Its images are reused when the new look
+ * takes them and their descriptions are unchanged (ADR 0016).
+ */
+export async function applyLookAction(form: FormData): Promise<void> {
+  await requireOperator();
+  const { code, look } = lookInput.parse(Object.fromEntries(form));
+  const post = await getPostByCode(db, code);
+  if (!post?.currentVersionId) throw new Error("Ese post ya no existe.");
+  const [brand, version] = await Promise.all([
+    getBrandById(db, post.brandId),
+    getPostVersion(db, post.currentVersionId),
+  ]);
+  if (!brand || !version) throw new Error("Ese post ya no existe.");
+  const theme = parseTheme(brand.stylePreset, brand.themeTokens);
+  if (!theme.ok || theme.theme.preset !== "studio" || !isLookId(look))
+    throw new Error("Esta marca no usa looks.");
+  if (!enabledLooks(theme.theme.tokens).includes(look))
+    throw new Error("Ese look no está activo en la marca.");
+  const current = carouselSchema.safeParse(version.content);
+  if (!current.success)
+    throw new Error("La versión actual ya no cumple el formato actual: abrila en el editor.");
+
+  const content = { ...current.data, look };
+  const result = await addPostVersion(db, {
+    postId: post.id,
+    content,
+    origin: "manual",
+    datasets: version.datasets,
+    art: artFor(brand, content),
   });
   if (!result.ok) throw new Error(result.reason);
   await applyPostEffects(post.id, result.effects);
