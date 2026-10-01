@@ -2,8 +2,8 @@
 // carousel is generated from it (`used`) or the operator discards it. Discarded ideas stay, so
 // they can come back and the AI (T10) knows what not to propose again.
 
-/** Where an idea came from: the operator, the AI, the weekly research, a recycled post, a series. */
-export const IDEA_SOURCES = ["manual", "ai", "research", "recycled", "series"] as const;
+/** Where an idea came from: the operator, the AI, the weekly research or a recycled post. */
+export const IDEA_SOURCES = ["manual", "ai", "research", "recycled"] as const;
 export type IdeaSource = (typeof IDEA_SOURCES)[number];
 
 export const IDEA_STATUSES = ["new", "used", "discarded"] as const;

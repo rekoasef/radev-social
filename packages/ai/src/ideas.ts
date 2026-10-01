@@ -18,10 +18,6 @@ export function hasFigures(text: string): boolean {
 export type IdeaSchemaOptions = {
   /** Pillars the ideas can take (one when the request fixes the pillar). */
   pillarKeys: readonly string[];
-  /** Series the ideas can belong to (one when the request is for a series; empty: none). */
-  seriesKeys: readonly string[];
-  /** The request is for that series: every idea belongs to it. */
-  seriesRequired: boolean;
   count: number;
   /** ideas.research: every idea brings the pages it comes from. */
   research: boolean;
@@ -39,18 +35,11 @@ const sourceSchema = z.object({
 
 /** The answer's shape for one request. */
 export function ideaProposalsSchema(options: IdeaSchemaOptions) {
-  const { pillarKeys, seriesKeys, seriesRequired, count, research } = options;
-  const seriesKey =
-    seriesKeys.length === 0
-      ? z.null()
-      : seriesRequired
-        ? z.enum(seriesKeys as [string, ...string[]])
-        : z.enum(seriesKeys as [string, ...string[]]).nullable();
+  const { pillarKeys, count, research } = options;
   const idea = z.object({
     title: withoutFigures(z.string().trim().min(IDEA_TITLE_MIN).max(IDEA_TITLE_MAX)),
     angle: withoutFigures(z.string().trim().max(IDEA_ANGLE_MAX)),
     pillarKey: z.enum(pillarKeys as [string, ...string[]]),
-    seriesKey,
     ...(research && {
       sources: z.array(sourceSchema).min(1).max(IDEA_SOURCES_MAX),
     }),

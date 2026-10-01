@@ -204,19 +204,6 @@ export {
   listScheduleSlots,
   setScheduleSlotActive,
 } from "./queries/schedule";
-export {
-  createSeries,
-  deleteSeries,
-  getSeries,
-  getSeriesByKey,
-  listActiveSeries,
-  listBrandSeries,
-  type SeriesFields,
-  type SeriesSummary,
-  type SeriesWriteResult,
-  setSeriesArchived,
-  updateSeries,
-} from "./queries/series";
 export { getSetting, setSetting } from "./queries/settings";
 export {
   createSlideRewrite,

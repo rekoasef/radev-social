@@ -19,18 +19,16 @@ const COUNTS = Array.from(
 type Option = { key: string; name: string };
 
 /**
- * "Proponer ideas" (free model, from pillars, series and history) and "Investigar temas" (Claude
+ * "Proponer ideas" (free model, from pillars and history) and "Investigar temas" (Claude
  * with web search). Each one queues a request; the list below shows how it goes.
  */
 export function AskAiForms({
   brand,
   pillars,
-  series,
   open,
 }: {
   brand: { id: string; name: string };
   pillars: Option[];
-  series: Option[];
   /** Tasks with a request waiting or running: their button waits. */
   open: readonly IdeaRequestTask[];
 }) {
@@ -40,10 +38,9 @@ export function AskAiForms({
         brand={brand}
         task="ideas.generate"
         title="Proponer ideas"
-        lead="Con los pilares, las series y lo que ya publicaste. Usa el modelo gratuito."
+        lead="Con los pilares y lo que ya publicaste. Usa el modelo gratuito."
         button="Proponer"
         pillars={pillars}
-        series={series}
         busy={open.includes("ideas.generate")}
       />
       <RequestForm
@@ -53,7 +50,6 @@ export function AskAiForms({
         lead="Claude busca en la web qué se está hablando en el nicho y trae ideas con sus fuentes. Tarda unos minutos y usa la suscripción."
         button="Investigar"
         pillars={pillars}
-        series={[]}
         busy={open.includes("ideas.research")}
       />
     </div>
@@ -67,7 +63,6 @@ function RequestForm({
   lead,
   button,
   pillars,
-  series,
   busy,
 }: {
   brand: { id: string; name: string };
@@ -76,11 +71,10 @@ function RequestForm({
   lead: string;
   button: string;
   pillars: Option[];
-  series: Option[];
   busy: boolean;
 }) {
   const [state, action, pending] = useActionState(requestIdeasAction, idle);
-  const ids = { count: useId(), pillar: useId(), series: useId(), focus: useId() };
+  const ids = { count: useId(), pillar: useId(), focus: useId() };
 
   return (
     <form
@@ -110,7 +104,7 @@ function RequestForm({
           />
         </div>
       )}
-      <div className="grid grid-cols-[5rem_1fr] gap-3 sm:grid-cols-[5rem_1fr_1fr]">
+      <div className="grid grid-cols-[5rem_1fr] gap-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor={ids.count} className="plate-text text-ink-faint">
             Cantidad
@@ -141,21 +135,6 @@ function RequestForm({
             ))}
           </select>
         </div>
-        {series.length > 0 && (
-          <div className="col-span-2 flex min-w-0 flex-col gap-1.5 sm:col-span-1">
-            <label htmlFor={ids.series} className="plate-text text-ink-faint">
-              Serie
-            </label>
-            <select id={ids.series} name="seriesKey" defaultValue="" className="console-field">
-              <option value="">Cualquiera o ninguna</option>
-              {series.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" className="console-button" disabled={pending || busy}>

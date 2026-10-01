@@ -1,7 +1,7 @@
 import type { FillIdea } from "@radev/core";
 import { and, asc, count, eq, gte, or, sql } from "drizzle-orm";
 import type { Database } from "../client";
-import { contentPillars, contentSeries, ideas, posts } from "../schema";
+import { contentPillars, ideas, posts } from "../schema";
 
 // What `slots.fill` reads (phase 4, T4): the mix so far, the posts in flight and the idea bank.
 
@@ -40,9 +40,6 @@ export async function countGeneratingPosts(db: Database, brandId: string): Promi
 export type BankIdea = FillIdea & {
   title: string;
   angle: string;
-  seriesKey: string | null;
-  /** Hook of its series, when the series is still active. */
-  seriesHook: string | null;
 };
 
 /** The brand's new ideas, oldest first (the filling uses them in order). */
@@ -54,29 +51,16 @@ export async function listBankIdeasForFill(db: Database, brandId: string): Promi
       angle: ideas.angle,
       pillarKey: contentPillars.key,
       pillarArchived: contentPillars.archivedAt,
-      seriesKey: ideas.seriesKey,
-      seriesId: contentSeries.id,
-      seriesHook: contentSeries.hookType,
-      seriesArchived: contentSeries.archivedAt,
     })
     .from(ideas)
     .leftJoin(contentPillars, eq(contentPillars.id, ideas.pillarId))
-    .leftJoin(
-      contentSeries,
-      and(eq(contentSeries.brandId, ideas.brandId), eq(contentSeries.key, ideas.seriesKey)),
-    )
     .where(and(eq(ideas.brandId, brandId), eq(ideas.status, "new")))
     .orderBy(asc(ideas.createdAt));
-  return rows.map((row) => {
-    const seriesActive = row.seriesId !== null && row.seriesArchived === null;
-    return {
-      id: row.id,
-      title: row.title,
-      angle: row.angle,
-      // An idea of an archived pillar is treated as one without a pillar.
-      pillarKey: row.pillarArchived === null ? row.pillarKey : null,
-      seriesKey: seriesActive ? row.seriesKey : null,
-      seriesHook: seriesActive ? row.seriesHook : null,
-    };
-  });
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    angle: row.angle,
+    // An idea of an archived pillar is treated as one without a pillar.
+    pillarKey: row.pillarArchived === null ? row.pillarKey : null,
+  }));
 }

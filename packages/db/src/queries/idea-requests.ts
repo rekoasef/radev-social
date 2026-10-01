@@ -71,7 +71,6 @@ export type ProposedIdea = {
   title: string;
   angle: string;
   pillarId: string | null;
-  seriesKey: string | null;
   source: IdeaSource;
   sources: IdeaSourceLink[];
 };
@@ -113,7 +112,7 @@ export async function failIdeaRequest(db: Database, id: string, error: string): 
 /** What the brand's bank already has, for the AI not to repeat it: newest first. */
 export function listIdeaTitles(db: Database, brandId: string, limit = 80) {
   return db
-    .select({ title: ideas.title, status: ideas.status, seriesKey: ideas.seriesKey })
+    .select({ title: ideas.title, status: ideas.status })
     .from(ideas)
     .where(eq(ideas.brandId, brandId))
     .orderBy(desc(ideas.createdAt))

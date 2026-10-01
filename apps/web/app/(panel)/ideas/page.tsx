@@ -1,11 +1,5 @@
 import { IDEA_STATUSES, type IdeaStatus, isIdeaRequestOpen } from "@radev/core";
-import {
-  countIdeasByStatus,
-  listActiveSeries,
-  listIdeaRequests,
-  listIdeas,
-  listPillars,
-} from "@radev/db";
+import { countIdeasByStatus, listIdeaRequests, listIdeas, listPillars } from "@radev/db";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
@@ -40,11 +34,10 @@ export default async function IdeasPage({ searchParams }: PageProps<"/ideas">) {
 
   const { status } = await searchParams;
   const current: IdeaStatus = isIdeaStatus(status) ? status : "new";
-  const [ideas, counts, pillars, series, requests] = await Promise.all([
+  const [ideas, counts, pillars, requests] = await Promise.all([
     listIdeas(db, brand.id, current),
     countIdeasByStatus(db, brand.id),
     listPillars(db, brand.id),
-    listActiveSeries(db, brand.id),
     listIdeaRequests(db, brand.id),
   ]);
   const options = (list: { key: string; name: string }[]) =>
@@ -65,7 +58,6 @@ export default async function IdeasPage({ searchParams }: PageProps<"/ideas">) {
         <AskAiForms
           brand={{ id: brand.id, name: brand.name }}
           pillars={options(pillars)}
-          series={options(series)}
           open={requests.filter((r) => isIdeaRequestOpen(r.status)).map((r) => r.task)}
         />
         <RequestList
@@ -123,10 +115,7 @@ export default async function IdeasPage({ searchParams }: PageProps<"/ideas">) {
                 <p className="timecode text-xs text-ink-faint">
                   {[
                     idea.pillarName ?? "Pilar a elección de la IA",
-                    idea.seriesName && `Serie ${idea.seriesName}`,
-                    idea.source !== "manual" &&
-                      idea.source !== "series" &&
-                      IDEA_SOURCE_LABELS[idea.source],
+                    idea.source !== "manual" && IDEA_SOURCE_LABELS[idea.source],
                     formatDateTime(idea.createdAt, brand.timezone),
                   ]
                     .filter(Boolean)

@@ -46,25 +46,6 @@ describe("aiCarouselSchema", () => {
     expect(parsed.success).toBe(false);
     expect(parsed.error?.issues.map((issue) => issue.path.join("."))).toContain("slides.1.type");
   });
-
-  it("a post of a series has the slides the series requires", () => {
-    const types = withoutBlocked.slides.map((slide) => slide.type);
-    const present = types[1] as string;
-    expect(
-      aiCarouselSchema([pillar], { requiredSlides: [present] }).safeParse(withoutBlocked).success,
-    ).toBe(true);
-
-    const missing = (["costBreakdown", "steps", "comparison"] as const).find(
-      (type) => !types.includes(type),
-    ) as string;
-    const parsed = aiCarouselSchema([pillar], { requiredSlides: [present, missing] }).safeParse(
-      withoutBlocked,
-    );
-    expect(parsed.success).toBe(false);
-    expect(parsed.error?.issues[0]?.path).toEqual(["slides"]);
-    expect(parsed.error?.issues[0]?.message).toContain(missing);
-    expect(parsed.error?.issues[0]?.message).not.toContain(`\`${present}\``);
-  });
 });
 
 describe("aiCarouselSchema with the pricing document", () => {

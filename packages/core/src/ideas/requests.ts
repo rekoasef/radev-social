@@ -29,8 +29,6 @@ export type IdeaRequestParams = {
   count: number;
   /** Only ideas of this pillar; null lets the AI spread them over the pillars. */
   pillarKey: string | null;
-  /** Only ideas of this series (ideas.generate). */
-  seriesKey: string | null;
   /** What to look into (ideas.research). */
   focus: string | null;
 };

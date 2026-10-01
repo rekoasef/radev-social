@@ -9,7 +9,6 @@ type Tab =
   | "assets"
   | "documents"
   | "pillars"
-  | "series"
   | "schedule"
   | "channels"
   | "links";
@@ -23,7 +22,6 @@ export function BrandTabs({ brand, current }: { brand: Brand; current: Tab }) {
     { id: "assets", label: "Assets", href: `/brands/${brand.slug}/assets` },
     { id: "documents", label: "Documentos", href: `/brands/${brand.slug}/documents` },
     { id: "pillars", label: "Pilares", href: `/brands/${brand.slug}/pillars` },
-    { id: "series", label: "Series", href: `/brands/${brand.slug}/series` },
     { id: "schedule", label: "Horarios", href: `/brands/${brand.slug}/schedule` },
     { id: "channels", label: "Canales", href: `/brands/${brand.slug}/channels` },
     { id: "links", label: "Links", href: `/brands/${brand.slug}/links` },

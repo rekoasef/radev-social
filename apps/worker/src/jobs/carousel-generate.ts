@@ -29,7 +29,6 @@ import {
   getBrandData,
   getPostById,
   getPostVersion,
-  getSeriesByKey,
   listAiRoutes,
   listCurrentBrandDocuments,
   listPillars,
@@ -109,9 +108,6 @@ function lookOf(content: unknown): string | null {
   return typeof look === "string" ? look : null;
 }
 
-/** The series a post belongs to, as the AI gets it (phase 3, T10). */
-export type TaskSeries = { name: string; brief: string; requiredSlides: readonly string[] };
-
 /** The context files of a run, besides the brand's CLAUDE.md. */
 export function buildTaskFiles(input: {
   request: GenerationRequest;
@@ -119,7 +115,6 @@ export function buildTaskFiles(input: {
   /** Problems of the previous answer, when retrying a malformed one. */
   problems?: readonly string[];
   revision?: Revision;
-  series?: TaskSeries;
   /** The brand's real data (`data.json`), when it has data sources. */
   data?: BrandData | null;
   /** The looks the post may take (`studio` brands). */
@@ -127,17 +122,9 @@ export function buildTaskFiles(input: {
   /** Whether the post gets generated images (the AI describes them). */
   art?: boolean;
 }): Record<string, string> {
-  const { request, recent, problems, revision, series, data, looks, art } = input;
+  const { request, recent, problems, revision, data, looks, art } = input;
   const task = {
     idea: request.idea,
-    ...(series && {
-      series: {
-        name: series.name,
-        structure: series.brief,
-        requiredSlides: series.requiredSlides,
-        note: "El post es de esta serie: seguí su estructura. Las slides de requiredSlides son obligatorias.",
-      },
-    }),
     pillarKey: request.pillarKey,
     ...(request.pillarKey === null && {
       pillarNote: "Elegí el pilar de la marca que mejor le quede a la idea.",
@@ -368,11 +355,10 @@ export async function generateCarousel(
     return "failed";
   }
 
-  const [{ claudeMd, pillars, pricing }, recent, current, seriesRow, data] = await Promise.all([
+  const [{ claudeMd, pillars, pricing }, recent, current, data] = await Promise.all([
     brandContext(db, brand),
     listRecentPostHooks(db, brand.id, { exceptPostId: post.id }),
     post.currentVersionId ? getPostVersion(db, post.currentVersionId) : undefined,
-    request.seriesKey ? getSeriesByKey(db, brand.id, request.seriesKey) : undefined,
     getBrandData(db, brand.id),
   ]);
   // A studio brand: the AI picks the look among the brand's, minus the last posts'. A revision
@@ -399,11 +385,6 @@ export async function generateCarousel(
             recent.map((r) => r.look),
           )
       : undefined;
-  const series: TaskSeries | undefined = seriesRow && {
-    name: seriesRow.name,
-    brief: seriesRow.brief,
-    requiredSlides: seriesRow.requiredSlides,
-  };
   // A post that already has a version is being regenerated: after a rejection or the render QA.
   const revision: Revision | undefined = current
     ? {
@@ -418,7 +399,6 @@ export async function generateCarousel(
   const schema = aiCarouselSchema(
     pillars.map((pillar) => pillar.key),
     {
-      requiredSlides: series?.requiredSlides,
       pricing,
       data: data
         ? {
@@ -451,7 +431,6 @@ export async function generateCarousel(
           recent,
           problems,
           revision,
-          series,
           data,
           looks,
           art: makesArt,

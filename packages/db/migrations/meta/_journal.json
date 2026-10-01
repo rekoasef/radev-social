@@ -162,6 +162,13 @@
       "when": 1790790567633,
       "tag": "0022_links_and_leads",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790874618061,
+      "tag": "0023_drop_series",
+      "breakpoints": true
     }
   ]
 }

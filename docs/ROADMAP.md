@@ -74,7 +74,7 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 - [x] Pilares con porcentajes (CRUD) y WhatsApp de la marca
 - [x] Banco de ideas: carga rápida (mobile), listado, descarte
 - [x] Jobs `ideas.generate` (modelo gratuito) e `ideas.research` (Claude con búsqueda web)
-- [x] Series recurrentes, empezando por "¿Cuánto cuesta realmente...?"
+- [x] ~~Series recurrentes, empezando por "¿Cuánto cuesta realmente...?"~~ (quitadas en la Fase 6, ADR 0020)
 - [x] Job `carousel.generate` → versión nueva → `carousel.render`
 - [x] Rechazo con feedback y regeneración; regeneración automática por QA (máx. 2)
 - [ ] ~~Importación del historial de posts → `winners.json`~~ → pospuesta a la Fase 6 (no hay historial con métricas)

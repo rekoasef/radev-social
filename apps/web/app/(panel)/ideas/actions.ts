@@ -14,7 +14,6 @@ import {
   createIdeaRequest,
   failIdeaRequest,
   getBrandById,
-  getSeriesByKey,
   listPillars,
   transitionIdea,
 } from "@radev/db";
@@ -97,7 +96,6 @@ const requestInput = z.object({
     .min(IDEA_COUNT_MIN, { error: `Pedí de ${IDEA_COUNT_MIN} a ${IDEA_COUNT_MAX} ideas.` })
     .max(IDEA_COUNT_MAX, { error: `Pedí de ${IDEA_COUNT_MIN} a ${IDEA_COUNT_MAX} ideas.` }),
   pillarKey: z.string().trim().max(64).optional().default(""),
-  seriesKey: z.string().trim().max(64).optional().default(""),
   focus: z
     .string()
     .trim()
@@ -119,18 +117,13 @@ export async function requestIdeasAction(_: IdeaFormState, form: FormData): Prom
   if (!parsed.success) {
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
-  const { brandId, task, count, pillarKey, seriesKey, focus } = parsed.data;
+  const { brandId, task, count, pillarKey, focus } = parsed.data;
   const brand = await getBrandById(db, brandId);
   if (!brand || brand.archivedAt) {
     return { status: "error", message: "Esa marca no existe o está archivada." };
   }
   if (pillarKey && !(await listPillars(db, brand.id)).some((p) => p.key === pillarKey)) {
     return { status: "error", message: "Elegí un pilar de la marca." };
-  }
-  if (task === "ideas.generate" && seriesKey) {
-    const series = await getSeriesByKey(db, brand.id, seriesKey);
-    if (!series || series.archivedAt)
-      return { status: "error", message: "Elegí una serie activa." };
   }
 
   const result = await createIdeaRequest(db, {
@@ -139,7 +132,6 @@ export async function requestIdeasAction(_: IdeaFormState, form: FormData): Prom
     params: {
       count,
       pillarKey: pillarKey || null,
-      seriesKey: task === "ideas.generate" ? seriesKey || null : null,
       focus: task === "ideas.research" ? focus || null : null,
     },
   });

@@ -48,16 +48,12 @@ vi.mock("@radev/db", () => ({
       title: "Idea 1",
       angle: "",
       pillarKey: "habits",
-      seriesKey: null,
-      seriesHook: null,
     },
     {
       id: "i2",
       title: "Idea 2",
       angle: "Ángulo",
       pillarKey: "news",
-      seriesKey: null,
-      seriesHook: null,
     },
   ],
   createGeneratingPost: async (
@@ -122,18 +118,17 @@ describe("slots.fill", () => {
       idea: "Idea 2\n\nÁngulo",
       pillarKey: "news",
       hookType: null,
-      seriesKey: null,
     });
     expect(queueGenerate).toHaveBeenCalledTimes(2);
     expect(db.requests[0]).toEqual({
       brandId: "b1",
       task: "ideas.generate",
-      params: { count: 5, pillarKey: "habits", seriesKey: null, focus: null },
+      params: { count: 5, pillarKey: "habits", focus: null },
     });
     expect(db.requests[1]).toEqual({
       brandId: "b1",
       task: "ideas.research",
-      params: { count: 5, pillarKey: null, seriesKey: null, focus: null },
+      params: { count: 5, pillarKey: null, focus: null },
     });
     expect(queueIdeaRequest.mock.calls).toEqual([
       ["ideas.generate", "r1"],

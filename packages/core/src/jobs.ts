@@ -10,7 +10,7 @@ export const JOBS = {
   artGenerate: "art.generate",
   /** Write a carousel with AI for a post that is `generating` (docs/ARCHITECTURE.md §7). */
   carouselGenerate: "carousel.generate",
-  /** Propose ideas for a brand's bank from its pillars, series and history (free model). */
+  /** Propose ideas for a brand's bank from its pillars and history (free model). */
   ideasGenerate: "ideas.generate",
   /** Look into the brand's niche with web search and bring topics as ideas (Claude). */
   ideasResearch: "ideas.research",
@@ -65,8 +65,6 @@ export type GenerationRequest = {
   pillarKey: string | null;
   /** Suggested hook type (a HOOK_TYPES value of packages/slides); null lets the AI choose. */
   hookType: string | null;
-  /** A series of the brand: its structure and required slides apply. Absent in older requests. */
-  seriesKey?: string | null;
 };
 
 /** A source's refresh: by the daily cron or by "Actualizar ahora" in the panel. */

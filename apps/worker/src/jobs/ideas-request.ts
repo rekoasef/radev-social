@@ -18,29 +18,27 @@ import {
   type Database,
   failIdeaRequest,
   getBrandById,
-  listActiveSeries,
   listAiRoutes,
   listIdeaTitles,
   listRecentPostHooks,
   type ProposedIdea,
   type RecentPost,
   recordGenerationRun,
-  type SeriesSummary,
   startIdeaRequest,
 } from "@radev/db";
 import type { Logger } from "../logger";
 import { brandContext, describeError, runRow } from "./carousel-generate";
 
 // ideas.generate and ideas.research (docs/ARCHITECTURE.md §6 and §7, phase 3 T10): the AI proposes
-// ideas for the brand's bank from its pillars, series and history; the research looks into the
+// ideas for the brand's bank from its pillars and history; the research looks into the
 // niche with web search first. The request row holds the parameters; its ideas are stored in the
 // same transaction that closes it, so a repeated job adds nothing (rule 8).
 
 export const IDEAS_PROMPT =
-  "Proponé ideas para carruseles de la marca a partir de `task.json`. Leé `series.md`, `recent-posts.json` y `existing-ideas.json`: no repitas temas que ya estén. Devolvé solo el objeto que pide el schema.";
+  "Proponé ideas para carruseles de la marca a partir de `task.json`. Leé `recent-posts.json` y `existing-ideas.json`: no repitas temas que ya estén. Devolvé solo el objeto que pide el schema.";
 
 export const RESEARCH_PROMPT =
-  "Investigá con búsqueda web qué se está hablando ahora en el nicho de la marca y traé ideas para carruseles según `task.json`. Leé antes `series.md`, `recent-posts.json` y `existing-ideas.json`: no repitas temas que ya estén. Cada idea lleva las páginas en las que se basa. Devolvé solo el objeto que pide el schema.";
+  "Investigá con búsqueda web qué se está hablando ahora en el nicho de la marca y traé ideas para carruseles según `task.json`. Leé antes `recent-posts.json` y `existing-ideas.json`: no repitas temas que ya estén. Cada idea lleva las páginas en las que se basa. Devolvé solo el objeto que pide el schema.";
 
 const RUN_SETTINGS: Record<
   IdeaRequestTask,
@@ -55,19 +53,18 @@ const RUN_SETTINGS: Record<
   },
 };
 
-type ExistingIdea = { title: string; status: string; seriesKey: string | null };
+type ExistingIdea = { title: string; status: string };
 
 /** The context files of a request, besides the brand's CLAUDE.md. */
 export function buildIdeaFiles(input: {
   task: IdeaRequestTask;
   params: IdeaRequestParams;
-  series: readonly Pick<SeriesSummary, "key" | "name" | "brief" | "pillarKey">[];
   recent: readonly RecentPost[];
   existing: readonly ExistingIdea[];
   /** Problems of the previous answer, when retrying a malformed one. */
   problems?: readonly string[];
 }): Record<string, string> {
-  const { task, params, series, recent, existing, problems } = input;
+  const { task, params, recent, existing, problems } = input;
   const brief = {
     count: params.count,
     countNote: `Hasta ${params.count} ideas distintas entre sí.`,
@@ -75,12 +72,6 @@ export function buildIdeaFiles(input: {
     pillarNote: params.pillarKey
       ? "Todas las ideas son de este pilar."
       : "Repartí las ideas entre los pilares según su porcentaje (están en CLAUDE.md).",
-    seriesKey: params.seriesKey,
-    seriesNote: params.seriesKey
-      ? "Todas las ideas son de esta serie (está en series.md): cada una, un tema distinto dentro de la serie."
-      : series.length > 0
-        ? "Una idea puede ser de una serie de series.md (poné su seriesKey) o suelta (seriesKey null)."
-        : "La marca no tiene series: seriesKey va en null.",
     ...(task === "ideas.research" && {
       focus: params.focus,
       focusNote: params.focus
@@ -102,18 +93,8 @@ export function buildIdeaFiles(input: {
           "Tu respuesta anterior no cumplía el formato por estos problemas. Corregilos.",
       }),
   };
-  const seriesMd =
-    series.length === 0
-      ? "# Series\n\nLa marca no tiene series.\n"
-      : `# Series\n\n${series
-          .map(
-            (s) =>
-              `## ${s.name} (\`${s.key}\`)\n\n${s.pillarKey ? `Pilar: \`${s.pillarKey}\`.\n\n` : ""}${s.brief}`,
-          )
-          .join("\n\n")}\n`;
   return {
     "task.json": `${JSON.stringify(brief, null, 2)}\n`,
-    "series.md": seriesMd,
     // Topics only: looks and structures are for writing a carousel, not for ideas.
     "recent-posts.json": `${JSON.stringify(
       recent.map(({ hook, hookType, pillarKey }) => ({ hook, hookType, pillarKey })),
@@ -125,9 +106,8 @@ export function buildIdeaFiles(input: {
 }
 
 /** Where an idea came from, for the bank. */
-export function ideaSource(task: IdeaRequestTask, seriesKey: string | null): IdeaSource {
-  if (task === "ideas.research") return "research";
-  return seriesKey ? "series" : "ai";
+export function ideaSource(task: IdeaRequestTask): IdeaSource {
+  return task === "ideas.research" ? "research" : "ai";
 }
 
 /** The rows to store from a valid answer: without repeats, with the pillars' ids. */
@@ -141,8 +121,7 @@ export function toProposedIdeas(
     title: idea.title,
     angle: idea.angle,
     pillarId: pillarIds.get(idea.pillarKey) ?? null,
-    seriesKey: idea.seriesKey,
-    source: ideaSource(task, idea.seriesKey),
+    source: ideaSource(task),
     sources: idea.sources ?? [],
   }));
 }
@@ -212,20 +191,13 @@ export async function runIdeaRequest(deps: IdeasDeps, job: IdeaRequestJob): Prom
   const route = resolveAiRoute(await listAiRoutes(db), request.task, brand.id);
   if (!route) return fail(`No hay una ruta de IA para ${request.task} (Ajustes → Ruteo de IA).`);
 
-  const [{ claudeMd, pillars }, activeSeries, recent, existing] = await Promise.all([
+  const [{ claudeMd, pillars }, recent, existing] = await Promise.all([
     brandContext(db, brand),
-    listActiveSeries(db, brand.id),
     listRecentPostHooks(db, brand.id),
     listIdeaTitles(db, brand.id),
   ]);
   const { params, task } = request;
-  const series = params.seriesKey
-    ? activeSeries.filter((s) => s.key === params.seriesKey)
-    : activeSeries;
-  if (params.seriesKey && series.length === 0) return fail("Esa serie no existe o está archivada.");
-  // A series with a pillar keeps its ideas there unless the request fixes another one.
-  const fixedPillar =
-    params.pillarKey ?? (params.seriesKey ? (series[0]?.pillarKey ?? null) : null);
+  const fixedPillar = params.pillarKey;
   const pillarKeys = fixedPillar
     ? pillars.filter((p) => p.key === fixedPillar).map((p) => p.key)
     : pillars.map((p) => p.key);
@@ -233,8 +205,6 @@ export async function runIdeaRequest(deps: IdeasDeps, job: IdeaRequestJob): Prom
 
   const schema = ideaProposalsSchema({
     pillarKeys,
-    seriesKeys: series.map((s) => s.key),
-    seriesRequired: params.seriesKey !== null,
     count: params.count,
     research: task === "ideas.research",
   });
@@ -251,7 +221,6 @@ export async function runIdeaRequest(deps: IdeasDeps, job: IdeaRequestJob): Prom
         ...buildIdeaFiles({
           task,
           params: { ...params, pillarKey: fixedPillar },
-          series,
           recent,
           existing,
           problems,

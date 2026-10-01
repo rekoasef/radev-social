@@ -138,8 +138,7 @@ async function fillBrand(
         request: {
           idea: ideaPrompt(idea),
           pillarKey: assignment.pillarKey,
-          hookType: idea.seriesHook,
-          seriesKey: idea.seriesKey,
+          hookType: null,
         },
         ideaId: idea.id,
         plan: { at: assignment.occurrence.at, slotId: assignment.occurrence.slotId },
@@ -164,7 +163,6 @@ async function fillBrand(
       params: {
         count: IDEA_COUNT_DEFAULT,
         pillarKey: plan.needIdeasFor,
-        seriesKey: null,
         focus: null,
       },
     });
@@ -202,7 +200,7 @@ async function weeklyResearch(deps: FillDeps, brand: Brand, now: Date): Promise<
   const requested = await createIdeaRequest(deps.db, {
     brandId: brand.id,
     task: "ideas.research",
-    params: { count: IDEA_COUNT_DEFAULT, pillarKey: null, seriesKey: null, focus: null },
+    params: { count: IDEA_COUNT_DEFAULT, pillarKey: null, focus: null },
   });
   if (!requested.ok) return false;
   await deps.queueIdeaRequest("ideas.research", requested.request.id);

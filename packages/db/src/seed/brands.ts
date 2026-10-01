@@ -199,18 +199,6 @@ export const seedPillars: Record<string, SeedPillar[]> = {
   ],
 };
 
-export type SeedSeries = {
-  key: string;
-  name: string;
-  pillarKey: string | null;
-  hookType: string | null;
-  requiredSlides: string[];
-};
-
-/**
- * Recurring series of each brand (docs/PRD.md RF-12); edited from the panel afterwards. The brief
- * of each one is seeds/brands/<slug>/series/<key>.md.
- */
 /**
  * Publishing slots of a brand the seed creates (docs/ROADMAP.md, phase 4: start with 1 post a day
  * between 14 and 21 h). Only for brands created in that same run: a brand that already exists keeps
@@ -219,16 +207,4 @@ export type SeedSeries = {
 export const seedSlots: Record<string, { weekdays: Weekday[]; localTime: string }[]> = {
   radev: [{ weekdays: [...WEEKDAYS], localTime: "19:00" }],
   lumus: [{ weekdays: [...WEEKDAYS], localTime: "19:00" }],
-};
-
-export const seedSeries: Record<string, SeedSeries[]> = {
-  radev: [
-    {
-      key: "real-cost",
-      name: "¿Cuánto cuesta realmente…?",
-      pillarKey: "business-problems",
-      hookType: "cost",
-      requiredSlides: ["costBreakdown"],
-    },
-  ],
 };

@@ -112,7 +112,7 @@ Las slides sin referencia (`statement`, `question`, `cta` y las demás) se dise�
 - `title` (≤60) · `left` / `right`: `{ name≤18, icon?, points: 2–4 × ≤40 }` · `verdict` (≤90)
 - `right` es la opción hacia la que se inclina el veredicto: el preset la destaca. Si ninguna gana, el veredicto lo dice igual; va a la derecha la que se recomienda en la mayoría de los casos.
 
-**`costBreakdown`** — desglose de costos (serie "¿Cuánto cuesta realmente...?").
+**`costBreakdown`** — desglose de costos. Sus rangos salen tal cual del documento Precios de la marca.
 - `title` (≤60) · `items`: 3–6 × `{ label≤30, range≤20 }` · `total`: `{ label≤20, range≤24 }` · `note?` (≤100)
 - Rangos **solo** del documento de precios de la marca, copiados tal cual: en la generación con IA se valida en código (Fase 3, T10).
 

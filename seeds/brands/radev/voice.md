@@ -83,17 +83,6 @@ Fórmulas por tipo de hook:
 - `comparison`: "[A] o [B]: cuál te conviene según [criterio concreto]"
 - `howto` / `story`: "Así [resolvimos X] para [tipo de negocio]"
 
-## Serie: "¿Cuánto cuesta realmente...?"
-
-Serie recurrente sobre cada servicio (una web, un e-commerce, un sistema de turnos, un bot de WhatsApp, un dashboard, una automatización, una app). Estructura:
-
-1. `cover`: "¿Cuánto cuesta realmente [X]?"
-2. `statement`: la creencia equivocada (ej. "no es solo programarla").
-3. `costBreakdown`: de qué depende el precio, con rangos de la sección Precios.
-4. `cardGrid` o `steps`: qué cosas encarecen o abaratan.
-5. `statement`: el costo de NO tenerlo (tiempo perdido, errores).
-6. `cta`: "¿Querés saber cuánto costaría el tuyo? Escribime por WhatsApp."
-
 ## Estructura de un buen carrusel
 
 - **Portada**: el hook, corto y concreto. Tiene que generar la necesidad de deslizar.

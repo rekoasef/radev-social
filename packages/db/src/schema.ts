@@ -207,38 +207,6 @@ export const scheduleSlots = pgTable(
 );
 
 /**
- * A recurring series of a brand (docs/PRD.md RF-12): the brief is the fixed structure the AI
- * follows; every carousel of the series has the required slide types (checked with Zod).
- */
-export const contentSeries = pgTable(
-  "content_series",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    brandId: uuid("brand_id")
-      .notNull()
-      .references(() => brands.id, { onDelete: "cascade" }),
-    /** Stable key ideas and generation requests use (`seriesKey`), e.g. "real-cost". */
-    key: text("key").notNull(),
-    name: text("name").notNull(),
-    /** Pillar of its posts; null lets the AI pick. */
-    pillarId: uuid("pillar_id").references(() => contentPillars.id, { onDelete: "set null" }),
-    /** Suggested hook type (a HOOK_TYPES value of packages/slides), e.g. "cost". */
-    hookType: text("hook_type"),
-    /** Structure and rules of the series, in Markdown, for the AI. */
-    brief: text("brief").notNull(),
-    /** Slide types (SLIDE_TYPES of packages/slides) every post of the series has. */
-    requiredSlides: jsonb("required_slides").$type<string[]>().notNull().default([]),
-    archivedAt: timestamp("archived_at", { withTimezone: true }),
-    createdAt: createdAt(),
-    updatedAt: updatedAt(),
-  },
-  (t) => [
-    uniqueIndex("content_series_brand_key_unique").on(t.brandId, t.key),
-    check("content_series_key_format", sql`${t.key} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
-  ],
-);
-
-/**
  * A request for ideas to the AI (phase 3, T10), with its parameters and outcome. Its ideas point
  * back to it, so running the job twice never adds them twice (rule 8).
  */
@@ -316,8 +284,6 @@ export const ideas = pgTable(
     title: text("title").notNull(),
     angle: text("angle").notNull().default(""),
     source: text("source", { enum: IDEA_SOURCES }).notNull(),
-    /** The recurring series it belongs to (T10), e.g. "real-cost". */
-    seriesKey: text("series_key"),
     /** Web pages the research drew on (ideas.research), for the operator to check. */
     sources: jsonb("sources").$type<IdeaSourceLink[]>().notNull().default([]),
     /** The AI request that proposed it; null for ideas typed by hand. */
@@ -841,7 +807,6 @@ export type ScheduleSlot = typeof scheduleSlots.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type NewContentPillar = typeof contentPillars.$inferInsert;
 export type Idea = typeof ideas.$inferSelect;
-export type ContentSeries = typeof contentSeries.$inferSelect;
 export type IdeaRequest = typeof ideaRequests.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type PostVersion = typeof postVersions.$inferSelect;

@@ -2,23 +2,14 @@ import { type AIError, providerError, rateLimited, validationError } from "@rade
 import { describe, expect, it } from "vitest";
 import { buildIdeaFiles, decideIdeas, ideaSource, toProposedIdeas } from "./ideas-request";
 
-const params = { count: 5, pillarKey: null, seriesKey: null, focus: null };
-const series = [
-  {
-    key: "real-cost",
-    name: "¿Cuánto cuesta realmente…?",
-    brief: "1. cover…",
-    pillarKey: "business-problems",
-  },
-];
+const params = { count: 5, pillarKey: null, focus: null };
 const read = (files: Record<string, string>, name: string) => JSON.parse(files[name] ?? "null");
 
 describe("buildIdeaFiles", () => {
-  it("gives the brief, the series and what the bank already has", () => {
+  it("gives the brief and what the bank already has", () => {
     const files = buildIdeaFiles({
       task: "ideas.generate",
       params,
-      series,
       recent: [
         {
           hook: "Tu negocio pierde clientes",
@@ -28,12 +19,11 @@ describe("buildIdeaFiles", () => {
           slides: ["cover", "cta"],
         },
       ],
-      existing: [{ title: "Bots de WhatsApp", status: "discarded", seriesKey: null }],
+      existing: [{ title: "Bots de WhatsApp", status: "discarded" }],
     });
     expect(Object.keys(files).sort()).toEqual([
       "existing-ideas.json",
       "recent-posts.json",
-      "series.md",
       "task.json",
     ]);
     // Topics only: the looks and structures of the posts are for writing carousels.
@@ -44,25 +34,21 @@ describe("buildIdeaFiles", () => {
     expect(task.count).toBe(5);
     expect(task.focus).toBeUndefined();
     expect(task.sourcesNote).toBeUndefined();
-    expect(files["series.md"]).toContain("`real-cost`");
-    expect(files["series.md"]).toContain("Pilar: `business-problems`");
     expect(read(files, "existing-ideas.json")).toEqual([
-      { title: "Bots de WhatsApp", status: "discarded", seriesKey: null },
+      { title: "Bots de WhatsApp", status: "discarded" },
     ]);
   });
 
-  it("a request for a series or a pillar says so", () => {
+  it("a request for a pillar says so", () => {
     const task = read(
       buildIdeaFiles({
         task: "ideas.generate",
-        params: { ...params, pillarKey: "business-problems", seriesKey: "real-cost" },
-        series,
+        params: { ...params, pillarKey: "business-problems" },
         recent: [],
         existing: [],
       }),
       "task.json",
     );
-    expect(task.seriesNote).toContain("Todas las ideas son de esta serie");
     expect(task.pillarNote).toContain("Todas las ideas son de este pilar");
   });
 
@@ -71,7 +57,6 @@ describe("buildIdeaFiles", () => {
       buildIdeaFiles({
         task: "ideas.research",
         params: { ...params, focus: "turnos en clínicas" },
-        series: [],
         recent: [],
         existing: [],
       }),
@@ -79,7 +64,6 @@ describe("buildIdeaFiles", () => {
     );
     expect(task.focus).toBe("turnos en clínicas");
     expect(task.sourcesNote).toBeDefined();
-    expect(task.seriesNote).toContain("no tiene series");
   });
 
   it("passes the problems of a malformed answer", () => {
@@ -87,7 +71,6 @@ describe("buildIdeaFiles", () => {
       buildIdeaFiles({
         task: "ideas.generate",
         params,
-        series,
         recent: [],
         existing: [],
         problems: ["ideas.0.title › Muy corto."],
@@ -99,10 +82,9 @@ describe("buildIdeaFiles", () => {
 });
 
 describe("ideaSource", () => {
-  it("research, series or plain AI", () => {
-    expect(ideaSource("ideas.research", "real-cost")).toBe("research");
-    expect(ideaSource("ideas.generate", "real-cost")).toBe("series");
-    expect(ideaSource("ideas.generate", null)).toBe("ai");
+  it("research or plain AI", () => {
+    expect(ideaSource("ideas.research")).toBe("research");
+    expect(ideaSource("ideas.generate")).toBe("ai");
   });
 });
 
@@ -116,14 +98,12 @@ describe("toProposedIdeas", () => {
             title: "Bots de WhatsApp para turnos",
             angle: "",
             pillarKey: "business-problems",
-            seriesKey: null,
             sources: [{ title: "Nota", url: "https://example.com" }],
           },
           {
             title: "¿Cuánto cuesta una web?",
             angle: "",
             pillarKey: "business-problems",
-            seriesKey: null,
             sources: [{ title: "Otra", url: "https://example.org" }],
           },
         ],
@@ -136,7 +116,6 @@ describe("toProposedIdeas", () => {
         title: "Bots de WhatsApp para turnos",
         angle: "",
         pillarId: "pillar-1",
-        seriesKey: null,
         source: "research",
         sources: [{ title: "Nota", url: "https://example.com" }],
       },

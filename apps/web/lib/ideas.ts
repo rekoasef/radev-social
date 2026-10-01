@@ -11,7 +11,6 @@ export const IDEA_SOURCE_LABELS: Record<IdeaSource, string> = {
   ai: "IA",
   research: "Investigación",
   recycled: "Reciclada",
-  series: "Serie",
 };
 
 export const IDEA_REQUEST_LABELS: Record<IdeaRequestTask, string> = {

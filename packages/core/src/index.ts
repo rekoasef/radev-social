@@ -376,11 +376,3 @@ export {
   weekRange,
 } from "./scheduling/week";
 export { type WallClock, wallClock, zonedToUtc, zoneOffsetMs } from "./scheduling/zoned";
-export {
-  canDeleteSeries,
-  missingSeriesSlides,
-  SERIES_BRIEF_MAX,
-  SERIES_BRIEF_MIN,
-  SERIES_NAME_MAX,
-  SERIES_REQUIRED_SLIDES_MAX,
-} from "./series/series";

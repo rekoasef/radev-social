@@ -234,38 +234,6 @@ describe("buildTaskFiles", () => {
   });
 });
 
-describe("buildTaskFiles with a series", () => {
-  const request = {
-    idea: "Cuánto cuesta una web",
-    pillarKey: null,
-    hookType: "cost",
-    seriesKey: "real-cost",
-  };
-
-  it("gives the AI the series' structure and required slides", () => {
-    const files = buildTaskFiles({
-      request,
-      recent: [],
-      series: {
-        name: "¿Cuánto cuesta realmente…?",
-        brief: "1. cover…",
-        requiredSlides: ["costBreakdown"],
-      },
-    });
-    const task = JSON.parse(files["task.json"] ?? "{}");
-    expect(task.series).toMatchObject({
-      name: "¿Cuánto cuesta realmente…?",
-      structure: "1. cover…",
-      requiredSlides: ["costBreakdown"],
-    });
-  });
-
-  it("leaves the series out of a post without one", () => {
-    const task = JSON.parse(buildTaskFiles({ request, recent: [] })["task.json"] ?? "{}");
-    expect(task.series).toBeUndefined();
-  });
-});
-
 describe("stampDataSources", () => {
   const carousel = {
     pillarKey: "dollar",

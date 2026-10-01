@@ -4,8 +4,6 @@ import { toJsonSchema } from "./schema";
 
 const base = {
   pillarKeys: ["business-problems", "build-in-public"],
-  seriesKeys: ["real-cost"],
-  seriesRequired: false,
   count: 3,
   research: false,
 };
@@ -14,7 +12,6 @@ const idea = {
   title: "Por qué tu negocio pierde clientes por WhatsApp",
   angle: "Desde el dueño que responde tarde",
   pillarKey: "business-problems",
-  seriesKey: null,
 };
 
 describe("hasFigures", () => {
@@ -41,35 +38,17 @@ describe("hasFigures", () => {
 });
 
 describe("ideaProposalsSchema", () => {
-  it("accepts ideas of the brand's pillars and series", () => {
+  it("accepts ideas of the brand's pillars", () => {
     const parsed = ideaProposalsSchema(base).safeParse({
-      ideas: [
-        idea,
-        { ...idea, title: "¿Cuánto cuesta realmente una web?", seriesKey: "real-cost" },
-      ],
+      ideas: [idea, { ...idea, title: "¿Cuánto cuesta realmente una web?" }],
     });
     expect(parsed.success ? [] : parsed.error.issues).toEqual([]);
   });
 
-  it("refuses unknown pillars and series", () => {
+  it("refuses unknown pillars", () => {
     expect(
       ideaProposalsSchema(base).safeParse({ ideas: [{ ...idea, pillarKey: "otro" }] }).success,
     ).toBe(false);
-    expect(
-      ideaProposalsSchema(base).safeParse({ ideas: [{ ...idea, seriesKey: "otra" }] }).success,
-    ).toBe(false);
-  });
-
-  it("a request for a series only takes ideas of that series", () => {
-    const schema = ideaProposalsSchema({ ...base, seriesRequired: true });
-    expect(schema.safeParse({ ideas: [idea] }).success).toBe(false);
-    expect(schema.safeParse({ ideas: [{ ...idea, seriesKey: "real-cost" }] }).success).toBe(true);
-  });
-
-  it("a brand without series only takes ideas without one", () => {
-    const schema = ideaProposalsSchema({ ...base, seriesKeys: [] });
-    expect(schema.safeParse({ ideas: [idea] }).success).toBe(true);
-    expect(schema.safeParse({ ideas: [{ ...idea, seriesKey: "real-cost" }] }).success).toBe(false);
   });
 
   it("no more ideas than asked, at least one", () => {
@@ -102,7 +81,7 @@ describe("ideaProposalsSchema", () => {
   it("turns into a JSON Schema the providers accept", () => {
     const json = toJsonSchema(ideaProposalsSchema({ ...base, research: true }));
     expect(json.type).toBe("object");
-    expect(JSON.stringify(json)).toContain("real-cost");
+    expect(JSON.stringify(json)).toContain("business-problems");
   });
 });
 

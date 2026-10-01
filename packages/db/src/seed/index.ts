@@ -1,13 +1,13 @@
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { BRAND_DOCUMENT_KINDS, isBrandDocumentKind } from "@radev/core";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { createDb } from "../client";
 import { loadRootEnv } from "../load-root-env";
 import { createBrandAsset, listBrandAssets, setBrandAssetToken } from "../queries/brand-assets";
 import { listCurrentBrandDocuments, saveBrandDocument } from "../queries/brand-documents";
 import { addScheduleSlots } from "../queries/schedule";
-import { aiRoutes, brands, contentPillars, contentSeries } from "../schema";
+import { aiRoutes, brands, contentPillars } from "../schema";
 import { seedAiRoutes } from "./ai-routes";
 import {
   pendingSeedAssets,
@@ -15,7 +15,6 @@ import {
   seedBrandAssets,
   seedBrands,
   seedPillars,
-  seedSeries,
   seedSlots,
 } from "./brands";
 
@@ -95,32 +94,6 @@ try {
     }
   }
   console.log(`Horarios creados: ${slotsAdded || "ninguno (solo en marcas nuevas)"}`);
-
-  // Series: only the missing keys, with their brief from seeds/brands/<slug>/series/<key>.md.
-  const seriesAdded: string[] = [];
-  for (const [slug, list] of Object.entries(seedSeries)) {
-    const [brand] = await db.select().from(brands).where(eq(brands.slug, slug));
-    if (!brand) continue;
-    for (const { pillarKey, ...series } of list) {
-      const brief = await readFile(
-        fileURLToPath(new URL(`${slug}/series/${series.key}.md`, seedsDir)),
-        "utf8",
-      );
-      const [pillar] = pillarKey
-        ? await db
-            .select({ id: contentPillars.id })
-            .from(contentPillars)
-            .where(and(eq(contentPillars.brandId, brand.id), eq(contentPillars.key, pillarKey)))
-        : [];
-      const added = await db
-        .insert(contentSeries)
-        .values({ ...series, brief: brief.trim(), brandId: brand.id, pillarId: pillar?.id ?? null })
-        .onConflictDoNothing({ target: [contentSeries.brandId, contentSeries.key] })
-        .returning({ key: contentSeries.key });
-      seriesAdded.push(...added.map((s) => `${slug}/${s.key}`));
-    }
-  }
-  console.log(`Series creadas: ${seriesAdded.join(", ") || "ninguna (ya estaban)"}`);
 
   // Documents: version 1 of each kind with a file in seeds/brands/<slug>/, only when missing.
   const documentsAdded: string[] = [];

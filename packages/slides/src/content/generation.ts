@@ -188,17 +188,15 @@ function normalizeRange(text: string): string {
 
 /**
  * The carousel schema for a brand's generation: the brand's pillars only, and no blocked slides.
- * A post of a series also has the slide types the series requires (phase 3, T10). With `pricing`
- * (the brand's pricing document, empty when there is none), every range of a `costBreakdown` has
- * to be written in it as is: the AI never makes up a price (CLAUDE.md, rule 9). Refinements
- * don't reach the JSON Schema, so the brand's CLAUDE.md lists the pillar keys and `task.json`
- * the series' slides. Without `data` the data slides are rejected; with it, a chart must point
- * to one of its datasets and a bigNumber must show one of its figures (`isFigure`).
+ * With `pricing` (the brand's pricing document, empty when there is none), every range of a
+ * `costBreakdown` has to be written in it as is: the AI never makes up a price (CLAUDE.md, rule 9).
+ * Refinements don't reach the JSON Schema, so the brand's CLAUDE.md lists the pillar keys.
+ * Without `data` the data slides are rejected; with it, a chart must point to one of its datasets
+ * and a bigNumber must show one of its figures (`isFigure`).
  */
 export function aiCarouselSchema(
   pillarKeys: readonly string[],
   options: {
-    requiredSlides?: readonly string[];
     pricing?: string;
     data?: { datasets: readonly string[]; isFigure: (value: string) => boolean };
     /** A `studio` brand: the post must take one of these looks (lookChoices). */
@@ -209,7 +207,6 @@ export function aiCarouselSchema(
 ) {
   const looks = options.looks && options.looks.length > 0 ? options.looks : undefined;
   const data = options.data;
-  const required = options.requiredSlides ?? [];
   const pricing = options.pricing === undefined ? undefined : normalizeRange(options.pricing);
   return carouselSchema.superRefine((carousel, ctx) => {
     if (pricing !== undefined) {
@@ -228,15 +225,6 @@ export function aiCarouselSchema(
             });
           }
         }
-      });
-    }
-    const present = new Set<string>(carousel.slides.map((slide) => slide.type));
-    const missing = required.filter((type) => !present.has(type));
-    if (missing.length > 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["slides"],
-        message: `La serie exige estas slides y faltan: ${missing.map((t) => `\`${t}\``).join(", ")}.`,
       });
     }
     if (looks && (!carousel.look || !looks.includes(carousel.look))) {
