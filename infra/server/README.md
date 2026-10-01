@@ -4,7 +4,7 @@ Scripts para dejar seguro el servidor (fase 4, T10): Ubuntu 24.04 ARM en Oracle 
 
 ## Entrar
 
-La llave es `~/.ssh/id_ed25519_radev_oracle` y el usuario, `ubuntu` (el de la imagen de Oracle: no es root, entra solo con llave y usa `sudo`). En `~/.ssh/config` de la máquina del operador (la IP **no** va al repo):
+El usuario es `ubuntu` (el de la imagen de Oracle: no es root y usa `sudo`). Entra con la llave `~/.ssh/id_ed25519_radev_oracle` o con su contraseña (ADR 0019), que está en el gestor de contraseñas del operador. Desde una compu sin la llave: `ssh ubuntu@<IP pública>`. Para cambiar la contraseña: `ssh -t radev-oracle sudo passwd ubuntu`. En `~/.ssh/config` de la máquina del operador (la IP **no** va al repo):
 
 ```
 Host radev-oracle
@@ -24,7 +24,8 @@ ssh radev-oracle 'sudo bash -s' < infra/server/harden.sh
 
 Se puede correr las veces que haga falta: lo que ya está hecho no se repite. Qué hace:
 
-- **SSH solo con llave**: sin contraseña, sin root (`/etc/ssh/sshd_config.d/10-radev-hardening.conf`). Antes de aplicarlo verifica la config con `sshd -t`, y si `ubuntu` no tiene una llave cargada **no toca nada** (para no quedar afuera). La sesión abierta no se corta.
+- **SSH con llave o contraseña**, sin root (`/etc/ssh/sshd_config.d/10-radev-hardening.conf`; ADR 0019). Antes de aplicarlo verifica la config con `sshd -t`, y si `ubuntu` no tiene una llave cargada **no toca nada** (para no quedar afuera). La sesión abierta no se corta. Avisa si `ubuntu` todavía no tiene contraseña.
+- **fail2ban**: 5 intentos fallidos de SSH en 10 minutos bloquean esa IP 1 hora (`/etc/fail2ban/jail.d/10-radev.conf`). Ver bloqueos: `ssh radev-oracle sudo fail2ban-client status sshd`.
 - **Firewall de Ubuntu**: la imagen de Oracle trae `iptables` que aceptan el 22 y rechazan el resto. Suma 80 y 443 antes del rechazo, en vivo y en `/etc/iptables/rules.v4` (lo que se carga al arrancar). No usa `ufw` (Oracle desaconseja mezclarlo con esas reglas) ni `iptables-save` (con Docker andando guardaría sus cadenas y chocarían al reiniciar).
 - **Actualizaciones automáticas** (`unattended-upgrades`): parches de seguridad todos los días. Si uno pide reiniciar, reinicia a las **11:00 UTC = 08:00 de Argentina**: después de la ventana de generación (02–07) y lejos de la hora de publicar.
 - **Zona horaria UTC** (las fechas se guardan en UTC; CLAUDE.md, regla 11).

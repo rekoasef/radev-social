@@ -61,7 +61,7 @@ Los registros DNS se crean donde estén los nameservers del dominio (Hostinger o
 - Postgres **no** publica puertos; solo accesible en la red de Docker.
 - Caddy bloquea `/render/*` desde afuera; la ruta además exige `X-Render-Token`.
 - El worker llama a la web por la red interna: `http://web:3000/render/...`.
-- Seguridad del servidor: SSH solo con llave, firewall 22/80/443, actualizaciones automáticas.
+- Seguridad del servidor: SSH con llave o contraseña y fail2ban (ADR 0019), firewall 22/80/443, actualizaciones automáticas.
 
 ## 3. Monorepo
 
@@ -378,7 +378,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 - Better Auth con GitHub + lista blanca `ALLOWED_EMAILS`.
 - Tokens de redes cifrados con AES-256-GCM (`TOKEN_ENCRYPTION_KEY`, 32 bytes en base64): `packages/db/src/token-crypto.ts`, formato `v1.<iv|tag|cifrado>` con la red, la cuenta y el tipo de token como datos autenticados (un token no se puede cambiar por otro). Solo `queries/social-accounts.ts` los lee o escribe; el resto recibe `SocialAccount`, sin tokens. La clave no viaja en los backups: sin ella hay que volver a conectar las cuentas.
 - `/render` bloqueado en Caddy y protegido con token interno.
-- Postgres sin puertos expuestos. Firewall: 22 (llave), 80, 443.
+- Postgres sin puertos expuestos. Firewall: 22 (llave o contraseña, con fail2ban), 80, 443.
 - Uploads de assets: tipo detectado por el contenido y hasta 5 MB; solo PNG, JPEG, WebP y SVG. Los SVG se sirven con `Content-Security-Policy: sandbox` y se cargan con `<img>`, así que sus scripts no corren (ADR 0012).
 - `/media` es público y de solo lectura: nombres imposibles de adivinar y nada fuera de `MEDIA_DIR`.
 - Nunca loguear secretos, tokens ni `.env`.

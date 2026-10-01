@@ -17,9 +17,11 @@ check() { local what=$1; shift; if "$@" >/dev/null 2>&1; then ok "$what"; else b
 sshd_value() { sshd -T 2>/dev/null | awk -v k="$1" '$1 == k { print $2 }'; }
 
 check "${ADMIN_USER} tiene llaves SSH" grep -qE '^(ssh-|ecdsa-)' "/home/${ADMIN_USER}/.ssh/authorized_keys"
-[ "$(sshd_value passwordauthentication)" = "no" ] && ok "SSH sin contraseña" || bad "SSH sin contraseña"
-[ "$(sshd_value kbdinteractiveauthentication)" = "no" ] && ok "SSH sin teclado interactivo" \
-  || bad "SSH sin teclado interactivo"
+# Contraseña permitida a propósito (ADR 0019), siempre con fail2ban.
+[ "$(sshd_value passwordauthentication)" = "yes" ] && ok "SSH con contraseña" || bad "SSH con contraseña"
+passwd -S "$ADMIN_USER" 2>/dev/null | awk '{ exit !($2 == "P") }' && ok "${ADMIN_USER} tiene contraseña" \
+  || bad "${ADMIN_USER} tiene contraseña (sudo passwd ${ADMIN_USER})"
+check "fail2ban protege SSH" fail2ban-client status sshd
 [ "$(sshd_value permitrootlogin)" = "no" ] && ok "SSH sin root" || bad "SSH sin root"
 [ "$(sshd_value pubkeyauthentication)" = "yes" ] && ok "SSH con llave" || bad "SSH con llave"
 passwd -S root 2>/dev/null | awk '{ exit !($2 == "L") }' && ok "root sin contraseña" || bad "root sin contraseña"
