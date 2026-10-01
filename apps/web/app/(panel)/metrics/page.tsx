@@ -3,6 +3,7 @@ import {
   addDays,
   byHour,
   byWeekday,
+  clickRate,
   groupPosts,
   isMetricsRange,
   localDateOf,
@@ -13,7 +14,15 @@ import {
   WEEKDAY_SHORT,
   zonedToUtc,
 } from "@radev/core";
-import { getLastMetricsAt, getSocialAccount, listAccountDays, listMetricsPosts } from "@radev/db";
+import {
+  countPostOutcomes,
+  getLastMetricsAt,
+  getLeadTotals,
+  getLinkTotals,
+  getSocialAccount,
+  listAccountDays,
+  listMetricsPosts,
+} from "@radev/db";
 import type { HookType } from "@radev/slides";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -26,6 +35,7 @@ import {
   formatPercent,
 } from "@/components/metrics/format";
 import { LineChart } from "@/components/metrics/line-chart";
+import { MetricsTabs } from "@/components/metrics/metrics-tabs";
 import {
   isPostSort,
   POST_SORTS,
@@ -100,6 +110,16 @@ export default async function MetricsPage({ searchParams }: PageProps<"/metrics"
         getLastMetricsAt(db, { brandId: brand.id, network: "tiktok" }),
       ])
     : [[], [], null];
+  const [linkTotals, leadTotals, outcomes] = await Promise.all([
+    getLinkTotals(db, { brandId: brand.id, from }),
+    getLeadTotals(db, { brandId: brand.id, from }),
+    countPostOutcomes(
+      db,
+      rows.map((row) => row.id),
+    ),
+  ]);
+  const outcomeOf = (id: string) => outcomes.get(id) ?? { clicks: 0, leads: 0, clients: 0 };
+  const clicks = linkTotals.whatsapp + linkTotals.links;
 
   const posts = rows.map(toMetricsPost);
   const summary = summarize(posts);
@@ -127,6 +147,12 @@ export default async function MetricsPage({ searchParams }: PageProps<"/metrics"
         { label: "Likes", value: formatNumber(row.likes) },
         { label: "Comentarios", value: formatNumber(row.comments) },
         { label: "Compartidos", value: formatNumber(row.shares) },
+        ...(outcomeOf(row.id).clicks > 0
+          ? [{ label: "Clics en la página", value: formatNumber(outcomeOf(row.id).clicks) }]
+          : []),
+        ...(outcomeOf(row.id).leads > 0
+          ? [{ label: "Leads", value: formatNumber(outcomeOf(row.id).leads) }]
+          : []),
       ],
     },
   }));
@@ -163,24 +189,35 @@ export default async function MetricsPage({ searchParams }: PageProps<"/metrics"
     },
   }));
 
-  const rank = (groups: ReturnType<typeof groupPosts>, labelOf: (key: string) => string) =>
-    groups.map((group) => ({
+  const rank = (
+    keyOf: (post: (typeof ours)[number]) => string | null,
+    labelOf: (key: string) => string,
+  ) => {
+    // Leads of each group: what the links page and the typed leads say of its posts.
+    const leadsBy = new Map<string, number>();
+    for (const post of ours) {
+      const key = keyOf(post);
+      if (key !== null) leadsBy.set(key, (leadsBy.get(key) ?? 0) + outcomeOf(post.id).leads);
+    }
+    return groupPosts(ours, keyOf).map((group) => ({
       key: group.key,
       label: labelOf(group.key),
       medianViews: group.medianViews,
       posts: group.posts,
       engagement: group.engagement,
+      leads: leadsBy.get(group.key) ?? 0,
     }));
+  };
   const byPillar = rank(
-    groupPosts(ours, (post) => post.pillar),
+    (post) => post.pillar,
     (key) => key,
   );
   const byHook = rank(
-    groupPosts(ours, (post) => post.hookType),
+    (post) => post.hookType,
     (key) => HOOK_LABELS[key as HookType] ?? key,
   );
   const byModel = rank(
-    groupPosts(ours, (post) => post.model),
+    (post) => post.model,
     (key) => key,
   );
 
@@ -193,6 +230,7 @@ export default async function MetricsPage({ searchParams }: PageProps<"/metrics"
 
   return (
     <>
+      <MetricsTabs current="summary" />
       <section aria-labelledby="metrics-heading" className="flex flex-col gap-6">
         <Plate
           as="h1"
@@ -296,6 +334,44 @@ export default async function MetricsPage({ searchParams }: PageProps<"/metrics"
             )}
           </>
         )}
+        <div className="flex flex-col gap-3">
+          <h2 className="plate-text text-ink-dim">
+            De la página de links a clientes ·{" "}
+            <Link href={`/brands/${brand.slug}/links`} className="underline hover:text-ink">
+              configurar
+            </Link>
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatTile
+              label="Visitas a la página"
+              value={formatCompact(linkTotals.views)}
+              hint="desde el link del perfil"
+            />
+            <StatTile
+              label="Clics"
+              value={formatCompact(clicks)}
+              hint={`${formatCompact(linkTotals.whatsapp)} a WhatsApp · ${formatPercent(clickRate(linkTotals.views, clicks))} de las visitas`}
+            />
+            <StatTile
+              label="Leads"
+              value={formatCompact(leadTotals.leads)}
+              hint={
+                leadTotals.leads > 0
+                  ? `${leadTotals.linked} con el post identificado`
+                  : "anotalos en Métricas → Leads"
+              }
+            />
+            <StatTile
+              label="Clientes"
+              value={formatCompact(leadTotals.clients)}
+              hint={
+                leadTotals.leads > 0
+                  ? `${formatPercent(leadTotals.clients / leadTotals.leads)} de los leads`
+                  : "leads que marcaste como cliente"
+              }
+            />
+          </div>
+        </div>
       </section>
 
       {account && lastAt !== null && (
@@ -428,6 +504,7 @@ export default async function MetricsPage({ searchParams }: PageProps<"/metrics"
                 rows={sortPosts(rows, sort)}
                 timeZone={brand.timezone}
                 medianViews={summary.medianViews}
+                outcomes={outcomes}
               />
             )}
           </section>

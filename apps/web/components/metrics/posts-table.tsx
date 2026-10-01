@@ -48,16 +48,22 @@ export function toMetricsPost(row: MetricsPostRow): MetricsPost {
   };
 }
 
+export type PostOutcome = { clicks: number; leads: number; clients: number };
+
 export function PostsTable({
   rows,
   timeZone,
   medianViews,
+  outcomes,
 }: {
   rows: MetricsPostRow[];
   timeZone: string;
+  /** Clicks on the links page and leads of each post. */
+  outcomes: ReadonlyMap<string, PostOutcome>;
   /** Posts above it are marked: they did better than the usual post of the range. */
   medianViews: number | null;
 }) {
+  const outcomeOf = (id: string) => outcomes.get(id) ?? { clicks: 0, leads: 0, clients: 0 };
   return (
     <>
       {/* Phone: one card per post, the four counts in a row. */}
@@ -68,13 +74,15 @@ export function PostsTable({
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <p className="line-clamp-2 text-sm text-ink">{row.caption || "Sin descripción"}</p>
               <PostMeta row={row} />
-              <dl className="grid grid-cols-4 gap-2 text-xs">
+              <dl className="grid grid-cols-3 gap-2 text-xs">
                 {(
                   [
                     ["Vistas", row.views],
                     ["Likes", row.likes],
                     ["Coment.", row.comments],
                     ["Compart.", row.shares],
+                    ["Clics", outcomeOf(row.id).clicks],
+                    ["Leads", outcomeOf(row.id).leads],
                   ] as const
                 ).map(([label, value]) => (
                   <div key={label} className="flex flex-col gap-0.5">
@@ -102,7 +110,7 @@ export function PostsTable({
       </ul>
 
       <div className="hidden overflow-x-auto rounded-md border border-bezel md:block">
-        <table className="w-full min-w-[760px] text-sm">
+        <table className="w-full min-w-[900px] text-sm">
           <thead className="bg-panel text-left">
             <tr className="plate-text text-ink-faint">
               <th scope="col" className="px-4 py-3 font-medium">

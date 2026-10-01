@@ -104,6 +104,27 @@ export {
   loadJobTargets,
 } from "./queries/jobs";
 export {
+  countPostOutcomes,
+  deleteBrandLink,
+  deleteLead,
+  findNetworkPostByRef,
+  getBrandLink,
+  getBrandNetworkPost,
+  getLeadTotals,
+  getLinkTotals,
+  type LeadRow,
+  type LinksPagePost,
+  type LinkTotals,
+  listBrandLinks,
+  listLeads,
+  listLinksPagePosts,
+  moveBrandLink,
+  recordLinkEvent,
+  saveBrandLink,
+  saveLead,
+  setLeadStatus,
+} from "./queries/links";
+export {
   getLastMetricsAt,
   getPostNetworkMetrics,
   hasNetworkPosts,

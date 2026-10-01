@@ -86,8 +86,15 @@ Decisión aprobada con el plan: **métricas de toda la cuenta**, no solo de los 
 | T2 | Job `metrics.sync` cada 4 h + "Actualizar ahora"; vincula nuestros posts con el suyo y baja las portadas | ✅ |
 | T3 | Sección **Métricas** (cifras, vistas por post, seguidores, cuándo publicar, qué funciona por pilar/gancho/modelo, tabla de posts) + bloque "En TikTok" en la ficha del post | ✅ (en producción; falta que la mire el operador 👁) |
 | T4 | Capturas → IA (`metrics.extract`) → guardados, visitas al perfil, audiencia | pendiente |
-| T5 | Página de links `/l/[brand]`, botón de WhatsApp con código, registro de leads | pendiente |
+| T5 | Página de links `/l/[brand]`, botón de WhatsApp con código, registro de leads (migración `0022`) | ✅ (en local; falta deploy y que la mire el operador 👁) |
 | T6 | Recomendaciones de horarios y mezcla; `winners` para la generación | pendiente |
+
+Notas de T5 (2026-10-01):
+- Tablas `brand_links`, `link_events` y `leads` (migración `0022`). `packages/core/src/links`: tipos de evento, estados y canales de lead, `postRef` (código del post o `TK-` + final del id de TikTok), `normalizePostRef`, `clickRate`.
+- Página pública **`/l/[slug]`** (sin login, sin indexar): colores y logo de la marca desde la base; "¿Por qué post venís?" con los últimos 12 posts de TikTok, que abren WhatsApp con el mensaje de la marca y el código del post (o el link principal con `?ref=`); botón de WhatsApp y los links de la marca. Cada visita y clic se registra en `/l/[slug]/go` (solo el host de origen, nada personal).
+- Panel: pestaña **Links** en cada marca (hasta 8, uno principal) y **Métricas → Leads** (carga rápida con código de post, estados Nuevo / En charla / Cliente / Perdido). El resumen de Métricas suma visitas, clics, leads y clientes, y los leads por pilar, gancho y modelo.
+- Probado en local: página, WhatsApp y links redirigen y registran el evento. El selector de posts no se pudo ver en local (los `network_posts` están en producción).
+- **Para el operador 👁:** tras el deploy, cargar el WhatsApp y los links de cada marca, poner `https://<dominio>/l/radev` en la bio de TikTok y probar desde el celular.
 
 Notas de T1–T3 (2026-09-30):
 - Colores de los gráficos validados con el validador de dataviz contra el fondo del panel: naranja `#e06c12` (posts del sistema, el color del logo) y azul `#5a8fd6` (resto de la cuenta), tokens `--chart-*` en `globals.css`.

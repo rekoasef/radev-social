@@ -9,6 +9,8 @@ export type RankRow = {
   medianViews: number | null;
   posts: number;
   engagement: number | null;
+  /** Leads its posts brought (links page and typed leads). */
+  leads?: number;
 };
 
 export function RankBars({ rows, empty }: { rows: RankRow[]; empty: string }) {
@@ -41,9 +43,10 @@ export function RankBars({ rows, empty }: { rows: RankRow[]; empty: string }) {
                 {row.medianViews === null ? "—" : formatCompact(row.medianViews)}
               </span>
             </span>
-            <span className="col-start-2 text-xs text-ink-faint sm:col-start-auto sm:w-40 sm:text-right">
+            <span className="col-start-2 text-xs text-ink-faint sm:col-start-auto sm:w-52 sm:text-right">
               {row.posts} {row.posts === 1 ? "post" : "posts"} · {formatPercent(row.engagement)}{" "}
               interacción
+              {row.leads ? ` · ${row.leads} ${row.leads === 1 ? "lead" : "leads"}` : ""}
             </span>
           </li>
         );

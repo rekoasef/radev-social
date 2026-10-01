@@ -935,3 +935,78 @@
     background: var(--color-panel-raised);
   }
 }
+
+/* A brand's public links page (phase 6 T5): its own colors, set from the database on the page. */
+@layer components {
+  .links-page {
+    background: var(--lp-bg);
+    color: var(--lp-text);
+  }
+  .links-page .lp-muted {
+    color: var(--lp-muted);
+  }
+  .lp-mark {
+    display: grid;
+    place-items: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--lp-bg);
+    background: var(--lp-accent);
+  }
+  .lp-post {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 10px;
+    background: color-mix(in oklab, var(--lp-text) 8%, var(--lp-bg));
+    outline-offset: 2px;
+    transition: transform 160ms ease-out;
+  }
+  .lp-post:active {
+    transform: scale(0.97);
+  }
+  .lp-post img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .lp-post-text {
+    display: block;
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--lp-muted);
+  }
+  .lp-button {
+    display: block;
+    padding: 16px 20px;
+    border-radius: 14px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--lp-text);
+    border: 1px solid color-mix(in oklab, var(--lp-text) 22%, var(--lp-bg));
+    background: color-mix(in oklab, var(--lp-text) 5%, var(--lp-bg));
+    transition:
+      transform 160ms ease-out,
+      background-color 160ms ease-out;
+  }
+  .lp-button:hover {
+    background: color-mix(in oklab, var(--lp-text) 10%, var(--lp-bg));
+  }
+  .lp-button:active {
+    transform: scale(0.98);
+  }
+  .lp-button-primary {
+    color: var(--lp-bg);
+    border-color: var(--lp-accent);
+    background: var(--lp-accent);
+  }
+  .lp-button-primary:hover {
+    background: color-mix(in oklab, var(--lp-accent) 88%, var(--lp-text));
+  }
+}
