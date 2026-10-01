@@ -89,6 +89,8 @@ Decisión aprobada con el plan: **métricas de toda la cuenta**, no solo de los 
 | T5 | Registro de leads (migración `0022`). La página de links `/l/[brand]` se quitó (ADR 0022, migración `0025`) | ✅ |
 | T6 | Recomendaciones de horarios y mezcla; `winners` para la generación | pendiente |
 
+Cierre al sitio web (2026-10-01, ADR 0023): campo **Sitio web** de la marca (`brands.website`, migración `0026`) en Marcas → General → Contacto; con sitio, el cierre y el caption mandan ahí en lugar de a WhatsApp. RAdev: `radev.tech`, voz y cierres de "Hecho por RAdev" y "Llamado a la acción" apuntando al sitio (seed actualizado; producción con SQL tras el deploy).
+
 Página de links quitada (2026-10-01, ADR 0022): el operador prefiere que el perfil lleve directo a radev.tech. Fuera `/l/[brand]`, la pestaña Links y el conteo de visitas y clics; migración `0025_drop_links_page` (borra `brand_links` y `link_events`, sin datos reales). Los leads se quedan (Métricas → Leads; `core/leads`, `queries/leads`).
 
 Instrucciones por pilar (2026-10-01, ADR 0021): objetivo, ganchos preferidos, cómo se cuenta, cómo cierra y qué evitar, en `content_pillars` (migración `0024`, solo agrega). Van al `CLAUDE.md` de la marca debajo de cada pilar. Panel: Marcas → Pilares → "Cómo se escribe cada pilar" (un plegable por pilar). Seed con los textos aprobados para RAdev y Lumus. En producción desde el 2026-10-01 (deploy con las migraciones `0022`–`0024`; los 10 pilares cargados con sus instrucciones). **Para el operador 👁:** mirar la sección con login, también en el celular.

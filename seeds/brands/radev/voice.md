@@ -88,11 +88,11 @@ Fórmulas por tipo de hook:
 - **Portada**: el hook, corto y concreto. Tiene que generar la necesidad de deslizar.
 - **Una idea por slide.** Si una slide necesita más texto del límite, son dos slides.
 - **Progresión**: problema → por qué pasa → qué se puede hacer → qué ganás → acción.
-- **Cierre (`cta`) con una acción concreta y fácil.** El canal de contacto de RAdev es **WhatsApp** (link en el perfil). Ejemplos:
-  - "¿Querés saber cuánto costaría el tuyo? Escribime por WhatsApp, el link está en mi perfil."
-  - "Contame qué tarea repetís en tu negocio y te digo cómo se podría automatizar. WhatsApp en el perfil."
+- **Cierre (`cta`) con una acción concreta y fácil.** El canal de contacto de RAdev es el sitio **radev.tech** (link en el perfil). Ejemplos:
+  - "¿Querés saber cuánto costaría el tuyo? Entrá a radev.tech, el link está en mi perfil."
+  - "Contame qué tarea repetís en tu negocio y te digo cómo se podría automatizar. Entrá a radev.tech."
   - Para generar conversación: "Comentá qué tarea repetís todos los días."
-- **Caption**: amplía el carrusel en 2–4 párrafos cortos y cierra invitando a escribir por WhatsApp desde el link del perfil. Máximo 3 emojis en el caption, nunca en las slides.
+- **Caption**: amplía el carrusel en 2–4 párrafos cortos y cierra invitando a entrar a radev.tech desde el link del perfil. Máximo 3 emojis en el caption, nunca en las slides.
 - **Hashtags**: máx. 5, específicos del tema (no genéricos tipo #viral).
 
 ## Lenguaje visual

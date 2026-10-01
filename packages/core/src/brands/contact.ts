@@ -1,5 +1,6 @@
-// A brand's WhatsApp for its calls to action (docs/PRD.md RF-07). The prefilled message carries
-// the post's public code (`{code}`, e.g. RA-0142) so each lead can be traced to a post (RF-41).
+// Where a brand's calls to action send people (docs/PRD.md RF-07): its website, or its WhatsApp.
+// The website wins when both are set (ADR 0023). The WhatsApp prefilled message carries the
+// post's public code (`{code}`, e.g. RA-0142).
 
 /** International format without "+": country code, area code and number (wa.me takes it so). */
 export const WHATSAPP_NUMBER_PATTERN = /^[1-9]\d{7,14}$/;
@@ -51,4 +52,35 @@ export function whatsappMessage(template: string, postCode: string): string {
 export function whatsappLink(number: string, message?: string | null): string {
   const base = `https://wa.me/${number}`;
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+}
+
+export const WEBSITE_MAX = 100;
+
+/**
+ * "https://www.RAdev.tech/" → "www.radev.tech": the site as the slides show it, without the
+ * protocol or a trailing slash. Empty means no website.
+ */
+export function normalizeWebsite(input: string): ContactCheck<string | null> {
+  const trimmed = input.trim();
+  if (trimmed === "") return { ok: true, value: null };
+  const bare = trimmed.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  const [host = "", ...path] = bare.split("/");
+  const site = [host.toLowerCase(), ...path].join("/");
+  if (site.length > WEBSITE_MAX) return { ok: false, reason: `Máximo ${WEBSITE_MAX} caracteres.` };
+  if (
+    !/^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(host.toLowerCase()) ||
+    /\s/.test(site)
+  ) {
+    return { ok: false, reason: "Poné la dirección del sitio (ej. radev.tech)." };
+  }
+  return { ok: true, value: site };
+}
+
+/** Where the posts' closing slide sends people: the website first, then WhatsApp, or nowhere. */
+export function ctaTarget(brand: {
+  website: string | null;
+  whatsappNumber: string | null;
+}): "website" | "whatsapp" | null {
+  if (brand.website) return "website";
+  return brand.whatsappNumber ? "whatsapp" : null;
 }

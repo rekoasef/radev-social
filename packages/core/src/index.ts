@@ -72,9 +72,12 @@ export {
 } from "./brands/brand-rules";
 export {
   type ContactCheck,
+  ctaTarget,
+  normalizeWebsite,
   normalizeWhatsappMessage,
   normalizeWhatsappNumber,
   POST_CODE_PLACEHOLDER,
+  WEBSITE_MAX,
   WHATSAPP_MESSAGE_MAX,
   WHATSAPP_NUMBER_PATTERN,
   whatsappLink,

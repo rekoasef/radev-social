@@ -331,6 +331,7 @@ export async function brandContext(db: Database, brand: Brand) {
         }),
       ),
       whatsappNumber: brand.whatsappNumber,
+      website: brand.website,
     }),
   };
 }

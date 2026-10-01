@@ -102,11 +102,15 @@ export async function deleteBrand(db: Database, id: string): Promise<void> {
   for (const { path } of files) await removeMediaFile(path);
 }
 
-/** The brand's WhatsApp and prefilled message (already normalized by packages/core). */
+/** The brand's website, WhatsApp and prefilled message (already normalized by packages/core). */
 export async function setBrandContact(
   db: Database,
   brandId: string,
-  contact: { whatsappNumber: string | null; whatsappMessageTemplate: string | null },
+  contact: {
+    website: string | null;
+    whatsappNumber: string | null;
+    whatsappMessageTemplate: string | null;
+  },
 ): Promise<void> {
   await db.update(brands).set(contact).where(eq(brands.id, brandId));
 }

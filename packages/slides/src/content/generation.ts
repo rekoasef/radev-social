@@ -61,7 +61,7 @@ límites de caracteres están en el JSON Schema; respetalos, porque un texto má
 - \`comparison\`: X contra Y con 2 a 4 puntos cada uno y un veredicto. A la derecha va la opción que recomendás.
 - \`costBreakdown\`: desglose de costos con rangos. **Solo** con rangos que estén en la sección Precios, copiados tal cual (se controla: un rango que no esté ahí rechaza el carrusel). Si no hay, no uses esta slide.
 - \`steps\`: 3 a 5 pasos numerados, cada uno con título y explicación.
-- \`cta\`: cierre con llamado a la acción. \`button\` dice la acción concreta (ej. "Escribime por WhatsApp").
+- \`cta\`: cierre con llamado a la acción. \`button\` dice la acción concreta, hacia el canal de la sección Contacto de CLAUDE.md (ej. "Escribime por WhatsApp", "Entrá a la web").
 {{data}}
 
 ## Énfasis

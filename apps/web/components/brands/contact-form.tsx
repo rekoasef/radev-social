@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  normalizeWebsite,
   normalizeWhatsappMessage,
   normalizeWhatsappNumber,
   WHATSAPP_MESSAGE_MAX,
@@ -13,28 +14,34 @@ import { type ContactFormState, saveContactAction } from "@/app/(panel)/brands/a
 const idle: ContactFormState = { status: "idle" };
 
 /**
- * The brand's WhatsApp and the message a lead finds already written, with the post's code in
- * `{code}`. The preview uses a sample code of the brand.
+ * Where the posts' closing slide sends people: the brand's website or, without one, its WhatsApp
+ * (ADR 0023). The WhatsApp message a lead finds already written carries the post's code in
+ * `{code}`; the preview uses a sample code of the brand.
  */
 export function ContactForm({
   id,
   codePrefix,
+  website,
   number,
   message,
   readOnly,
 }: {
   id: string;
   codePrefix: string;
+  website: string | null;
   number: string | null;
   message: string | null;
   readOnly: boolean;
 }) {
   const [state, action, pending] = useActionState(saveContactAction, idle);
+  const [typedWebsite, setTypedWebsite] = useState(website ?? "");
   const [typedNumber, setTypedNumber] = useState(number ? `+${number}` : "");
   const [typedMessage, setTypedMessage] = useState(message ?? "");
-  const ids = { number: useId(), message: useId() };
+  const ids = { website: useId(), number: useId(), message: useId() };
 
   const sampleCode = `${codePrefix}-0142`;
+  const parsedWebsite = normalizeWebsite(typedWebsite);
+  const site = parsedWebsite.ok ? parsedWebsite.value : null;
   const parsedNumber = normalizeWhatsappNumber(typedNumber);
   const parsedMessage = normalizeWhatsappMessage(typedMessage);
   const preview =
@@ -43,12 +50,37 @@ export function ContactForm({
       : null;
   const link =
     parsedNumber.ok && parsedNumber.value ? whatsappLink(parsedNumber.value, preview) : null;
-  const error = (field: "number" | "message") =>
+  const error = (field: "website" | "number" | "message") =>
     state.status === "error" && state.field === field ? state.message : undefined;
 
   return (
     <form action={action} className="flex max-w-2xl flex-col gap-6">
       <input type="hidden" name="id" value={id} />
+      <div className="flex flex-col gap-2">
+        <label htmlFor={ids.website} className="plate-text text-ink-faint">
+          Sitio web
+        </label>
+        <input
+          id={ids.website}
+          name="website"
+          type="text"
+          inputMode="url"
+          autoComplete="off"
+          spellCheck={false}
+          value={typedWebsite}
+          onChange={(event) => setTypedWebsite(event.target.value)}
+          placeholder="radev.tech"
+          readOnly={readOnly}
+          aria-invalid={error("website") ? true : undefined}
+          className="console-field timecode"
+        />
+        <p className={`text-sm ${error("website") ? "text-tally-red" : "text-ink-faint"}`}>
+          {error("website") ??
+            (site
+              ? `Los posts cierran mandando a ${site} (por ejemplo "Entrá a ${site}").`
+              : "Vacío: los posts cierran invitando a escribir por WhatsApp.")}
+        </p>
+      </div>
       <div className="flex flex-col gap-2">
         <label htmlFor={ids.number} className="plate-text text-ink-faint">
           WhatsApp
@@ -68,7 +100,9 @@ export function ContactForm({
         />
         <p className={`text-sm ${error("number") ? "text-tally-red" : "text-ink-faint"}`}>
           {error("number") ??
-            "Con el código de país. Vacío: los posts cierran sin invitar a escribir."}
+            (site
+              ? "Con el código de país. Con sitio web, el cierre de los posts no lo usa."
+              : "Con el código de país. Vacío: los posts cierran sin invitar a escribir.")}
         </p>
       </div>
       <div className="flex flex-col gap-2">

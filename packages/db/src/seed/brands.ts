@@ -11,6 +11,7 @@ export const seedBrands: NewBrand[] = [
     name: "RAdev",
     codePrefix: "RA",
     stylePreset: "bold",
+    website: "radev.tech",
     timezone: "America/Argentina/Buenos_Aires",
     postsPerDayTarget: 1,
     themeTokens: {
@@ -166,7 +167,7 @@ export const seedPillars: Record<string, SeedPillar[]> = {
       hookTypes: ["story", "howto"],
       guide:
         "Un caso de la sección Casos por post: problema, solución y resultado, como un antes y después. Al cliente se lo nombra solo si Casos lo permite.",
-      closing: '"¿Querés algo así para tu negocio? Escribime."',
+      closing: '"¿Querés algo así para tu negocio? Entrá a radev.tech."',
       avoid: "Casos o resultados que no estén en Casos.",
     },
     {
@@ -202,7 +203,7 @@ export const seedPillars: Record<string, SeedPillar[]> = {
       hookTypes: ["question", "story"],
       guide:
         "Un servicio concreto (web, sistema a medida, automatización, bot de WhatsApp) presentado desde el problema que resuelve, con un caso de Casos como prueba.",
-      closing: "Escribir por WhatsApp.",
+      closing: "Entrar a radev.tech.",
       avoid: "Listas genéricas de servicios y precios.",
     },
   ],

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  ctaTarget,
+  normalizeWebsite,
   normalizeWhatsappMessage,
   normalizeWhatsappNumber,
   WHATSAPP_MESSAGE_MAX,
@@ -71,5 +73,32 @@ describe("message and link", () => {
       "https://wa.me/5493515551234?text=Hola!%20Vi%20RA-0142%20%26%20quiero%20info",
     );
     expect(whatsappLink("5493515551234")).toBe("https://wa.me/5493515551234");
+  });
+});
+
+describe("normalizeWebsite", () => {
+  it.each([
+    ["radev.tech", "radev.tech"],
+    ["https://www.RAdev.tech/", "www.radev.tech"],
+    ["http://radev.tech/contacto/", "radev.tech/contacto"],
+    ["  RADEV.TECH  ", "radev.tech"],
+  ])("%j → %j", (input, expected) => {
+    expect(normalizeWebsite(input)).toEqual({ ok: true, value: expected });
+  });
+
+  it("empty means no website", () => {
+    expect(normalizeWebsite("  ")).toEqual({ ok: true, value: null });
+  });
+
+  it.each(["radev", "radev tech", "https://", "radev.t", "-radev.tech"])("refuses %j", (input) => {
+    expect(normalizeWebsite(input).ok).toBe(false);
+  });
+});
+
+describe("ctaTarget", () => {
+  it("the website first, then WhatsApp, or nowhere", () => {
+    expect(ctaTarget({ website: "radev.tech", whatsappNumber: "5493515551234" })).toBe("website");
+    expect(ctaTarget({ website: null, whatsappNumber: "5493515551234" })).toBe("whatsapp");
+    expect(ctaTarget({ website: null, whatsappNumber: null })).toBeNull();
   });
 });

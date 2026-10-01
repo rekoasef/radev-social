@@ -1,4 +1,4 @@
-import type { BrandDocumentKind, PillarGoal } from "@radev/core";
+import { type BrandDocumentKind, ctaTarget, type PillarGoal } from "@radev/core";
 
 // The brand's CLAUDE.md for a generation run (docs/ARCHITECTURE.md §7): who writes, how the brand
 // talks, its limits, and the only figures it may use. Built from plain data (the worker loads it
@@ -10,8 +10,10 @@ export type BrandContext = {
   documents: Partial<Record<BrandDocumentKind, string>>;
   /** Active pillars only (archived ones are left out by the caller). */
   pillars: readonly BrandPillar[];
-  /** WhatsApp the `cta` points to, when the brand has one. */
+  /** WhatsApp the `cta` points to, when the brand has one and no website. */
   whatsappNumber?: string | null;
+  /** Site the `cta` sends people to ("radev.tech"); wins over WhatsApp (ADR 0023). */
+  website?: string | null;
 };
 
 export type BrandPillar = {
@@ -115,7 +117,15 @@ export function buildBrandClaudeMd(brand: BrandContext): string {
     );
   }
 
-  if (brand.whatsappNumber) {
+  const target = ctaTarget({
+    website: brand.website ?? null,
+    whatsappNumber: brand.whatsappNumber ?? null,
+  });
+  if (target === "website") {
+    parts.push(
+      `## Contacto\n\nEl cierre (\`cta\`) invita a entrar a **${brand.website}**: el botón dice la acción con el sitio (por ejemplo "Entrá a ${brand.website}"). El caption cierra invitando a entrar al sitio desde el link del perfil. Esto manda sobre cualquier otro canal que nombre la voz: no invites a escribir por WhatsApp.`,
+    );
+  } else if (target === "whatsapp") {
     parts.push(
       `## Contacto\n\nEl cierre (\`cta\`) invita a escribir por WhatsApp: el botón dice la acción (por ejemplo "Escribime por WhatsApp"), nunca el número.`,
     );

@@ -4,6 +4,7 @@ import {
   canChangeCodePrefix,
   canDeleteBrand,
   DATA_SOURCES,
+  normalizeWebsite,
   normalizeWhatsappMessage,
   normalizeWhatsappNumber,
 } from "@radev/core";
@@ -162,15 +163,19 @@ export async function saveAiLimitsAction(
 export type ContactFormState =
   | { status: "idle" }
   | { status: "ok"; message: string }
-  | { status: "error"; field?: "number" | "message"; message: string };
+  | { status: "error"; field?: "website" | "number" | "message"; message: string };
 
 const contactInput = z.object({
   id: z.uuid(),
+  website: z.string().max(300, { error: "Esa dirección es demasiado larga." }),
   number: z.string().max(40, { error: "Ese número es demasiado largo." }),
   message: z.string().max(1000, { error: "El mensaje es demasiado largo." }),
 });
 
-/** The WhatsApp the calls to action point to and its prefilled message (docs/PRD.md RF-07). */
+/**
+ * Where the calls to action send people (docs/PRD.md RF-07): the website, or the WhatsApp and its
+ * prefilled message. The website wins when both are set (ADR 0023).
+ */
 export async function saveContactAction(
   _: ContactFormState,
   form: FormData,
@@ -184,6 +189,8 @@ export async function saveContactAction(
   if (!brand || brand.archivedAt !== null) {
     return { status: "error", message: "Esa marca no existe o está archivada." };
   }
+  const website = normalizeWebsite(parsed.data.website);
+  if (!website.ok) return { status: "error", field: "website", message: website.reason };
   const number = normalizeWhatsappNumber(parsed.data.number);
   if (!number.ok) return { status: "error", field: "number", message: number.reason };
   const message = normalizeWhatsappMessage(parsed.data.message);
@@ -197,6 +204,7 @@ export async function saveContactAction(
   }
 
   await setBrandContact(db, brand.id, {
+    website: website.value,
     whatsappNumber: number.value,
     whatsappMessageTemplate: message.value,
   });

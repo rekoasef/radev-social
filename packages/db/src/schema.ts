@@ -77,6 +77,8 @@ export const brands = pgTable(
     /** Null means no limit. */
     aiMonthlyLimit: integer("ai_monthly_limit"),
     whatsappNumber: text("whatsapp_number"),
+    /** The site the calls to action send people to, as shown ("radev.tech"); wins over WhatsApp. */
+    website: text("website"),
     whatsappMessageTemplate: text("whatsapp_message_template"),
     /** Data sources whose numbers the brand's content may show (DATA_SOURCES, e.g. bluelytics). */
     dataSources: text("data_sources")

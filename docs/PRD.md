@@ -54,7 +54,7 @@ Cada requerimiento indica la fase del roadmap en la que se implementa.
 - **RF-04** (F3) Documentos de marca editables: voz (guía para la IA), precios, casos y reglas duras. Con historial de versiones.
 - **RF-05** (F3) Pilares de contenido por marca con porcentaje objetivo (CRUD; archivar si tienen posts), con instrucciones para la IA: objetivo, ganchos preferidos, cómo se cuenta, cómo cierra y qué evitar (ADR 0021).
 - **RF-06** (F4) Slots de publicación por marca (día + hora local).
-- **RF-07** (F3) Datos de contacto por marca (WhatsApp) para los llamados a la acción.
+- **RF-07** (F3) Datos de contacto por marca (sitio web o WhatsApp; el sitio manda, ADR 0023) para los llamados a la acción.
 - **RF-08** (F0) Login con GitHub solo para emails en lista blanca.
 
 ### Ideas

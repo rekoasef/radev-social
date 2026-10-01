@@ -51,6 +51,7 @@ export default async function BrandPage({ params }: PageProps<"/brands/[slug]">)
           key={brand.updatedAt.toISOString()}
           id={brand.id}
           codePrefix={brand.codePrefix}
+          website={brand.website}
           number={brand.whatsappNumber}
           message={brand.whatsappMessageTemplate}
           readOnly={brand.archivedAt !== null}

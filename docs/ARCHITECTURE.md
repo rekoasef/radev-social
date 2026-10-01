@@ -345,7 +345,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 
 | Tabla | Campos principales |
 |---|---|
-| `brands` | id, slug, name, code_prefix (ej. `RA`), style_preset, theme_tokens (jsonb), timezone, posts_per_day_target (sin uso desde la F4: la cantidad sale de los horarios), ai_daily_limit, ai_monthly_limit, whatsapp_number, whatsapp_message_template, data_sources (text[]: fuentes de datos que usa su contenido, ej. `bluelytics`), archived_at |
+| `brands` | id, slug, name, code_prefix (ej. `RA`), style_preset, theme_tokens (jsonb), timezone, posts_per_day_target (sin uso desde la F4: la cantidad sale de los horarios), ai_daily_limit, ai_monthly_limit, website (destino del cierre; gana sobre WhatsApp, ADR 0023), whatsapp_number, whatsapp_message_template, data_sources (text[]: fuentes de datos que usa su contenido, ej. `bluelytics`), archived_at |
 | `brand_assets` | id, brand_id, role (`logo` \| `hero` \| `decoration` \| `other`), path (relativo a `MEDIA_DIR`), mime, width, height (null en un SVG sin tamaño), size_bytes, created_at, updated_at |
 | `brand_documents` | id, brand_id, kind (`voice` \| `pricing` \| `cases` \| `rules`), content (markdown), version, created_at — la versión vigente es la más alta |
 | `content_pillars` | id, brand_id, key, name, description, target_share (0–1), goal (`reach` \| `trust` \| `sales`, null), hook_types (jsonb), guide, closing, avoid (ADR 0021), archived_at |

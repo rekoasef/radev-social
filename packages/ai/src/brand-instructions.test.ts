@@ -74,6 +74,13 @@ describe("buildBrandClaudeMd", () => {
     expect(md).not.toContain("+5493410000000");
   });
 
+  it("sends the cta to the website when the brand has one, over WhatsApp", () => {
+    const withSite = buildBrandClaudeMd({ ...brand, website: "radev.tech" });
+    expect(withSite).toContain('"Entrá a radev.tech"');
+    expect(withSite).toContain("no invites a escribir por WhatsApp");
+    expect(withSite).not.toContain("+5493410000000");
+  });
+
   it("works for a brand with nothing loaded yet", () => {
     const empty = buildBrandClaudeMd({ name: "Nueva", documents: {}, pillars: [] });
     expect(empty).toContain("# Nueva");
