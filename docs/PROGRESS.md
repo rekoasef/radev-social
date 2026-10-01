@@ -89,7 +89,7 @@ Decisión aprobada con el plan: **métricas de toda la cuenta**, no solo de los 
 | T5 | Registro de leads (migración `0022`). La página de links `/l/[brand]` se quitó (ADR 0022, migración `0025`) | ✅ |
 | T6 | Recomendaciones de horarios y mezcla; `winners` para la generación | pendiente |
 
-Cierre al sitio web (2026-10-01, ADR 0023): campo **Sitio web** de la marca (`brands.website`, migración `0026`) en Marcas → General → Contacto; con sitio, el cierre y el caption mandan ahí en lugar de a WhatsApp. RAdev: `radev.tech`, voz y cierres de "Hecho por RAdev" y "Llamado a la acción" apuntando al sitio (seed actualizado; producción con SQL tras el deploy).
+Cierre al sitio web (2026-10-01, ADR 0023): campo **Sitio web** de la marca (`brands.website`, migración `0026`) en Marcas → General → Contacto; con sitio, el cierre y el caption mandan ahí en lugar de a WhatsApp. RAdev: `radev.tech`, voz y cierres de "Hecho por RAdev" y "Llamado a la acción" apuntando al sitio (seed actualizado; en producción desde el 2026-10-01: sitio cargado, voz versión 3 y cierres de los dos pilares).
 
 Página de links quitada (2026-10-01, ADR 0022): el operador prefiere que el perfil lleve directo a radev.tech. Fuera `/l/[brand]`, la pestaña Links y el conteo de visitas y clics; migración `0025_drop_links_page` (borra `brand_links` y `link_events`, sin datos reales). Los leads se quedan (Métricas → Leads; `core/leads`, `queries/leads`).
 
