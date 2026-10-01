@@ -37,7 +37,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 Pedido del operador: ver cómo quedaría un carrusel con los otros looks y quedarse con el que más le guste.
 - Ficha del post → **Probar otros looks** (marcas `studio`, plegado por defecto): las portadas del carrusel en cada look activo, el carrusel completo del elegido y **Usar <look>**, que crea una versión nueva con ese look (`applyLookAction`; vuelve a render y revisión). No usa la IA: el look es código. Las imágenes generadas se muestran y se reutilizan solo en los looks que las llevan; pasar a un look con imagen desde uno sin ella no genera imagen (se pide desde el editor). Componente `components/posts/look-explorer.tsx`.
 - **Bug corregido**: mientras se renderizaba, la vista previa de la ficha (`PostStrip`) no recibía el look del post y dibujaba otro (el mismo para todos los posts); al terminar el render aparecían los PNG con el look real y "cambiaba el estilo". Ahora recibe look, id del post, datos e imágenes, como la página de render.
-- Verificado con login en local (Playwright, escritorio y celular): 16 portadas, carrusel completo, "Usar Revista" crea la v2 con `look: revista` y pasa a render. 841 tests. Pendiente: deploy.
+- Verificado con login en local (Playwright, escritorio y celular): 16 portadas, carrusel completo, "Usar Revista" crea la v2 con `look: revista` y pasa a render. 841 tests. En producción desde el 2026-10-01 (`681711e`).
 - Anotado para más adelante (pedido del operador): indicaciones propias al generar (campo aparte del tema, para los posts automáticos, o elegir el look al generar).
 
 ## Mejora — rehacer una slide con IA (2026-09-29)
