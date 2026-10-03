@@ -1,5 +1,5 @@
 import type { PostStatus } from "@radev/core";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull } from "drizzle-orm";
 import type { Database } from "../client";
 import { assets, brands, posts, postVersions, publications } from "../schema";
 import type { Executor } from "./brand-assets";
@@ -145,6 +145,47 @@ export async function settleTiktokPublication(
       }
     }
   });
+}
+
+export type TiktokInboxDraft = {
+  postId: string;
+  publicCode: string;
+  brand: { id: string; name: string };
+  content: unknown;
+  /** TikTok's publish id: its status says whether the operator already posted the draft. */
+  publishId: string;
+  /** When post.publish started it (about when TikTok got it). */
+  sentAt: Date;
+};
+
+/**
+ * Drafts waiting in a TikTok inbox (phase 6, tiktok.confirm): posts `publishing` whose TikTok
+ * publication is `inbox` with a publish id, oldest first.
+ */
+export async function listTiktokInboxDrafts(db: Executor): Promise<TiktokInboxDraft[]> {
+  const rows = await db
+    .select({
+      postId: posts.id,
+      publicCode: posts.publicCode,
+      brand: { id: brands.id, name: brands.name },
+      content: postVersions.content,
+      publishId: publications.externalId,
+      sentAt: publications.createdAt,
+    })
+    .from(publications)
+    .innerJoin(posts, eq(posts.id, publications.postId))
+    .innerJoin(brands, eq(brands.id, posts.brandId))
+    .innerJoin(postVersions, eq(postVersions.id, posts.currentVersionId))
+    .where(
+      and(
+        eq(publications.network, "tiktok"),
+        eq(publications.status, "inbox"),
+        eq(posts.status, "publishing"),
+        isNotNull(publications.externalId),
+      ),
+    )
+    .orderBy(asc(publications.createdAt));
+  return rows.flatMap((row) => (row.publishId ? [{ ...row, publishId: row.publishId }] : []));
 }
 
 export type RetryTiktokResult = { ok: true } | { ok: false; reason: string };

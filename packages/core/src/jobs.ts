@@ -24,6 +24,11 @@ export const JOBS = {
    */
   tiktokPublish: "tiktok.publish",
   /**
+   * Every 5 min: asks TikTok about the drafts waiting in an inbox and marks published the ones the
+   * operator already posted from the app, with their link (phase 6).
+   */
+  tiktokConfirm: "tiktok.confirm",
+  /**
    * Daily: renews the tokens of every connected account, so one that goes weeks without posting
    * doesn't lose its access, and a revoked one is found before its next post (phase 5 T8).
    */
@@ -77,6 +82,12 @@ export const DATA_REFRESH_TZ = "America/Argentina/Buenos_Aires";
 /** When the daily token renewal runs (cron, in DATA_REFRESH_TZ): at night, away from the posts. */
 export const TOKENS_REFRESH_CRON = "30 4 * * *";
 
+/** How often the inbox drafts are checked (cron): published within minutes of posting it. */
+export const TIKTOK_CONFIRM_CRON = "*/5 * * * *";
+
+/** A draft not posted from the inbox in this many days is given up (publish_failed + notice). */
+export const TIKTOK_INBOX_GIVE_UP_DAYS = 7;
+
 /** Both idea jobs run an `idea_requests` row that holds their parameters. */
 export type IdeaRequestJob = { requestId: string };
 
@@ -125,6 +136,8 @@ export const QUEUE_OPTIONS = {
     retryBackoff: true,
     expireInSeconds: 10 * 60,
   },
+  // TikTok down: the next run (5 min) is the retry.
+  [JOBS.tiktokConfirm]: { retryLimit: 0, expireInSeconds: 4 * 60 },
   // TikTok down: tried again twice, 10 min apart; the next day's run is the real retry.
   [JOBS.tokensRefresh]: { retryLimit: 2, retryDelay: 600, expireInSeconds: 10 * 60 },
   // TikTok down or its rate limit: two more tries 5 min apart; the next run (4 h) is the real one.
@@ -171,6 +184,9 @@ export const dataRefreshKey = (source: string) => `data:${source}`;
 export const postPublishKey = (postId: string) => `publish:${postId}`;
 
 export type TiktokPublishJob = { postId: string };
+
+/** One check of the inbox drafts at a time; it only settles drafts still in the inbox (rule 8). */
+export const TIKTOK_CONFIRM_KEY = "tiktok-confirm";
 
 /** Key of a post's TikTok job: one at a time per post (it only acts on a pending publication). */
 export const tiktokPublishKey = (postId: string) => `tiktok:${postId}`;

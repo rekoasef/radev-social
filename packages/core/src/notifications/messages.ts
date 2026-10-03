@@ -89,7 +89,25 @@ export function tiktokInboxNotice(
       post.hook,
       "",
       "Abrí TikTok, tocá la notificación y publicalo.",
-      `Después marcalo como publicado: ${url(appUrl, `/posts/${post.code}`)}`,
+      `Se marca como publicado solo, unos minutos después: ${url(appUrl, `/posts/${post.code}`)}`,
+    ].join("\n"),
+  };
+}
+
+/** The operator posted the draft from the inbox and tiktok.confirm marked it published. */
+export function tiktokPublishedNotice(
+  post: { id: string; code: string; brandName: string; hook: string; link: string | null },
+  appUrl: string,
+): Notice {
+  return {
+    key: `tiktok-published:${post.id}`,
+    kind: "publish",
+    text: [
+      `✅ ${post.code} (${post.brandName}) quedó publicado en TikTok:`,
+      post.hook,
+      "",
+      ...(post.link ? [post.link] : []),
+      url(appUrl, `/posts/${post.code}`),
     ].join("\n"),
   };
 }

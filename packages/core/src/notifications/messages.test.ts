@@ -12,6 +12,7 @@ import {
   shortDateTime,
   tiktokExpiringNotice,
   tiktokInboxNotice,
+  tiktokPublishedNotice,
   tiktokReauthNotice,
 } from "./messages";
 
@@ -64,6 +65,32 @@ describe("messages", () => {
     expect(notice.text).toContain("bandeja de TikTok");
     expect(notice.text).toContain("https://app.gestorlumus.site/posts/RA-0007");
     expect(notice.text).not.toContain("download");
+    expect(notice.text).toContain("Se marca como publicado solo");
+  });
+
+  it("tells once per post that it got published from the inbox, with TikTok's link", () => {
+    const notice = tiktokPublishedNotice(
+      {
+        id: "p1",
+        code: "RA-0007",
+        brandName: "RAdev",
+        hook: "Tu web",
+        link: "https://www.tiktok.com/@radev906/photo/7691331151528545557",
+      },
+      APP,
+    );
+    expect(notice.key).toBe("tiktok-published:p1");
+    expect(notice.kind).toBe("publish");
+    expect(notice.text).toBe(
+      "✅ RA-0007 (RAdev) quedó publicado en TikTok:\nTu web\n\n" +
+        "https://www.tiktok.com/@radev906/photo/7691331151528545557\n" +
+        "https://app.gestorlumus.site/posts/RA-0007",
+    );
+    const noLink = tiktokPublishedNotice(
+      { id: "p1", code: "RA-0007", brandName: "RAdev", hook: "Tu web", link: null },
+      APP,
+    );
+    expect(noLink.text).not.toContain("tiktok.com");
   });
 
   it("asks to reconnect a TikTok account once per day, linking to Canales", () => {

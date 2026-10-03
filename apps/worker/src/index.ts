@@ -28,6 +28,8 @@ import {
   QUEUE_OPTIONS,
   SLOTS_FILL_CRON,
   type SlideRewriteJob,
+  TIKTOK_CONFIRM_CRON,
+  TIKTOK_CONFIRM_KEY,
   type TiktokPublishJob,
   TOKENS_REFRESH_CRON,
   tiktokPublishKey,
@@ -51,6 +53,7 @@ import { notifyReview, sendNotification } from "./jobs/notify";
 import { publishPost } from "./jobs/post-publish";
 import { RetryableRewriteError, rewriteSlide } from "./jobs/slide-rewrite";
 import { fillSlots } from "./jobs/slots-fill";
+import { confirmTiktokDrafts } from "./jobs/tiktok-confirm";
 import { failTiktokPublish, publishToTiktok } from "./jobs/tiktok-publish";
 import { refreshTokens } from "./jobs/tokens-refresh";
 import { createLogger } from "./logger";
@@ -486,6 +489,32 @@ async function main() {
   if (tiktokClient && !(await hasNetworkPosts(db))) {
     await boss.send(JOBS.metricsSync, {}, { singletonKey: METRICS_SYNC_KEY });
   }
+
+  // Drafts in a TikTok inbox (phase 6): every 5 min, the ones the operator already posted from the
+  // app are marked published with their link. With no drafts it calls nobody.
+  await boss.createQueue(JOBS.tiktokConfirm, QUEUE_OPTIONS[JOBS.tiktokConfirm]);
+  await boss.work(
+    JOBS.tiktokConfirm,
+    { batchSize: 1, includeMetadata: true },
+    async ([job]: JobWithMetadata<object>[]) => {
+      if (!job) return;
+      await confirmTiktokDrafts({
+        db,
+        log: log.child({ job: JOBS.tiktokConfirm, id: job.id }),
+        client: tiktokClient,
+        notify: notifier.notify,
+        onFailed: ({ postId, error }) =>
+          events.postFailed({ what: "publish", postId, id: job.id, error }),
+        appUrl: notifier.appUrl,
+      });
+    },
+  );
+  await boss.schedule(
+    JOBS.tiktokConfirm,
+    TIKTOK_CONFIRM_CRON,
+    {},
+    { key: TIKTOK_CONFIRM_KEY, singletonKey: TIKTOK_CONFIRM_KEY },
+  );
 
   // Automatic filling: every 15 min by cron; it only acts inside the generation window (Settings).
   // One run at a time (a single cron job per tick, one worker at a time on it).

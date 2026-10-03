@@ -261,7 +261,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
         {post.status === "publishing" && (
           <p role="status" className="max-w-[60ch] text-sm text-ink">
             {tiktokPublication?.status === "inbox"
-              ? "Está en tu bandeja de TikTok: abrí la app, publicalo desde la notificación y marcalo como publicado."
+              ? "Está en tu bandeja de TikTok: abrí la app y publicalo desde la notificación. Unos minutos después se marca como publicado solo (o marcalo vos abajo)."
               : tiktokPublication?.status === "pending"
                 ? "Mandándolo a TikTok… En un par de minutos queda en tu bandeja."
                 : "Llegó su hora: descargalo, publicalo a mano y marcalo como publicado."}
