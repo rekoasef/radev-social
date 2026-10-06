@@ -309,6 +309,18 @@ describe("aiCarouselSchema with screenshots (ADR 0024)", () => {
     ]);
   });
 
+  it("rewrites a screen slide with the post's screenshots, and only with them", () => {
+    const carousel = withScreen([phone.id]);
+    const index = carousel.slides.findIndex((slide) => slide?.type === "screen");
+    const rewrite = (screens: string[], screenshots = [phone, laptop]) =>
+      aiSlideRewriteSchema(carousel, index, [[pillar], { screenshots }]).safeParse({
+        slide: { type: "screen", title: "Otra forma de decirlo", screens },
+      }).success;
+    expect(rewrite([laptop.id])).toBe(true);
+    expect(rewrite(["00000000-0000-4000-8000-0000000000ff"])).toBe(false);
+    expect(rewrite([phone.id], [])).toBe(false);
+  });
+
   it("refuses screen slides in a post without screenshots", () => {
     expect(issues(withScreen([phone.id]), [])).toEqual([
       expect.stringMatching(/no tiene capturas/),

@@ -55,4 +55,21 @@ describe("buildRewriteFiles", () => {
       "slide.title › Tiene 90 caracteres",
     ]);
   });
+
+  it("gives the screenshots of the post and lets the slide become a screen (ADR 0024)", () => {
+    const screenshots = [{ id: "s1", note: "cargar un gasto", device: "phone" as const }];
+    const files = buildRewriteFiles({
+      carousel,
+      slideIndex: 1,
+      instruction: "mostrá la captura",
+      data: null,
+      screenshots,
+    });
+    expect(read(files, "screenshots.json")).toEqual(screenshots);
+    expect(files["slides.md"]).toContain("## Capturas");
+    expect(read(files, "task.json").rules.join(" ")).toContain("captura de pantalla → `screen`");
+    const without = buildRewriteFiles({ carousel, slideIndex: 1, instruction: "", data: null });
+    expect(without["screenshots.json"]).toBeUndefined();
+    expect(read(without, "task.json").rules.join(" ")).not.toContain("`screen`");
+  });
 });

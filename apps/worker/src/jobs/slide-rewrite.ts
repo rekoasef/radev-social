@@ -6,13 +6,19 @@ import {
   getBrandById,
   getBrandData,
   listAiRoutes,
+  listPostScreenshots,
   recordGenerationRun,
   startSlideRewrite,
 } from "@radev/db";
 import type { Slide } from "@radev/slides";
-import { aiSlideGuide, aiSlideRewriteSchema } from "@radev/slides/generation";
+import {
+  type AiScreenshot,
+  aiSlideGuide,
+  aiSlideRewriteSchema,
+  brandLooks,
+} from "@radev/slides/generation";
 import type { Logger } from "../logger";
-import { brandContext, runRow } from "./carousel-generate";
+import { brandContext, loadScreenshots, runRow } from "./carousel-generate";
 import { decideIdeas } from "./ideas-request";
 
 // slide.rewrite (editor, "Rehacer con IA"): one slide of the carousel the editor had, rewritten
@@ -23,6 +29,10 @@ import { decideIdeas } from "./ideas-request";
 export const REWRITE_PROMPT =
   "Reescribí solo la slide que indica `task.json` del carrusel de `carousel.json`, siguiendo la instrucción. Leé antes `slides.md`. Mantené el tono y la coherencia con el resto del carrusel. Devolvé solo el objeto que pide el schema: la slide nueva.";
 
+/** Added to the prompt when the post has screenshots (ADR 0024). */
+export const REWRITE_SCREENSHOTS_PROMPT =
+  "El post tiene capturas de pantalla (las ves en el mensaje y están en `screenshots.json`): una slide `screen` muestra una de ellas, como dice la sección Capturas de `slides.md`.";
+
 const MAX_TURNS = 3;
 
 /** The context files of a rewrite, besides the brand's CLAUDE.md. */
@@ -32,8 +42,11 @@ export function buildRewriteFiles(input: {
   instruction: string;
   data: BrandData | null;
   problems?: readonly string[];
+  /** The post's screenshots (ADR 0024). */
+  screenshots?: readonly AiScreenshot[];
 }): Record<string, string> {
   const { carousel, slideIndex, instruction, data, problems } = input;
+  const shots = input.screenshots && input.screenshots.length > 0 ? input.screenshots : undefined;
   const slides = (carousel.slides as unknown[]) ?? [];
   const current = slides[slideIndex] as { type?: string } | undefined;
   const task = {
@@ -42,7 +55,7 @@ export function buildRewriteFiles(input: {
     currentType: current?.type,
     instruction: instruction || "Mejorala: más clara, más directa y con más gancho.",
     rules: [
-      "Por defecto mantené el tipo de slide. Si la instrucción pide otro formato, cambiá al tipo que le corresponde (ver slides.md): afirmación → `statement`, pregunta → `question`, pasos → `steps`, lista u opciones → `cardGrid`, comparación → `comparison`, proceso → `flow`.",
+      `Por defecto mantené el tipo de slide. Si la instrucción pide otro formato, cambiá al tipo que le corresponde (ver slides.md): afirmación → \`statement\`, pregunta → \`question\`, pasos → \`steps\`, lista u opciones → \`cardGrid\`, comparación → \`comparison\`, proceso → \`flow\`${shots ? ", captura de pantalla → `screen`" : ""}.`,
       slideIndex === 0
         ? "Es la portada: tiene que seguir siendo `cover`."
         : slideIndex === slides.length - 1
@@ -62,8 +75,9 @@ export function buildRewriteFiles(input: {
   return {
     "task.json": `${JSON.stringify(task, null, 2)}\n`,
     "carousel.json": `${JSON.stringify(shown, null, 2)}\n`,
-    "slides.md": aiSlideGuide({ data: Boolean(data) }),
+    "slides.md": aiSlideGuide({ data: Boolean(data), screenshots: shots }),
     ...(data && { "data.json": `${JSON.stringify(data, null, 2)}\n` }),
+    ...(shots && { "screenshots.json": `${JSON.stringify(shots, null, 2)}\n` }),
   };
 }
 
@@ -109,10 +123,18 @@ export async function rewriteSlide(
   const slides = request.carousel.slides;
   if (!Array.isArray(slides) || !slides[request.slideIndex]) return fail("Esa slide no existe.");
 
-  const [{ claudeMd, pillars, pricing }, data] = await Promise.all([
+  const [{ claudeMd, pillars, pricing }, data, rows] = await Promise.all([
     brandContext(db, brand),
     getBrandData(db, brand.id),
+    // Screenshots belong to a post (none in a new one) and only the studio preset draws them.
+    request.postId && brandLooks(brand.stylePreset, brand.themeTokens).length > 0
+      ? listPostScreenshots(db, request.postId)
+      : [],
   ]);
+  const { images, screenshots, missing } = await loadScreenshots(rows);
+  if (missing.length > 0) {
+    log.warn("screenshots missing on disk", { requestId: request.id, missing });
+  }
   const schema = aiSlideRewriteSchema(
     request.carousel as { slides: unknown[] },
     request.slideIndex,
@@ -126,6 +148,7 @@ export async function rewriteSlide(
               isFigure: (value: string) => findFigure(data.figures, value) !== undefined,
             }
           : undefined,
+        screenshots,
       },
     ],
   );
@@ -135,7 +158,8 @@ export async function rewriteSlide(
     const routed = await deps.router.generate<{ slide: Slide }>(route, {
       task: "slide.rewrite",
       brandId: brand.id,
-      prompt: REWRITE_PROMPT,
+      prompt:
+        screenshots.length > 0 ? `${REWRITE_PROMPT} ${REWRITE_SCREENSHOTS_PROMPT}` : REWRITE_PROMPT,
       files: {
         "CLAUDE.md": claudeMd,
         ...buildRewriteFiles({
@@ -144,8 +168,10 @@ export async function rewriteSlide(
           instruction: request.instruction,
           data,
           problems,
+          screenshots,
         }),
       },
+      images,
       schema,
       maxTurns: MAX_TURNS,
     });
