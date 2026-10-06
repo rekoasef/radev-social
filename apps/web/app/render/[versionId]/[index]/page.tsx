@@ -43,7 +43,7 @@ export default async function RenderSlidePage({
   const post = await getPostById(db, version.postId);
   const brand = post ? await getBrandById(db, post.brandId) : undefined;
   if (!post || !brand) notFound();
-  const render = await brandRenderContext(brand);
+  const render = await brandRenderContext(brand, post.id);
   if (!render.ok) notFound();
 
   const total = carousel.data.slides.length;

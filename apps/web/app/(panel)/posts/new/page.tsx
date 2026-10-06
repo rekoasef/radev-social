@@ -74,6 +74,7 @@ export default async function NewPostPage({ searchParams }: PageProps<"/posts/ne
               brand={{ id: brand.id, name: brand.name }}
               pillars={pillars.map((p) => ({ key: p.key, name: p.name }))}
               fromIdea={fromIdea}
+              screenshots={render.theme.preset === "studio"}
             />
           </section>
           <section aria-labelledby="manual-heading" className="flex flex-col gap-5">

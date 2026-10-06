@@ -1,6 +1,11 @@
 "use server";
 
-import { canDiscard, REJECTION_FEEDBACK_MAX, REJECTION_FEEDBACK_MIN } from "@radev/core";
+import {
+  canDiscard,
+  MAX_POST_SCREENSHOTS,
+  REJECTION_FEEDBACK_MAX,
+  REJECTION_FEEDBACK_MIN,
+} from "@radev/core";
 import {
   addPostVersion,
   approvePost,
@@ -15,6 +20,8 @@ import {
   getSocialAccount,
   listPillars,
   markPublishedManually,
+  type PreparedScreenshot,
+  prepareScreenshots,
   rejectAndRegenerate,
   resolveVersionDatasets,
   retryGeneration,
@@ -351,8 +358,40 @@ const generateInput = z.object({
 });
 
 /**
- * "Generar con IA": creates the post in `generating` with the operator's request and queues the
- * worker's carousel.generate. The web never runs AI (CLAUDE.md, rule 5).
+ * The screenshots of the form (ADR 0024): files `screenshot` and notes `screenshotNote`, in order,
+ * checked with the rules of packages/core. Only a `studio` brand draws them.
+ */
+async function formScreenshots(
+  form: FormData,
+  brand: Brand,
+): Promise<{ ok: true; value: PreparedScreenshot[] } | { ok: false; error: string }> {
+  const files = form
+    .getAll("screenshot")
+    .filter((value): value is File => value instanceof File && value.size > 0);
+  if (files.length === 0) return { ok: true, value: [] };
+  if (brand.stylePreset !== "studio") {
+    return {
+      ok: false,
+      error: `Las capturas necesitan el preset studio, y ${brand.name} no lo usa.`,
+    };
+  }
+  if (files.length > MAX_POST_SCREENSHOTS) {
+    return { ok: false, error: `Podés adjuntar hasta ${MAX_POST_SCREENSHOTS} capturas.` };
+  }
+  const notes = form.getAll("screenshotNote").map(String);
+  return prepareScreenshots(
+    await Promise.all(
+      files.map(async (file, i) => ({
+        bytes: new Uint8Array(await file.arrayBuffer()),
+        note: notes[i] ?? "",
+      })),
+    ),
+  );
+}
+
+/**
+ * "Generar con IA": creates the post in `generating` with the operator's request (and screenshots)
+ * and queues the worker's carousel.generate. The web never runs AI (CLAUDE.md, rule 5).
  */
 export async function generateCarouselAction(
   _: GenerateState,
@@ -381,6 +420,9 @@ export async function generateCarouselAction(
     }
   }
 
+  const screenshots = await formScreenshots(form, brand);
+  if (!screenshots.ok) return { status: "error", message: screenshots.error };
+
   const overLimit = await quotaWarning(brand);
   if (overLimit && !confirmOverLimit) return { status: "limit", message: overLimit };
 
@@ -392,6 +434,9 @@ export async function generateCarouselAction(
       hookType: hookType || null,
     },
     ideaId: ideaId || null,
+    ...(screenshots.value.length > 0 && {
+      screenshots: { brandSlug: brand.slug, files: screenshots.value },
+    }),
   });
   await queueGenerate(post.id);
   revalidatePath("/posts");

@@ -23,7 +23,7 @@ export default async function EditPostPage({ params }: PageProps<"/posts/[code]/
   ]);
   if (!brand || !version) notFound();
   const [render, pillars, data] = await Promise.all([
-    brandRenderContext(brand),
+    brandRenderContext(brand, post.id),
     listPillars(db, brand.id),
     editorData(brand.id, version.datasets),
   ]);

@@ -17,6 +17,7 @@ import {
   getSocialAccount,
   listGenerationRuns,
   listPlannedTimes,
+  listPostScreenshots,
   listPostVersions,
   listPublications,
   listScheduleSlots,
@@ -76,9 +77,10 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
   // ?v=<number> shows an older version; by default, the current one.
   const version = versions.find((v) => String(v.number) === query.v) ?? current;
   const viewingOld = version !== undefined && version.id !== current?.id;
-  const [render, rendered] = await Promise.all([
-    brandRenderContext(brand),
+  const [render, rendered, screenshots] = await Promise.all([
+    brandRenderContext(brand, post.id),
     version ? listVersionAssets(db, version.id) : [],
+    listPostScreenshots(db, post.id),
   ]);
   const content = version ? carouselSchema.safeParse(version.content) : undefined;
   // The real PNGs once every slide has one; while the current version renders (or if it failed
@@ -163,6 +165,23 @@ export default async function PostPage({ params, searchParams }: PageProps<"/pos
           <p className="max-w-[70ch] text-sm text-ink-dim">
             <span className="text-ink-faint">Pedido a la IA:</span> {post.generationRequest.idea}
           </p>
+        )}
+        {screenshots.length > 0 && (
+          <ul aria-label="Capturas para la IA" className="flex flex-wrap gap-3">
+            {screenshots.map((shot) => (
+              <li key={shot.id} className="flex w-28 flex-col gap-1">
+                <a href={mediaUrl(shot.path)} target="_blank" rel="noreferrer">
+                  {/* biome-ignore lint/performance/noImgElement: the operator's file, as uploaded */}
+                  <img
+                    src={mediaUrl(shot.path)}
+                    alt={shot.note}
+                    className="h-28 w-28 border border-bezel object-cover object-top"
+                  />
+                </a>
+                <span className="text-xs text-ink-faint">{shot.note}</span>
+              </li>
+            ))}
+          </ul>
         )}
         {post.rejectionFeedback && (
           <p className="max-w-[70ch] text-sm text-ink-dim">

@@ -1,6 +1,6 @@
 import type { DataSeries } from "@radev/core";
 import type { Brand } from "@radev/db";
-import { getBrandData, listBrandAssets } from "@radev/db";
+import { getBrandData, listBrandAssets, listPostScreenshots } from "@radev/db";
 import {
   type BrandTheme,
   type Carousel,
@@ -30,14 +30,22 @@ export function blankCarousel(pillarKey: string): Carousel {
   };
 }
 
-/** What a brand needs to draw its slides: the parsed identity and its files by id. */
+/**
+ * What a brand needs to draw its slides: the parsed identity and its files by id. With a post,
+ * its screenshots too (ADR 0024): `screen` slides point to them by id, like tokens to assets.
+ */
 export async function brandRenderContext(
   brand: Brand,
+  postId?: string,
 ): Promise<{ ok: true; theme: BrandTheme; assets: SlideAssets } | { ok: false; issues: string[] }> {
   const parsed = parseTheme(brand.stylePreset, brand.themeTokens);
   if (!parsed.ok) return parsed;
+  const [files, screenshots] = await Promise.all([
+    listBrandAssets(db, brand.id),
+    postId ? listPostScreenshots(db, postId) : [],
+  ]);
   const assets: SlideAssets = Object.fromEntries(
-    (await listBrandAssets(db, brand.id)).map((a) => [
+    [...files, ...screenshots].map((a) => [
       a.id,
       { url: mediaUrl(a.path), width: a.width, height: a.height },
     ]),

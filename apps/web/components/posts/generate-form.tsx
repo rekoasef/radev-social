@@ -4,6 +4,7 @@ import { HOOK_TYPES } from "@radev/slides";
 import { useActionState, useId, useState } from "react";
 import { type GenerateState, generateCarouselAction } from "@/app/(panel)/posts/actions";
 import { HOOK_LABELS } from "@/lib/hooks";
+import { type PickedScreenshot, ScreenshotPicker } from "./screenshot-picker";
 
 const idle: GenerateState = { status: "idle" };
 
@@ -15,18 +16,32 @@ export function GenerateForm({
   brand,
   pillars,
   fromIdea,
+  screenshots: takesScreenshots = false,
 }: {
   brand: { id: string; name: string };
   pillars: { key: string; name: string }[];
   fromIdea?: { id: string; text: string; pillarKey: string | null };
+  /** Whether the brand draws screenshots (`studio` preset, ADR 0024). */
+  screenshots?: boolean;
 }) {
   const [state, action, pending] = useActionState(generateCarouselAction, idle);
   const [idea, setIdea] = useState(fromIdea?.text ?? "");
+  const [shots, setShots] = useState<PickedScreenshot[]>([]);
   const ids = { idea: useId(), pillar: useId(), hook: useId() };
   const length = idea.trim().length;
 
   return (
-    <form action={action} className="flex max-w-3xl flex-col gap-5">
+    <form
+      // The screenshots live in state (previews, order): they join the form when it is sent.
+      action={(form) => {
+        for (const shot of shots) {
+          form.append("screenshot", shot.file);
+          form.append("screenshotNote", shot.note);
+        }
+        action(form);
+      }}
+      className="flex max-w-3xl flex-col gap-5"
+    >
       <input type="hidden" name="brandId" value={brand.id} />
       {fromIdea && <input type="hidden" name="ideaId" value={fromIdea.id} />}
       <div className="flex flex-col gap-2">
@@ -91,6 +106,8 @@ export function GenerateForm({
           </select>
         </div>
       </div>
+
+      {takesScreenshots && <ScreenshotPicker value={shots} onChange={setShots} />}
 
       {state.status === "limit" && (
         <div role="alert" className="flex flex-col gap-2 border-l border-tally-amber pl-3 text-sm">
