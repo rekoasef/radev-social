@@ -30,7 +30,28 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Mejoras de contenido (2026-09-29, pedido del operador, en paralelo con la Fase 5):** (1) ✅ generación liviana: ~128.000 → ~1.000 tokens de entrada de base por ejecución (ver abajo). (2) Próximo: rediseño para que cada carrusel sea distinto (composiciones, tipos nuevos, looks por post). El operador eligió: tokens primero, **se puede salir del fondo oscuro** (claro, acento), y que Claude proponga direcciones visuales con capturas (no tiene referencias). Quiere que "cada imagen sea diferente, como ChatGPT". Diagnóstico sobre los carruseles de RAdev en producción: todas las slides tienen el mismo esqueleto (título arriba, diagrama chico, vacío, pie), el contenido ocupa ~30 % de la slide, la secuencia de tipos se repite y sobra decoración.
 - **Looks e imágenes en producción (2026-09-29):** deploy hecho (`4131aa2`), claves de Cloudflare cargadas en el servidor. RAdev y Lumus pasados a `studio` por el operador (Lumus con acento `#6E5CE8` y la orbe como elemento de marca). RA-0006 re-hecho con un look desde el editor. Próximo: mirar los primeros posts que genere la IA con looks e imágenes (look elegido, calidad de las imágenes, tiempos) y ajustar; después seguir con la Fase 5 (T2, registro de la app de TikTok).
 - **SSH con contraseña (2026-10-01, ADR 0019):** el operador no podía entrar desde su casa (la llave está solo en la notebook). `harden.sh` ahora permite contraseña para `ubuntu` y suma fail2ban (5 fallos en 10 min → 1 h de bloqueo); aplicado en el servidor. La contraseña la pone el operador (`ssh -t radev-oracle sudo passwd ubuntu`) y va a su gestor. Desde otra compu: `ssh ubuntu@<IP>`.
-- **Última actualización:** 2026-10-03, mejora "publicado automático desde la bandeja" en producción (`b941697`) y verificada
+- **Capturas al generar (2026-10-06, en curso):** T1 hecha (datos). Sigue T3 (slide `screen`). Ver la sección de abajo.
+- **Última actualización:** 2026-10-06, mejora "capturas al generar", T1
+
+## Mejora — capturas al generar (2026-10-06, en curso)
+
+Pedido del operador: al generar un carrusel con IA, subir capturas de la app (ej. Lumus cargando un gasto) para que la IA las use en las slides. Decisiones aprobadas:
+- Se suben en **Nuevo post → Generar con IA** (sirve desde una idea o desde cero): hasta **4**, cada una con una frase corta. Pertenecen al **post** (tabla propia `post_screenshots`, no `brand_assets`: no se mezclan con el logo y se borran con el post).
+- **La IA las ve** (Claude: imágenes en el mensaje por `stream-json`; verificado con el token de suscripción, 2.1.282) y **tiene que usar al menos una**. OpenRouter recibe solo las frases.
+- Slide nueva **`screen`**: celular al costado del texto (captura vertical), notebook (apaisada) o notebook con el celular adelante (una de cada). Pantalla completa descartada. Prototipos aprobados (capturas en la conversación del 2026-10-06).
+- Sin recorte en el panel por ahora (la ayuda recomienda capturas cerradas). Para después: recorte y marcar una zona de la captura.
+
+| # | Tarea | Estado |
+|---|---|---|
+| T1 | Datos: `core/posts/screenshots` (límites, tipos, frase), tabla `post_screenshots` (migración `0027`, solo agrega), `prepareScreenshots` y `createGeneratingPost` con capturas (archivos en `media/<marca>/screens/`, se borran si el post no se crea) | ✅ |
+| T2 | Panel: subir, ordenar y quitar capturas en "Generar con IA" (también celular); verlas en la ficha | pendiente |
+| T3 | Slide `screen`: schema, plantilla con 3 composiciones, ejemplos, extremos, control de render en los 16 looks | pendiente |
+| T4 | IA: imágenes a `claude-code`, frases a OpenRouter; Zod exige al menos una y solo las del post | pendiente |
+| T5 | Revisiones (v2) y rehacer una slide con las capturas | pendiente |
+| T6 | Editor: cambiar la captura de una slide `screen` | pendiente |
+| T7 | ADR 0024, docs, prueba real con Lumus | pendiente |
+
+Notas de T1: probado contra Postgres local (inserción y rollback con la captura real del operador). Para levantar el Postgres local hubo que frenar `bibliotecacrucianelli-db-1`, que ocupaba el 5433, y recrear el contenedor (`--force-recreate`) porque había quedado sin el puerto publicado.
 
 ## Mejora — publicado automático desde la bandeja (2026-10-03)
 

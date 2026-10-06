@@ -312,6 +312,12 @@ export {
   sortReviewQueue,
 } from "./posts/review";
 export {
+  checkScreenshotFile,
+  MAX_POST_SCREENSHOTS,
+  normalizeScreenshotNote,
+  SCREENSHOT_NOTE,
+} from "./posts/screenshots";
+export {
   availableEvents,
   canDiscard,
   DISCARDABLE_STATUSES,

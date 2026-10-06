@@ -15,6 +15,7 @@ import {
   type IdeaRequestParams,
   LEAD_CHANNELS,
   LEAD_STATUSES,
+  MAX_POST_SCREENSHOTS,
   METRIC_SOURCES,
   NETWORKS,
   NOTIFICATION_KINDS,
@@ -406,6 +407,39 @@ export const postVersions = pgTable(
   ],
 );
 
+/**
+ * Screenshots the operator attached when asking the AI for the post (ADR 0024): the AI sees them
+ * and shows them on `screen` slides. They belong to the post, so every version can use them.
+ */
+export const postScreenshots = pgTable(
+  "post_screenshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    /** Order the operator gave them, from 0. */
+    position: integer("position").notNull(),
+    /** Relative to MEDIA_DIR: <brand>/screens/<file>. */
+    path: text("path").notNull(),
+    mime: text("mime").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    /** What it shows, in the operator's words; the AI reads it (and it is all a model without vision gets). */
+    note: text("note").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("post_screenshots_post_position_unique").on(t.postId, t.position),
+    uniqueIndex("post_screenshots_path_unique").on(t.path),
+    check(
+      "post_screenshots_position_valid",
+      sql`${t.position} >= 0 and ${t.position} < ${sql.raw(String(MAX_POST_SCREENSHOTS))}`,
+    ),
+  ],
+);
+
 /** Rendered slides of a version: one PNG (and its JPEG) per slide and format, in MEDIA_DIR. */
 export const assets = pgTable(
   "assets",
@@ -771,6 +805,7 @@ export type IdeaRequest = typeof ideaRequests.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type PostVersion = typeof postVersions.$inferSelect;
 export type RenderedAsset = typeof assets.$inferSelect;
+export type PostScreenshot = typeof postScreenshots.$inferSelect;
 export type Publication = typeof publications.$inferSelect;
 export type SocialAccountRow = typeof socialAccounts.$inferSelect;
 export type NewBrandAsset = typeof brandAssets.$inferInsert;

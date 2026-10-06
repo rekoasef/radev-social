@@ -40,6 +40,11 @@ export function newBrandAssetPath(brandSlug: string, extension: string): string 
   return `${brandSlug}/brand/${randomUUID()}.${extension}`;
 }
 
+/** A new, unguessable path for a screenshot attached to a post (ADR 0024). */
+export function newScreenshotPath(brandSlug: string, extension: string): string {
+  return `${brandSlug}/screens/${randomUUID()}.${extension}`;
+}
+
 /** Writes the whole file or nothing: a half-written file never takes the final name. */
 export async function writeMediaFile(relativePath: string, bytes: Uint8Array): Promise<void> {
   const absolute = mustResolve(relativePath);

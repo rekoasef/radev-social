@@ -20,13 +20,21 @@ import {
   transitionPost,
   type VersionDatasets,
 } from "./posts";
+import {
+  insertPostScreenshots,
+  type PreparedScreenshot,
+  removeScreenshotFiles,
+  writeScreenshotFiles,
+} from "./screenshots";
 
 // AI generation of a post (phase 3, T7): the post is born `generating` with no version; the
 // worker's carousel.generate adds the first version and moves it on through the state machine.
 
 /**
  * A post the AI will write. It gets its public code now; its content comes with the job. From a
- * bank idea, the idea turns `used` in the same transaction (it has to be `new`).
+ * bank idea, the idea turns `used` in the same transaction (it has to be `new`). Screenshots
+ * (ADR 0024, already checked with prepareScreenshots) are written first and removed if the post
+ * cannot be created.
  */
 export async function createGeneratingPost(
   db: Database,
@@ -36,7 +44,27 @@ export async function createGeneratingPost(
     ideaId?: string | null;
     /** Planned time and slot (slots.fill, phase 4 T4): approving it schedules it there. */
     plan?: { at: Date; slotId: string | null };
+    screenshots?: { brandSlug: string; files: PreparedScreenshot[] };
   },
+): Promise<Post> {
+  const screenshots = input.screenshots?.files ?? [];
+  const paths =
+    screenshots.length > 0
+      ? await writeScreenshotFiles(input.screenshots?.brandSlug as string, screenshots)
+      : [];
+  try {
+    return await createPost(db, input, screenshots, paths);
+  } catch (error) {
+    await removeScreenshotFiles(paths);
+    throw error;
+  }
+}
+
+function createPost(
+  db: Database,
+  input: Parameters<typeof createGeneratingPost>[1],
+  screenshots: PreparedScreenshot[],
+  paths: string[],
 ): Promise<Post> {
   return db.transaction(async (tx) => {
     if (input.ideaId) {
@@ -66,6 +94,7 @@ export async function createGeneratingPost(
       })
       .returning();
     if (!post) throw new Error("No se pudo crear el post.");
+    await insertPostScreenshots(tx, post.id, screenshots, paths);
     return post;
   });
 }

@@ -197,6 +197,11 @@ export {
   listScheduleSlots,
   setScheduleSlotActive,
 } from "./queries/schedule";
+export {
+  listPostScreenshots,
+  type PreparedScreenshot,
+  prepareScreenshots,
+} from "./queries/screenshots";
 export { getSetting, setSetting } from "./queries/settings";
 export {
   createSlideRewrite,
