@@ -10,6 +10,10 @@ import {
 import { enabledLooks } from "../presets/studio/tokens";
 import { describeQaIssue, QA_KINDS, type QaIssue } from "../qa-issues";
 import { carouselSchema } from "./carousel";
+import type { ScreenDevice } from "./screens";
+
+export { type ScreenDevice, screenDevice } from "./screens";
+
 import { limits as L } from "./limits";
 import { slideSchema } from "./slides";
 
@@ -61,7 +65,7 @@ límites de caracteres están en el JSON Schema; respetalos, porque un texto má
 - \`comparison\`: X contra Y con 2 a 4 puntos cada uno y un veredicto. A la derecha va la opción que recomendás.
 - \`costBreakdown\`: desglose de costos con rangos. **Solo** con rangos que estén en la sección Precios, copiados tal cual (se controla: un rango que no esté ahí rechaza el carrusel). Si no hay, no uses esta slide.
 - \`steps\`: 3 a 5 pasos numerados, cada uno con título y explicación.
-- \`screen\`: muestra capturas de pantalla del post. Este post no tiene: no la uses.
+{{screen}}
 - \`cta\`: cierre con llamado a la acción. \`button\` dice la acción concreta, hacia el canal de la sección Contacto de CLAUDE.md (ej. "Escribime por WhatsApp", "Entrá a la web").
 {{data}}
 
@@ -76,6 +80,34 @@ de la portada, en \`name\` de \`comparison\`, en rangos ni en \`button\`.
 Nombres de Lucide en kebab-case (ej. \`message-circle\`, \`calendar-clock\`, \`file-spreadsheet\`).
 Si no estás seguro de que un ícono existe, usá uno común.
 `;
+
+/** A screenshot of the post as the AI gets it (ADR 0024): the image goes in the message. */
+export type AiScreenshot = { id: string; note: string; device: ScreenDevice };
+
+const NO_SCREEN =
+  "- `screen`: muestra capturas de pantalla del post. Este post no tiene: no la uses.";
+
+const SCREEN_GUIDE = `- \`screen\`: una o dos capturas de pantalla del post dentro de un celular o una notebook, con un título y un texto corto (ver Capturas).`;
+
+/** The screenshots section of the guide, for a post that has them. */
+function screenshotsGuide(): string {
+  return `
+## Capturas (\`screenshots.json\`)
+
+El operador adjuntó capturas de pantalla para este post. Las ves en el mensaje, cada una después
+de la línea que dice su \`id\`; \`screenshots.json\` trae, de cada una, el \`id\`, qué muestra en
+palabras del operador (\`note\`) y dónde se dibuja (\`device\`: \`phone\` en un celular, \`laptop\` en
+una notebook).
+
+- Usá **al menos una** en una slide \`screen\` (se controla). \`screens\` lleva su \`id\`, o dos ids
+  para mostrar las dos versiones juntas: entonces una \`phone\` y una \`laptop\`, nunca dos del mismo tipo.
+- Cada captura, una sola vez en el carrusel. Si hay varias, ordenalas para que cuenten algo (ej.
+  cargar un gasto → ver el resumen del mes).
+- El texto cuenta lo que se ve: el gesto, el paso o el resultado. No describas la pantalla entera
+  ni nombres cosas que no aparecen. Las cifras que se ven en una captura son reales y podés
+  nombrarlas tal cual; no inventes otras.
+`;
+}
 
 export { parseTheme } from "../presets/registry";
 export {
@@ -165,6 +197,8 @@ export function aiSlideGuide(options: {
   looks?: readonly LookId[];
   /** Whether the post gets generated images (brandMakesArt); true by default. */
   art?: boolean;
+  /** The post's screenshots (ADR 0024): only a `studio` brand draws them. */
+  screenshots?: readonly AiScreenshot[];
 }): string {
   const dataSlides = DATA_SLIDES.map((type) => `\`${type}\``).join(" ni ");
   const dataPart = options.data
@@ -176,7 +210,15 @@ ${DATA_GUIDE}`
 No uses ${dataSlides}: sus cifras tienen que venir de datos reales que esta marca no tiene.`;
   const looks =
     options.looks && options.looks.length > 0 ? lookGuide(options.looks, options.art ?? true) : "";
-  return AI_SLIDE_GUIDE_BASE.replace("{{data}}", dataPart) + looks;
+  const screens = (options.screenshots?.length ?? 0) > 0;
+  return (
+    AI_SLIDE_GUIDE_BASE.replace("{{screen}}", screens ? SCREEN_GUIDE : NO_SCREEN).replace(
+      "{{data}}",
+      dataPart,
+    ) +
+    (screens ? screenshotsGuide() : "") +
+    looks
+  );
 }
 
 /** A range as written, for comparing: no case, no spaces, one kind of dash. */
@@ -204,11 +246,14 @@ export function aiCarouselSchema(
     looks?: readonly LookId[];
     /** Whether the images are asked for (brandMakesArt); true by default. */
     art?: boolean;
+    /** The post's screenshots: `screen` slides show only these, and at least one of them. */
+    screenshots?: readonly AiScreenshot[];
   } = {},
 ) {
   const looks = options.looks && options.looks.length > 0 ? options.looks : undefined;
   const data = options.data;
   const pricing = options.pricing === undefined ? undefined : normalizeRange(options.pricing);
+  const shots = new Map((options.screenshots ?? []).map((shot) => [shot.id, shot]));
   return carouselSchema.superRefine((carousel, ctx) => {
     if (pricing !== undefined) {
       carousel.slides.forEach((slide, index) => {
@@ -255,13 +300,41 @@ export function aiCarouselSchema(
         message: `El pilar tiene que ser uno de la marca: ${pillarKeys.join(", ")}.`,
       });
     }
+    if (shots.size > 0 && !carousel.slides.some((slide) => slide.type === "screen")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["slides"],
+        message:
+          "El operador adjuntó capturas: mostrá al menos una en una slide `screen` (ver Capturas en slides.md).",
+      });
+    }
     carousel.slides.forEach((slide, index) => {
       if (slide.type === "screen") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["slides", index, "type"],
-          message: "No se puede usar `screen`: este post no tiene capturas.",
+        if (shots.size === 0) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["slides", index, "type"],
+            message: "No se puede usar `screen`: este post no tiene capturas.",
+          });
+        }
+        const devices = slide.screens.map((id) => shots.get(id)?.device);
+        slide.screens.forEach((id, i) => {
+          if (shots.size > 0 && !shots.has(id)) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["slides", index, "screens", i],
+              message: `"${id}" no es una captura de este post. Usá un \`id\` de screenshots.json.`,
+            });
+          }
         });
+        if (devices.length === 2 && devices[0] && devices[0] === devices[1]) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["slides", index, "screens"],
+            message:
+              "Dos capturas juntas tienen que ser una `phone` y una `laptop`: dejá una sola.",
+          });
+        }
       }
       if (!data) {
         if ((DATA_SLIDES as readonly string[]).includes(slide.type)) {

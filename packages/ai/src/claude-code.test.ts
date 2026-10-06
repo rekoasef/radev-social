@@ -18,16 +18,25 @@ import type { GenerationResult, GenerationTask } from "./types";
 const FAKE_CLI = `#!/usr/bin/env node
 const { readdirSync, readFileSync } = require("node:fs");
 const args = process.argv.slice(2);
-// The prompt comes through stdin; its first line is the task's prompt (the files follow).
+// The prompt comes through stdin; its first line is the task's prompt (the files follow). With
+// images it is one stream-json message whose last block is the prompt, and the answer is events.
 const input = readFileSync(0, "utf8");
-const prompt = input.split("\\n")[0];
+const streaming = args.includes("--input-format");
+const message = streaming ? JSON.parse(input.split("\\n")[0]).message : null;
+const text = streaming ? message.content[message.content.length - 1].text : input;
+const prompt = text.split("\\n")[0];
 const base = {
   is_error: false, session_id: "s-1", num_turns: 2, duration_ms: 1234, total_cost_usd: 0.01,
   terminal_reason: "completed", api_error_status: null,
   usage: { input_tokens: 10, output_tokens: 20, cache_creation_input_tokens: 5, cache_read_input_tokens: 5 },
   modelUsage: { "claude-haiku": { outputTokens: 1 }, "claude-sonnet-x": { outputTokens: 19 } },
 };
-const out = (envelope, code = 0) => { process.stdout.write(JSON.stringify({ ...base, ...envelope })); process.exit(code); };
+const out = (envelope, code = 0) => {
+  // In a stream, \`type\` is not the first key (as with the real CLI).
+  const final = JSON.stringify({ ...base, ...envelope, ...(streaming ? { type: "result" } : {}) });
+  process.stdout.write(streaming ? '{"type":"system","subtype":"init"}\\n' + final + "\\n" : final);
+  process.exit(code);
+};
 const fail = (envelope) => out({ is_error: true, ...envelope }, 1);
 switch (prompt) {
   case "ok": out({ structured_output: { hook: "Hola" } });
@@ -40,6 +49,9 @@ switch (prompt) {
   case "bad-model": fail({ result: "model not found", api_error_status: 404, terminal_reason: "api_error" });
   case "garbage": process.stderr.write("algo se rompió\\n"); process.stdout.write("no es json"); process.exit(1);
   case "sleep": setInterval(() => {}, 1000); break;
+  case "inspect-images":
+    out({ structured_output: { args, content: message.content.map((b) =>
+      b.type === "image" ? { type: "image", media: b.source.media_type, bytes: Buffer.from(b.source.data, "base64").length } : { type: "text", text: b.text.split("\\n")[0] }) } });
   case "inspect":
     out({ structured_output: {
       cwd: process.cwd(), args, env: process.env, input,
@@ -239,6 +251,41 @@ describe("createClaudeCodeProvider", () => {
     expect(seen.env.DATABASE_URL).toBeUndefined();
     expect(seen.env.RENDER_TOKEN).toBeUndefined();
     expect(seen.env.ANTHROPIC_API_KEY).toBeUndefined();
+  });
+
+  it("sends images in a stream-json message, each after the line that names it (ADR 0024)", async () => {
+    const images = [
+      { id: "a1", note: "cargar un gasto", mime: "image/png" as const, data: new Uint8Array(7) },
+      { id: "b2", note: "el informe", mime: "image/jpeg" as const, data: new Uint8Array(3) },
+    ];
+    const seenSchema = z.object({ args: z.array(z.string()), content: z.array(z.unknown()) });
+    const result = await provider().generate({
+      ...task("inspect-images", { images }),
+      schema: seenSchema,
+    });
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.data.content).toEqual([
+      { type: "text", text: "Captura `a1`: cargar un gasto" },
+      { type: "image", media: "image/png", bytes: 7 },
+      { type: "text", text: "Captura `b2`: el informe" },
+      { type: "image", media: "image/jpeg", bytes: 3 },
+      { type: "text", text: "inspect-images" },
+    ]);
+    expect(result.data.args.join(" ")).toContain(
+      "--input-format stream-json --output-format stream-json --verbose",
+    );
+    expect(result.usage).toMatchObject({ numTurns: 2, sessionId: "s-1" });
+  });
+
+  it("reads the result event of a stream, errors included", async () => {
+    const images = [{ id: "a1", note: "una", mime: "image/png" as const, data: new Uint8Array(1) }];
+    expect(await provider().generate(task("ok", { images }))).toMatchObject({
+      ok: true,
+      data: { hook: "Hola" },
+    });
+    expect(errorOf(await provider().generate(task("limit", { images })))).toMatchObject({
+      kind: "rate_limited",
+    });
   });
 
   it("fails without spawning when there is no credential", async () => {

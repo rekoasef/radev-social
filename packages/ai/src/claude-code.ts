@@ -113,8 +113,10 @@ export function buildClaudeArgs(task: GenerationTask<unknown>): string[] {
   const system = inlineTask(task).system !== null;
   return [
     "-p",
-    "--output-format",
-    "json",
+    // With images the message goes as a JSON line (ADR 0024); the answer then comes as events.
+    ...(streams(task)
+      ? ["--input-format", "stream-json", "--output-format", "stream-json", "--verbose"]
+      : ["--output-format", "json"]),
     "--json-schema",
     JSON.stringify(toJsonSchema(task.schema)),
     "--max-turns",
@@ -131,6 +133,46 @@ export function buildClaudeArgs(task: GenerationTask<unknown>): string[] {
     "project",
     "--strict-mcp-config",
   ];
+}
+
+/** Whether a run sends images, and so speaks `stream-json` both ways. */
+const streams = (task: GenerationTask<unknown>) => (task.images?.length ?? 0) > 0;
+
+/**
+ * What goes through stdin: the prompt as is, or, with images, one user message in `stream-json`
+ * with each image after a line that names it (the prompt refers to them by id) and the prompt last.
+ */
+export function buildClaudeInput(task: GenerationTask<unknown>, prompt: string): string {
+  if (!streams(task)) return prompt;
+  const content = [
+    ...(task.images ?? []).flatMap((image) => [
+      { type: "text", text: `Captura \`${image.id}\`: ${image.note}` },
+      {
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: image.mime,
+          data: Buffer.from(image.data).toString("base64"),
+        },
+      },
+    ]),
+    { type: "text", text: prompt },
+  ];
+  return `${JSON.stringify({ type: "user", message: { role: "user", content } })}\n`;
+}
+
+/** The final envelope in the CLI's output: the whole stdout, or the `result` event of a stream. */
+function envelopeJson(stdout: string, streaming: boolean): unknown {
+  if (!streaming) return JSON.parse(stdout);
+  for (const line of stdout.trim().split("\n").reverse()) {
+    try {
+      const event = JSON.parse(line) as { type?: unknown };
+      if (event.type === "result") return event;
+    } catch {
+      // A line cut by the output cap, or not JSON: keep looking.
+    }
+  }
+  throw new Error("Sin evento result.");
 }
 
 /** The JSON envelope `claude -p --output-format json` prints. Only the fields we use. */
@@ -367,7 +409,7 @@ export function createClaudeCodeProvider(options: ClaudeCodeOptions = {}): AIPro
           const run = await runProcess(bin, args, {
             cwd: workspace.dir,
             env,
-            input: files[PROMPT_FILE] ?? "",
+            input: buildClaudeInput(task as GenerationTask<unknown>, files[PROMPT_FILE] ?? ""),
             timeoutMs,
             signal: task.signal,
           });
@@ -403,7 +445,9 @@ export function createClaudeCodeProvider(options: ClaudeCodeOptions = {}): AIPro
 
           let envelope: ClaudeEnvelope;
           try {
-            envelope = envelopeSchema.parse(JSON.parse(run.stdout));
+            envelope = envelopeSchema.parse(
+              envelopeJson(run.stdout, streams(task as GenerationTask<unknown>)),
+            );
           } catch {
             const tail = stderrTail(run.stderr);
             return {

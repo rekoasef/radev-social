@@ -4,6 +4,7 @@ import {
   type GenerationResult,
   type RouteAttempt,
   type Router,
+  type TaskImage,
 } from "@radev/ai";
 import {
   type AiTask,
@@ -32,15 +33,19 @@ import {
   listAiRoutes,
   listCurrentBrandDocuments,
   listPillars,
+  listPostScreenshots,
   listPostVersions,
   listRecentPostHooks,
   type NewGenerationRun,
+  type PostScreenshot,
   type RecentPost,
+  readMediaFile,
   recordGenerationRun,
   setGenerationRetryAt,
 } from "@radev/db";
 import {
   type AiCarousel,
+  type AiScreenshot,
   aiCarouselSchema,
   aiSlideGuide,
   brandLooks,
@@ -50,6 +55,7 @@ import {
   lookChoices,
   lookTakesArt,
   type StoredRenderIssue,
+  screenDevice,
 } from "@radev/slides/generation";
 import type { Logger } from "../logger";
 
@@ -73,6 +79,10 @@ export const DATA_PROMPT =
 /** Added to the prompt when the brand draws its posts with looks (`studio` preset). */
 export const LOOK_PROMPT =
   "Elegí también el `look` del carrusel: la sección Look de `slides.md` dice para qué sirve cada uno.";
+
+/** Added to the prompt when the operator attached screenshots (ADR 0024). */
+export const SCREENSHOTS_PROMPT =
+  "El operador adjuntó capturas de pantalla (las ves en el mensaje y están en `screenshots.json`): mostrá al menos una en una slide `screen`, como dice la sección Capturas de `slides.md`.";
 
 /** Added to the prompt when the run rewrites an existing version (phase 3, T8). */
 export const REVISION_PROMPT =
@@ -108,6 +118,29 @@ function lookOf(content: unknown): string | null {
   return typeof look === "string" ? look : null;
 }
 
+/**
+ * The post's screenshots as the AI gets them (ADR 0024): the images for a provider that sees them,
+ * and their id, note and device for every provider. A file that is gone is left out.
+ */
+export async function loadScreenshots(
+  rows: readonly PostScreenshot[],
+  read: (path: string) => Promise<Uint8Array | undefined> = readMediaFile,
+): Promise<{ images: TaskImage[]; screenshots: AiScreenshot[]; missing: string[] }> {
+  const images: TaskImage[] = [];
+  const screenshots: AiScreenshot[] = [];
+  const missing: string[] = [];
+  for (const row of rows) {
+    const data = await read(row.path);
+    if (!data) {
+      missing.push(row.path);
+      continue;
+    }
+    images.push({ id: row.id, note: row.note, mime: row.mime as TaskImage["mime"], data });
+    screenshots.push({ id: row.id, note: row.note, device: screenDevice(row) });
+  }
+  return { images, screenshots, missing };
+}
+
 /** The context files of a run, besides the brand's CLAUDE.md. */
 export function buildTaskFiles(input: {
   request: GenerationRequest;
@@ -121,8 +154,11 @@ export function buildTaskFiles(input: {
   looks?: readonly LookId[];
   /** Whether the post gets generated images (the AI describes them). */
   art?: boolean;
+  /** The operator's screenshots (ADR 0024). */
+  screenshots?: readonly AiScreenshot[];
 }): Record<string, string> {
-  const { request, recent, problems, revision, data, looks, art } = input;
+  const { request, recent, problems, revision, data, looks, art, screenshots } = input;
+  const shots = screenshots && screenshots.length > 0 ? screenshots : undefined;
   const task = {
     idea: request.idea,
     pillarKey: request.pillarKey,
@@ -166,9 +202,10 @@ export function buildTaskFiles(input: {
   };
   return {
     "task.json": `${JSON.stringify(task, null, 2)}\n`,
-    "slides.md": aiSlideGuide({ data: Boolean(data), looks, art }),
+    "slides.md": aiSlideGuide({ data: Boolean(data), looks, art, screenshots: shots }),
     "recent-posts.json": `${JSON.stringify(recent, null, 2)}\n`,
     ...(data && { "data.json": `${JSON.stringify(data, null, 2)}\n` }),
+    ...(shots && { "screenshots.json": `${JSON.stringify(shots, null, 2)}\n` }),
     ...(revision && { "previous.json": `${JSON.stringify(revision.previous, null, 2)}\n` }),
   };
 }
@@ -384,6 +421,14 @@ export async function generateCarousel(
       ]
     : [];
   const makesArt = brandMakesArt(brand.stylePreset, brand.themeTokens);
+  // Screenshots go on `screen` slides, which only the studio preset draws.
+  const { images, screenshots, missing } =
+    enabled.length > 0
+      ? await loadScreenshots(await listPostScreenshots(db, post.id))
+      : { images: [], screenshots: [], missing: [] };
+  if (missing.length > 0) {
+    log.warn("screenshots missing on disk", { post: post.publicCode, missing });
+  }
   const looks =
     enabled.length > 0
       ? current
@@ -416,12 +461,14 @@ export async function generateCarousel(
         : undefined,
       looks,
       art: makesArt,
+      screenshots,
     },
   );
   const prompt = [
     GENERATION_PROMPT,
     ...(data ? [DATA_PROMPT] : []),
     ...(looks ? [LOOK_PROMPT] : []),
+    ...(screenshots.length > 0 ? [SCREENSHOTS_PROMPT] : []),
     ...(revision ? [REVISION_PROMPT] : []),
   ].join(" ");
   const context = { brandId: brand.id, postId: post.id };
@@ -442,8 +489,10 @@ export async function generateCarousel(
           data,
           looks,
           art: makesArt,
+          screenshots,
         }),
       },
+      images,
       schema,
       maxTurns: MAX_TURNS,
     });

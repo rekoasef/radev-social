@@ -5,6 +5,7 @@ import {
   artPlan,
   buildTaskFiles,
   decide,
+  loadScreenshots,
   MAX_RATE_LIMIT_ATTEMPTS,
   revisionLooks,
   runRow,
@@ -118,6 +119,17 @@ describe("buildTaskFiles", () => {
     });
     expect(JSON.parse(files["recent-posts.json"] ?? "")).toEqual(recent);
     expect(files["slides.md"]).toContain("# Guía de slides");
+  });
+
+  it("adds screenshots.json and the screenshots section when the operator attached some", () => {
+    const screenshots = [{ id: "s1", note: "cargar un gasto", device: "phone" as const }];
+    const request = { idea: "Cargar un gasto", pillarKey: null, hookType: null };
+    const files = buildTaskFiles({ request, recent, screenshots });
+    expect(JSON.parse(files["screenshots.json"] ?? "")).toEqual(screenshots);
+    expect(files["slides.md"]).toContain("## Capturas");
+    expect(
+      buildTaskFiles({ request, recent, screenshots: [] })["screenshots.json"],
+    ).toBeUndefined();
   });
 
   it("adds data.json and explains it when the brand has data", () => {
@@ -336,6 +348,49 @@ describe("runRow", () => {
       { brandId: "brand-1", postId: null, task: "ideas.research" },
     );
     expect(row).toMatchObject({ postId: null, task: "ideas.research", errorKind: "rate_limited" });
+  });
+});
+
+describe("loadScreenshots", () => {
+  const row = (id: string, path: string, width: number, height: number) => ({
+    id,
+    postId: "p1",
+    position: 0,
+    path,
+    mime: "image/png",
+    width,
+    height,
+    sizeBytes: 3,
+    note: `captura ${id}`,
+    createdAt: new Date(),
+  });
+
+  it("gives the images and, for every provider, their id, note and device", async () => {
+    const files: Record<string, Uint8Array> = {
+      "lumus/screens/a.png": new Uint8Array([1, 2, 3]),
+      "lumus/screens/b.png": new Uint8Array([4]),
+    };
+    const loaded = await loadScreenshots(
+      [row("a", "lumus/screens/a.png", 738, 1600), row("b", "lumus/screens/b.png", 1440, 900)],
+      async (path) => files[path],
+    );
+    expect(loaded.screenshots).toEqual([
+      { id: "a", note: "captura a", device: "phone" },
+      { id: "b", note: "captura b", device: "laptop" },
+    ]);
+    expect(loaded.images.map((image) => [image.id, image.mime, image.data.length])).toEqual([
+      ["a", "image/png", 3],
+      ["b", "image/png", 1],
+    ]);
+    expect(loaded.missing).toEqual([]);
+  });
+
+  it("leaves out a file that is gone", async () => {
+    const loaded = await loadScreenshots(
+      [row("a", "lumus/screens/a.png", 738, 1600)],
+      async () => undefined,
+    );
+    expect(loaded).toEqual({ images: [], screenshots: [], missing: ["lumus/screens/a.png"] });
   });
 });
 

@@ -17,11 +17,27 @@ export type GenerationTask<T> = {
   schema: z.ZodType<T>;
   /** Model id as the provider names it; comes from the routing table, never from code. */
   model: string;
+  /**
+   * Images the model looks at (ADR 0024: the post's screenshots), in order. claude-code sends them
+   * in the message; a provider without vision skips them, so whatever the model must know about
+   * them also goes in `files` (their notes).
+   */
+  images?: readonly TaskImage[];
   /** Extra tools (claude-code only), e.g. WebSearch for ideas.research. None by default. */
   tools?: readonly string[];
   maxTurns?: number;
   timeoutMs?: number;
   signal?: AbortSignal;
+};
+
+/** An image of a task: its file and how the prompt refers to it. */
+export type TaskImage = {
+  /** What the prompt calls it (a screenshot's id). */
+  id: string;
+  /** What it shows, in the operator's words. */
+  note: string;
+  mime: "image/png" | "image/jpeg" | "image/webp";
+  data: Uint8Array;
 };
 
 /** What a run consumed. Goes to generation_runs (T6). */

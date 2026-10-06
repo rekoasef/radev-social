@@ -261,7 +261,72 @@ describe("brandLooks", () => {
   });
 });
 
+describe("aiCarouselSchema with screenshots (ADR 0024)", () => {
+  const pillar = exampleCarousel.pillarKey;
+  const phone = {
+    id: "00000000-0000-4000-8000-0000000000b1",
+    note: "cargar un gasto",
+    device: "phone" as const,
+  };
+  const laptop = {
+    id: "00000000-0000-4000-8000-0000000000b2",
+    note: "el informe",
+    device: "laptop" as const,
+  };
+  const phone2 = { ...phone, id: "00000000-0000-4000-8000-0000000000b3" };
+  const base = exampleCarousel.slides.filter(
+    (slide) => !(DATA_SLIDES as readonly string[]).includes(slide.type),
+  );
+  const withScreen = (screens: string[]) => ({
+    ...exampleCarousel,
+    slides: [...base.slice(0, -1), { type: "screen", title: "Así se carga", screens }, base.at(-1)],
+  });
+  const issues = (carousel: unknown, screenshots = [phone, laptop, phone2]) => {
+    const parsed = aiCarouselSchema([pillar], { screenshots }).safeParse(carousel);
+    return parsed.success ? [] : parsed.error.issues.map((issue) => issue.message);
+  };
+
+  it("takes a screen slide with the post's screenshots, alone or a phone with a laptop", () => {
+    expect(issues(withScreen([phone.id]))).toEqual([]);
+    expect(issues(withScreen([laptop.id, phone.id]))).toEqual([]);
+  });
+
+  it("asks for at least one screen slide when the post has screenshots", () => {
+    expect(issues({ ...exampleCarousel, slides: base })).toEqual([
+      expect.stringMatching(/al menos una/),
+    ]);
+  });
+
+  it("refuses screenshots that are not the post's", () => {
+    expect(issues(withScreen(["00000000-0000-4000-8000-0000000000ff"]))).toEqual([
+      expect.stringMatching(/no es una captura de este post/),
+    ]);
+  });
+
+  it("refuses two screenshots of the same device together", () => {
+    expect(issues(withScreen([phone.id, phone2.id]))).toEqual([
+      expect.stringMatching(/una `phone` y una `laptop`/),
+    ]);
+  });
+
+  it("refuses screen slides in a post without screenshots", () => {
+    expect(issues(withScreen([phone.id]), [])).toEqual([
+      expect.stringMatching(/no tiene capturas/),
+    ]);
+  });
+});
+
 describe("aiSlideGuide", () => {
+  it("explains the screenshots only to a post that has them", () => {
+    const shots = [{ id: "a", note: "cargar un gasto", device: "phone" as const }];
+    const withShots = aiSlideGuide({ data: false, screenshots: shots });
+    expect(withShots).toContain("## Capturas (`screenshots.json`)");
+    expect(withShots).toMatch(/- `screen`: una o dos capturas/);
+    const without = aiSlideGuide({ data: false });
+    expect(without).not.toContain("## Capturas");
+    expect(without).toMatch(/- `screen`: .*no la uses/);
+  });
+
   it("tells a brand without data which slides it can't use", () => {
     const guide = aiSlideGuide({ data: false });
     expect(guide).toContain("No uses `chart` ni `bigNumber`");
