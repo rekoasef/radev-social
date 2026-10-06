@@ -30,8 +30,27 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Mejoras de contenido (2026-09-29, pedido del operador, en paralelo con la Fase 5):** (1) ✅ generación liviana: ~128.000 → ~1.000 tokens de entrada de base por ejecución (ver abajo). (2) Próximo: rediseño para que cada carrusel sea distinto (composiciones, tipos nuevos, looks por post). El operador eligió: tokens primero, **se puede salir del fondo oscuro** (claro, acento), y que Claude proponga direcciones visuales con capturas (no tiene referencias). Quiere que "cada imagen sea diferente, como ChatGPT". Diagnóstico sobre los carruseles de RAdev en producción: todas las slides tienen el mismo esqueleto (título arriba, diagrama chico, vacío, pie), el contenido ocupa ~30 % de la slide, la secuencia de tipos se repite y sobra decoración.
 - **Looks e imágenes en producción (2026-09-29):** deploy hecho (`4131aa2`), claves de Cloudflare cargadas en el servidor. RAdev y Lumus pasados a `studio` por el operador (Lumus con acento `#6E5CE8` y la orbe como elemento de marca). RA-0006 re-hecho con un look desde el editor. Próximo: mirar los primeros posts que genere la IA con looks e imágenes (look elegido, calidad de las imágenes, tiempos) y ajustar; después seguir con la Fase 5 (T2, registro de la app de TikTok).
 - **SSH con contraseña (2026-10-01, ADR 0019):** el operador no podía entrar desde su casa (la llave está solo en la notebook). `harden.sh` ahora permite contraseña para `ubuntu` y suma fail2ban (5 fallos en 10 min → 1 h de bloqueo); aplicado en el servidor. La contraseña la pone el operador (`ssh -t radev-oracle sudo passwd ubuntu`) y va a su gestor. Desde otra compu: `ssh ubuntu@<IP>`.
-- **Capturas al generar (2026-10-06, ADR 0024, lista para el deploy):** T1–T7 hechas (datos, slide `screen`, la IA las ve, subirlas desde el panel, rehacer una slide, editor, ADR 0024 y docs). **Para el operador 👁:** probar con login Nuevo post → Generar con IA con capturas (escritorio y celular), mirar la ficha y, en Editar, cambiar las capturas de una slide `screen`. Después: deploy (migración `0027`, solo agrega). Ver la sección de abajo.
-- **Última actualización:** 2026-10-06, mejora "capturas al generar", T7 (docs)
+- **Próximo (pedido del operador, 2026-10-06):** mejorar las imágenes generadas de portada y cierre. Diagnóstico y experimento a medias en la sección "Mejora — imágenes de portada y cierre". Retomar desde ahí.
+- **Capturas al generar (2026-10-06, ADR 0024, en producción desde `b522da5`):** T1–T7 hechas (datos, slide `screen`, la IA las ve, subirlas desde el panel, rehacer una slide, editor, ADR 0024 y docs). **Para el operador 👁:** probar con login Nuevo post → Generar con IA con capturas (escritorio y celular), mirar la ficha y, en Editar, cambiar las capturas de una slide `screen`. Deploy hecho el 2026-10-06 (`b522da5`): migración `0027` aplicada, web y worker arriba; falta la primera prueba real con login. Ver la sección de abajo.
+- **Última actualización:** 2026-10-06, mejora "capturas al generar" en producción; diagnóstico de las imágenes generadas
+
+## Mejora — imágenes de portada y cierre (2026-10-06, sin empezar a codear)
+
+Pedido del operador: que las imágenes generadas (ADR 0016) sean "mucho mejores". Nada decidido todavía.
+
+**Diagnóstico** (las 4 versiones con imagen en producción: RA-0015, RA-0010, RA-0006; descargadas y vistas junto a las slides renderizadas):
+- **Se ven chicas en la slide**: el objeto ocupa poco (el prompt pide "generous negative space" y el look deja la imagen en una franja). En el cierre de RA-0015 la cápsula es un punto. Probablemente es lo que más pesa.
+- **Temas genéricos y repetidos**: esferas, orbes y vidrio en casi todas; metáforas literales (una cápsula con monedas). La guía de `art` en `slides.md` (`artGuide`) empuja a "un objeto" sin dirección de arte.
+- **Fondo no siempre limpio**: el cierre de RA-0010 trae humo y un pedestal gris sobre negro.
+- **Modelo**: FLUX.1 schnell, 8 pasos, 1024×1024, aspecto de render 3D barato en algunos casos.
+
+**Opciones vistas** (precios de Workers AI, 2026-10-06; cupo gratis 10.000 neuronas/día = USD 0,11):
+- **FLUX.2 klein 4B** (`@cf/black-forest-labs/flux-2-klein-4b`): ~105 neuronas por imagen de 1024×1024 (como schnell, ~96), de una generación más nueva. Se llama con multipart (`prompt`, `width`, `height`) y devuelve `result.image` en base64. En la prueba tardó **26–30 s por imagen** y una vez dio timeout (schnell: unos segundos): hay que medirlo mejor antes de decidir. Licencia: revisar los términos de Black Forest Labs.
+- Descartados por costo: FLUX.2 klein 9B (~1.360 neuronas/imagen), Leonardo Lucid Origin y Phoenix (~2.000–2.600): entrarían 3 a 7 imágenes por día.
+- **Prompt con dirección de arte** (en `scratchpad`, sin probar todavía): "editorial still-life photograph", lente macro, objeto grande (~2/3 del cuadro), material y textura, luz de borde con el acento, fondo puro sin piso ni humo, tono de campaña premium.
+- **Layout**: que los looks con imagen la muestren más grande en portada y cierre.
+
+**Experimento a medias**: comparar schnell vs klein 4B × prompt actual vs dirigido sobre los 3 temas de producción. Salieron solo 2 imágenes de klein con el prompt actual; las de schnell fallaron porque el script le mandaba `width`/`height` (schnell no los acepta: solo `prompt` y `steps`). Retomar: arreglar el script, generar las 12, mirarlas con el operador y decidir modelo, prompt y tamaño en la slide (con ADR si cambia el modelo).
 
 ## Mejora — capturas al generar (2026-10-06, ADR 0024)
 
@@ -49,7 +68,7 @@ Pedido del operador: al generar un carrusel con IA, subir capturas de la app (ej
 | T4 | IA: imágenes a `claude-code`, frases a OpenRouter; Zod exige al menos una y solo las del post | ✅ |
 | T5 | Revisiones (v2) y rehacer una slide con las capturas | ✅ |
 | T6 | Editor: cambiar la captura de una slide `screen` | ✅ |
-| T7 | ADR 0024, docs, prueba real con Lumus | ✅ (falta el deploy) |
+| T7 | ADR 0024, docs, prueba real con Lumus, deploy | ✅ |
 
 Notas de T6: campo `screens` del editor (`ScreensField` en `slide-fields.tsx`, opciones por el contexto `ScreenshotOptions`): miniaturas de las capturas del post con su dispositivo; tocar una la suma, la cambia o la saca según `toggleScreen` (`content/screens.ts`, con tests): siempre queda una, o un celular y una notebook. El editor ofrece "Captura" en Agregar solo con preset `studio` y capturas en el post (la nueva arranca con la primera). Al guardar, la Server Action rechaza una slide `screen` con capturas que no son del post. Verificado con Playwright en una página temporal sin login (borrada) con el carrusel de la T4: elegir y quitar actualiza la vista previa (notebook + celular → notebook). Visto de paso: en 390 px el editor tiene scroll horizontal también sin esta slide (los campos miden 467 px en una columna de 358); no es de esta tarea y no se verificó dentro del panel con login.
 
