@@ -27,3 +27,4 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0021 | Instrucciones por pilar para la IA | aceptada |
 | 0022 | Sin página de links: el perfil lleva directo al sitio de la marca | aceptada |
 | 0023 | El cierre de los posts puede mandar al sitio web de la marca | aceptada |
+| 0024 | Capturas de pantalla en los carruseles generados | aceptada |

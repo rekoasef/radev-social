@@ -66,7 +66,7 @@ Cada requerimiento indica la fase del roadmap en la que se implementa.
 
 ### Carruseles
 - **RF-14** (F2) Crear y editar carruseles manualmente con vista previa en vivo.
-- **RF-15** (F3) Generar un carrusel completo con IA a partir de una idea: slides, copy, hashtags, pilar y tipo de hook.
+- **RF-15** (F3) Generar un carrusel completo con IA a partir de una idea: slides, copy, hashtags, pilar y tipo de hook. Opcional: hasta 4 capturas de pantalla que la IA ve y muestra dentro de un celular o una notebook (ADR 0024).
 - **RF-16** (F3) Rechazar con feedback escrito y regenerar usando ese feedback.
 - **RF-17** (F2) Versionado: cada generación o edición crea una versión; se puede volver a cualquiera.
 - **RF-18** (F2) Etiquetar cada post con pilar y tipo de hook.
