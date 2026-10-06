@@ -39,6 +39,8 @@ export const limits = {
   steps: { title: 60, steps: { min: 3, max: 5 }, stepTitle: 32, stepText: 90 },
   bigNumber: { kicker: 30, value: 10, label: 80, context: 140, source: 90 },
   chart: { title: 60, caption: 100, source: 90 },
+  /** Screens: how many screenshots a slide shows (a phone, a computer, or one of each). */
+  screen: { title: 70, body: 140, screens: { min: 1, max: 2 } },
   cta: { title: 70, subtitle: 120, button: 50 },
   carousel: {
     hook: 100,

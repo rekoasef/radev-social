@@ -12,6 +12,8 @@ export type FieldSpec = { key: string; label: string; optional?: boolean } & (
   | { kind: "choice"; options: readonly { value: string; label: string }[] }
   /** A dataset of the brand's data, by key (the editor lists them). */
   | { kind: "dataset" }
+  /** Screenshots of the post, by id (ADR 0024; the editor lists them). */
+  | { kind: "screens"; min: number; max: number }
   | { kind: "object"; fields: FieldSpec[] }
   | {
       kind: "list";
@@ -69,6 +71,7 @@ export const SLIDE_LABELS: Record<SlideType, string> = {
   steps: "Pasos",
   bigNumber: "Número",
   chart: "Gráfico",
+  screen: "Captura",
   cta: "Cierre",
 };
 
@@ -259,6 +262,11 @@ export const SLIDE_FIELDS: Record<SlideType, FieldSpec[]> = {
     text("caption", "Epígrafe", L.chart.caption, { optional: true }),
     plain("source", "Fuente", L.chart.source),
   ],
+  screen: [
+    text("title", "Título", L.screen.title),
+    text("body", "Texto", L.screen.body, { optional: true, multiline: true }),
+    { key: "screens", label: "Capturas", kind: "screens", ...L.screen.screens },
+  ],
   cta: [
     text("title", "Título", L.cta.title),
     text("subtitle", "Subtítulo", L.cta.subtitle, { optional: true }),
@@ -269,7 +277,8 @@ export const SLIDE_FIELDS: Record<SlideType, FieldSpec[]> = {
 
 /**
  * Types the manual editor offers. `cover` and `cta` are always the first and last slides; `chart`
- * only for a brand with data (the editor leaves it out otherwise).
+ * only for a brand with data, `screen` only for a post with screenshots (the editor leaves them out
+ * otherwise).
  */
 export const EDITOR_MIDDLE_TYPES: readonly SlideType[] = [
   "statement",
@@ -282,6 +291,7 @@ export const EDITOR_MIDDLE_TYPES: readonly SlideType[] = [
   "steps",
   "bigNumber",
   "chart",
+  "screen",
 ];
 
 function emptyValue(field: FieldSpec): unknown {
@@ -295,6 +305,8 @@ function emptyValue(field: FieldSpec): unknown {
       return field.options[0]?.value ?? "";
     case "dataset":
       return "";
+    case "screens":
+      return [];
     case "object":
       return emptyObject(field.fields);
     case "list":

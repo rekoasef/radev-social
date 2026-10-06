@@ -178,8 +178,9 @@ export function CarouselEditor({
     setSlides(slides.map((s, i) => (i === index ? next : s)));
   };
   const datasets = data?.datasets ?? {};
+  // `screen` needs the post's screenshots: the editor offers it from T6 of ADR 0024 on.
   const middleTypes = EDITOR_MIDDLE_TYPES.filter(
-    (t) => t !== "chart" || (data?.options.length ?? 0) > 0,
+    (t) => t !== "screen" && (t !== "chart" || (data?.options.length ?? 0) > 0),
   );
   // A chart with no data yet can't be drawn: the preview says so instead.
   const drawable = slide.type !== "chart" || Boolean(datasets[slide.datasetRef]);

@@ -29,6 +29,9 @@ const templates: { bold: TemplateSet<BoldTokens>; soft: TemplateSet<SoftTokens> 
   soft: softTemplates,
 };
 
+/** Types only the `studio` preset draws: `screen` (ADR 0024); bold and soft predate it. */
+export const STUDIO_ONLY_TYPES: readonly SlideType[] = ["screen"];
+
 export function hasTemplate(preset: StylePreset, type: SlideType): boolean {
   // Studio has every type (presets/studio/templates.tsx).
   return preset === "studio" || templates[preset][type] !== undefined;

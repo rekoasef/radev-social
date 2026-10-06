@@ -7,6 +7,7 @@ import {
   exampleSlidesByPreset,
   extremeSlides,
   FORMAT,
+  hasTemplate,
   type LookId,
   RenderSlide,
   type Slide,
@@ -19,7 +20,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 // Live preview of the identity editor: the same frame and templates the render uses, with the
 // preset's example content, scaled down to the column width.
 
-export const PREVIEW_SLIDES: { type: SlideType; label: string }[] = [
+const PREVIEW_SLIDES: { type: SlideType; label: string }[] = [
   { type: "cover", label: "Portada" },
   { type: "statement", label: "Afirmación" },
   { type: "question", label: "Pregunta" },
@@ -31,8 +32,14 @@ export const PREVIEW_SLIDES: { type: SlideType; label: string }[] = [
   { type: "steps", label: "Pasos" },
   { type: "bigNumber", label: "Número" },
   { type: "chart", label: "Gráfico" },
+  { type: "screen", label: "Captura" },
   { type: "cta", label: "Cierre" },
 ];
+
+/** The slide types a preset can draw (`screen` is only in `studio`). */
+export function previewSlides(preset: BrandTheme["preset"]) {
+  return PREVIEW_SLIDES.filter((s) => hasTemplate(preset, s.type));
+}
 
 export function SlidePreview({
   theme,

@@ -44,7 +44,7 @@ describe("text fields", () => {
 describe("slideSchema", () => {
   it("has an example for every slide type", () => {
     expect(Object.keys(exampleSlides).sort()).toEqual([...SLIDE_TYPES].sort());
-    expect(SLIDE_TYPES).toHaveLength(12);
+    expect(SLIDE_TYPES).toHaveLength(13);
   });
 
   const presetExamples = Object.entries(exampleSlidesByPreset).flatMap(([preset, examples]) =>

@@ -30,8 +30,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Mejoras de contenido (2026-09-29, pedido del operador, en paralelo con la Fase 5):** (1) ✅ generación liviana: ~128.000 → ~1.000 tokens de entrada de base por ejecución (ver abajo). (2) Próximo: rediseño para que cada carrusel sea distinto (composiciones, tipos nuevos, looks por post). El operador eligió: tokens primero, **se puede salir del fondo oscuro** (claro, acento), y que Claude proponga direcciones visuales con capturas (no tiene referencias). Quiere que "cada imagen sea diferente, como ChatGPT". Diagnóstico sobre los carruseles de RAdev en producción: todas las slides tienen el mismo esqueleto (título arriba, diagrama chico, vacío, pie), el contenido ocupa ~30 % de la slide, la secuencia de tipos se repite y sobra decoración.
 - **Looks e imágenes en producción (2026-09-29):** deploy hecho (`4131aa2`), claves de Cloudflare cargadas en el servidor. RAdev y Lumus pasados a `studio` por el operador (Lumus con acento `#6E5CE8` y la orbe como elemento de marca). RA-0006 re-hecho con un look desde el editor. Próximo: mirar los primeros posts que genere la IA con looks e imágenes (look elegido, calidad de las imágenes, tiempos) y ajustar; después seguir con la Fase 5 (T2, registro de la app de TikTok).
 - **SSH con contraseña (2026-10-01, ADR 0019):** el operador no podía entrar desde su casa (la llave está solo en la notebook). `harden.sh` ahora permite contraseña para `ubuntu` y suma fail2ban (5 fallos en 10 min → 1 h de bloqueo); aplicado en el servidor. La contraseña la pone el operador (`ssh -t radev-oracle sudo passwd ubuntu`) y va a su gestor. Desde otra compu: `ssh ubuntu@<IP>`.
-- **Capturas al generar (2026-10-06, en curso):** T1 hecha (datos). Sigue T3 (slide `screen`). Ver la sección de abajo.
-- **Última actualización:** 2026-10-06, mejora "capturas al generar", T1
+- **Capturas al generar (2026-10-06, en curso):** T1 (datos) y T3 (slide `screen`) hechas. Sigue T4 (la IA ve las capturas). Ver la sección de abajo.
+- **Última actualización:** 2026-10-06, mejora "capturas al generar", T3
 
 ## Mejora — capturas al generar (2026-10-06, en curso)
 
@@ -45,11 +45,13 @@ Pedido del operador: al generar un carrusel con IA, subir capturas de la app (ej
 |---|---|---|
 | T1 | Datos: `core/posts/screenshots` (límites, tipos, frase), tabla `post_screenshots` (migración `0027`, solo agrega), `prepareScreenshots` y `createGeneratingPost` con capturas (archivos en `media/<marca>/screens/`, se borran si el post no se crea) | ✅ |
 | T2 | Panel: subir, ordenar y quitar capturas en "Generar con IA" (también celular); verlas en la ficha | pendiente |
-| T3 | Slide `screen`: schema, plantilla con 3 composiciones, ejemplos, extremos, control de render en los 16 looks | pendiente |
+| T3 | Slide `screen`: schema, plantilla con 3 composiciones, ejemplos, extremos, control de render en los 16 looks | ✅ |
 | T4 | IA: imágenes a `claude-code`, frases a OpenRouter; Zod exige al menos una y solo las del post | pendiente |
 | T5 | Revisiones (v2) y rehacer una slide con las capturas | pendiente |
 | T6 | Editor: cambiar la captura de una slide `screen` | pendiente |
 | T7 | ADR 0024, docs, prueba real con Lumus | pendiente |
+
+Notas de T3: `screen` = `{ title≤70, body?≤140, screens: 1–2 ids }`, solo en `studio` (`STUDIO_ONLY_TYPES`; bold y soft no la dibujan, la galería la oculta). El dispositivo sale de la proporción (`content/screens.ts`), dibujado en `presets/studio/devices.tsx` como capa `hero`. Hasta la T4 la IA no puede usarla (la guía lo dice y `aiCarouselSchema` la rechaza) y el editor no la ofrece hasta la T6. `preview` suma `--screens cel,pc` y `--types screen`; verificado con Playwright en los 16 looks (ejemplos, textos al límite y las capturas reales del operador: celular, notebook y las dos): 0 problemas del control de render. `image-size` 2.0.2 sumado como devDependency de slides (ya estaba en el repo, para el script). DESIGN-SYSTEM §5 actualizado.
 
 Notas de T1: probado contra Postgres local (inserción y rollback con la captura real del operador). Para levantar el Postgres local hubo que frenar `bibliotecacrucianelli-db-1`, que ocupaba el 5433, y recrear el contenedor (`--force-recreate`) porque había quedado sin el puerto publicado.
 

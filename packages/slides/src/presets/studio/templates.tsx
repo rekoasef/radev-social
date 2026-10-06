@@ -1,10 +1,12 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { Datasets } from "../../content/datasets";
+import { screenComposition } from "../../content/screens";
 import type { Slide, SlideOf, SlideType } from "../../content/slides";
 import { decimalsFor, formatNumber, withUnit } from "../../format";
 import { Layer } from "../../frame/layer";
 import { SlideIcon } from "../../icons";
 import { chartLayout } from "../shared/chart-layout";
+import { Laptop, Phone, phoneSize } from "./devices";
 import { Label, type LookContext, plainOf, Rich, STUDIO_CONTENT_BOX, Text, Title } from "./kit";
 
 // Templates of the `studio` preset (docs/DESIGN-SYSTEM.md §10): the structure of each slide type,
@@ -563,6 +565,76 @@ function Chart({ slide, ctx, datasets }: TemplateArgs<"chart">) {
   );
 }
 
+/** The device layer of a `screen` slide: movable and scalable like a hero image (ADR 0013). */
+function Device({ slide, children }: { slide: Slide; children: ReactNode }) {
+  return (
+    <Layer name="hero" layout={slide.layout}>
+      <div data-qa="content" style={{ display: "flex", justifyContent: "center" }}>
+        {children}
+      </div>
+    </Layer>
+  );
+}
+
+function Screen({ slide, ctx }: TemplateArgs<"screen">) {
+  const shots = screenComposition(slide.screens, ctx.assets);
+  const H = STUDIO_CONTENT_BOX.height;
+  if (shots.kind === "phone") {
+    // The phone beside the text: the text column takes what the phone leaves.
+    const gap = 44;
+    const phone = phoneSize(shots.phone, { width: 400, height: H - 40 });
+    const column = W - phone.width - gap;
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap, height: "100%" }}>
+        <div style={{ width: column, display: "flex", flexDirection: "column", gap: 36 }}>
+          <Block name="title" slide={slide}>
+            <Title text={slide.title} ctx={ctx} size="small" width={column} />
+          </Block>
+          {slide.body && (
+            <Block name="body" slide={slide}>
+              <Text text={slide.body} ctx={ctx} size={28} />
+            </Block>
+          )}
+        </div>
+        <Device slide={slide}>
+          <Phone shot={shots.phone} max={{ width: 400, height: H - 40 }} />
+        </Device>
+      </div>
+    );
+  }
+  // A laptop (with the phone in front, when there is one of each) under the text.
+  return (
+    <Column justify="center" gap={56}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <Block name="title" slide={slide}>
+          <Title text={slide.title} ctx={ctx} size="small" />
+        </Block>
+        {slide.body && (
+          <Block name="body" slide={slide}>
+            <div style={{ maxWidth: 760 }}>
+              <Text text={slide.body} ctx={ctx} size={28} />
+            </div>
+          </Block>
+        )}
+      </div>
+      <Device slide={slide}>
+        {shots.kind === "laptop" ? (
+          <Laptop shot={shots.laptop} max={{ width: 780, height: 560 }} />
+        ) : (
+          <div style={{ position: "relative", width: W, height: 540 }}>
+            <div style={{ position: "absolute", left: 0, top: 20 }}>
+              <Laptop shot={shots.laptop} max={{ width: 700, height: 500 }} />
+            </div>
+            <div style={{ position: "absolute", right: 0, bottom: 0 }}>
+              <Phone shot={shots.phone} max={{ width: 250, height: 500 }} />
+            </div>
+          </div>
+        )}
+      </Device>
+    </Column>
+  );
+}
+
 function Cta({ slide, ctx }: TemplateArgs<"cta">) {
   const mode = ctx.art ? "low" : ctx.kit.compose.cta;
   const center = mode !== "left";
@@ -609,5 +681,6 @@ export const studioTemplates: { [T in SlideType]: (args: TemplateArgs<T>) => Rea
   steps: Steps,
   bigNumber: BigNumber,
   chart: Chart,
+  screen: Screen,
   cta: Cta,
 };

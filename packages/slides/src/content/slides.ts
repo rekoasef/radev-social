@@ -158,6 +158,24 @@ export const chartSlide = z.object({
   source: plainText(L.chart.source),
 });
 
+/**
+ * One or two of the post's screenshots (ADR 0024), by id: inside a phone when it is portrait, a
+ * laptop otherwise, and the laptop with the phone in front when there is one of each.
+ */
+export const screenSlide = z.object({
+  type: z.literal("screen"),
+  layout: slideLayoutSchema.optional(),
+  title: richText(L.screen.title),
+  body: richText(L.screen.body).optional(),
+  screens: z
+    .array(z.uuid({ error: "Elegí una captura del post." }))
+    .min(L.screen.screens.min, { error: "Elegí una captura del post." })
+    .max(L.screen.screens.max)
+    .refine((ids) => new Set(ids).size === ids.length, {
+      error: "La misma captura no va dos veces.",
+    }),
+});
+
 export const ctaSlide = z.object({
   type: z.literal("cta"),
   layout: slideLayoutSchema.optional(),
@@ -179,6 +197,7 @@ const slideOptions = [
   stepsSlide,
   bigNumberSlide,
   chartSlide,
+  screenSlide,
   ctaSlide,
 ] as const;
 

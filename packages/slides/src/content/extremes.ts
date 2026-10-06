@@ -1,4 +1,5 @@
 import { limits as L } from "./limits";
+import { SAMPLE_SCREENS } from "./screens";
 import type { SlideOf, SlideType } from "./slides";
 
 // Worst cases for the render (phase 1, T11): every text at its limit, the most nodes or cards,
@@ -167,6 +168,13 @@ export const extremeSlides: { [T in SlideType]: SlideOf<T> } = {
     datasetRef: "usd-blue-30d",
     caption: t(L.chart.caption, 3, { emphasis: true }),
     source: t(L.chart.source, 6),
+  },
+  // Both devices: the composition with the least room for the text.
+  screen: {
+    type: "screen",
+    title: t(L.screen.title, 0, { emphasis: true }),
+    body: t(L.screen.body, 2, { emphasis: true }),
+    screens: [SAMPLE_SCREENS.laptop, SAMPLE_SCREENS.phone],
   },
   cta: {
     type: "cta",

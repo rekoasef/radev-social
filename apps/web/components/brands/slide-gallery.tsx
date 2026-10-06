@@ -13,7 +13,7 @@ import {
 import type { QaIssue } from "@radev/slides/qa";
 import { useCallback, useState } from "react";
 import { Tally } from "@/components/console/tally";
-import { PREVIEW_SLIDES, SlidePreview } from "./slide-preview";
+import { previewSlides, SlidePreview } from "./slide-preview";
 
 // Every slide type of a brand at once, with its saved identity, and the preset's example
 // carousel. Each preview runs the render QA; the header sums up the problems. A `studio` brand
@@ -37,8 +37,9 @@ export function SlideGallery({
       ),
     [],
   );
+  const slides = previewSlides(theme.preset);
   const checked = Object.keys(qa).length;
-  const failing = PREVIEW_SLIDES.filter((s) => (qa[s.type] ?? 0) > 0);
+  const failing = slides.filter((s) => (qa[s.type] ?? 0) > 0);
   const carousel = exampleCarouselByPreset[theme.preset];
   const looks = theme.preset === "studio" ? enabledLooks(theme.tokens) : [];
   const [look, setLook] = useState<LookId | undefined>(looks[0]);
@@ -75,7 +76,7 @@ export function SlideGallery({
             Tipos de slide
           </h2>
           <div className="flex flex-wrap items-center gap-5">
-            {checked === PREVIEW_SLIDES.length &&
+            {checked === slides.length &&
               (failing.length === 0 ? (
                 <Tally state="ready">Todo entra</Tally>
               ) : (
@@ -98,7 +99,7 @@ export function SlideGallery({
           </div>
         </div>
         <ul className="grid grid-cols-2 gap-x-5 gap-y-8 md:grid-cols-3 xl:grid-cols-4">
-          {PREVIEW_SLIDES.map((s) => (
+          {slides.map((s) => (
             <li key={s.type} className="flex min-w-0 flex-col gap-2">
               <span className="plate-text text-ink-faint">{s.label}</span>
               <SlidePreview

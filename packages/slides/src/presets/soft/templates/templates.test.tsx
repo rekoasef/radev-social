@@ -4,7 +4,7 @@ import { exampleDatasets, exampleSlidesByPreset } from "../../../content/example
 import { SLIDE_TYPES, type Slide } from "../../../content/slides";
 import { SlideFrame } from "../../../frame/slide-frame";
 import type { SlideAssets } from "../../../frame/types";
-import { hasTemplate, SlideContent } from "../../../slide-content";
+import { hasTemplate, SlideContent, STUDIO_ONLY_TYPES } from "../../../slide-content";
 import { type BrandTheme, defaultTokens, parseTheme } from "../../registry";
 import { titleSize } from "../parts";
 import { bigNumberSize } from "./big-number";
@@ -31,13 +31,16 @@ const render = (slide: Slide, t: BrandTheme = plain, a: SlideAssets = {}) =>
 
 const count = (html: string, needle: string) => html.split(needle).length - 1;
 
+const TYPES = SLIDE_TYPES.filter((type) => !STUDIO_ONLY_TYPES.includes(type));
+
 describe("soft templates", () => {
-  it("exist for every slide type", () => {
-    for (const type of SLIDE_TYPES) expect(hasTemplate("soft", type), type).toBe(true);
+  it("exist for every slide type but the studio-only ones", () => {
+    for (const type of TYPES) expect(hasTemplate("soft", type), type).toBe(true);
+    for (const type of STUDIO_ONLY_TYPES) expect(hasTemplate("soft", type), type).toBe(false);
   });
 
   it("render every example without emphasis marks, marked for the render QA", () => {
-    for (const type of SLIDE_TYPES) {
+    for (const type of TYPES) {
       const html = render(examples[type]);
       expect(html, type).toContain('data-qa="text"');
       expect(html, type).toContain('data-qa="content"');

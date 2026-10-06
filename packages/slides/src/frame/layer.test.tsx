@@ -4,6 +4,7 @@ import { exampleDatasets, exampleSlidesByPreset } from "../content/examples";
 import { SLIDE_TYPES, type Slide } from "../content/slides";
 import { type BrandTheme, defaultTokens, parseTheme, STYLE_PRESETS } from "../presets/registry";
 import { RenderSlide } from "../render-slide";
+import { hasTemplate } from "../slide-content";
 import type { SlideAssets } from "./types";
 
 const heroId = "0b9f3c2e-4a1d-4c7b-9e2f-1a2b3c4d5e6f";
@@ -32,9 +33,10 @@ describe("movable layers (ADR 0013)", () => {
   for (const preset of STYLE_PRESETS) {
     const t = theme(preset);
     const examples = exampleSlidesByPreset[preset];
+    const types = SLIDE_TYPES.filter((type) => hasTemplate(preset, type));
 
     it(`${preset}: every template has a title and a body layer`, () => {
-      for (const type of SLIDE_TYPES) {
+      for (const type of types) {
         const html = render(t, examples[type]);
         expect(html, type).toContain('data-layer="title"');
         expect(html, type).toContain('data-layer="body"');
@@ -42,7 +44,7 @@ describe("movable layers (ADR 0013)", () => {
     });
 
     it(`${preset}: a slide without adjustments draws nothing moved`, () => {
-      for (const type of SLIDE_TYPES) {
+      for (const type of types) {
         const slide = examples[type];
         const html = render(t, slide);
         expect(html, type).not.toContain("data-moved");

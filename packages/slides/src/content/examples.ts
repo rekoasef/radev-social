@@ -1,5 +1,6 @@
 import type { Carousel } from "./carousel";
 import type { Datasets } from "./datasets";
+import { SAMPLE_SCREENS } from "./screens";
 import type { SlideOf, SlideType } from "./slides";
 
 // Sample content for previews and tests. Texts from docs/references/radev/ where one exists.
@@ -127,6 +128,12 @@ export const exampleSlides: { [T in SlideType]: SlideOf<T> } = {
     caption: "Últimos 30 días.",
     source: "Bluelytics (ejemplo)",
   },
+  screen: {
+    type: "screen",
+    title: "Los pedidos entran *solos* al sistema.",
+    body: "El cliente completa el formulario y el pedido aparece ordenado, con su estado, sin copiar nada a mano.",
+    screens: [SAMPLE_SCREENS.laptop],
+  },
   cta: {
     type: "cta",
     title: "¿Querés ordenar *tus procesos*?",
@@ -244,6 +251,12 @@ const softOverrides: { [T in SlideType]?: SlideOf<T> } = {
         text: "Lo que queda se reparte con un límite por categoría, y te avisa si te pasás.",
       },
     ],
+  },
+  screen: {
+    type: "screen",
+    title: "Anotás el gasto *antes de guardar el ticket*.",
+    body: "Monto, categoría y listo. Lo hacés en la fila del súper, sin abrir ninguna planilla.",
+    screens: [SAMPLE_SCREENS.phone],
   },
   cta: {
     type: "cta",

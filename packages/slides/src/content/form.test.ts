@@ -39,7 +39,7 @@ describe("slide form spec", () => {
       const problems = result.success ? [] : result.error.issues.map((i) => i.message);
       // Empty texts are the only thing to fill in.
       for (const message of problems)
-        expect(message).toMatch(/vacío|dataset|caracteres|minúsculas/i);
+        expect(message).toMatch(/vacío|dataset|caracteres|minúsculas|captura/i);
     },
   );
 

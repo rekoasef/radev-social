@@ -12,16 +12,21 @@
 // --hero: an image (the brand's element, e.g. Lumus' orb) for the looks that take one.
 // --art-dir: a folder with cover-dark.jpg, cover-light.jpg, cta-dark.jpg and cta-light.jpg: the
 //   generated images, for the looks that take them (each gets the one of its background).
+// --screens: a phone and a computer screenshot (phone.jpg,laptop.png) in place of the samples of
+//   the `screen` slides (ADR 0024).
+// --types: only these slide types (e.g. screen), with --set.
 // Prints the QA problems of each slide and exits with 1 when there are any.
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
+import { imageSize } from "image-size";
 import { chromium } from "playwright";
 import { renderToStaticMarkup } from "react-dom/server";
 import { type Carousel, carouselSchema } from "../src/content/carousel";
 import { exampleCarousel, exampleDatasets, exampleSlides } from "../src/content/examples";
 import { extremeSlides } from "../src/content/extremes";
+import { SAMPLE_SCREENS } from "../src/content/screens";
 import { SLIDE_TYPES, type Slide } from "../src/content/slides";
 import { FONT_FAMILIES, fonts } from "../src/fonts/registry";
 import type { SlideAssets } from "../src/frame/types";
@@ -43,17 +48,29 @@ const carousel: Carousel = option("carousel")
   ? carouselSchema.parse(JSON.parse(readFileSync(option("carousel") as string, "utf8")))
   : exampleCarousel;
 const set = option("set");
+const types = option("types")?.split(",") ?? SLIDE_TYPES;
+const setTypes = SLIDE_TYPES.filter((type) => types.includes(type));
 const slides: Slide[] =
   set === "extremes"
-    ? SLIDE_TYPES.map((type) => extremeSlides[type])
+    ? setTypes.map((type) => extremeSlides[type])
     : set === "examples"
-      ? SLIDE_TYPES.map((type) => exampleSlides[type])
+      ? setTypes.map((type) => exampleSlides[type])
       : carousel.slides;
 const heroFile = option("hero");
 const HERO_ID = "00000000-0000-4000-8000-000000000001";
-const assets: SlideAssets = heroFile
-  ? { [HERO_ID]: { url: `file://${resolve(heroFile)}`, width: null, height: null } }
-  : {};
+const screenFiles = option("screens")?.split(",");
+/** A screenshot from disk, with its size (the template picks the device by it). */
+function screenAsset(file: string) {
+  const { width = null, height = null } = imageSize(readFileSync(file));
+  return { url: `file://${resolve(file)}`, width, height };
+}
+const assets: SlideAssets = {
+  ...(heroFile
+    ? { [HERO_ID]: { url: `file://${resolve(heroFile)}`, width: null, height: null } }
+    : {}),
+  ...(screenFiles?.[0] ? { [SAMPLE_SCREENS.phone]: screenAsset(screenFiles[0]) } : {}),
+  ...(screenFiles?.[1] ? { [SAMPLE_SCREENS.laptop]: screenAsset(screenFiles[1]) } : {}),
+};
 const baseTokens = option("tokens")
   ? JSON.parse(readFileSync(option("tokens") as string, "utf8"))
   : {};

@@ -52,6 +52,14 @@ export {
 } from "./content/layout";
 export { limits } from "./content/limits";
 export {
+  SAMPLE_SCREEN_ASSETS,
+  SAMPLE_SCREENS,
+  type ScreenComposition,
+  type ScreenDevice,
+  screenComposition,
+  screenDevice,
+} from "./content/screens";
+export {
   SLIDE_TYPES,
   type Slide,
   type SlideOf,
@@ -139,4 +147,4 @@ export {
 export { resolveLook } from "./presets/studio/looks";
 export { enabledLooks, type StudioTokens, studioTokensSchema } from "./presets/studio/tokens";
 export { RenderSlide, type RenderSlideProps } from "./render-slide";
-export { hasTemplate, SlideContent } from "./slide-content";
+export { hasTemplate, SlideContent, STUDIO_ONLY_TYPES } from "./slide-content";

@@ -128,6 +128,12 @@ Las slides sin referencia (`statement`, `question`, `cta` y las demás) se dise�
 - La IA elige el dataset; los puntos los inyecta el código. Cada dataset (`chartDatasetSchema`) tiene `unit?`, `unitPosition` y 2–60 puntos `{ label≤10, value }`. El render recibe los datasets **congelados en la versión** (`post_versions.datasets`: un render nuevo dibuja los mismos números con los que se escribió el texto); si falta el de `datasetRef`, falla (nunca se dibuja un gráfico sin datos reales). La `source` la pone el código (la del dataset).
 - Números con "." de miles y "," decimal (`formatNumber`, sin `Intl` para no depender del runtime). Sin decimales si todos los valores son enteros o desde 100; nunca más decimales que los que traen los datos (1,4 → "1,4", no "1,40").
 
+**`screen`** — capturas de pantalla del post dentro de un dispositivo (ADR 0024). Solo en `studio`.
+- `title` (≤70) · `body?` (≤140) · `screens`: 1–2 ids de capturas del post (`post_screenshots`), sin repetir
+- El dispositivo sale de la proporción de la captura (`screenDevice`): más alta que 1,15 × su ancho → **celular** al costado del texto; si no → **notebook** debajo del texto (la pantalla va de 16:10 a 4:3 y la captura entra entera, sin recortar). Dos capturas, una de cada → **notebook con el celular adelante**; si son del mismo tipo se muestra la primera.
+- Celular y notebook están dibujados en código (`presets/studio/devices.tsx`), iguales en todos los looks: cuerpo oscuro y un brillo con el `--hl` del look. El dispositivo es la capa `hero` (se mueve y escala en el editor).
+- Ejemplos y galería usan capturas de muestra (`SAMPLE_SCREENS`, pantallas grises dibujadas en SVG); una captura que ya no existe se dibuja como el celular de muestra. `pnpm --filter @radev/slides preview … --screens cel.jpg,pc.png` prueba con capturas reales.
+
 **`cta`** — cierre con llamado a la acción.
 - `title` (≤70) · `subtitle?` (≤120) · `button` (≤50) · `icon?`
 - Si la marca tiene WhatsApp configurado, el `button` refleja esa acción ("Escribime por WhatsApp").

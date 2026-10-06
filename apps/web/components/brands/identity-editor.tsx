@@ -18,7 +18,7 @@ import {
   type IdentityState,
   saveIdentityAction,
 } from "@/app/(panel)/brands/[slug]/identity/actions";
-import { PREVIEW_SLIDES, SlidePreview } from "./slide-preview";
+import { previewSlides, SlidePreview } from "./slide-preview";
 import { type AssetOption, TokenInput } from "./token-inputs";
 
 const idle: IdentityState = { status: "idle" };
@@ -195,7 +195,7 @@ export function IdentityEditor({
               onChange={(event) => setSlide(event.target.value as SlideType)}
               className="console-field"
             >
-              {PREVIEW_SLIDES.map((s) => (
+              {previewSlides(theme.preset).map((s) => (
                 <option key={s.type} value={s.type}>
                   {s.label}
                 </option>
