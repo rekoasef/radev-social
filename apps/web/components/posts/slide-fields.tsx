@@ -1,6 +1,13 @@
 "use client";
 
-import { emptyField, type FieldSpec, parseEmphasis, SlideIcon } from "@radev/slides";
+import {
+  emptyField,
+  type FieldSpec,
+  parseEmphasis,
+  type ScreenDevice,
+  SlideIcon,
+  toggleScreen,
+} from "@radev/slides";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { createContext, useContext, useId } from "react";
 
@@ -238,6 +245,73 @@ function DatasetField({
   );
 }
 
+/** A screenshot of the post a `screen` slide can show (ADR 0024), for the screens field. */
+export type ScreenshotOption = { id: string; url: string; note: string; device: ScreenDevice };
+export const ScreenshotOptions = createContext<readonly ScreenshotOption[]>([]);
+
+const DEVICE_LABELS: Record<ScreenDevice, string> = { phone: "Celular", laptop: "Notebook" };
+
+/** The post's screenshots as toggles: one, or a phone and a laptop together (toggleScreen). */
+function ScreensField({
+  field,
+  value,
+  onChange,
+  error,
+}: {
+  field: Extract<FieldSpec, { kind: "screens" }>;
+  value: Value;
+  onChange: (v: Value) => void;
+  error?: string;
+}) {
+  const options = useContext(ScreenshotOptions);
+  const selected = Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === "string")
+    : [];
+  const deviceOf = (id: string) => options.find((o) => o.id === id)?.device ?? "phone";
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="text-sm text-ink-dim">{field.label}</legend>
+      <p className="text-xs text-ink-faint">
+        Una, o una de celular y una de notebook para mostrarlas juntas.
+      </p>
+      {options.length === 0 ? (
+        <p className="text-sm text-ink-faint">Este post no tiene capturas.</p>
+      ) : (
+        <ul className="flex flex-wrap gap-2">
+          {options.map((option) => {
+            const on = selected.includes(option.id);
+            return (
+              <li key={option.id}>
+                <button
+                  type="button"
+                  aria-pressed={on}
+                  title={option.note}
+                  onClick={() => onChange(toggleScreen(selected, option.id, deviceOf))}
+                  className={`flex w-24 flex-col gap-1 border p-1 text-left ${
+                    on ? "border-ink" : "border-bezel opacity-70 hover:opacity-100"
+                  }`}
+                >
+                  {/* biome-ignore lint/performance/noImgElement: the operator's file, as uploaded */}
+                  <img
+                    src={option.url}
+                    alt={option.note}
+                    className="h-20 w-full object-cover object-top"
+                  />
+                  <span className="text-[11px] text-ink-faint">
+                    {on ? "✓ " : ""}
+                    {DEVICE_LABELS[option.device]}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {error && <p className="text-sm text-tally-red">{error}</p>}
+    </fieldset>
+  );
+}
+
 function move<T>(list: T[], from: number, to: number): T[] {
   const next = [...list];
   const [item] = next.splice(from, 1);
@@ -309,6 +383,16 @@ export function Fields({
           case "dataset":
             return (
               <DatasetField
+                key={key}
+                field={field}
+                value={current}
+                onChange={(v) => set(field.key, v)}
+                error={errors[key]}
+              />
+            );
+          case "screens":
+            return (
+              <ScreensField
                 key={key}
                 field={field}
                 value={current}

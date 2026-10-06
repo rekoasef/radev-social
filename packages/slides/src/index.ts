@@ -58,6 +58,7 @@ export {
   type ScreenDevice,
   screenComposition,
   screenDevice,
+  toggleScreen,
 } from "./content/screens";
 export {
   SLIDE_TYPES,

@@ -1,7 +1,13 @@
 import type { PostArt } from "@radev/core";
 import { availableEvents } from "@radev/core";
-import { getBrandById, getPostByCode, getPostVersion, listPillars } from "@radev/db";
-import { carouselSchema } from "@radev/slides";
+import {
+  getBrandById,
+  getPostByCode,
+  getPostVersion,
+  listPillars,
+  listPostScreenshots,
+} from "@radev/db";
+import { carouselSchema, screenDevice } from "@radev/slides";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,10 +28,11 @@ export default async function EditPostPage({ params }: PageProps<"/posts/[code]/
     getPostVersion(db, post.currentVersionId),
   ]);
   if (!brand || !version) notFound();
-  const [render, pillars, data] = await Promise.all([
+  const [render, pillars, data, screenshots] = await Promise.all([
     brandRenderContext(brand, post.id),
     listPillars(db, brand.id),
     editorData(brand.id, version.datasets),
+    listPostScreenshots(db, post.id),
   ]);
   const content = carouselSchema.safeParse(version.content);
   const editable = availableEvents(post.status).includes("edit");
@@ -61,6 +68,12 @@ export default async function EditPostPage({ params }: PageProps<"/posts/[code]/
           seed={post.id}
           data={data}
           art={editorArt(version.art)}
+          screenshots={screenshots.map((shot) => ({
+            id: shot.id,
+            url: mediaUrl(shot.path),
+            note: shot.note,
+            device: screenDevice(shot),
+          }))}
         />
       )}
     </section>

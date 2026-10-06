@@ -29,7 +29,14 @@ import { type SaveCarouselState, saveCarouselAction } from "@/app/(panel)/posts/
 import { SlidePreview } from "@/components/brands/slide-preview";
 import { HOOK_LABELS } from "@/lib/hooks";
 import { LayerEditor, LayerToolbar, useLayerSelection } from "./layer-editor";
-import { type DatasetOption, DatasetOptions, Fields, ICON_LIST_ID } from "./slide-fields";
+import {
+  type DatasetOption,
+  DatasetOptions,
+  Fields,
+  ICON_LIST_ID,
+  type ScreenshotOption,
+  ScreenshotOptions,
+} from "./slide-fields";
 import { SlideRewrite } from "./slide-rewrite";
 
 const idle: SaveCarouselState = { status: "idle" };
@@ -95,6 +102,7 @@ export function CarouselEditor({
   data,
   seed = "preview",
   art,
+  screenshots = [],
 }: {
   brand: { id: string; slug: string; name: string };
   theme: BrandTheme;
@@ -109,6 +117,8 @@ export function CarouselEditor({
   seed?: string;
   /** The images of the version being edited, when it has them. */
   art?: EditorArt;
+  /** The post's screenshots (ADR 0024): `screen` slides pick among them. */
+  screenshots?: readonly ScreenshotOption[];
 }) {
   const draftKey = `radev-social:draft:${brand.slug}:${post?.code ?? "new"}`;
   const [carousel, setCarousel] = useState<Carousel>(initial);
@@ -178,9 +188,11 @@ export function CarouselEditor({
     setSlides(slides.map((s, i) => (i === index ? next : s)));
   };
   const datasets = data?.datasets ?? {};
-  // `screen` needs the post's screenshots: the editor offers it from T6 of ADR 0024 on.
+  // A chart needs the brand's data; a screen, the post's screenshots (studio only, ADR 0024).
   const middleTypes = EDITOR_MIDDLE_TYPES.filter(
-    (t) => t !== "screen" && (t !== "chart" || (data?.options.length ?? 0) > 0),
+    (t) =>
+      (t !== "chart" || (data?.options.length ?? 0) > 0) &&
+      (t !== "screen" || (theme.preset === "studio" && screenshots.length > 0)),
   );
   // A chart with no data yet can't be drawn: the preview says so instead.
   const drawable = slide.type !== "chart" || Boolean(datasets[slide.datasetRef]);
@@ -473,7 +485,11 @@ export function CarouselEditor({
                 className="console-button"
                 onClick={() => {
                   const at = slides.length - 1;
-                  setSlides([...slides.slice(0, at), emptySlide(newType), ...slides.slice(at)]);
+                  const added = emptySlide(newType);
+                  // A new screen starts with the first screenshot: it can't go without one.
+                  if (added.type === "screen" && screenshots[0])
+                    added.screens = [screenshots[0].id];
+                  setSlides([...slides.slice(0, at), added, ...slides.slice(at)]);
                   setSelected(at);
                 }}
               >
@@ -542,16 +558,18 @@ export function CarouselEditor({
         {errors[`slides.${index}`] && (
           <p className="text-sm text-tally-red">{errors[`slides.${index}`]}</p>
         )}
-        <DatasetOptions value={data?.options ?? []}>
-          <Fields
-            fields={SLIDE_FIELDS[slide.type]}
-            value={slide as unknown as Record<string, unknown>}
-            onChange={updateSlide}
-            errors={errors}
-            path={["slides", String(index)]}
-            icons={ICONS}
-          />
-        </DatasetOptions>
+        <ScreenshotOptions value={screenshots}>
+          <DatasetOptions value={data?.options ?? []}>
+            <Fields
+              fields={SLIDE_FIELDS[slide.type]}
+              value={slide as unknown as Record<string, unknown>}
+              onChange={updateSlide}
+              errors={errors}
+              path={["slides", String(index)]}
+              icons={ICONS}
+            />
+          </DatasetOptions>
+        </ScreenshotOptions>
         {slide.type === "bigNumber" && data && data.figures.length > 0 && (
           <div className="flex flex-col gap-2 rounded-md border border-bezel p-3">
             <p className="text-sm text-ink">Cifras del día</p>

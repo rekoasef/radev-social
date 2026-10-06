@@ -81,3 +81,20 @@ export const SAMPLE_SCREEN_ASSETS: SlideAssets = {
   [SAMPLE_SCREENS.phone]: { url: sampleScreen(738, 1600, true), width: 738, height: 1600 },
   [SAMPLE_SCREENS.laptop]: { url: sampleScreen(1440, 900, false), width: 1440, height: 900 },
 };
+
+/**
+ * The editor's pick of a `screen` slide after tapping a screenshot: tapping a chosen one takes it
+ * out (never the last), one of the same device replaces it, and one of the other device joins it.
+ * Whatever the taps, the result stays valid: one screenshot, or a phone and a laptop.
+ */
+export function toggleScreen(
+  selected: readonly string[],
+  id: string,
+  deviceOf: (id: string) => ScreenDevice,
+): string[] {
+  if (selected.includes(id)) {
+    return selected.length > 1 ? selected.filter((other) => other !== id) : [...selected];
+  }
+  const device = deviceOf(id);
+  return [...selected.filter((other) => deviceOf(other) !== device), id].slice(-2);
+}

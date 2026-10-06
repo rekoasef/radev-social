@@ -19,6 +19,7 @@ import {
   getPostVersion,
   getSocialAccount,
   listPillars,
+  listPostScreenshots,
   markPublishedManually,
   type PreparedScreenshot,
   prepareScreenshots,
@@ -103,6 +104,16 @@ export async function saveCarouselAction(
   const post = code ? await getPostByCode(db, code) : undefined;
   if (code && (!post || post.brandId !== brand.id))
     return { status: "error", message: "Ese post ya no existe." };
+
+  // A screen shows the post's own screenshots (ADR 0024): a new post has none.
+  const shotIds = new Set((post ? await listPostScreenshots(db, post.id) : []).map((s) => s.id));
+  const foreign: Record<string, string> = {};
+  carousel.data.slides.forEach((slide, index) => {
+    if (slide.type === "screen" && slide.screens.some((id) => !shotIds.has(id)))
+      foreign[`slides.${index}.screens`] = "Elegí capturas de este post.";
+  });
+  if (Object.keys(foreign).length > 0)
+    return { status: "error", message: "Hay campos para corregir.", fields: foreign };
 
   // Charts freeze their points with the version: the ones already in the post keep theirs, a
   // new one takes the brand's data of today (phase 3, T11).
