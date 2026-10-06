@@ -50,7 +50,7 @@ Pedido del operador: que las imágenes generadas (ADR 0016) sean "mucho mejores"
 - **Prompt con dirección de arte** (en `scratchpad`, sin probar todavía): "editorial still-life photograph", lente macro, objeto grande (~2/3 del cuadro), material y textura, luz de borde con el acento, fondo puro sin piso ni humo, tono de campaña premium.
 - **Layout**: que los looks con imagen la muestren más grande en portada y cierre.
 
-**Experimento a medias**: comparar schnell vs klein 4B × prompt actual vs dirigido sobre los 3 temas de producción. Salieron solo 2 imágenes de klein con el prompt actual; las de schnell fallaron porque el script le mandaba `width`/`height` (schnell no los acepta: solo `prompt` y `steps`). Retomar: arreglar el script, generar las 12, mirarlas con el operador y decidir modelo, prompt y tamaño en la slide (con ADR si cambia el modelo).
+**Experimento a medias**: comparar schnell vs klein 4B × prompt actual vs dirigido sobre los 3 temas de producción. Salieron solo 2 imágenes de klein con el prompt actual; las de schnell fallaron porque el script le mandaba `width`/`height` (schnell no los acepta: solo `prompt` y `steps`). Script: `packages/ai/.scratch/compare-images.mjs` (solo en la notebook, ignorado por git; uso: `node packages/ai/.scratch/compare-images.mjs <carpeta>` con las claves de Cloudflare del `.env` cargadas). Retomar: arreglar el script (sacar `width`/`height` de schnell; subir el tiempo de espera de klein), generar las 12, mirarlas con el operador y decidir modelo, prompt y tamaño en la slide (con ADR si cambia el modelo).
 
 ## Mejora — capturas al generar (2026-10-06, ADR 0024)
 
