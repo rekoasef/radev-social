@@ -1,6 +1,6 @@
 # 0016 — Imágenes generadas con IA en portada y cierre
 
-**Estado:** aceptada · 2026-09-29 · amplía 0004 y 0015
+**Estado:** aceptada · 2026-09-29 · amplía 0004 y 0015 · modelo y prompt cambiados por 0025
 
 **Contexto.** Con los looks (0015) cada post cambió de diseño, pero el operador quería además ese "toque" de imagen única por post, como cuando ChatGPT genera imágenes. 0004 descartó generar las slides como imágenes: el texto sale mal en español, la identidad no es estable y hay costo. Una prueba de calidad con Cloudflare Workers AI (FLUX.1 schnell) dio buenos resultados con objetos simbólicos sobre fondo liso (una esfera agrietada, un candado, una cerradura), a unos 3 segundos por imagen y dentro de un cupo gratuito diario. También mostró el riesgo: el modelo a veces ignora el fondo pedido (un escudo sobre blanco para un look oscuro).
 

@@ -100,7 +100,8 @@ export const QUEUE_OPTIONS = {
   // Like a carousel, shorter: one slide. The operator is waiting in the editor.
   [JOBS.slideRewrite]: { retryLimit: 1, retryDelay: 30, expireInSeconds: 10 * 60 },
   // Never retried: the job settles every failure itself (the post renders without images).
-  [JOBS.artGenerate]: { retryLimit: 0, expireInSeconds: 5 * 60 },
+  // Room for the worst case: 2 images × 2 tries × the 90 s timeout of FLUX.2 klein.
+  [JOBS.artGenerate]: { retryLimit: 0, expireInSeconds: 8 * 60 },
   // A run can take a while: claude -p up to 5 min, the fallback up to 2, and one more try when
   // the answer comes malformed. Provider errors worth retrying get 2 more attempts from 1 min.
   [JOBS.carouselGenerate]: {

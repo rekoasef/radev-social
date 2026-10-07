@@ -24,7 +24,7 @@ describe("createCloudflareImageProvider", () => {
     expect(createCloudflareImageProvider({ env: { CLOUDFLARE_ACCOUNT_ID: "a" } })).toBeNull();
   });
 
-  it("asks FLUX.1 schnell with the token in the header and returns the image", async () => {
+  it("asks FLUX.2 klein with the token in the header and returns the image", async () => {
     const png = Buffer.from("fake-jpeg");
     const { impl, calls } = fakeFetch(200, {
       success: true,
@@ -41,8 +41,13 @@ describe("createCloudflareImageProvider", () => {
     expect((call?.init.headers as Record<string, string> | undefined)?.Authorization).toBe(
       "Bearer cf-secret-token",
     );
-    // Only what FLUX.1 schnell takes: it rejects any other property (a seed, for instance).
-    expect(JSON.parse(String(call?.init.body))).toEqual({ prompt: "a padlock", steps: 8 });
+    // FLUX.2 takes multipart form data: the prompt and a square image.
+    const form = call?.init.body as FormData;
+    expect(Object.fromEntries(form.entries())).toEqual({
+      prompt: "a padlock",
+      width: "1024",
+      height: "1024",
+    });
   });
 
   it("maps failures without leaking the token", async () => {
@@ -85,21 +90,23 @@ describe("classifyCloudflareError", () => {
 
 describe("artPrompt", () => {
   it("always adds the rules, the look's background and the brand's accent", () => {
-    const prompt = artPrompt("  A cracked black ceramic sphere  ", {
+    const prompt = artPrompt("  A cracked black   ceramic sphere  ", {
       background: "dark",
-      accent: "#FF7A00",
+      accent: "#ff7a00",
     });
-    expect(prompt.startsWith("A cracked black ceramic sphere")).toBe(true);
+    expect(prompt.startsWith("Subject: A cracked black ceramic sphere Editorial")).toBe(true);
+    expect(prompt).toContain("entirely visible");
     expect(prompt).toContain("no people");
     expect(prompt).toContain("No text");
     expect(prompt).toContain("pure black background");
-    expect(prompt).toContain("in orange");
+    expect(prompt).toContain("saturated orange (#FF7A00)");
+    expect(prompt).toContain("orange rim light");
     expect(artPrompt("x", { background: "light", accent: "#FF7A00" })).toContain(
       "pure white background",
     );
-    expect(artPrompt("x", { background: "dark", accent: "#FF7A00", monochrome: true })).toContain(
-      "Black and white only",
-    );
+    const mono = artPrompt("x", { background: "dark", accent: "#FF7A00", monochrome: true });
+    expect(mono).toContain("Black and white only");
+    expect(mono).not.toContain("orange");
   });
 
   it("names the accent roughly", () => {

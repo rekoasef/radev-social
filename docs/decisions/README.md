@@ -28,3 +28,4 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0022 | Sin página de links: el perfil lleva directo al sitio de la marca | aceptada |
 | 0023 | El cierre de los posts puede mandar al sitio web de la marca | aceptada |
 | 0024 | Capturas de pantalla en los carruseles generados | aceptada |
+| 0025 | Imágenes con FLUX.2 klein 4B y prompt de foto editorial | aceptada |

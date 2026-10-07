@@ -106,9 +106,9 @@ describe("art.generate", () => {
     expect(db.saved?.images.cover?.path).toBe("radev/post-1/v-1/art/cover.jpg");
     expect(db.files.get("radev/post-1/v-1/art/cta.jpg")?.toString()).toBe("dark-cta");
     // The subject plus the fixed rules, the look's background and the brand's accent.
-    expect(prompts[0]).toMatch(/^A cracked black ceramic sphere/);
+    expect(prompts[0]).toMatch(/^Subject: A cracked black ceramic sphere/);
     expect(prompts[0]).toContain("pure black background");
-    expect(prompts[0]).toContain("in orange");
+    expect(prompts[0]).toContain("saturated orange");
     expect(queueRender).toHaveBeenCalledWith("v-1");
   });
 

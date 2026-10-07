@@ -1,7 +1,7 @@
-// The prompt of a post's image (ADR 0016). The AI only describes the subject; the rules that make
-// it usable are always added here, whatever it wrote: one object, the background the look needs
-// (it is blended into the slide), the brand's accent as the light, and nothing that could be
-// read as text or a person (docs/DESIGN-SYSTEM.md §1: no people, no photos of people).
+// The prompt of a post's image (ADR 0016, 0025). The AI only describes the subject; the rules that
+// make it usable are always added here, whatever it wrote: the photographic direction, the
+// background the look needs (it is blended into the slide), the brand's accent as the dominant
+// color, and nothing that could be read as text or a person (docs/DESIGN-SYSTEM.md §1).
 
 export type ArtBackground = "dark" | "light";
 
@@ -40,19 +40,33 @@ export function colorName(hex: string): string {
   return light > 0.75 ? `pale ${name}` : name;
 }
 
+// An editorial still life (ADR 0025): the object big and real, with material detail, so it reads
+// on a phone instead of a small cheap 3D render lost in the slide. The accent is the dominant
+// color of the image, or the brand disappears from it.
+const PHOTO =
+  "Editorial still-life photograph, shot on a 100mm macro lens at f/8: the object large in frame (about two thirds of the image) but entirely visible with a clear margin on every side, centered, crisp focus on real material detail (surface texture, reflections, refraction, tiny imperfections).";
+
 const RULES =
-  "Single centered object, minimal premium product render, generous negative space around it, soft cinematic studio lighting, high detail. No text, no letters, no numbers, no logos, no watermark, no people, no faces, no hands, no frame, no border.";
+  "Restrained, premium, quiet mood like a luxury brand campaign. No text, no letters, no numbers, no logos, no watermark, no people, no faces, no hands, no frame, no border.";
 
 export function artPrompt(
   subject: string,
   options: { background: ArtBackground; accent: string; monochrome?: boolean },
 ): string {
+  const color = `${colorName(options.accent)} (${options.accent.trim().toUpperCase()})`;
+  const palette = options.monochrome
+    ? "Black and white only, no color at all: the object in shades of grey."
+    : `Color palette: the object itself is tinted in saturated ${color} or glows ${colorName(options.accent)} from within; it is the dominant color of the image, everything else is neutral.`;
+  const accentLight = options.monochrome ? "white" : colorName(options.accent);
   const background =
     options.background === "dark"
-      ? "Plain pure black background (#000000) filling the whole image, nothing else behind the object."
-      : "Plain pure white background (#ffffff) filling the whole image, nothing else behind the object.";
-  const light = options.monochrome
-    ? "Black and white only, no color at all."
-    : `Accent light and highlights in ${colorName(options.accent)}.`;
-  return [subject.trim().replace(/\s+/g, " "), RULES, light, background].join(" ");
+      ? `Low-key lighting: a single soft key light from above and a strong ${accentLight} rim light tracing the edges. Plain pure black background (#000000) filling the whole image, with no floor, no horizon, no smoke, nothing else behind the object.`
+      : `High-key lighting: soft diffused daylight${options.monochrome ? "" : ` with ${accentLight} reflections on the object`}. Plain pure white background (#ffffff) filling the whole image, with no floor line, no props, nothing else behind the object; only a faint contact shadow.`;
+  return [
+    `Subject: ${subject.trim().replace(/\s+/g, " ")}`,
+    PHOTO,
+    palette,
+    background,
+    RULES,
+  ].join(" ");
 }

@@ -1,19 +1,18 @@
 import { type AIError, providerError, rateLimited } from "../errors";
 
-// Image generation with Cloudflare Workers AI (ADR 0016): FLUX.1 schnell, inside the free daily
-// allocation (10,000 neurons; ~96 per 1024×1024 image at 8 steps). Only the worker calls it
-// (rule 5). The token goes in a header and nowhere else: never in logs or error messages.
+// Image generation with Cloudflare Workers AI (ADR 0016, model from ADR 0025): FLUX.2 klein 4B,
+// inside the free daily allocation (10,000 neurons; ~105 per 1024×1024 image). It takes 15–30 s
+// per image. Only the worker calls it (rule 5). The token goes in a header and nowhere else: never
+// in logs or error messages.
 
-export const CLOUDFLARE_IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
-export const DEFAULT_IMAGE_STEPS = 8;
-export const DEFAULT_IMAGE_TIMEOUT_MS = 60_000;
-/** FLUX.1 schnell's cap on the prompt. */
+export const CLOUDFLARE_IMAGE_MODEL = "@cf/black-forest-labs/flux-2-klein-4b";
+export const IMAGE_SIZE = 1024;
+export const DEFAULT_IMAGE_TIMEOUT_MS = 90_000;
+/** Cap on the prompt (ours stay well under it). */
 export const MAX_IMAGE_PROMPT = 2048;
 
 export type ImageRequest = {
   prompt: string;
-  /** 1–8; more is more detail. FLUX.1 schnell takes no seed: each call is a new image. */
-  steps?: number;
   signal?: AbortSignal;
 };
 
@@ -84,18 +83,17 @@ export function createCloudflareImageProvider(
       const startedAt = Date.now();
       const timeout = AbortSignal.timeout(timeoutMs);
       const signal = request.signal ? AbortSignal.any([request.signal, timeout]) : timeout;
+      // FLUX.2 models take multipart form data, not JSON.
+      const form = new FormData();
+      form.append("prompt", request.prompt.slice(0, MAX_IMAGE_PROMPT));
+      form.append("width", String(IMAGE_SIZE));
+      form.append("height", String(IMAGE_SIZE));
       let response: Response;
       try {
         response = await doFetch(url, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${credentials.token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            prompt: request.prompt.slice(0, MAX_IMAGE_PROMPT),
-            steps: request.steps ?? DEFAULT_IMAGE_STEPS,
-          }),
+          headers: { Authorization: `Bearer ${credentials.token}` },
+          body: form,
           signal,
         });
       } catch (error) {
