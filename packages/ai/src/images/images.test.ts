@@ -111,7 +111,9 @@ describe("artPrompt", () => {
 
   it("names the accent roughly", () => {
     expect(colorName("#FF7A00")).toBe("orange");
-    expect(colorName("#BDB4FF")).toBe("pale blue");
+    expect(colorName("#BDB4FF")).toBe("pale violet");
+    expect(colorName("#6E5CE8")).toBe("violet");
+    expect(colorName("#2563EB")).toBe("blue");
     expect(colorName("#7C3AED")).toBe("violet");
     expect(colorName("#0B0B0B")).toBe("black");
     expect(colorName("nope")).toBe("warm");

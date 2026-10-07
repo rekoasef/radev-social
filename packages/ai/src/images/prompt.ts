@@ -31,7 +31,7 @@ export function colorName(hex: string): string {
     [65, "yellow"],
     [160, "green"],
     [200, "cyan"],
-    [250, "blue"],
+    [245, "blue"],
     [290, "violet"],
     [335, "magenta"],
     [360, "red"],

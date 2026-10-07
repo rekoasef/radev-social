@@ -144,13 +144,20 @@ function artGuide(looks: readonly LookId[]): string {
 ## Imagen (solo ${withArt.map((id) => `\`${id}\``).join(", ")})
 
 Si elegís uno de estos looks, el post lleva dos imágenes generadas: una en la portada y otra en el
-cierre. En \`art\` describí **un objeto** para cada una, **en inglés**, en una o dos frases: qué es,
-de qué material, qué le pasa. Que sea una metáfora visual del tema, no una ilustración literal, y
-que la del cierre se sienta como el desenlace de la de la portada. El estilo, la luz, el color y
-el fondo los agrega el código: no los describas.
+cierre. Salen como **fotos de producto**: un objeto real, grande, con su material bien visible. En
+\`art\` describí **un objeto** para cada una, **en inglés**, en una o dos frases: qué es, de qué
+material, en qué estado está o qué le pasa. Que sea una metáfora visual del tema, no una
+ilustración literal, y que la del cierre se sienta como el desenlace de la de la portada. El
+estilo, la luz, el color y el fondo los agrega el código: no los describas.
 
-- Bien: "A cracked black ceramic sphere leaking warm light through the cracks" / "The same sphere, mended with seams of gold".
-- Nunca personas, caras ni manos, ni cosas con texto (carteles, pantallas, libros, cuadernos, gráficos): el modelo inventa letras.
+- **Objetos concretos y cotidianos**, de los que se pueden tocar: herramientas, cerraduras, llaves, relojes, engranajes, cables, enchufes, lámparas, tazas, sillas, plantas, frutas, piedras, cuerdas, nudos, sobres cerrados, piezas de máquinas, juguetes.
+- **Variá el material**: madera, cerámica, metal oxidado o pulido, papel plegado, tela, cuero, hormigón, goma, cera, hielo. No todo es vidrio.
+- **Evitá lo gastado**: esferas, orbes, burbujas, cristales, fragmentos flotando, cubos que brillan, objetos "de tecnología" genéricos y monedas para hablar de plata. Si se te ocurre uno de esos, buscá otro.
+- El estado cuenta la historia: roto, gastado, a medio armar, atado, desbordado, en equilibrio, recién reparado.
+- **Solo el objeto**, entero, sobre un fondo liso: sin mesa, estante, piso ni escenario debajo, y nada que cuelgue o entre desde fuera del cuadro (cuerdas, cables o cadenas que se cortan en el borde). La imagen se funde con la slide por los bordes.
+- Bien: "A brass padlock clamped shut around a tangle of frayed rope" / "The same rope, untangled and neatly coiled, the open padlock resting on top".
+- Bien: "A tall stack of mismatched ceramic cups leaning dangerously to one side" / "The same cups, sorted into three neat, steady stacks".
+- Nunca personas, caras ni manos, ni cosas con texto (carteles, pantallas, libros, cuadernos, gráficos, etiquetas): el modelo inventa letras.
 - Con los demás looks no escribas \`art\`.
 `;
 }
