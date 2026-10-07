@@ -61,11 +61,12 @@ export function lookContext(props: StudioSlideProps): LookContext {
  */
 function ArtLayer({ ctx, slide }: { ctx: LookContext; slide: Slide }) {
   if (!ctx.art) return null;
-  // A generated object fills about half of its square: the image runs big and fades out. The
-  // brand's element is a cut-out already: drawn as it is, at the size of soft's hero.
+  // A generated object fills about two thirds of its square on a clean background (ADR 0025):
+  // the image runs big and only its edges fade. The brand's element is a cut-out already: drawn
+  // as it is, at the size of soft's hero.
   const brand = ctx.art.brand === true;
-  const size = brand ? (ctx.type === "cover" ? 420 : 280) : ctx.type === "cover" ? 760 : 520;
-  const top = brand ? (ctx.type === "cover" ? 190 : 170) : ctx.type === "cover" ? 20 : 60;
+  const size = brand ? (ctx.type === "cover" ? 420 : 280) : ctx.type === "cover" ? 760 : 600;
+  const top = brand ? (ctx.type === "cover" ? 190 : 170) : ctx.type === "cover" ? 20 : 40;
   const light = ctx.art.background === "light";
   return (
     <Layer
@@ -96,8 +97,8 @@ function ArtLayer({ ctx, slide }: { ctx: LookContext; slide: Slide }) {
             ]
               .filter(Boolean)
               .join(" ") || undefined,
-          WebkitMaskImage: brand ? undefined : "radial-gradient(circle, #000 34%, transparent 58%)",
-          maskImage: brand ? undefined : "radial-gradient(circle, #000 34%, transparent 58%)",
+          WebkitMaskImage: brand ? undefined : "radial-gradient(circle, #000 46%, transparent 66%)",
+          maskImage: brand ? undefined : "radial-gradient(circle, #000 46%, transparent 66%)",
         }}
       />
     </Layer>
