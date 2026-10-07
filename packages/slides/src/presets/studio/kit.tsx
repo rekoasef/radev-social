@@ -6,6 +6,7 @@ import type { Rect } from "../../frame/geometry";
 import type { SlideAssets } from "../../frame/types";
 import { fitTextSize, type GlyphWidths } from "../shared/fit";
 import type { LookId } from "./look-ids";
+import type { Surface } from "./surfaces";
 import type { StudioTokens } from "./tokens";
 
 // The engine of the `studio` preset (docs/DESIGN-SYSTEM.md §10). A look is a small kit: which
@@ -13,8 +14,7 @@ import type { StudioTokens } from "./tokens";
 // (panel, list, button) the shared templates are built from. Templates know the structure of a
 // slide type; looks know how things look. Adding a look never touches the templates.
 
-/** Every slide is painted on one of these; the frame turns it into CSS variables. */
-export type Surface = "ink" | "paper" | "accent";
+export type { Surface } from "./surfaces";
 
 /**
  * Where templates lay out their content: inside the safe area, between the look's header and

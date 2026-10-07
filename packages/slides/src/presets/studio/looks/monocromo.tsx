@@ -1,6 +1,6 @@
 import { SlideIcon } from "../../../icons";
 import { type Look, onSurface, pageLabel, RichText } from "../kit";
-import { rhythm } from "./common";
+import { ART_LOOK_SURFACES } from "../surfaces";
 
 // `monocromo`: extreme minimalism. Black and white only (no accent), one idea per slide, centered
 // giant type, an underline for emphasis and almost nothing else.
@@ -8,7 +8,7 @@ import { rhythm } from "./common";
 export const monocromo: Look = {
   id: "monocromo",
   title: { weight: 800, caps: false, tracking: -0.05, lineHeight: 0.98 },
-  surface: rhythm("ink", ["paper", "ink"], "paper"),
+  surface: ART_LOOK_SURFACES.monocromo,
   vars: () => ({ "--hl": "var(--fg)" }) as Record<string, string>,
   Header: () => null,
   Footer: (ctx) => (

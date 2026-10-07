@@ -3,13 +3,17 @@
 import {
   type BrandTheme,
   type Carousel,
+  COMPOSITION_LABELS,
+  COMPOSITIONS,
   carouselSchema,
+  compositionOf,
   type Datasets,
   EDITOR_MIDDLE_TYPES,
   emptySlide,
   enabledLooks,
   exampleCarouselByPreset,
   HOOK_TYPES,
+  hasCompositions,
   ICON_NAMES,
   LOOK_NAMES,
   type LookId,
@@ -48,13 +52,13 @@ export type EditorPillar = { key: string; name: string };
 export type EditorArt = {
   status: string;
   note?: string;
-  urls: { cover?: string; cta?: string };
+  urls: { cover?: string; cta?: string; middle?: string };
 };
 
 const ART_STATUS_LABELS: Record<string, string> = {
   pending: "Generándose…",
   ready: "Lista",
-  partial: "Solo una de las dos",
+  partial: "Solo algunas",
   skipped: "Sin imagen",
   failed: "No se pudo generar",
 };
@@ -160,10 +164,27 @@ export function CarouselEditor({
   const brandElementAlways =
     theme.preset === "studio" && theme.tokens.heroAlways && Boolean(theme.tokens.heroAsset);
   const takesArt = lookTakesArt(look) && !brandElementAlways;
-  const artUnchanged =
-    look === (initial.look ?? look) && JSON.stringify(carousel.art) === JSON.stringify(initial.art);
+  // What the images depend on: their descriptions, and which slides are scenes (ADR 0026).
+  const artShape = (c: Carousel) =>
+    JSON.stringify([c.art, ...[c.slides[0], c.slides.at(-1)].map((s) => s && compositionOf(s))]);
+  const artUnchanged = look === (initial.look ?? look) && artShape(carousel) === artShape(initial);
   const previewArt = takesArt && artUnchanged && !freshArt ? art?.urls : undefined;
   const setArt = (next: Carousel["art"]) => setCarousel((c) => ({ ...c, art: next }));
+  // ADR 0026: a `bleed` cover or close asks for a scene; a `photo` statement, a third image.
+  const bleed = (s: Slide | undefined) =>
+    s !== undefined && "composition" in s && s.composition === "bleed";
+  const hasPhoto = carousel.slides.some((s) => s.type === "statement" && s.composition === "photo");
+  const artSlots = [
+    {
+      slot: "cover" as const,
+      label: bleed(carousel.slides[0]) ? "Escena de la portada" : "Objeto de la portada",
+    },
+    {
+      slot: "cta" as const,
+      label: bleed(carousel.slides.at(-1)) ? "Escena del cierre" : "Objeto del cierre",
+    },
+    ...(hasPhoto ? [{ slot: "middle" as const, label: "Objeto de la foto (afirmación)" }] : []),
+  ];
   const check = useMemo(() => carouselSchema.safeParse(carousel), [carousel]);
   const errors: Record<string, string> = {};
   if (!check.success) {
@@ -321,9 +342,7 @@ export function CarouselEditor({
         )}
         {takesArt && (
           <fieldset className="flex flex-col gap-3 rounded-md border border-bezel p-4">
-            <legend className="px-1 text-sm text-ink-dim">
-              Imagen de portada y cierre (generada con IA)
-            </legend>
+            <legend className="px-1 text-sm text-ink-dim">Imágenes generadas con IA</legend>
             {art && artUnchanged && (
               <p className="text-sm text-ink-dim">
                 Estado: {ART_STATUS_LABELS[art.status] ?? art.status}
@@ -332,10 +351,10 @@ export function CarouselEditor({
             )}
             {carousel.art ? (
               <>
-                {(["cover", "cta"] as const).map((slot) => (
+                {artSlots.map(({ slot, label }) => (
                   <label key={slot} className="flex flex-col gap-1.5 text-sm text-ink-dim">
                     <span className="flex justify-between">
-                      {slot === "cover" ? "Objeto de la portada" : "Objeto del cierre"} (en inglés)
+                      {label} (en inglés)
                       <span className="timecode text-xs text-ink-faint">
                         {[...(carousel.art?.[slot] ?? "")].length}/{limits.carousel.artSubject.max}
                       </span>
@@ -347,6 +366,7 @@ export function CarouselEditor({
                         setArt({
                           cover: carousel.art?.cover ?? "",
                           cta: carousel.art?.cta ?? "",
+                          ...(hasPhoto && { middle: carousel.art?.middle ?? "" }),
                           [slot]: e.target.value,
                         })
                       }
@@ -359,8 +379,9 @@ export function CarouselEditor({
                   </label>
                 ))}
                 <p className="text-xs text-ink-faint">
-                  Un objeto, sin personas ni cosas con texto. El estilo, la luz y el fondo los pone
-                  el sistema. Si cambiás la descripción, la imagen se genera de nuevo al guardar.
+                  Un objeto (o un lugar, en una escena), sin personas ni cosas con texto. El estilo,
+                  la luz y el fondo los pone el sistema. Si cambiás la descripción, la imagen se
+                  genera de nuevo al guardar.
                 </p>
                 <div className="flex flex-wrap items-center gap-4">
                   <label className="flex items-center gap-2 text-sm text-ink-dim">
@@ -387,7 +408,7 @@ export function CarouselEditor({
                 <button
                   type="button"
                   className="underline underline-offset-2"
-                  onClick={() => setArt({ cover: "", cta: "" })}
+                  onClick={() => setArt({ cover: "", cta: "", ...(hasPhoto && { middle: "" }) })}
                 >
                   Agregar imagen
                 </button>
@@ -557,6 +578,25 @@ export function CarouselEditor({
         </div>
         {errors[`slides.${index}`] && (
           <p className="text-sm text-tally-red">{errors[`slides.${index}`]}</p>
+        )}
+        {look && hasCompositions(slide.type) && (
+          <label className="flex flex-col gap-1.5 text-sm text-ink-dim">
+            Composición
+            <select
+              value={("composition" in slide && slide.composition) || COMPOSITIONS[slide.type][0]}
+              onChange={(e) => updateSlide({ ...slide, composition: e.target.value })}
+              className="console-field"
+            >
+              {COMPOSITIONS[slide.type].map((id) => (
+                <option key={id} value={id}>
+                  {COMPOSITION_LABELS[id]}
+                  {(id === "bleed" || id === "photo") && !takesArt
+                    ? " (sin imagen en este look)"
+                    : ""}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
         <ScreenshotOptions value={screenshots}>
           <DatasetOptions value={data?.options ?? []}>

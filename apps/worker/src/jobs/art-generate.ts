@@ -1,7 +1,6 @@
-import { artPrompt, type ImageProvider } from "@radev/ai";
+import { artPrompt, type ImageProvider, scenePrompt } from "@radev/ai";
 import {
   ART_DAILY_CAP,
-  ART_SLOTS,
   type ArtGenerateJob,
   type ArtImage,
   type ArtSlot,
@@ -18,7 +17,7 @@ import {
   setVersionArt,
   writeMediaFile,
 } from "@radev/db";
-import { brandMakesArt, isLookId, LOOK_ART, parseTheme } from "@radev/slides/generation";
+import { artSlotsOf, brandMakesArt, isLookId, parseTheme } from "@radev/slides/generation";
 import type { Logger } from "../logger";
 
 // art.generate (ADR 0016): the images of a version's cover and close, between the writing and
@@ -30,6 +29,11 @@ import type { Logger } from "../logger";
 /** Tries per image: a second one when the background came out wrong or the call failed. */
 const TRIES = 2;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SLOT_NAMES: Record<ArtSlot, string> = {
+  cover: "Portada",
+  cta: "Cierre",
+  middle: "Imagen del medio",
+};
 
 export type ArtDeps = {
   db: Database;
@@ -66,12 +70,23 @@ export async function generateArt(
 
   try {
     const brand = await getBrandById(db, post.brandId);
-    const content = version.content as { look?: unknown; art?: Partial<Record<ArtSlot, string>> };
+    const content = version.content as {
+      look?: unknown;
+      art?: Partial<Record<ArtSlot, string>>;
+      slides?: { type: string; composition?: string }[];
+    };
     const look =
       typeof content.look === "string" && isLookId(content.look) ? content.look : undefined;
-    const spec = look ? LOOK_ART[look] : undefined;
+    // The images the carousel asks for (ADR 0026): background, scene or object, monochrome.
+    const slots = look ? artSlotsOf(look, content.slides ?? []) : [];
     const theme = brand ? parseTheme(brand.stylePreset, brand.themeTokens) : undefined;
-    if (!brand || !spec || !content.art || !theme?.ok || theme.theme.preset !== "studio") {
+    if (
+      !brand ||
+      slots.length === 0 ||
+      !content.art ||
+      !theme?.ok ||
+      theme.theme.preset !== "studio"
+    ) {
       return finish({ status: "skipped", images: {}, note: "Este post no lleva imagen." });
     }
     if (!brandMakesArt(brand.stylePreset, brand.themeTokens)) {
@@ -97,11 +112,12 @@ export async function generateArt(
     /** The provider's limit: no more calls in this run. */
     let limited = false;
 
-    for (const slot of ART_SLOTS) {
+    for (const { slot, background, scene, monochrome } of slots) {
       const subject = content.art[slot];
       if (!subject || limited) continue;
-      const background = spec[slot];
-      const prompt = artPrompt(subject, { background, accent, monochrome: spec.monochrome });
+      // A scene across the slide (`bleed`) is a 4:5 place; the rest, a square object.
+      const prompt = (scene ? scenePrompt : artPrompt)(subject, { background, accent, monochrome });
+      const size = scene ? { width: 1024, height: 1280 } : {};
 
       // The same prompt as an earlier version of the post (a text fix): the same image.
       const reuse = fresh ? undefined : previous.find((image) => image.prompt === prompt);
@@ -116,7 +132,7 @@ export async function generateArt(
 
       let saved: ArtImage | undefined;
       for (let attempt = 1; attempt <= TRIES && !saved; attempt++) {
-        const result = await deps.images.generate({ prompt });
+        const result = await deps.images.generate({ prompt, ...size });
         generatedToday++;
         if (!result.ok) {
           log.warn("art image failed", {
@@ -126,7 +142,7 @@ export async function generateArt(
             error: result.error.message,
           });
           if (result.error.kind === "rate_limited" || attempt === TRIES) {
-            notes.push(`${slot === "cover" ? "Portada" : "Cierre"}: ${result.error.message}`);
+            notes.push(`${SLOT_NAMES[slot]}: ${result.error.message}`);
           }
           if (result.error.kind === "rate_limited") {
             limited = true;
@@ -134,8 +150,9 @@ export async function generateArt(
           }
           continue;
         }
-        const brightness = await deps.edgeBrightness(result.image);
-        if (!deps.backgroundMatches(brightness, background)) {
+        // A scene has no plain background to check: the slide fades over it.
+        const brightness = scene ? undefined : await deps.edgeBrightness(result.image);
+        if (brightness !== undefined && !deps.backgroundMatches(brightness, background)) {
           log.warn("art image with the wrong background", {
             slot,
             attempt,
@@ -143,9 +160,7 @@ export async function generateArt(
             background,
           });
           if (attempt === TRIES) {
-            notes.push(
-              `${slot === "cover" ? "Portada" : "Cierre"}: la imagen salió con el fondo equivocado dos veces.`,
-            );
+            notes.push(`${SLOT_NAMES[slot]}: la imagen salió con el fondo equivocado dos veces.`);
           }
           continue;
         }
@@ -156,7 +171,7 @@ export async function generateArt(
       if (saved) images[slot] = saved;
     }
 
-    const wanted = ART_SLOTS.filter((slot) => content.art?.[slot]).length;
+    const wanted = slots.filter(({ slot }) => content.art?.[slot]).length;
     const got = Object.keys(images).length;
     return finish({
       status: got === 0 ? "failed" : got < wanted ? "partial" : "ready",

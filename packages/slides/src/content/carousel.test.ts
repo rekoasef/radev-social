@@ -61,3 +61,54 @@ describe("carouselSchema", () => {
     expect(json).toContain('"hubDiagram"');
   });
 });
+
+describe("carousel middle image (ADR 0026)", () => {
+  const art = {
+    cover: "A worn leather wallet stretched to bursting",
+    cta: "The same wallet, mended and neatly closed",
+  };
+  const photo = { ...exampleSlides.statement, composition: "photo" };
+  const withSlides = (middle: unknown[]) => ({
+    ...exampleCarousel,
+    look: "editorial",
+    slides: [exampleCarousel.slides[0], ...middle, exampleCarousel.slides.at(-1)],
+  });
+
+  it("goes with one statement in `photo`", () => {
+    const middle = "A brass hourglass with the sand almost run out";
+    const slides = [photo, exampleSlides.steps, exampleSlides.cardGrid];
+    expect(messages({ ...withSlides(slides), art: { ...art, middle } })).toEqual([]);
+    // Without its slide, or the slide without its image.
+    expect(
+      messages({
+        ...withSlides([exampleSlides.statement, exampleSlides.steps, exampleSlides.cardGrid]),
+        art: { ...art, middle },
+      }),
+    ).toEqual([expect.stringContaining("`photo`")]);
+    expect(messages({ ...withSlides(slides), art })).toEqual([
+      expect.stringContaining("art.middle"),
+    ]);
+    // Two photos: one at most.
+    expect(
+      messages({ ...withSlides([photo, exampleSlides.steps, photo]), art: { ...art, middle } }),
+    ).toEqual([expect.stringContaining("Solo una")]);
+  });
+
+  it("knows the compositions of each type", () => {
+    const cover = { ...exampleSlides.cover, composition: "bleed" };
+    expect(
+      messages(withSlides([exampleSlides.steps, exampleSlides.cardGrid, exampleSlides.statement])),
+    ).toEqual([]);
+    expect(
+      carouselSchema.safeParse({
+        ...withSlides([exampleSlides.steps, exampleSlides.cardGrid, exampleSlides.statement]),
+        slides: [cover, ...exampleCarousel.slides.slice(1)],
+      }).success,
+    ).toBe(true);
+    const wrong = { ...exampleSlides.steps, composition: "bento" };
+    expect(
+      carouselSchema.safeParse(withSlides([wrong, exampleSlides.cardGrid, exampleSlides.statement]))
+        .success,
+    ).toBe(false);
+  });
+});

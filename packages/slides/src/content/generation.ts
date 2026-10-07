@@ -7,6 +7,7 @@ import {
   type LookId,
   lookTakesArt,
 } from "../presets/studio/look-ids";
+import { ART_LOOK_SURFACES, type SurfaceOf, surfaceBackground } from "../presets/studio/surfaces";
 import { enabledLooks } from "../presets/studio/tokens";
 import { describeQaIssue, QA_KINDS, type QaIssue } from "../qa-issues";
 import { carouselSchema } from "./carousel";
@@ -146,20 +147,70 @@ function artGuide(looks: readonly LookId[]): string {
 Si elegís uno de estos looks, el post lleva dos imágenes generadas: una en la portada y otra en el
 cierre. Salen como **fotos de producto**: un objeto real, grande, con su material bien visible. En
 \`art\` describí **un objeto** para cada una, **en inglés**, en una o dos frases: qué es, de qué
-material, en qué estado está o qué le pasa. Que sea una metáfora visual del tema, no una
-ilustración literal, y que la del cierre se sienta como el desenlace de la de la portada. El
-estilo, la luz, el color y el fondo los agrega el código: no los describas.
+material, en qué estado está o qué le pasa. Que la del cierre se sienta como el desenlace de la
+de la portada. El estilo, la luz, el color y el fondo los agrega el código: no los describas.
+
+- Si la portada o el cierre son \`bleed\`, esa imagen es una **escena**: describí un lugar, sin personas, con el objeto del tema en él (ej. "An empty small shop counter at night, a dusty brass service bell on it").
+- Con una afirmación \`photo\`, describí en \`art.middle\` un objeto más, que acompañe a esa afirmación.
+
+**Que se entienda en un segundo al lado del título.** Alguien que ve la portada tiene que
+conectar el objeto con el tema sin pensarlo: si hay que explicar la relación, no sirve. Empezá
+por el objeto más directo del tema (para plata: una billetera, una alcancía; para
+tiempo: un reloj, un reloj de arena; para orden: cajas, cajones, cables) y contá la historia con
+su estado. Evitá metáforas rebuscadas.
+
+- "¿Cuánto cuesta realmente tener una app?" → "A worn leather wallet stretched to bursting, its seams splitting open" / "The same wallet, mended and neatly closed, comfortably full".
+- "Tu pyme pierde clientes por no contestar WhatsApp" → "A brass shop service bell covered in thick dust" / "The same bell, polished and gleaming, ready to ring".
 
 - **Objetos concretos y cotidianos**, de los que se pueden tocar: herramientas, cerraduras, llaves, relojes, engranajes, cables, enchufes, lámparas, tazas, sillas, plantas, frutas, piedras, cuerdas, nudos, sobres cerrados, piezas de máquinas, juguetes.
 - **Variá el material**: madera, cerámica, metal oxidado o pulido, papel plegado, tela, cuero, hormigón, goma, cera, hielo. No todo es vidrio.
 - **Evitá lo gastado**: esferas, orbes, burbujas, cristales, fragmentos flotando, cubos que brillan, objetos "de tecnología" genéricos y monedas para hablar de plata. Si se te ocurre uno de esos, buscá otro.
 - El estado cuenta la historia: roto, gastado, a medio armar, atado, desbordado, en equilibrio, recién reparado.
-- **Solo el objeto**, entero, sobre un fondo liso: sin mesa, estante, piso ni escenario debajo, y nada que cuelgue o entre desde fuera del cuadro (cuerdas, cables o cadenas que se cortan en el borde). La imagen se funde con la slide por los bordes.
-- Bien: "A brass padlock clamped shut around a tangle of frayed rope" / "The same rope, untangled and neatly coiled, the open padlock resting on top".
-- Bien: "A tall stack of mismatched ceramic cups leaning dangerously to one side" / "The same cups, sorted into three neat, steady stacks".
+- **Solo el objeto** (salvo en una escena), entero, sobre un fondo liso: sin mesa, estante, piso ni escenario debajo, y nada que cuelgue o entre desde fuera del cuadro (cuerdas, cables o cadenas que se cortan en el borde). La imagen se funde con la slide por los bordes.
+- "Tu equipo hace todo a mano" → "A tall stack of mismatched ceramic cups leaning dangerously to one side" / "The same cups, sorted into three neat, steady stacks".
 - Nunca personas, caras ni manos, ni cosas con texto (carteles, pantallas, libros, cuadernos, gráficos, etiquetas): el modelo inventa letras.
 - Con los demás looks no escribas \`art\`.
 `;
+}
+
+export type ArtSlotSpec = {
+  slot: "cover" | "cta" | "middle";
+  background: "dark" | "light";
+  /** A place across the whole slide (`bleed`, 1024×1280) instead of an object (ADR 0026). */
+  scene: boolean;
+  monochrome: boolean;
+};
+
+/**
+ * The images a carousel in a look asks for (ADR 0016, 0026): the cover and the close always, the
+ * middle one when a statement has the `photo` composition; each with the background of its slide
+ * and as a scene when that slide is `bleed`. Empty for a look without images.
+ */
+export function artSlotsOf(
+  look: string,
+  slides: readonly { type: string; composition?: string }[],
+): ArtSlotSpec[] {
+  if (!isLookIdLocal(look)) return [];
+  const spec = LOOK_ART[look];
+  const surfaceOf = (ART_LOOK_SURFACES as Partial<Record<LookId, SurfaceOf>>)[look];
+  if (!spec || !surfaceOf) return [];
+  const monochrome = spec.monochrome === true;
+  const bleed = (slide: { composition?: string } | undefined) => slide?.composition === "bleed";
+  const slots: ArtSlotSpec[] = [
+    { slot: "cover", background: spec.cover, scene: bleed(slides[0]), monochrome },
+    { slot: "cta", background: spec.cta, scene: bleed(slides.at(-1)), monochrome },
+  ];
+  const index = slides.findIndex((s) => s.type === "statement" && s.composition === "photo");
+  if (index > 0) {
+    const surface = surfaceOf({ index, total: slides.length, type: "statement" });
+    slots.push({
+      slot: "middle",
+      background: surfaceBackground(surface),
+      scene: false,
+      monochrome,
+    });
+  }
+  return slots;
 }
 
 /**
@@ -191,7 +242,32 @@ al tono del post. Cambia todo (colores, tipografía, composición), así que pen
 dirección de arte. Los looks de los últimos posts no están en la lista a propósito.
 
 ${looks.map((id) => `- \`${id}\`: ${LOOK_GUIDE[id]}`).join("\n")}
-${art ? artGuide(looks) : ""}`;
+${compositionGuide(looks, art)}${art ? artGuide(looks) : ""}`;
+}
+
+/**
+ * The composition section (ADR 0026): the structure of each slide, apart from its look. The ones
+ * that need generated images only where the post gets them.
+ */
+function compositionGuide(looks: readonly LookId[], art: boolean): string {
+  const withArt = art && looks.some((id) => LOOK_ART[id]);
+  const imageNote = withArt
+    ? "solo con los looks que llevan imagen"
+    : "no los uses: este post no lleva imágenes generadas";
+  return `
+## Composición
+
+Además del look, \`cover\`, \`statement\`, \`steps\`, \`cardGrid\` y \`cta\` llevan
+\`composition\`: su estructura. Elegila según el contenido de cada slide y **variá**: que dos
+slides del mismo tipo no compartan composición y que el carrusel no se vea siempre igual. Sin
+\`composition\` sale la primera de cada lista.
+
+- \`cover\`: \`hero\` (objeto arriba, título abajo) · \`split\` (título grande a la izquierda, el objeto cortado por el borde derecho; mejor con títulos cortos) · \`giant\` (título arriba, el objeto abajo) · \`bleed\` (una escena de fondo a sangre y el título abajo; ${imageNote}).
+- \`statement\`: \`center\` (la afirmación sola, grande) · \`quote\` (comillas gigantes: para una frase que alguien diría o una verdad incómoda; no escribas comillas en el título, las pone la composición) · \`drawing\` (un ícono grande en órbitas: poné \`icon\`) · \`photo\` (una imagen generada arriba, descripta en \`art.middle\`; una sola por carrusel; ${imageNote}).
+- \`steps\`: \`list\` (pasos en lista) · \`grid\` (dos columnas con números grandes; mejor con textos cortos) · \`path\` (zigzag por una línea central).
+- \`cardGrid\`: \`list\` (tarjetas en lista) · \`tiles\` (mosaico de paneles) · \`bento\` (la primera tarjeta grande arriba: poné primero la más importante).
+- \`cta\`: \`center\` · \`bleed\` (escena a sangre detrás; ${imageNote}).
+`;
 }
 
 /**

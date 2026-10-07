@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { carouselSchema } from "../../content/carousel";
+import { COMPOSITIONS } from "../../content/compositions";
 import { exampleCarousel, exampleDatasets, exampleSlides } from "../../content/examples";
 import { extremeSlides } from "../../content/extremes";
 import { SLIDE_TYPES, type Slide, type SlideType } from "../../content/slides";
@@ -225,5 +226,62 @@ describe("carousel look", () => {
     expect(carouselSchema.safeParse(exampleCarousel).success).toBe(true);
     expect(carouselSchema.safeParse({ ...exampleCarousel, look: "recibo" }).success).toBe(true);
     expect(carouselSchema.safeParse({ ...exampleCarousel, look: "vaporwave" }).success).toBe(false);
+  });
+});
+
+describe("compositions (ADR 0026)", () => {
+  const art = {
+    cover: "/media/radev/p/v/art/cover.jpg",
+    cta: "/media/radev/p/v/art/cta.jpg",
+    middle: "/media/radev/p/v/art/middle.jpg",
+  };
+  const draw = (slide: Slide, look: LookId, index: number, withArt = true) =>
+    renderToStaticMarkup(
+      <RenderSlide
+        theme={theme}
+        slide={slide}
+        page={{ index, total: 7 }}
+        seed="post-1"
+        brandName="Marca"
+        look={look}
+        art={withArt ? art : undefined}
+      />,
+    );
+
+  it("draw every composition of every type, with the examples and the extremes", () => {
+    for (const [type, compositions] of Object.entries(COMPOSITIONS)) {
+      for (const composition of compositions) {
+        for (const source of [exampleSlides, extremeSlides]) {
+          const slide = { ...source[type as SlideType], composition } as Slide;
+          for (const look of ["editorial", "recibo"] as const) {
+            expect(
+              () => draw(slide, look, indexOf(type as SlideType)),
+              `${type} ${composition}`,
+            ).not.toThrow();
+          }
+        }
+      }
+    }
+  });
+
+  it("draw the scene across the slide under a fade for `bleed`", () => {
+    const html = draw({ ...exampleSlides.cover, composition: "bleed" }, "atmosfera", 0);
+    expect(html).toContain("/art/cover.jpg");
+    expect(html).toContain("object-fit:cover");
+    expect(html).not.toContain("mix-blend-mode:screen");
+  });
+
+  it("take the middle image for a `photo` statement, and draw it without one", () => {
+    const photo = { ...exampleSlides.statement, composition: "photo" } as Slide;
+    expect(draw(photo, "editorial", 2)).toContain("/art/middle.jpg");
+    // No image (or a look without images): the drawing takes its place.
+    expect(draw(photo, "editorial", 2, false)).toContain("<circle");
+    expect(draw(photo, "recibo", 2)).not.toContain("/art/");
+  });
+
+  it("keep the original structure without `composition`", () => {
+    expect(draw(exampleSlides.steps, "editorial", 2)).toBe(
+      draw({ ...exampleSlides.steps, composition: "list" } as Slide, "editorial", 2),
+    );
   });
 });

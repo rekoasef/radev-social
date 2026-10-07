@@ -1,9 +1,11 @@
 import type { CSSProperties, ReactNode } from "react";
-import type { SlideType } from "../../../content/slides";
 import { createRandom } from "../../../frame/random";
-import { type LookContext, pageLabel, type Surface, Wordmark } from "../kit";
+import { type LookContext, pageLabel, Wordmark } from "../kit";
 
-// Pieces several looks share: the header and footer lines, surface rhythms and seeded variation.
+export { rhythm } from "../surfaces";
+
+// Pieces several looks share: the header and footer lines and seeded variation. Surface rhythms
+// live in ../surfaces.ts (no React: the worker reads them too).
 
 /** Mono metadata line along the top (inside the safe area). */
 export function MetaHeader({
@@ -78,26 +80,6 @@ export function WordmarkFooter({
 /** Brand name (or handle) for metadata lines. */
 export const brandLine = (ctx: LookContext) =>
   ctx.tokens.handle.site || ctx.tokens.wordmark.text || ctx.brandName;
-
-/**
- * A surface rhythm: the cover and the cta get fixed surfaces, the slides in between cycle
- * through `middle`. Data slides never land on `accent` (a chart reads better on ink or paper).
- */
-export function rhythm(
-  cover: Surface,
-  middle: readonly Surface[],
-  cta: Surface,
-): (slide: { index: number; total: number; type: SlideType }) => Surface {
-  const dataTypes: readonly SlideType[] = ["chart", "bigNumber", "costBreakdown", "comparison"];
-  return ({ index, total, type }) => {
-    if (index === 0) return cover;
-    if (index === total - 1) return cta;
-    const surface = middle[(index - 1) % middle.length] ?? "ink";
-    if (surface === "accent" && dataTypes.includes(type))
-      return middle.find((s) => s !== "accent") ?? "ink";
-    return surface;
-  };
-}
 
 /** Seeded variation for a slide (same post and slide: same result). */
 export const slideRandom = (ctx: LookContext, salt = "") =>

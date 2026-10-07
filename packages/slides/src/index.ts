@@ -1,6 +1,13 @@
 // SlideFrame, style presets, slide templates and their Zod schemas.
 export { type Carousel, carouselSchema, HOOK_TYPES, type HookType } from "./content/carousel";
 export {
+  COMPOSITION_LABELS,
+  COMPOSITIONS,
+  type CompositionType,
+  compositionOf,
+  hasCompositions,
+} from "./content/compositions";
+export {
   type ChartDataset,
   chartDatasetSchema,
   type Datasets,

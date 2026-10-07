@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { compositionOf } from "../../content/compositions";
 import type { Datasets } from "../../content/datasets";
 import type { Slide } from "../../content/slides";
 import { FORMAT } from "../../frame/geometry";
@@ -7,6 +8,7 @@ import type { SlideAssets } from "../../frame/types";
 import { type LookContext, STUDIO_CONTENT_BOX, surfaceVars } from "./kit";
 import { LOOK_ART, type LookId } from "./look-ids";
 import { LOOKS } from "./looks";
+import { surfaceBackground } from "./surfaces";
 import { studioTemplates } from "./templates";
 import type { StudioTokens } from "./tokens";
 
@@ -23,62 +25,121 @@ export type StudioSlideProps = {
   brandName: string;
   assets?: SlideAssets;
   datasets?: Datasets;
-  /** URLs of the post's generated images (ADR 0016): the cover's and the close's. */
-  art?: { cover?: string; cta?: string };
+  /**
+   * URLs of the post's generated images (ADR 0016, 0026): the cover's, the close's and the one of
+   * a middle slide with the `photo` composition.
+   */
+  art?: { cover?: string; cta?: string; middle?: string };
 };
 
 export function lookContext(props: StudioSlideProps): LookContext {
   const kit = LOOKS[props.look];
   const spec = LOOK_ART[props.look];
   const type = props.slide.type;
+  const surface = kit.surface({ ...props.page, type });
+  const composition = compositionOf(props.slide);
   const slot = type === "cover" || type === "cta" ? type : undefined;
-  // The post's generated image; the brand's element when there is none, or always if asked.
+  // The post's generated image; the brand's element when there is none, or always if asked. A
+  // scene across the slide (`bleed`) is always generated: the brand's element is a cut-out.
   const hero = props.tokens.heroAsset ? props.assets?.[props.tokens.heroAsset] : undefined;
-  const generated = spec && slot && !props.tokens.heroAlways ? props.art?.[slot] : undefined;
-  const url = generated ?? (spec && slot ? hero?.url : undefined);
+  const generated = spec && !props.tokens.heroAlways ? props.art?.[slot ?? "middle"] : undefined;
+  const middle = !slot && composition === "photo";
+  const url =
+    slot || middle
+      ? (generated ?? (spec && slot && composition !== "bleed" ? hero?.url : undefined))
+      : undefined;
+  // A middle slide takes the background of its own surface.
+  const background = slot ? spec?.[slot] : surfaceBackground(surface);
   return {
     look: props.look,
     kit,
     tokens: props.tokens,
-    surface: kit.surface({ ...props.page, type: props.slide.type }),
+    surface,
     page: props.page,
     seed: props.seed,
-    type: props.slide.type,
+    type,
     brandName: props.brandName,
     assets: props.assets ?? {},
     ...(spec &&
       url &&
-      (type === "cover" || type === "cta") && {
-        art: { url, background: spec[type], monochrome: spec.monochrome, brand: !generated },
+      background && {
+        art: { url, background, monochrome: spec.monochrome, brand: !generated },
       }),
   };
 }
 
+/** Where the image goes and how big, by slide type and composition. */
+function artPlacement(
+  ctx: LookContext,
+  composition: string | undefined,
+): { left: number; top: number; size: number } | "bleed" | "inline" {
+  const brand = ctx.art?.brand === true;
+  const centered = (size: number, top: number) => ({
+    left: FORMAT.width / 2 - size / 2,
+    top,
+    size,
+  });
+  if (composition === "bleed") return "bleed";
+  // Under a title of any length: the template draws it in the flow, with the room left.
+  if (ctx.type === "cover" && composition === "giant") return "inline";
+  if (ctx.type === "cover") {
+    // Beside the title, cut by the right edge; under a title at the top; above one at the bottom.
+    if (composition === "split") return { left: 500, top: 260, size: 820 };
+    return brand ? centered(420, 190) : centered(760, 20);
+  }
+  if (ctx.type === "cta") return brand ? centered(280, 170) : centered(600, 40);
+  // A middle slide's photo: above its title.
+  return centered(640, 60);
+}
+
 /**
  * The generated image, blended into the slide: its plain background disappears (screen over a
- * dark slide, multiply over a light one) and its edges fade, so the object floats. Movable and
- * resizable as the slide's graphic element (ADR 0013).
+ * dark slide, multiply over a light one) and its edges fade, so the object floats. A scene
+ * (`bleed`) covers the whole slide instead, under a fade to the look's background where the text
+ * goes. Movable and resizable as the slide's graphic element (ADR 0013).
  */
 function ArtLayer({ ctx, slide }: { ctx: LookContext; slide: Slide }) {
   if (!ctx.art) return null;
+  const place = artPlacement(ctx, compositionOf(slide));
+  if (place === "inline") return null;
+  const mono = ctx.art.monochrome ? "grayscale(1) contrast(1.1)" : "";
+  if (place === "bleed") {
+    return (
+      <>
+        <img
+          src={ctx.art.url}
+          alt=""
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: FORMAT.width,
+            height: FORMAT.height,
+            objectFit: "cover",
+            filter: mono || undefined,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(to bottom, color-mix(in srgb, var(--bg) 60%, transparent) 0%, transparent 15%, transparent 44%, color-mix(in srgb, var(--bg) 92%, transparent) 68%, var(--bg) 84%)",
+          }}
+        />
+      </>
+    );
+  }
   // A generated object fills about two thirds of its square on a clean background (ADR 0025):
   // the image runs big and only its edges fade. The brand's element is a cut-out already: drawn
-  // as it is, at the size of soft's hero.
+  // as it is.
   const brand = ctx.art.brand === true;
-  const size = brand ? (ctx.type === "cover" ? 420 : 280) : ctx.type === "cover" ? 760 : 600;
-  const top = brand ? (ctx.type === "cover" ? 190 : 170) : ctx.type === "cover" ? 20 : 40;
   const light = ctx.art.background === "light";
+  const { left, top, size } = place;
   return (
     <Layer
       name="hero"
       layout={slide.layout}
-      style={{
-        position: "absolute",
-        left: FORMAT.width / 2 - size / 2,
-        top,
-        width: size,
-        height: size,
-      }}
+      style={{ position: "absolute", left, top, width: size, height: size }}
     >
       <img
         src={ctx.art.url}
@@ -91,10 +152,7 @@ function ArtLayer({ ctx, slide }: { ctx: LookContext; slide: Slide }) {
           mixBlendMode: brand ? undefined : light ? "multiply" : "screen",
           // The model's "white" is a light gray with haze: lifted to white so it disappears.
           filter:
-            [
-              ctx.art.monochrome ? "grayscale(1) contrast(1.1)" : "",
-              light && !brand ? "brightness(1.1) contrast(1.08)" : "",
-            ]
+            [mono, light && !brand ? "brightness(1.1) contrast(1.08)" : ""]
               .filter(Boolean)
               .join(" ") || undefined,
           WebkitMaskImage: brand ? undefined : "radial-gradient(circle, #000 46%, transparent 66%)",

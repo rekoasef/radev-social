@@ -59,10 +59,12 @@ export const carouselSchema = z
      */
     look: z.enum(LOOK_IDS).optional(),
     /**
-     * Subjects of the generated images (ADR 0016), in English: one object for the cover and one
-     * for the close. Only for looks that take images (LOOK_ART); the code adds the style rules.
+     * Subjects of the generated images (ADR 0016, 0026), in English: one object for the cover and
+     * one for the close (a scene when that slide is `bleed`), and one more object for a statement
+     * with the `photo` composition. Only for looks that take images (LOOK_ART); the code adds the
+     * style rules.
      */
-    art: z.object({ cover: artSubject, cta: artSubject }).optional(),
+    art: z.object({ cover: artSubject, cta: artSubject, middle: artSubject.optional() }).optional(),
     /** One per slide. */
     altTexts: z.array(z.string().trim().min(1, { error: "No puede estar vacío." })).optional(),
   })
@@ -98,6 +100,32 @@ export const carouselSchema = z
         });
       }
     });
+    // The middle image and its slide go together (ADR 0026): one statement with `photo` at most.
+    const photos = carousel.slides.filter(
+      (slide) => slide.type === "statement" && slide.composition === "photo",
+    ).length;
+    if (photos > 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["slides"],
+        message: "Solo una afirmación del carrusel puede llevar foto (`photo`).",
+      });
+    }
+    if (carousel.art?.middle && photos === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["art", "middle"],
+        message:
+          "La imagen del medio va con una afirmación con composición `photo`: sumala o sacá `art.middle`.",
+      });
+    }
+    if (carousel.art && !carousel.art.middle && photos > 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["art", "middle"],
+        message: "La afirmación con `photo` necesita su imagen: describila en `art.middle`.",
+      });
+    }
     if (carousel.altTexts && carousel.altTexts.length !== carousel.slides.length) {
       ctx.addIssue({
         code: "custom",

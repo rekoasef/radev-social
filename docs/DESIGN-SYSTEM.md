@@ -90,7 +90,7 @@ La estructura (campos) es común a todos los presets. Schemas en `packages/slide
 Las slides sin referencia (`statement`, `question`, `cta` y las demás) se diseñan en código con las reglas del preset y el operador las aprueba sobre capturas del render real.
 
 **`statement`** — afirmación fuerte con apoyo.
-- `title` (≤70) · `body?` (≤160) · `visual?`: `{ from: {icon, label≤16}, to: {icon, label≤16} }`
+- `title` (≤70) · `body?` (≤160) · `visual?`: `{ from: {icon, label≤16}, to: {icon, label≤16} }` · `icon?` (el de la composición `drawing`)
 
 **`question`** — pregunta con caja de callout.
 - `title` (≤80) · `callout`: `{ icon, lead≤30, text≤80 }`
@@ -301,6 +301,20 @@ Cada slide cae en una superficie: `ink` (fondo oscuro, texto claro), `paper` (al
 
 Las plantillas (`templates.tsx`) son comunes: una por tipo de slide, con las capas título y contenido (ADR 0013) y los textos marcados para el control del render. Las slides de listas y datos se centran en vertical como grupo (sin franja vacía en el medio). Tamaños de título por rol (`hero`, `statement`, `title`, `small`), estimados con las métricas de la fuente (§2).
 
+### Composiciones (ADR 0026)
+
+El look es la piel; la composición, la estructura. `cover`, `statement`, `steps`, `cardGrid` y `cta` llevan un `composition` opcional (`content/compositions.ts`); sin él, la primera de cada lista (la estructura original). La IA la elige por slide (`compositionGuide`) y el editor tiene un selector.
+
+| Tipo | Composiciones |
+|---|---|
+| `cover` | `hero` objeto arriba y título abajo · `bleed` escena a sangre bajo un degradé, título abajo · `split` título (escala `statement`, 520 px) a la izquierda y el objeto (820 px) cortado por el borde derecho · `giant` título arriba y el objeto abajo, en el flujo, con el lugar que quede |
+| `statement` | `center` · `quote` comillas serif gigantes del color de énfasis, filete antes del texto · `drawing` ícono en un disco del color de énfasis dentro de tres órbitas con puntos (posición por el id del post; capa "elemento gráfico") · `photo` la imagen del medio arriba (640 px) y el texto abajo |
+| `steps` | `list` · `grid` dos columnas, número grande del color de énfasis, título 40 px y texto 28 px · `path` zigzag: cada paso de un lado de una línea central, su número en un círculo |
+| `cardGrid` | `list` · `tiles` mosaico con el `Panel` del look (2 o 3 columnas; en 3, etiquetas a 26 px) · `bento` la primera tarjeta grande (`Panel` destacado) y el resto en grilla |
+| `cta` | `center` · `bleed` escena a sangre |
+
+Sin imagen (look sin imágenes, marca con `heroAlways` o imagen que falló), `bleed`, `split` y `giant` vuelven a `hero` y `photo` a `drawing`. Las composiciones pasan el control del render con los textos al límite en los 16 looks.
+
 ### Catálogo
 
 | Look | Qué es | Para qué (lo lee la IA) |
@@ -332,13 +346,14 @@ La descripción que lee la IA es `LOOK_GUIDE` (`look-ids.ts`).
 
 ### Imágenes generadas (ADR 0016)
 
-- Looks con imagen (`LOOK_ART`): atmósfera, neón, gradiente, revista, editorial y monocromo; solo en **portada y cierre**. El fondo que se le pide al modelo es el de la superficie de esa slide (oscura → negro puro, clara → blanco puro).
+- Looks con imagen (`LOOK_ART`): atmósfera, neón, gradiente, revista, editorial y monocromo; en **portada y cierre**, y en una afirmación `photo` (ADR 0026). El fondo que se le pide al modelo es el de la superficie de esa slide (oscura → negro puro, clara o de acento → blanco puro; las superficies de estos looks están en `surfaces.ts`).
+- En una portada o cierre `bleed`, la imagen es una escena 4:5 que cubre la slide, sin mezcla, bajo un degradé al `--bg` del look (60 % arriba, transparente de 15 % a 44 %, fondo pleno desde 84 %).
 - Con imagen, la portada pone el objeto arriba y el título abajo (tamaño `title`); el cierre baja su contenido (`low`) y su título a `title`. La imagen reemplaza la decoración propia del look en esa slide.
 - Se dibuja a 760 px (portada) o 600 px (cierre, a 40 px del borde: entra entre el encabezado de revista y el título más largo), centrada, con mezcla `screen` (oscuro) o `multiply` con un leve aumento de brillo (claro, para que el "blanco" del modelo desaparezca), máscara radial que desvanece solo los bordes (opaca hasta el 46 %, el objeto ocupa dos tercios del cuadro desde ADR 0025) y escala de grises en monocromo. Es la capa "elemento gráfico": se mueve y escala en el editor.
 - Reglas del objeto: uno solo, sin personas, caras ni manos, sin nada con texto (carteles, pantallas, libros, gráficos). Lo controla el esquema.
 - Prioridad en portada y cierre: imagen generada del post → elemento de marca (`heroAsset`, dibujado tal cual: 420 px en portada, 280 en cierre, sin mezcla) → decoración propia del look. Con `heroAlways`, el elemento de marca siempre y la IA no describe imágenes (`brandMakesArt`).
 - Valores de Lumus en `studio` (2026-09-29): ink `#0B0B12`, paper `#F0EDF7`, accent `#6E5CE8` (el lavanda `#BDB4FF` daba 1,6:1 sobre el claro; `#6E5CE8` da 4,2:1 sobre claro y 4,1:1 sobre oscuro), glow `#FFB86E`, Hanken Grotesk 600 / Geist Sans / Geist Mono; looks sin bloques, brutalista, neón, terminal ni bauhaus; la orbe como elemento de marca.
-- Previsualizar: `pnpm --filter @radev/slides preview <dir> --art-dir <carpeta>` (y `--hero <png>` para el elemento de marca) con `cover-dark.jpg`, `cover-light.jpg`, `cta-dark.jpg` y `cta-light.jpg`.
+- Previsualizar: `pnpm --filter @radev/slides preview <dir> --art-dir <carpeta>` (y `--hero <png>` para el elemento de marca) con `cover-dark.jpg`, `cover-light.jpg`, `cta-dark.jpg` y `cta-light.jpg`; para un carrusel con composiciones, además `<slot>-<fondo>-scene.jpg` (escenas de `bleed`) y `middle-dark.jpg` / `middle-light.jpg` (imagen del medio).
 
 ### Sumar un look
 

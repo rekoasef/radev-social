@@ -1,6 +1,7 @@
 import { createRandom } from "../../../frame/random";
 import { SlideIcon } from "../../../icons";
 import { type Look, type LookContext, RichText, twoDigits } from "../kit";
+import { ART_LOOK_SURFACES } from "../surfaces";
 import { brandLine, MetaHeader, WordmarkFooter } from "./common";
 
 // `gradiente`: light and friendly. Soft color clouds over paper (one panorama across the
@@ -57,7 +58,7 @@ function Clouds({ ctx }: { ctx: LookContext }) {
 export const gradiente: Look = {
   id: "gradiente",
   title: { weight: 700, caps: false, tracking: -0.035, lineHeight: 1.03 },
-  surface: () => "paper",
+  surface: ART_LOOK_SURFACES.gradiente,
   Backdrop: (ctx) => <Clouds ctx={ctx} />,
   Header: (ctx) => <MetaHeader left={brandLine(ctx)} color="var(--fg)" />,
   Footer: (ctx) => <WordmarkFooter ctx={ctx} color="var(--fg)" />,

@@ -1,7 +1,8 @@
 import { SlideIcon } from "../../../icons";
 import type { Look } from "../kit";
 import { RichText, twoDigits } from "../kit";
-import { brandLine, MetaHeader, rhythm, WordmarkFooter } from "./common";
+import { ART_LOOK_SURFACES } from "../surfaces";
+import { brandLine, MetaHeader, WordmarkFooter } from "./common";
 
 // `editorial`: paper and ink like a magazine. Huge lowercase titles, thin rules instead of boxes,
 // the accent as a single mark, and the background changing along the carousel.
@@ -9,7 +10,7 @@ import { brandLine, MetaHeader, rhythm, WordmarkFooter } from "./common";
 export const editorial: Look = {
   id: "editorial",
   title: { weight: 700, caps: false, tracking: -0.045, lineHeight: 0.96 },
-  surface: rhythm("paper", ["ink", "paper", "paper", "accent"], "ink"),
+  surface: ART_LOOK_SURFACES.editorial,
   Header: (ctx) => <MetaHeader left={brandLine(ctx)} />,
   Footer: (ctx) => <WordmarkFooter ctx={ctx} />,
   emphasis: (_ctx, where) =>

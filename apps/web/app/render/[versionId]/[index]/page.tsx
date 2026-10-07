@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { RenderReady } from "@/components/render/render-ready";
-import { mediaUrl } from "@/lib/brand-assets";
+import { artUrls } from "@/lib/brand-assets";
 import { brandRenderContext } from "@/lib/carousel";
 import { db } from "@/lib/db";
 import { isValidRenderToken, renderTokenFrom } from "@/lib/render-token";
@@ -48,11 +48,7 @@ export default async function RenderSlidePage({
 
   const total = carousel.data.slides.length;
   // The version's generated images (ADR 0016), once art.generate is done with them.
-  const images = version.art?.images ?? {};
-  const art = {
-    ...(images.cover && { cover: mediaUrl(images.cover.path) }),
-    ...(images.cta && { cta: mediaUrl(images.cta.path) }),
-  };
+  const art = artUrls(version.art?.images);
   return (
     <main
       data-render-root=""

@@ -1,5 +1,6 @@
 import { SlideIcon } from "../../../icons";
 import { type Look, RichText, twoDigits } from "../kit";
+import { ART_LOOK_SURFACES } from "../surfaces";
 import { brandLine, MetaHeader, WordmarkFooter } from "./common";
 
 // `neon`: night signs. Strokes that glow over black, a retro perspective grid on the floor and
@@ -56,7 +57,7 @@ const tube = (strong?: boolean) => {
 export const neon: Look = {
   id: "neon",
   title: { weight: 700, caps: false, tracking: -0.03, lineHeight: 1.02 },
-  surface: () => "ink",
+  surface: ART_LOOK_SURFACES.neon,
   Backdrop: () => <Floor />,
   Header: (ctx) => (
     <MetaHeader left={brandLine(ctx)} color="color-mix(in srgb, var(--glow) 80%, white)" />

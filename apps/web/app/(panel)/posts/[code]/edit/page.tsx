@@ -13,7 +13,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plate } from "@/components/console/plate";
 import { CarouselEditor, type EditorArt } from "@/components/posts/carousel-editor";
-import { mediaUrl } from "@/lib/brand-assets";
+import { artUrls, mediaUrl } from "@/lib/brand-assets";
 import { brandRenderContext, editorData } from "@/lib/carousel";
 import { db } from "@/lib/db";
 
@@ -86,9 +86,6 @@ function editorArt(art: PostArt | null): EditorArt | undefined {
   return {
     status: art.status,
     note: art.note,
-    urls: {
-      ...(art.images.cover && { cover: mediaUrl(art.images.cover.path) }),
-      ...(art.images.cta && { cta: mediaUrl(art.images.cta.path) }),
-    },
+    urls: artUrls(art.images),
   };
 }

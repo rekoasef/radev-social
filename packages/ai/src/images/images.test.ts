@@ -4,7 +4,7 @@ import {
   classifyCloudflareError,
   createCloudflareImageProvider,
 } from "./cloudflare";
-import { artPrompt, colorName } from "./prompt";
+import { artPrompt, colorName, scenePrompt } from "./prompt";
 
 const env = { CLOUDFLARE_ACCOUNT_ID: "acc-1", CLOUDFLARE_API_TOKEN: "cf-secret-token" };
 
@@ -48,6 +48,17 @@ describe("createCloudflareImageProvider", () => {
       width: "1024",
       height: "1024",
     });
+  });
+
+  it("asks for another size when given one (a 4:5 scene)", async () => {
+    const { impl, calls } = fakeFetch(200, { success: true, result: { image: "eA==" } });
+    await createCloudflareImageProvider({ env, fetch: impl })?.generate({
+      prompt: "a shop",
+      width: 1024,
+      height: 1280,
+    });
+    const form = calls[0]?.init.body as FormData;
+    expect([form.get("width"), form.get("height")]).toEqual(["1024", "1280"]);
   });
 
   it("maps failures without leaking the token", async () => {
@@ -117,5 +128,23 @@ describe("artPrompt", () => {
     expect(colorName("#7C3AED")).toBe("violet");
     expect(colorName("#0B0B0B")).toBe("black");
     expect(colorName("nope")).toBe("warm");
+  });
+});
+
+describe("scenePrompt", () => {
+  it("asks for a place with a calm lower third, in the slide's tone and the brand's accent", () => {
+    const dark = scenePrompt("An empty shop counter at night", {
+      background: "dark",
+      accent: "#FF7A00",
+    });
+    expect(dark.startsWith("Scene: An empty shop counter at night")).toBe(true);
+    expect(dark).toContain("lower third is calm");
+    expect(dark).toContain("near black");
+    expect(dark).toContain("orange (#FF7A00)");
+    expect(dark).toContain("no people");
+    const light = scenePrompt("x", { background: "light", accent: "#FF7A00", monochrome: true });
+    expect(light).toContain("near white");
+    expect(light).toContain("Black and white only");
+    expect(light).not.toContain("orange");
   });
 });

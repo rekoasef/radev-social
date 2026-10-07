@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { compositionSchema } from "./compositions";
 import { countEmphasis, MAX_EMPHASIS_PER_SLIDE } from "./emphasis";
 import { iconName, key, plainText, richText } from "./fields";
 import { slideLayoutSchema } from "./layout";
@@ -12,6 +13,7 @@ const iconLabel = (max: number) => z.object({ icon: iconName, label: plainText(m
 export const coverSlide = z.object({
   type: z.literal("cover"),
   layout: slideLayoutSchema.optional(),
+  composition: compositionSchema("cover").optional(),
   kicker: plainText(L.cover.kicker).optional(),
   title: richText(L.cover.title),
   subtitle: richText(L.cover.subtitle).optional(),
@@ -20,8 +22,11 @@ export const coverSlide = z.object({
 export const statementSlide = z.object({
   type: z.literal("statement"),
   layout: slideLayoutSchema.optional(),
+  composition: compositionSchema("statement").optional(),
   title: richText(L.statement.title),
   body: richText(L.statement.body).optional(),
+  /** The icon of the `drawing` composition. */
+  icon: iconName.optional(),
   visual: z
     .object({ from: iconLabel(L.statement.visualLabel), to: iconLabel(L.statement.visualLabel) })
     .optional(),
@@ -41,6 +46,7 @@ export const questionSlide = z.object({
 export const cardGridSlide = z.object({
   type: z.literal("cardGrid"),
   layout: slideLayoutSchema.optional(),
+  composition: compositionSchema("cardGrid").optional(),
   title: richText(L.cardGrid.title),
   intro: richText(L.cardGrid.intro).optional(),
   cards: z
@@ -129,6 +135,7 @@ export const costBreakdownSlide = z.object({
 export const stepsSlide = z.object({
   type: z.literal("steps"),
   layout: slideLayoutSchema.optional(),
+  composition: compositionSchema("steps").optional(),
   title: richText(L.steps.title),
   steps: z
     .array(z.object({ title: richText(L.steps.stepTitle), text: richText(L.steps.stepText) }))
@@ -179,6 +186,7 @@ export const screenSlide = z.object({
 export const ctaSlide = z.object({
   type: z.literal("cta"),
   layout: slideLayoutSchema.optional(),
+  composition: compositionSchema("cta").optional(),
   title: richText(L.cta.title),
   subtitle: richText(L.cta.subtitle).optional(),
   button: plainText(L.cta.button),

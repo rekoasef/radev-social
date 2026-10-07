@@ -13,6 +13,9 @@ export const MAX_IMAGE_PROMPT = 2048;
 
 export type ImageRequest = {
   prompt: string;
+  /** Default: a 1024×1024 square. A scene across a 4:5 slide asks for 1024×1280. */
+  width?: number;
+  height?: number;
   signal?: AbortSignal;
 };
 
@@ -86,8 +89,8 @@ export function createCloudflareImageProvider(
       // FLUX.2 models take multipart form data, not JSON.
       const form = new FormData();
       form.append("prompt", request.prompt.slice(0, MAX_IMAGE_PROMPT));
-      form.append("width", String(IMAGE_SIZE));
-      form.append("height", String(IMAGE_SIZE));
+      form.append("width", String(request.width ?? IMAGE_SIZE));
+      form.append("height", String(request.height ?? IMAGE_SIZE));
       let response: Response;
       try {
         response = await doFetch(url, {

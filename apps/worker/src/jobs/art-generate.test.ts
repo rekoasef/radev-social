@@ -48,16 +48,18 @@ const pending = (look = "atmosfera") => ({
 /** A provider that answers from a list; records the prompts. */
 function provider(answers: ImageResult[]) {
   const prompts: string[] = [];
+  const sizes: (string | undefined)[] = [];
   const images: ImageProvider = {
     id: "cloudflare",
-    async generate({ prompt }) {
+    async generate({ prompt, width, height }) {
       prompts.push(prompt);
+      sizes.push(width ? `${width}x${height}` : undefined);
       const next = answers.shift();
       if (!next) throw new Error("generate llamado de más");
       return next;
     },
   };
-  return { images, prompts };
+  return { images, prompts, sizes };
 }
 
 const ok = (tag: string): ImageResult => ({
@@ -200,5 +202,47 @@ describe("art.generate", () => {
     db.version = pending("recibo");
     await generateArt(deps(provider([]).images).deps, { versionId: "v-1" });
     expect(db.saved?.status).toBe("skipped");
+  });
+
+  describe("with compositions (ADR 0026)", () => {
+    const slide = (type: string, composition?: string) => ({
+      type,
+      ...(composition && { composition }),
+    });
+
+    it("asks a 4:5 scene for a `bleed` slide and does not check its background", async () => {
+      db.version = {
+        ...pending("atmosfera"),
+        content: {
+          look: "atmosfera",
+          art,
+          slides: [slide("cover", "bleed"), slide("steps"), slide("cta")],
+        },
+      };
+      // A light-edged scene on a dark look: fine, the slide fades over it.
+      const { images, prompts, sizes } = provider([ok("light-scene"), ok("dark-cta")]);
+      await generateArt(deps(images).deps, { versionId: "v-1" });
+      expect(prompts[0]).toMatch(/^Scene: /);
+      expect(sizes).toEqual(["1024x1280", undefined]);
+      expect(db.saved?.status).toBe("ready");
+    });
+
+    it("generates the middle image of a `photo` statement on its slide's background", async () => {
+      db.version = {
+        ...pending("editorial"),
+        content: {
+          look: "editorial",
+          art: { ...art, middle: "A brass hourglass with the sand almost run out" },
+          // editorial: the second slide is ink, so the middle image is asked on black.
+          slides: [slide("cover"), slide("statement", "photo"), slide("steps"), slide("cta")],
+        },
+      };
+      const { images, prompts } = provider([ok("light-cover"), ok("dark-cta"), ok("dark-middle")]);
+      await generateArt(deps(images).deps, { versionId: "v-1" });
+      expect(prompts[2]).toMatch(/^Subject: A brass hourglass/);
+      expect(prompts[2]).toContain("pure black background");
+      expect(db.saved?.images.middle?.path).toBe("radev/post-1/v-1/art/middle.jpg");
+      expect(db.saved?.status).toBe("ready");
+    });
   });
 });

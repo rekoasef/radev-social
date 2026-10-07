@@ -86,24 +86,77 @@ function Kicker({ text, ctx }: { text: string; ctx: LookContext }) {
   );
 }
 
+/** The post's image in the template's flow (the `giant` cover): blended like the frame's. */
+function InlineArt({ slide, ctx }: { slide: Slide; ctx: LookContext }) {
+  if (!ctx.art) return null;
+  const light = ctx.art.background === "light";
+  const brand = ctx.art.brand === true;
+  return (
+    <div style={{ flex: 1, minHeight: 400, display: "flex", justifyContent: "center" }}>
+      <Layer name="hero" layout={slide.layout} style={{ height: "100%", display: "flex" }}>
+        <img
+          src={ctx.art.url}
+          alt=""
+          style={{
+            height: "100%",
+            maxHeight: 560,
+            aspectRatio: "1",
+            objectFit: "contain",
+            mixBlendMode: brand ? undefined : light ? "multiply" : "screen",
+            filter:
+              [
+                ctx.art.monochrome ? "grayscale(1) contrast(1.1)" : "",
+                light && !brand ? "brightness(1.1) contrast(1.08)" : "",
+              ]
+                .filter(Boolean)
+                .join(" ") || undefined,
+            WebkitMaskImage: brand
+              ? undefined
+              : "radial-gradient(circle, #000 46%, transparent 66%)",
+            maskImage: brand ? undefined : "radial-gradient(circle, #000 46%, transparent 66%)",
+          }}
+        />
+      </Layer>
+    </div>
+  );
+}
+
 function Cover({ slide, ctx }: TemplateArgs<"cover">) {
-  // With a generated image the object takes the top and the title goes to the bottom.
-  const mode = ctx.art ? "bottom" : ctx.kit.compose.cover;
+  // ADR 0026: with the image across the slide (`bleed`) or under the title (`giant`) the title
+  // runs big; beside it (`split`) it takes the left column. Without an image those fall back to
+  // the original: the object on top and the title at the bottom, or the look's own arrangement.
+  const composition = ctx.art ? (slide.composition ?? "hero") : "hero";
+  const mode =
+    composition === "giant"
+      ? "top"
+      : composition === "split"
+        ? "middle"
+        : ctx.art
+          ? "bottom"
+          : ctx.kit.compose.cover;
   const center = mode === "center";
+  const width = composition === "split" ? 520 : W;
+  const size =
+    composition === "split" || composition === "giant"
+      ? "statement"
+      : ctx.art
+        ? "title"
+        : (ctx.kit.compose.coverTitle ?? "hero");
   const title = (
     <Block name="title" slide={slide} gap={32} align={center ? "center" : undefined}>
       {slide.kicker && <Kicker text={slide.kicker} ctx={ctx} />}
       <Title
         text={slide.title}
         ctx={ctx}
-        size={ctx.art ? "title" : (ctx.kit.compose.coverTitle ?? "hero")}
+        size={size}
+        width={width}
         align={center ? "center" : undefined}
       />
     </Block>
   );
   const subtitle = slide.subtitle && (
     <Block name="body" slide={slide} align={center ? "center" : undefined}>
-      <div style={{ maxWidth: 680 }}>
+      <div style={{ maxWidth: Math.min(680, width) }}>
         <Text
           text={slide.subtitle}
           ctx={ctx}
@@ -114,9 +167,22 @@ function Cover({ slide, ctx }: TemplateArgs<"cover">) {
       </div>
     </Block>
   );
-  if (mode === "bottom") {
+  if (composition === "giant" && ctx.art) {
+    // The title first, as big as it gets; the object takes what is left below it.
     return (
-      <Column justify="flex-end" gap={44}>
+      <Column justify="flex-start" gap={36}>
+        {title}
+        {subtitle}
+        <InlineArt slide={slide} ctx={ctx} />
+      </Column>
+    );
+  }
+  if (mode === "bottom" || mode === "top" || mode === "middle") {
+    return (
+      <Column
+        justify={mode === "bottom" ? "flex-end" : mode === "top" ? "flex-start" : "center"}
+        gap={44}
+      >
         {title}
         {subtitle}
       </Column>
@@ -170,7 +236,138 @@ function FromTo({ slide, ctx }: { slide: SlideOf<"statement">; ctx: LookContext 
   );
 }
 
+/**
+ * A drawing made in code (ADR 0026): the slide's icon in a disc of the look's highlight, inside
+ * thin orbits with a few dots. Movable like the slide's graphic element.
+ */
+function Drawing({
+  slide,
+  ctx,
+  icon,
+  size,
+}: {
+  slide: Slide;
+  ctx: LookContext;
+  icon: string;
+  size: number;
+}) {
+  const c = size / 2;
+  const orbits = [0.48, 0.36, 0.25].map((r) => r * size);
+  // Dots on the orbits at angles from the seed: the same post, the same drawing.
+  const seed = [...ctx.seed].reduce((n, ch) => (n * 31 + ch.charCodeAt(0)) % 997, 7);
+  const dots = orbits.map((r, i) => {
+    const angle = ((seed * (i + 3) * 47) % 360) * (Math.PI / 180);
+    return { x: c + r * Math.cos(angle), y: c + r * Math.sin(angle), r: 10 - i * 2 };
+  });
+  return (
+    <Layer name="hero" layout={slide.layout}>
+      <div data-qa="content" style={{ position: "relative", width: size, height: size }}>
+        <svg width={size} height={size} style={{ position: "absolute", inset: 0 }} aria-hidden>
+          {orbits.map((r) => (
+            <circle key={r} cx={c} cy={c} r={r} fill="none" stroke="var(--line)" strokeWidth={2} />
+          ))}
+          <circle cx={c} cy={c} r={size * 0.16} fill="var(--hl)" />
+          {dots.map((d) => (
+            <circle key={d.x} cx={d.x} cy={d.y} r={d.r} fill="var(--hl)" />
+          ))}
+        </svg>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <SlideIcon name={icon} size={Math.round(size * 0.15)} color="var(--bg)" />
+        </div>
+      </div>
+    </Layer>
+  );
+}
+
+function StatementBody({ slide, ctx }: { slide: SlideOf<"statement">; ctx: LookContext }) {
+  if (!slide.visual && !slide.body) return null;
+  return (
+    <Block name="body" slide={slide} gap={40}>
+      <FromTo slide={slide} ctx={ctx} />
+      {slide.body && (
+        <div style={{ maxWidth: 720 }}>
+          <Text text={slide.body} ctx={ctx} size={31} />
+        </div>
+      )}
+    </Block>
+  );
+}
+
 function Statement({ slide, ctx }: TemplateArgs<"statement">) {
+  // ADR 0026: the photo needs the post's middle image; without it, the drawing takes its place.
+  const composition =
+    slide.composition === "photo" && !ctx.art ? "drawing" : (slide.composition ?? "center");
+  if (composition === "photo") {
+    // The image is drawn by the frame above: the text goes to the bottom.
+    return (
+      <Column justify="flex-end" gap={48}>
+        <Block name="title" slide={slide}>
+          <Title text={slide.title} ctx={ctx} size="title" />
+        </Block>
+        <StatementBody slide={slide} ctx={ctx} />
+      </Column>
+    );
+  }
+  if (composition === "drawing") {
+    return (
+      <Column justify="center" gap={64}>
+        <Drawing
+          slide={slide}
+          ctx={ctx}
+          icon={slide.icon ?? slide.visual?.to.icon ?? "sparkles"}
+          size={440}
+        />
+        <Block name="title" slide={slide}>
+          <Title text={slide.title} ctx={ctx} size="title" />
+        </Block>
+        {slide.body && (
+          <Block name="body" slide={slide}>
+            <div style={{ maxWidth: 720 }}>
+              <Text text={slide.body} ctx={ctx} size={31} />
+            </div>
+          </Block>
+        )}
+      </Column>
+    );
+  }
+  if (composition === "quote") {
+    // A quote: giant quotation marks, the title as what is said, the body after a rule.
+    return (
+      <Column justify="center" gap={56}>
+        <Block name="title" slide={slide} gap={8}>
+          <span
+            aria-hidden
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: 340,
+              lineHeight: 0.62,
+              height: 170,
+              color: "var(--hl)",
+            }}
+          >
+            “
+          </span>
+          <Title text={slide.title} ctx={ctx} size="statement" />
+        </Block>
+        {slide.body && (
+          <Block name="body" slide={slide} gap={28}>
+            <div style={{ width: 120, height: 6, background: "var(--hl)" }} />
+            <div style={{ maxWidth: 720 }}>
+              <Text text={slide.body} ctx={ctx} size={31} />
+            </div>
+          </Block>
+        )}
+      </Column>
+    );
+  }
   // Centered as a group: a statement is the slide, no empty band between title and support.
   return (
     <Column justify="center" gap={72}>
@@ -234,7 +431,138 @@ function Question({ slide, ctx }: TemplateArgs<"question">) {
   );
 }
 
+/** A step in the `grid` and `path` compositions: number, title and text. */
+function StepCell({
+  ctx,
+  index,
+  step,
+  numeral,
+  align,
+}: {
+  ctx: LookContext;
+  index: number;
+  step: SlideOf<"steps">["steps"][number];
+  numeral: number;
+  align?: "right";
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: align }}>
+      {numeral > 0 && (
+        <span
+          style={{
+            fontFamily: "var(--font-display)",
+            fontWeight: ctx.kit.title.weight,
+            fontSize: numeral,
+            lineHeight: 0.9,
+            letterSpacing: "-0.04em",
+            color: "var(--hl)",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {String(index + 1).padStart(2, "0")}
+        </span>
+      )}
+      <span
+        data-qa="text"
+        style={{
+          fontFamily: "var(--font-display)",
+          fontWeight: 700,
+          fontSize: 40,
+          lineHeight: 1.1,
+          letterSpacing: "-0.02em",
+        }}
+      >
+        <Rich text={step.title} emphasis={ctx.kit.emphasis(ctx, "text")} />
+      </span>
+      <Text text={step.text} ctx={ctx} size={28} />
+    </div>
+  );
+}
+
 function Steps({ slide, ctx }: TemplateArgs<"steps">) {
+  const composition = slide.composition ?? "list";
+  if (composition === "grid") {
+    // Two columns of cells, each led by a big number.
+    return (
+      <Column justify="center" gap={64}>
+        <Block name="title" slide={slide}>
+          <Title text={slide.title} ctx={ctx} size="small" />
+        </Block>
+        <Block name="body" slide={slide}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 56, rowGap: 52 }}
+          >
+            {slide.steps.map((step, i) => (
+              <StepCell key={step.title} ctx={ctx} index={i} step={step} numeral={110} />
+            ))}
+          </div>
+        </Block>
+      </Column>
+    );
+  }
+  if (composition === "path") {
+    // A zigzag down a center line: each step on one side, its number on the line.
+    const side = (W - 120) / 2;
+    return (
+      <Column justify="center" gap={56}>
+        <Block name="title" slide={slide}>
+          <Title text={slide.title} ctx={ctx} size="small" />
+        </Block>
+        <Block name="body" slide={slide}>
+          <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 28 }}>
+            <div
+              style={{
+                position: "absolute",
+                left: W / 2 - 2,
+                top: 30,
+                bottom: 30,
+                width: 4,
+                background: "var(--line)",
+              }}
+            />
+            {slide.steps.map((step, i) => {
+              const right = i % 2 === 1;
+              const cell = (
+                <StepCell
+                  ctx={ctx}
+                  index={i}
+                  step={step}
+                  numeral={0}
+                  align={right ? undefined : "right"}
+                />
+              );
+              return (
+                <div key={step.title} style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
+                  <div style={{ width: side }}>{right ? null : cell}</div>
+                  <div style={{ width: 120, display: "flex", justifyContent: "center" }}>
+                    <span
+                      style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: 999,
+                        background: "var(--hl)",
+                        color: "var(--bg)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 26,
+                        fontWeight: 700,
+                        position: "relative",
+                      }}
+                    >
+                      {i + 1}
+                    </span>
+                  </div>
+                  <div style={{ width: side }}>{right ? cell : null}</div>
+                </div>
+              );
+            })}
+          </div>
+        </Block>
+      </Column>
+    );
+  }
   return (
     <Column justify="center" gap={64}>
       <Block name="title" slide={slide}>
@@ -251,7 +579,86 @@ function Steps({ slide, ctx }: TemplateArgs<"steps">) {
   );
 }
 
+/** A card of the `tiles` and `bento` compositions, in the look's panel. */
+function Tile({
+  ctx,
+  card,
+  big,
+  narrow,
+}: {
+  ctx: LookContext;
+  card: SlideOf<"cardGrid">["cards"][number];
+  big?: boolean;
+  /** In three columns: smaller type, so a 24-letter label still breaks in two lines. */
+  narrow?: boolean;
+}) {
+  return (
+    <ctx.kit.Panel ctx={ctx} strong={big}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: big ? "row" : "column",
+          alignItems: big ? "center" : "flex-start",
+          gap: big ? 32 : 18,
+        }}
+      >
+        <SlideIcon name={card.icon} size={big ? 96 : 52} color="var(--hl)" />
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {card.lead && (
+            <span
+              data-qa="text"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: big ? 30 : 24,
+                color: "var(--muted)",
+              }}
+            >
+              {card.lead}
+            </span>
+          )}
+          <span
+            data-qa="text"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 700,
+              fontSize: big ? 52 : narrow ? 26 : 32,
+              lineHeight: 1.1,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {card.label}
+          </span>
+        </div>
+      </div>
+    </ctx.kit.Panel>
+  );
+}
+
 function CardGrid({ slide, ctx }: TemplateArgs<"cardGrid">) {
+  const composition = slide.composition ?? "list";
+  if (composition === "tiles" || composition === "bento") {
+    // Tiles: a grid of panels. Bento: the first card big across, the rest in a grid below.
+    const [first, ...rest] = slide.cards;
+    const cards = composition === "bento" ? rest : slide.cards;
+    const columns = cards.length === 3 || cards.length > 4 ? 3 : 2;
+    return (
+      <Column justify="center" gap={56}>
+        <Block name="title" slide={slide} gap={20}>
+          <Title text={slide.title} ctx={ctx} size="small" />
+          {slide.intro && <Text text={slide.intro} ctx={ctx} size={30} />}
+        </Block>
+        <Block name="body" slide={slide} gap={24}>
+          {composition === "bento" && first && <Tile ctx={ctx} card={first} big />}
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: 24 }}>
+            {cards.map((card) => (
+              <Tile key={card.label} ctx={ctx} card={card} narrow={columns === 3} />
+            ))}
+          </div>
+          {slide.footer && <Text text={slide.footer} ctx={ctx} size={30} color="var(--fg)" />}
+        </Block>
+      </Column>
+    );
+  }
   return (
     <Column justify="center" gap={56}>
       <Block name="title" slide={slide} gap={20}>
@@ -636,6 +1043,7 @@ function Screen({ slide, ctx }: TemplateArgs<"screen">) {
 }
 
 function Cta({ slide, ctx }: TemplateArgs<"cta">) {
+  // With an image, low: the object (or the scene, `bleed`) takes the top.
   const mode = ctx.art ? "low" : ctx.kit.compose.cta;
   const center = mode !== "left";
   return (

@@ -17,7 +17,7 @@
 // --types: only these slide types (e.g. screen), with --set.
 // Prints the QA problems of each slide and exits with 1 when there are any.
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { imageSize } from "image-size";
@@ -32,6 +32,7 @@ import { FONT_FAMILIES, fonts } from "../src/fonts/registry";
 import type { SlideAssets } from "../src/frame/types";
 import { parseTheme } from "../src/presets/registry";
 import { isLookId, LOOK_ART, LOOK_IDS, type LookId } from "../src/presets/studio/look-ids";
+import { LOOKS } from "../src/presets/studio/looks";
 import { checkRender, fitSlide } from "../src/qa";
 import { RenderSlide } from "../src/render-slide";
 
@@ -81,12 +82,33 @@ const looks: LookId[] = (option("looks")?.split(",") ?? [...LOOK_IDS]).filter(is
 const seed = option("seed") ?? "preview";
 const artDir = option("art-dir");
 
-/** The images of a look from --art-dir, by the background of each slot. */
-function artOf(look: LookId): { cover?: string; cta?: string } | undefined {
+/**
+ * The images of a look from --art-dir, by the background of each slot. A `bleed` slide takes
+ * `<slot>-<background>-scene.jpg` when there is one; the middle image (`photo` composition),
+ * `middle-<background>.jpg` by the surface of its slide.
+ */
+function artOf(look: LookId): { cover?: string; cta?: string; middle?: string } | undefined {
   const spec = LOOK_ART[look];
   if (!artDir || !spec) return undefined;
-  const url = (slot: "cover" | "cta") => `file://${resolve(artDir)}/${slot}-${spec[slot]}.jpg`;
-  return { cover: url("cover"), cta: url("cta") };
+  const file = (name: string) => `${resolve(artDir as string)}/${name}.jpg`;
+  const url = (slot: "cover" | "cta") => {
+    const bleed = slides.some(
+      (s) => s.type === slot && "composition" in s && s.composition === "bleed",
+    );
+    const scene = file(`${slot}-${spec[slot]}-scene`);
+    return `file://${bleed && existsSync(scene) ? scene : file(`${slot}-${spec[slot]}`)}`;
+  };
+  const index = slides.findIndex((s) => s.type === "statement" && s.composition === "photo");
+  const surface =
+    index >= 0
+      ? LOOKS[look].surface({ index, total: slides.length, type: "statement" })
+      : undefined;
+  const middle = surface && file(`middle-${surface === "ink" ? "dark" : "light"}`);
+  return {
+    cover: url("cover"),
+    cta: url("cta"),
+    ...(middle && existsSync(middle) && { middle: `file://${middle}` }),
+  };
 }
 
 /** @font-face rules of the curated fonts, pointing at the package files on disk. */

@@ -1,6 +1,7 @@
 import { createRandom } from "../../../frame/random";
 import { SlideIcon } from "../../../icons";
 import { type Look, type LookContext, RichText, twoDigits } from "../kit";
+import { ART_LOOK_SURFACES } from "../surfaces";
 import { brandLine, MetaHeader, WordmarkFooter } from "./common";
 
 // `atmosfera`: cinematic. Soft lights, grain and glass over ink. The lights are one panorama cut
@@ -148,7 +149,7 @@ function Sphere({ size, top }: { size: number; top: number }) {
 export const atmosfera: Look = {
   id: "atmosfera",
   title: { weight: 600, caps: false, tracking: -0.04, lineHeight: 1.0 },
-  surface: () => "ink",
+  surface: ART_LOOK_SURFACES.atmosfera,
   Backdrop: (ctx) => <Lights ctx={ctx} />,
   Header: (ctx) => <MetaHeader left={brandLine(ctx)} />,
   Footer: (ctx) => <WordmarkFooter ctx={ctx} separator=" / " />,

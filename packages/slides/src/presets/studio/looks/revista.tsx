@@ -1,6 +1,7 @@
 import { SlideIcon } from "../../../icons";
 import { type Look, pageLabel, RichText } from "../kit";
-import { brandLine, rhythm } from "./common";
+import { ART_LOOK_SURFACES } from "../surfaces";
+import { brandLine } from "./common";
 
 // `revista`: a classic magazine. Serif titles with italic emphasis, a centered masthead over a
 // double rule, roman numerals and an underlined call to action. Weight and elegance.
@@ -12,7 +13,7 @@ const doubleRule = (color = "var(--fg)") => `4px double ${color}`;
 export const revista: Look = {
   id: "revista",
   title: { font: "serif", weight: 500, caps: false, tracking: -0.025, lineHeight: 1.02 },
-  surface: rhythm("paper", ["paper", "ink", "paper", "paper"], "ink"),
+  surface: ART_LOOK_SURFACES.revista,
   Header: (ctx) => (
     <div style={{ position: "absolute", top: 70, left: 80, width: 850, textAlign: "center" }}>
       <div

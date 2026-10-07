@@ -1,5 +1,6 @@
 import {
   AI_PROVIDER_LABELS,
+  type ArtSlot,
   availableEvents,
   canDiscard,
   canExport,
@@ -41,7 +42,7 @@ import { RejectForm } from "@/components/posts/reject-form";
 import { RenderProgress } from "@/components/posts/render-progress";
 import { RenderedStrip } from "@/components/posts/rendered-strip";
 import { ScheduleForm, type SlotChoice } from "@/components/posts/schedule-form";
-import { mediaUrl } from "@/lib/brand-assets";
+import { artUrls, mediaUrl } from "@/lib/brand-assets";
 import { brandRenderContext } from "@/lib/carousel";
 import { db } from "@/lib/db";
 import { STATUS_DISPLAY } from "@/lib/post-status";
@@ -541,14 +542,8 @@ async function scheduleChoices(
 }
 
 /** URLs of a version's generated images, as the render page passes them (ADR 0016). */
-function versionArt(
-  art: { images?: { cover?: { path: string }; cta?: { path: string } } } | null,
-): { cover?: string; cta?: string } {
-  const images = art?.images ?? {};
-  return {
-    ...(images.cover && { cover: mediaUrl(images.cover.path) }),
-    ...(images.cta && { cta: mediaUrl(images.cta.path) }),
-  };
+function versionArt(art: { images?: Partial<Record<ArtSlot, { path: string }>> } | null) {
+  return artUrls(art?.images);
 }
 
 /** Who wrote a version: the editor, or the AI with the provider and model that answered. */

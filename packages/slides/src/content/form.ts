@@ -84,6 +84,7 @@ export const SLIDE_FIELDS: Record<SlideType, FieldSpec[]> = {
   statement: [
     text("title", "Título", L.statement.title),
     text("body", "Texto", L.statement.body, { optional: true, multiline: true }),
+    icon("icon", "Ícono del dibujo", true),
     {
       key: "visual",
       label: "De → a",

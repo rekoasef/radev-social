@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { exampleCarousel } from "./examples";
+import { exampleCarousel, exampleSlides } from "./examples";
 import {
   aiCarouselSchema,
   aiSlideGuide,
   aiSlideRewriteSchema,
+  artSlotsOf,
   brandLooks,
   brandMakesArt,
   DATA_SLIDES,
@@ -371,5 +372,35 @@ describe("describeRenderProblems", () => {
 
   it("leaves out render errors, which are not the content's fault", () => {
     expect(describeRenderProblems([{ slide: -1, kind: "error", text: "Timeout" }])).toEqual([]);
+  });
+});
+
+describe("artSlotsOf (ADR 0026)", () => {
+  const { cover, statement, steps, cta } = exampleSlides;
+  it("asks for the cover and the close by the look, as scenes when they are `bleed`", () => {
+    expect(artSlotsOf("editorial", [cover, steps, statement, cta])).toEqual([
+      { slot: "cover", background: "light", scene: false, monochrome: false },
+      { slot: "cta", background: "dark", scene: false, monochrome: false },
+    ]);
+    const slots = artSlotsOf("atmosfera", [{ ...cover, composition: "bleed" }, steps, cta]);
+    expect(slots.map((s) => s.scene)).toEqual([true, false]);
+    expect(artSlotsOf("monocromo", [cover, steps, cta])[0]?.monochrome).toBe(true);
+  });
+
+  it("adds the middle image with the background of its slide's surface", () => {
+    const photo = { ...statement, composition: "photo" };
+    // editorial cycles ink, paper, paper, accent from the second slide.
+    expect(artSlotsOf("editorial", [cover, photo, steps, cta]).at(-1)).toEqual({
+      slot: "middle",
+      background: "dark",
+      scene: false,
+      monochrome: false,
+    });
+    expect(artSlotsOf("editorial", [cover, steps, photo, cta]).at(-1)?.background).toBe("light");
+  });
+
+  it("is empty for a look without images", () => {
+    expect(artSlotsOf("recibo", [cover, steps, cta])).toEqual([]);
+    expect(artSlotsOf("nope", [cover, cta])).toEqual([]);
   });
 });

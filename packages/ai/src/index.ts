@@ -35,7 +35,7 @@ export {
   type ImageRequest,
   type ImageResult,
 } from "./images/cloudflare";
-export { type ArtBackground, artPrompt, colorName } from "./images/prompt";
+export { type ArtBackground, artPrompt, colorName, scenePrompt } from "./images/prompt";
 export {
   createOpenRouterProvider,
   OPENROUTER_URL,

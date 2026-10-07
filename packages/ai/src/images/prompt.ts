@@ -49,6 +49,26 @@ const PHOTO =
 const RULES =
   "Restrained, premium, quiet mood like a luxury brand campaign. No text, no letters, no numbers, no logos, no watermark, no people, no faces, no hands, no frame, no border.";
 
+// A scene across the whole slide (ADR 0026, the `bleed` composition): a place, not an object.
+// The lower part stays calm and in the slide's tone: the title goes there over a fade.
+const SCENE =
+  "Cinematic editorial photograph of a real place, vertical 4:5 frame, natural depth of field, real materials and textures. The main subject sits in the upper half; the lower third is calm, simple and uncluttered.";
+
+export function scenePrompt(
+  subject: string,
+  options: { background: ArtBackground; accent: string; monochrome?: boolean },
+): string {
+  const accent = colorName(options.accent);
+  const palette = options.monochrome
+    ? "Black and white only, no color at all."
+    : `Color grade: neutral tones with ${accent} (${options.accent.trim().toUpperCase()}) as the one strong accent color, in the light or in a key object.`;
+  const light =
+    options.background === "dark"
+      ? "Low-key, moody light: mostly deep shadows, the scene fading to near black at the edges and the bottom."
+      : "High-key, airy light: soft daylight, pale and bright, the scene fading to near white at the edges and the bottom.";
+  return [`Scene: ${subject.trim().replace(/\s+/g, " ")}`, SCENE, palette, light, RULES].join(" ");
+}
+
 export function artPrompt(
   subject: string,
   options: { background: ArtBackground; accent: string; monochrome?: boolean },
