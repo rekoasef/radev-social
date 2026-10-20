@@ -63,6 +63,7 @@ export function buildRewriteFiles(input: {
     instruction: instruction || "Mejorala: más clara, más directa y con más gancho.",
     rules: [
       `Podés mantener el tipo de slide, pero si la instrucción pide otro formato, o algo que este tipo no puede mostrar, cambiá al tipo que le corresponde (ver slides.md): afirmación → \`statement\`, pregunta → \`question\`, pasos → \`steps\`, lista u opciones → \`cardGrid\`, comparación → \`comparison\`, proceso → \`flow\`${shots ? ", captura de pantalla → `screen`" : ""}.`,
+      "Si la instrucción pide cambiarla entera, hacerla distinta o de nuevo, usá otro tipo de slide (o, si el tipo es el único que sirve, otra composición) y escribí textos nuevos.",
       "Si la instrucción pide más contenido, sumá contenido de verdad (más ítems, un texto de apoyo, un ejemplo concreto). Si el tipo actual no tiene dónde ponerlo (una pregunta o una afirmación tienen solo un título y un texto), pasala a uno que sí (`cardGrid`, `steps`, `comparison`).",
       ...(look
         ? [

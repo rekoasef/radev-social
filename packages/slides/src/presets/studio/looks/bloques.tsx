@@ -4,7 +4,10 @@ import { rhythm, WordmarkFooter } from "./common";
 
 // `bloques`: pop. Full-bleed color, giant capitals, solid tiles and stickers. Stops the scroll.
 
-/** Tiles take turns: accent, paper, a panel of the surface, and an outline. */
+/**
+ * Tiles take turns: accent, paper, a panel of the surface, and an outline. The outline and the
+ * panel draw with `--hl` (the accent, or ink on an accent surface): accent on accent can't be seen.
+ */
 function tileSurface(ctx: LookContext, i: number): Surface | "panel" | "outline" {
   const order: (Surface | "panel" | "outline")[] =
     ctx.surface === "accent"
@@ -55,7 +58,7 @@ export const bloques: Look = {
             tone === "panel"
               ? { background: "var(--panel)" }
               : tone === "outline"
-                ? { border: "3px solid var(--accent)" }
+                ? { border: "3px solid var(--hl)" }
                 : onSurface(ctx, tone);
           return (
             <div
@@ -83,9 +86,9 @@ export const bloques: Look = {
                       tone === "outline"
                         ? "transparent"
                         : tone === "panel"
-                          ? "var(--accent)"
+                          ? "var(--hl)"
                           : "var(--fg)",
-                    WebkitTextStroke: tone === "outline" ? "3px var(--accent)" : undefined,
+                    WebkitTextStroke: tone === "outline" ? "3px var(--hl)" : undefined,
                   }}
                 >
                   {twoDigits(i + 1)}
@@ -95,7 +98,7 @@ export const bloques: Look = {
                   <SlideIcon
                     name={item.icon}
                     size={small ? 44 : 56}
-                    color={tone === "panel" || tone === "outline" ? "var(--accent)" : "var(--fg)"}
+                    color={tone === "panel" || tone === "outline" ? "var(--hl)" : "var(--fg)"}
                     strokeWidth={2.2}
                   />
                 )

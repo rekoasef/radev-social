@@ -95,6 +95,7 @@ describe("buildRewriteFiles: compositions and a repeated answer", () => {
       "task.json",
     );
     expect(task.rules.join(" ")).toContain("sumá contenido de verdad");
+    expect(task.rules.join(" ")).toContain("cambiarla entera");
   });
 
   it("shows the previous answer when it came back practically the same", () => {
