@@ -249,11 +249,18 @@ ${compositionGuide(looks, art)}${art ? artGuide(looks) : ""}`;
  * The composition section (ADR 0026): the structure of each slide, apart from its look. The ones
  * that need generated images only where the post gets them.
  */
-function compositionGuide(looks: readonly LookId[], art: boolean): string {
+function compositionGuide(
+  looks: readonly LookId[],
+  art: boolean,
+  /** Replaces the note on the compositions that need a generated image. */
+  imageNoteOverride?: string,
+): string {
   const withArt = art && looks.some((id) => LOOK_ART[id]);
-  const imageNote = withArt
-    ? "solo con los looks que llevan imagen"
-    : "no los uses: este post no lleva imágenes generadas";
+  const imageNote =
+    imageNoteOverride ??
+    (withArt
+      ? "solo con los looks que llevan imagen"
+      : "no los uses: este post no lleva imágenes generadas");
   return `
 ## Composición
 
@@ -282,6 +289,11 @@ export function aiSlideGuide(options: {
   art?: boolean;
   /** The post's screenshots (ADR 0024): only a `studio` brand draws them. */
   screenshots?: readonly AiScreenshot[];
+  /**
+   * Rewriting one slide: the look the post already has. Adds the compositions (not the choice of
+   * look), so the AI can change the structure of the slide and not only its texts.
+   */
+  rewriteLook?: LookId;
 }): string {
   const dataSlides = DATA_SLIDES.map((type) => `\`${type}\``).join(" ni ");
   const dataPart = options.data
@@ -300,8 +312,48 @@ No uses ${dataSlides}: sus cifras tienen que venir de datos reales que esta marc
       dataPart,
     ) +
     (screens ? screenshotsGuide() : "") +
-    looks
+    looks +
+    (options.rewriteLook ? compositionGuide([options.rewriteLook], false, REWRITE_IMAGE_NOTE) : "")
   );
+}
+
+/** Rewriting a slide can't ask for a new image: only keep one the slide already has. */
+const REWRITE_IMAGE_NOTE =
+  "no la elijas al rehacer una slide, porque necesita una imagen nueva; si la slide ya la tiene, podés dejarla";
+
+/** Words of a slide's texts (and icons), without emphasis marks or punctuation. */
+function slideWords(slide: unknown, into = new Set<string>()): Set<string> {
+  if (typeof slide === "string") {
+    for (const word of slide.toLowerCase().split(/[^\p{L}\p{N}-]+/u)) if (word) into.add(word);
+  } else if (Array.isArray(slide)) {
+    for (const item of slide) slideWords(item, into);
+  } else if (slide && typeof slide === "object") {
+    for (const [key, value] of Object.entries(slide)) {
+      if (!REWRITE_IGNORED_KEYS.has(key)) slideWords(value, into);
+    }
+  }
+  return into;
+}
+const REWRITE_IGNORED_KEYS = new Set(["type", "composition", "layout"]);
+
+/** Share of words two versions of a slide have in common for it to count as the same one. */
+export const REWRITE_SAME_WORDS = 0.75;
+
+/**
+ * Whether a rewritten slide is practically the one it replaces: same type, same composition and
+ * most of the words in common (a word or two touched up). The hand layout doesn't count.
+ */
+export function rewriteTooSimilar(before: unknown, after: unknown): boolean {
+  const field = (slide: unknown, key: string) =>
+    slide && typeof slide === "object" ? (slide as Record<string, unknown>)[key] : undefined;
+  if (field(before, "type") !== field(after, "type")) return false;
+  if (field(before, "composition") !== field(after, "composition")) return false;
+  const a = slideWords(before);
+  const b = slideWords(after);
+  const union = new Set([...a, ...b]).size;
+  if (union === 0) return true;
+  const shared = [...a].filter((word) => b.has(word)).length;
+  return shared / union >= REWRITE_SAME_WORDS;
 }
 
 /** A range as written, for comparing: no case, no spaces, one kind of dash. */

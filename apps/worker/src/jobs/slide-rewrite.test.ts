@@ -73,3 +73,43 @@ describe("buildRewriteFiles", () => {
     expect(read(without, "task.json").rules.join(" ")).not.toContain("`screen`");
   });
 });
+
+describe("buildRewriteFiles: compositions and a repeated answer", () => {
+  it("with the post's look, lets the slide change its composition", () => {
+    const files = buildRewriteFiles({
+      carousel,
+      slideIndex: 1,
+      instruction: "se ve mal",
+      data: null,
+      look: "editorial",
+    });
+    expect(files["slides.md"]).toContain("## Composición");
+    expect(read(files, "task.json").rules.join(" ")).toContain("cambiá también su `composition`");
+    const without = buildRewriteFiles({ carousel, slideIndex: 1, instruction: "", data: null });
+    expect(without["slides.md"]).not.toContain("## Composición");
+  });
+
+  it("asks for more content in a type that has room for it", () => {
+    const task = read(
+      buildRewriteFiles({ carousel, slideIndex: 1, instruction: "más contenido", data: null }),
+      "task.json",
+    );
+    expect(task.rules.join(" ")).toContain("sumá contenido de verdad");
+  });
+
+  it("shows the previous answer when it came back practically the same", () => {
+    const previous = { type: "statement", title: "Una afirmación" };
+    const task = read(
+      buildRewriteFiles({
+        carousel,
+        slideIndex: 1,
+        instruction: "",
+        data: null,
+        tooSimilar: previous,
+      }),
+      "task.json",
+    );
+    expect(task.previousAnswer).toEqual(previous);
+    expect(task.previousAnswerNote).toMatch(/casi igual/);
+  });
+});

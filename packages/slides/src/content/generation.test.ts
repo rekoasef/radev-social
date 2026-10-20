@@ -10,6 +10,7 @@ import {
   DATA_SLIDES,
   describeRenderProblems,
   lookChoices,
+  rewriteTooSimilar,
 } from "./generation";
 
 describe("aiCarouselSchema", () => {
@@ -402,5 +403,74 @@ describe("artSlotsOf (ADR 0026)", () => {
   it("is empty for a look without images", () => {
     expect(artSlotsOf("recibo", [cover, steps, cta])).toEqual([]);
     expect(artSlotsOf("nope", [cover, cta])).toEqual([]);
+  });
+});
+
+describe("aiSlideGuide for a rewrite", () => {
+  it("adds the compositions of the post's look, without new images", () => {
+    const guide = aiSlideGuide({ data: false, rewriteLook: "editorial" });
+    expect(guide).toContain("## Composición");
+    expect(guide).toContain("no la elijas al rehacer una slide");
+    expect(guide).not.toContain("## Look");
+    expect(aiSlideGuide({ data: false })).not.toContain("## Composición");
+  });
+});
+
+describe("rewriteTooSimilar", () => {
+  // Real answers from production (2026-10-20) to "Agregale un poco mas de contenido".
+  const question = {
+    type: "question",
+    title: "¿Qué es realmente un *dashboard*?",
+    callout: {
+      icon: "layout-dashboard",
+      lead: "En simple",
+      text: "Un panel que junta tus números y te los muestra *al instante*.",
+    },
+  };
+
+  it("catches a word or two touched up", () => {
+    expect(
+      rewriteTooSimilar(question, {
+        ...question,
+        callout: {
+          ...question.callout,
+          text: "Un panel que junta ventas, gastos y stock y te los muestra *al instante*.",
+        },
+      }),
+    ).toBe(true);
+    expect(
+      rewriteTooSimilar(question, {
+        ...question,
+        callout: {
+          ...question.callout,
+          lead: "En simple, sin vueltas",
+          text: "Un panel que junta tus números y te los muestra *al instante*, sin planillas.",
+        },
+      }),
+    ).toBe(true);
+    expect(rewriteTooSimilar({ ...question, layout: { title: { x: 0, y: 10 } } }, question)).toBe(
+      true,
+    );
+  });
+
+  it("lets through a new type, a new composition or new texts", () => {
+    expect(rewriteTooSimilar(question, { ...question, type: "statement" })).toBe(false);
+    const statement = {
+      type: "statement",
+      title: "Tus números, *al instante*",
+      composition: "center",
+    };
+    expect(rewriteTooSimilar(statement, { ...statement, composition: "quote" })).toBe(false);
+    expect(
+      rewriteTooSimilar(question, {
+        type: "question",
+        title: "¿Para qué te sirve un *dashboard*?",
+        callout: {
+          icon: "chart-line",
+          lead: "La idea",
+          text: "Ver ventas, gastos y stock en una pantalla, sin abrir cinco planillas.",
+        },
+      }),
+    ).toBe(false);
   });
 });

@@ -16,6 +16,9 @@ import {
   aiSlideGuide,
   aiSlideRewriteSchema,
   brandLooks,
+  isLookId,
+  type LookId,
+  rewriteTooSimilar,
 } from "@radev/slides/generation";
 import type { Logger } from "../logger";
 import { brandContext, loadScreenshots, runRow } from "./carousel-generate";
@@ -27,7 +30,7 @@ import { decideIdeas } from "./ideas-request";
 // and saves. Only runs a request that is still queued (rule 8).
 
 export const REWRITE_PROMPT =
-  "Reescribí solo la slide que indica `task.json` del carrusel de `carousel.json`, siguiendo la instrucción. Leé antes `slides.md`. Mantené el tono y la coherencia con el resto del carrusel. Devolvé solo el objeto que pide el schema: la slide nueva.";
+  "Reescribí solo la slide que indica `task.json` del carrusel de `carousel.json`, siguiendo la instrucción. Leé antes `slides.md`. Mantené el tono de la marca y la coherencia con el resto del carrusel, pero el cambio se tiene que notar: reescribí la slide de verdad, no retoques una o dos palabras. Devolvé solo el objeto que pide el schema: la slide nueva.";
 
 /** Added to the prompt when the post has screenshots (ADR 0024). */
 export const REWRITE_SCREENSHOTS_PROMPT =
@@ -44,8 +47,12 @@ export function buildRewriteFiles(input: {
   problems?: readonly string[];
   /** The post's screenshots (ADR 0024). */
   screenshots?: readonly AiScreenshot[];
+  /** The post's look (studio brands): the AI may change the slide's composition within it. */
+  look?: LookId;
+  /** The previous answer, when it came back practically the same as the current slide. */
+  tooSimilar?: unknown;
 }): Record<string, string> {
-  const { carousel, slideIndex, instruction, data, problems } = input;
+  const { carousel, slideIndex, instruction, data, problems, look, tooSimilar } = input;
   const shots = input.screenshots && input.screenshots.length > 0 ? input.screenshots : undefined;
   const slides = (carousel.slides as unknown[]) ?? [];
   const current = slides[slideIndex] as { type?: string } | undefined;
@@ -55,7 +62,13 @@ export function buildRewriteFiles(input: {
     currentType: current?.type,
     instruction: instruction || "Mejorala: más clara, más directa y con más gancho.",
     rules: [
-      `Por defecto mantené el tipo de slide. Si la instrucción pide otro formato, cambiá al tipo que le corresponde (ver slides.md): afirmación → \`statement\`, pregunta → \`question\`, pasos → \`steps\`, lista u opciones → \`cardGrid\`, comparación → \`comparison\`, proceso → \`flow\`${shots ? ", captura de pantalla → `screen`" : ""}.`,
+      `Podés mantener el tipo de slide, pero si la instrucción pide otro formato, o algo que este tipo no puede mostrar, cambiá al tipo que le corresponde (ver slides.md): afirmación → \`statement\`, pregunta → \`question\`, pasos → \`steps\`, lista u opciones → \`cardGrid\`, comparación → \`comparison\`, proceso → \`flow\`${shots ? ", captura de pantalla → `screen`" : ""}.`,
+      "Si la instrucción pide más contenido, sumá contenido de verdad (más ítems, un texto de apoyo, un ejemplo concreto). Si el tipo actual no tiene dónde ponerlo (una pregunta o una afirmación tienen solo un título y un texto), pasala a uno que sí (`cardGrid`, `steps`, `comparison`).",
+      ...(look
+        ? [
+            "Si la instrucción dice que la slide se ve mal o pide otro diseño, cambiá también su `composition` (ver Composición en slides.md), no solo los textos.",
+          ]
+        : []),
       slideIndex === 0
         ? "Es la portada: tiene que seguir siendo `cover`."
         : slideIndex === slides.length - 1
@@ -63,6 +76,11 @@ export function buildRewriteFiles(input: {
           : "No puede ser `cover` ni `cta` (van primera y última).",
       "No cambies las otras slides: solo devolvés esta.",
     ],
+    ...(tooSimilar !== undefined && {
+      previousAnswer: stripLayout(tooSimilar),
+      previousAnswerNote:
+        "Tu respuesta anterior (previousAnswer) era casi igual a la slide actual: el operador no va a notar el cambio. Volvé a hacerla con un cambio claro. Solo si la instrucción pide un ajuste puntual (una palabra, un dato), está bien que el resto quede igual.",
+    }),
     ...(problems &&
       problems.length > 0 && {
         previousProblems: problems,
@@ -75,7 +93,7 @@ export function buildRewriteFiles(input: {
   return {
     "task.json": `${JSON.stringify(task, null, 2)}\n`,
     "carousel.json": `${JSON.stringify(shown, null, 2)}\n`,
-    "slides.md": aiSlideGuide({ data: Boolean(data), screenshots: shots }),
+    "slides.md": aiSlideGuide({ data: Boolean(data), screenshots: shots, rewriteLook: look }),
     ...(data && { "data.json": `${JSON.stringify(data, null, 2)}\n` }),
     ...(shots && { "screenshots.json": `${JSON.stringify(shots, null, 2)}\n` }),
   };
@@ -153,7 +171,23 @@ export async function rewriteSlide(
     ],
   );
 
+  // The look the post has (studio brands): lets the AI change the slide's composition.
+  const look =
+    typeof request.carousel.look === "string" &&
+    isLookId(request.carousel.look) &&
+    brandLooks(brand.stylePreset, brand.themeTokens).includes(request.carousel.look)
+      ? request.carousel.look
+      : undefined;
+  const current = slides[request.slideIndex];
+
   let problems: string[] | undefined;
+  // A valid answer that came back practically the same: asked once more, and kept if that fails.
+  let tooSimilar: Record<string, unknown> | undefined;
+  const save = async (slide: Record<string, unknown>) => {
+    await finishSlideRewrite(db, request.id, { result: slide });
+    log.info("slide rewrite done", { requestId: request.id });
+    return "done" as const;
+  };
   while (true) {
     const routed = await deps.router.generate<{ slide: Slide }>(route, {
       task: "slide.rewrite",
@@ -169,6 +203,8 @@ export async function rewriteSlide(
           data,
           problems,
           screenshots,
+          look,
+          tooSimilar,
         }),
       },
       images,
@@ -197,18 +233,23 @@ export async function rewriteSlide(
     switch (decision.kind) {
       case "save": {
         if (!routed.result.ok) throw new Error("unreachable");
-        await finishSlideRewrite(db, request.id, {
-          result: routed.result.data.slide as unknown as Record<string, unknown>,
-        });
-        log.info("slide rewrite done", { requestId: request.id });
-        return "done";
+        const slide = routed.result.data.slide as unknown as Record<string, unknown>;
+        if (tooSimilar === undefined && rewriteTooSimilar(current, slide)) {
+          log.info("slide rewrite too similar, asking again", { requestId: request.id });
+          tooSimilar = slide;
+          problems = undefined;
+          continue;
+        }
+        return save(slide);
       }
       case "retryWithFeedback":
         problems = decision.problems;
         continue;
       case "retry":
+        if (tooSimilar) return save(tooSimilar);
         throw new RetryableRewriteError(routed.result.ok ? "" : routed.result.error.message);
       case "fail":
+        if (tooSimilar) return save(tooSimilar);
         return fail(decision.message);
     }
   }
