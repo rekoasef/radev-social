@@ -12,6 +12,7 @@ Gestor de redes sociales que genera, renderiza, programa y publica carruseles pa
 | **Siempre, al empezar**: en qué tarea estamos, decisiones tomadas, cómo trabajamos | `docs/PROGRESS.md` |
 | Qué incluye cada fase | `docs/ROADMAP.md` |
 | Por qué se tomó una decisión | `docs/decisions/` |
+| **Siempre, antes de instalar, configurar o medir algo en la máquina**: en cuál de las dos PCs estás y cómo está cada una | `docs/ENVIRONMENTS.md` |
 
 Trabajamos **una fase del roadmap a la vez**. No implementes cosas de fases futuras salvo que se pida explícitamente.
 
@@ -23,6 +24,7 @@ Renzo desarrolla con IA y tiene **poca experiencia en infraestructura** (Docker,
 - **Pedí confirmación explícita antes de cualquier acción destructiva o difícil de revertir**: borrar datos o volúmenes, migraciones que eliminan columnas, cambios en el servidor, DNS, firewall o credenciales.
 - Preferí siempre la solución más simple que cumpla la documentación.
 - Si algo falla, explicá la causa probable antes de probar arreglos.
+- **Hacé de profesor.** Renzo usa el proyecto para aprender. Cuando aparezca una herramienta, un concepto o una decisión nueva (un worker, Docker, una cola de jobs, una librería, un patrón), explicá en pocas líneas qué es, para qué lo usamos acá y cuándo conviene usarlo y cuándo no, con ejemplos del código real del repo. Que sea corto y no frene el trabajo; profundizá solo si lo pide. No vuelvas a explicar lo que ya aprendió.
 
 ## Entorno de desarrollo
 
