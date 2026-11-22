@@ -1,6 +1,8 @@
 packages:
   - apps/*
   - packages/*
+  # Solo en la rama spike/video-v0: pruebas descartables de RAdev Studio.
+  - spikes/*
 
 # Paquetes autorizados a ejecutar scripts al instalarse (pnpm los bloquea por defecto).
 allowBuilds:

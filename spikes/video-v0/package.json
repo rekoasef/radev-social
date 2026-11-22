@@ -1,0 +1,27 @@
+{
+  "name": "@radev/spike-video-v0",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pruebas descartables de V0 (RAdev Studio). No es código de producción.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "studio": "remotion studio src/index.ts",
+    "bench": "tsx scripts/bench.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter-tight": "5.3.0",
+    "@fontsource-variable/space-grotesk": "5.3.0",
+    "@remotion/bundler": "4.0.545",
+    "@remotion/cli": "4.0.545",
+    "@remotion/renderer": "4.0.545",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.545"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.18",
+    "tsx": "4.23.15"
+  }
+}

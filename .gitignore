@@ -42,3 +42,6 @@ pnpm-debug.log*
 **/.impeccable/questions/
 **/.impeccable/review/
 **/.impeccable/mocks/
+
+# Salidas de las pruebas de V0 (MP4, audio, mediciones crudas)
+spikes/*/out/
