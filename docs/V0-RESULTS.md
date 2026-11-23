@@ -95,6 +95,16 @@ Descartadas por licencia antes de probar: Piper `en_US-ryan` y `hfc_female`/`hfc
 - **ElevenLabs gratis no puede usar voces de la biblioteca por la API** (HTTP 402 `paid_plan_required`); desde la web sí. Todas las voces argentinas son de la biblioteca. Hay muchas (filtro `accent=argentine`).
 - **Decisión del operador: varias voces, elegidas por video.** Las voces de los primeros resultados suenan "a comercial"; para historias quiere una voz **narrativa**. Se queda con **Carlos Pro** (`gBTPbHzRd0ZmV75Z5Zk4`, "Argentinian Documentary") para comerciales (por ejemplo de Lumus) y busca otra narrativa. En V1: catálogo de voces en la base (proveedor, id, nombre, uso: narrativa/comercial), voz por defecto por marca y selector al crear cada video (regla 6: nada de una marca en código).
 - **Candidatas narrativas (operador, 2026-11-23):** **Fran** (`0bu1GUsOfNJYyXbmSTxD`) y **Juan** (`dGjL92Li0y7ZUQ3MESQW`). Falta probarlas con el texto de prueba (web o API ya paga).
+- **Con Starter pago (2026-11-23):** `cloud.py --only=<voz>` + `eleven_words.py` (tiempos por carácter → palabras, MP3 → WAV) + composición `captions`.
+
+| Voz | Uso | Audio | Generación | Tono al final de la pregunta | Palabras |
+|---|---|---|---|---|---|
+| Fran | narrativa | 41,5 s | 8,0 s | **+15 %** (sube) | 93/93 |
+| Juan | narrativa | 42,2 s | 13,2 s | −40 % (baja) | 93/93 |
+| Carlos Pro | comercial | 33,7 s | 3,2 s | **+29 %** (sube) | 93/93 |
+| Kokoro `em_alex` (referencia) | — | 32,8 s | 22,8 s (local) | −28 % | 93/93 |
+
+  Los tiempos por carácter vienen del texto original: no hace falta la unión con números de `align.py`. Videos con subtítulos (42 s en ~38 s de render cada uno) en `Descargas\v0-2-voces\elevenlabs\videos`. Decisión en **ADR 0027**.
 - Muestras gratis (las de la biblioteca, con su propio texto) en `Descargas\v0-2-voces\elevenlabs` y `...\narrativas` (12 voces argentinas narrativas por uso).
 
 ## V0-7 · Licencias y condiciones

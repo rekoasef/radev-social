@@ -30,3 +30,4 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0024 | Capturas de pantalla en los carruseles generados | aceptada |
 | 0025 | Imágenes con FLUX.2 klein 4B y prompt de foto editorial | aceptada |
 | 0026 | Composiciones por slide, escenas a sangre e imagen del medio | aceptada |
+| 0027 | Voces del video con ElevenLabs (pago) y voz elegida por video | aceptada |
