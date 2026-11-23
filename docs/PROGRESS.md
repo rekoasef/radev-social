@@ -29,6 +29,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 >
 > **V0-3 (2026-11-23):** variante **A (audio aparte en PCM)** cumple todo lo medible: desfase final 0, voz a 0 ms en cada escena, 0 saltos de cuadro, armado ~5,8 s, cambiar una escena = 1 clip (26 % del render) + armado. La B (audio en los clips) corre la voz 8–35 ms por unión y queda 1,4 cuadros larga. El mux lleva `-t` (si no, el relleno de AAC alarga el audio 2 cuadros). Para repetir: `cd spikes/video-v0 && (cd tts && python3 scenes.py texts/scenes-es.json) && pnpm scenes --tag full` (con `scenes-es-edit.json` y `--tag edit` para la escena cambiada).
 >
+> Los videos de `Descargas\v0-3-escenas` están solo en la PC de casa (no viajan con git). En la otra máquina se rehacen con los comandos de arriba (~625 caracteres de ElevenLabs y ~2 min de render; quedan en `spikes/video-v0/out/v0-3/{full,edit}/final-{a,b}.mp4`). Si es la fábrica, medir solo después de relevarla y preguntar.
+>
 > **Próximo paso:** el operador mira y escucha `Descargas\v0-3-escenas` (uniones, entonación entre escenas, música de prueba con *ducking*). Si aprueba: D-D en firme con audio aparte, y seguir con la próxima prueba de §6 (V0-5, `packages/slides` en video, o V0-6, personaje SVG; V0-4 Ollama es opcional).
 >
 > **Para correr V0-3 con ElevenLabs alcanza con** Node/pnpm, `ffmpeg` y `python3` del sistema: `tts/cloud.py` y `tts/eleven_words.py` usan solo la biblioteca estándar de Python (sin entorno virtual). El entorno virtual de Kokoro (`tts/setup.sh`, 1,7 GB, pide `python3.12-venv` y `espeak-ng` por apt) **no hace falta** salvo que se quiera Kokoro.
