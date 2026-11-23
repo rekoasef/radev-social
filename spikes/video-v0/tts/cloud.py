@@ -31,8 +31,17 @@ AZURE_VOICES = [
     ("es-MX", "es-MX-Ximena:DragonHDLatestNeural"),
 ]
 GOOGLE_VOICES = ["es-US-Chirp3-HD-Charon", "es-US-Chirp3-HD-Orus", "es-US-Chirp3-HD-Kore"]
-# Se completan con --list-eleven (id de la voz, nombre corto).
-ELEVEN_VOICES: list[tuple[str, str]] = []
+# Voces argentinas de la biblioteca (elegidas con --list-eleven el 2026-11-23).
+ELEVEN_VOICES: list[tuple[str, str]] = [
+    ("ByVRQtaK1WDOvTmP1PKO", "agustin"),
+    ("gBTPbHzRd0ZmV75Z5Zk4", "carlos-pro"),
+    ("MjtZn5tagxL1RO6w9ER5", "lionel"),
+    ("FrrTxu4nrplZwLlMy2kD", "javier"),
+    ("GXjmyUMreNIadjZrZRka", "nicolas-porteno"),
+    ("9oPKasc15pfAbMr7N6Gs", "valeria"),
+    ("p7AwDmKvTdoHTBuueGvP", "malena"),
+    ("bN1bDXgDIGX5lw0rtY2B", "melanie"),
+]
 ELEVEN_MODEL = "eleven_multilingual_v2"
 
 
@@ -86,7 +95,7 @@ def eleven(key: str, voice_id: str) -> tuple[bytes, str, dict]:
 def list_eleven(key: str) -> None:
     for accent in ["argentinian", "latin american", "mexican", ""]:
         q = urllib.parse.urlencode({"language": "es", "accent": accent, "page_size": 15,
-                                    "sort": "usage_character_count_7d"})
+                                    "sort": "usage_character_count_1y"})
         res = json.loads(http(f"https://api.elevenlabs.io/v1/shared-voices?{q}", None, {"xi-api-key": key}))
         print(f"\n== acento: {accent or '(cualquiera)'}")
         for v in res.get("voices", []):
@@ -108,6 +117,9 @@ def main() -> None:
         jobs += [(f"google-{v}", lambda v=v: google(e["GOOGLE_TTS_API_KEY"], v)) for v in GOOGLE_VOICES]
     if e.get("ELEVENLABS_API_KEY"):
         jobs += [(f"eleven-{name}", lambda i=vid: eleven(e["ELEVENLABS_API_KEY"], i)) for vid, name in ELEVEN_VOICES]
+    only = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--only=")), None)
+    if only:
+        jobs = [j for j in jobs if only in j[0]]
     results = []
     for name, fn in jobs:
         t0 = time.perf_counter()
