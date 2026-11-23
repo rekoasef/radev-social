@@ -3,4 +3,6 @@ kokoro==0.9.4
 misaki[en]==0.9.4
 piper-tts[alignment]==1.8.0
 soundfile==0.14.0
+# Medir el tono (F0) de las muestras (Praat; GPL-3.0, uso local).
+praat-parselmouth
 huggingface_hub
