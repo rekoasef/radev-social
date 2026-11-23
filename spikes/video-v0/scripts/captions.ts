@@ -20,10 +20,22 @@ const words = JSON.parse(readFileSync(path.join(samples, `${voice}.words.json`),
 const wav = readFileSync(path.join(samples, `${voice}.wav`));
 const seconds = (wav.length - 44) / wav.readUInt32LE(28) + 0.5;
 
-const serveUrl = await bundle({ entryPoint: path.join(root, "src", "index.ts"), publicDir: samples });
+const serveUrl = await bundle({
+  entryPoint: path.join(root, "src", "index.ts"),
+  publicDir: samples,
+});
 const inputProps = { audio: `${voice}.wav`, words, seconds };
 const composition = await selectComposition({ serveUrl, id: "captions", inputProps });
 const output = path.join(root, "out", `captions-${voice}.mp4`);
 const t0 = performance.now();
-await renderMedia({ composition, serveUrl, codec: "h264", outputLocation: output, inputProps, concurrency: 4 });
-console.log(`${output} (${seconds.toFixed(1)} s de video, render ${((performance.now() - t0) / 1000).toFixed(1)} s)`);
+await renderMedia({
+  composition,
+  serveUrl,
+  codec: "h264",
+  outputLocation: output,
+  inputProps,
+  concurrency: 4,
+});
+console.log(
+  `${output} (${seconds.toFixed(1)} s de video, render ${((performance.now() - t0) / 1000).toFixed(1)} s)`,
+);
