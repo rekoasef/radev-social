@@ -33,10 +33,50 @@ Código de las pruebas: `spikes/video-v0/` en la rama `spike/video-v0` (descarta
 - **De 4 a 6 casi no mejora** (−3 %) y usa más RAM: el cuello de botella no es la cantidad de pestañas, la CPU nunca pasó del 50 % de promedio. **Concurrency por defecto: 4.**
 - El `.wslconfig` (10 GB) alcanza con margen para el render solo.
 
+**Con el sistema levantado (PC de casa, 2026-11-23):** Docker Desktop abierto, `docker compose up -d --build` (postgres, migrate, web y worker; build + arranque 270 s), Short de 45 s con concurrency 4.
+
+| Situación | Render | s/s | RAM pico WSL | CPU prom. | Bundle frío / caché |
+|---|---|---|---|---|---|
+| Web, worker y Postgres arriba (en reposo: worker ≤ 3 % CPU, ~150–300 MiB) | 73,6 · 68,5 · 67,0 s | 1,49–1,64 | 2,9–3,5 GiB | 45 % | 26,0 / 8,5 s |
+| Contenedores frenados, Docker Desktop abierto | 69,4 · 67,5 s | 1,50–1,54 | 2,6–3,6 GiB | 44 % | 24,5 / 5,3 s |
+
+- **Los contenedores no frenan el render**: con o sin ellos da ~68 s. Sigue cumpliendo de sobra (≤ 3 min).
+- **Contra el 2026-11-21 es ~35 % más lento** (51 → 68 s; bundle en frío 15 → 25 s). Causa sin confirmar: Docker Desktop abierto (su VM comparte la máquina) o el estado de energía de la notebook. Para producción local no cambia ninguna decisión; si importa, repetir con Docker Desktop cerrado y el cargador puesto.
+
 **Pendiente de V0-1:**
-- [ ] Una corrida con la web, el worker y Postgres levantados al mismo tiempo.
+- [x] Una corrida con la web, el worker y Postgres levantados al mismo tiempo (2026-11-23).
 - [ ] Ver si `@remotion/player` anda dentro del panel (se puede pasar a V1: no cambia ninguna decisión).
 - Temperatura de la CPU: no se puede leer desde WSL. La GPU no subió de 45 °C (Remotion renderiza con la CPU).
+
+## V0-2 · Kokoro y Piper
+
+**Máquina:** PC de casa (Ubuntu), 2026-11-23. Python 3.12.3 en un entorno virtual (`spikes/video-v0/tts/setup.sh`; versiones exactas en `requirements.lock.txt`): kokoro 0.9.4, misaki 0.9.4, piper-tts 1.8.0 (con `onnx` 1.23.2 para los tiempos), torch 2.15.0 **solo CPU**. Modelos bajados con `download.py` a `spikes/video-v0/out/tts/models` (726 MB). Prueba: `synth.py`, cada voz en su propio proceso, todo en CPU (16 hilos).
+
+**Texto:** el mismo en español (voseo) y en inglés, 93 palabras: números (1978, 6 millones, 64, 23 %, 3, 15), siglas (JFK), nombres propios (Nueva York, Lufthansa) y dos preguntas (`tts/texts/`).
+
+| Voz | Idioma | Licencia de la voz | Audio | Síntesis | × tiempo real | RAM pico |
+|---|---|---|---|---|---|---|
+| Kokoro `ef_dora` | es (España) | Apache 2.0 | 32,7 s | 21,9 s | 1,5× | 1,4 GiB |
+| Kokoro `em_alex` | es (España) | Apache 2.0 | 32,8 s | 23,1 s | 1,4× | 1,4 GiB |
+| Kokoro `em_santa` | es (España) | Apache 2.0 | 32,9 s | 22,9 s | 1,4× | 1,4 GiB |
+| Kokoro `ef_dora` + `es-419` | es (Latinoamérica) | Apache 2.0 | 32,8 s | 22,8 s | 1,4× | 1,4 GiB |
+| Kokoro `em_alex` + `es-419` | es (Latinoamérica) | Apache 2.0 | 33,0 s | 24,5 s | 1,3× | 1,4 GiB |
+| Kokoro `af_heart` | en | Apache 2.0 | 31,3 s | 22,0 s | 1,4× | 1,6 GiB |
+| Kokoro `am_michael` | en | Apache 2.0 | 34,7 s | 28,4 s | 1,2× | 1,7 GiB |
+| Piper `es_AR-daniela-high` | es (Argentina) | dataset CC BY-SA 4.0 (atribución y "compartir igual": revisar en V0-7) | 27,1 s | 9,1 s | 3,0× | 0,5 GiB |
+| Piper `es_MX-claude-high` | es (México) | dataset Apache 2.0 | 34,9 s | 2,7 s | 13× | 0,4 GiB |
+| Piper `es_MX-ald-medium` | es (México) | dataset Unlicense | 34,9 s | 4,3 s | 8× | 0,4 GiB |
+| Piper `es_ES-davefx-medium` | es (España) | dataset CC0 | 30,6 s | 3,9 s | 7,8× | 0,4 GiB |
+| Piper `en_US-joe-medium` | en | dataset CC0 | 31,9 s | 2,1 s | 15× | 0,4 GiB |
+| Piper `en_US-kristin-medium` | en | dominio público | 34,4 s | 1,9 s | 18× | 0,5 GiB |
+
+Descartadas por licencia antes de probar: Piper `en_US-ryan` y `hfc_female`/`hfc_male` (CC BY-NC-SA: no comercial), `en_US-lessac` (licencia de investigación de Blizzard 2013).
+
+**Lectura (parcial):**
+- **Todas cumplen "más rápida que el tiempo real" en CPU.** Piper es mucho más rápido (8–18×, Daniela 3× por ser `high`) y usa un tercio de la RAM. Kokoro anda a ~1,4×: un Short de 45 s tarda ~35 s en generar la voz, que con la caché por hash se paga una sola vez por escena.
+- **Kokoro en español usa por defecto las reglas de España** (`espeak-ng` `es`: "diθjembre", con θ). Con `es-419` (cambiando `pipe.g2p`) sale "disjembre". Ninguna de las dos es rioplatense: `espeak-ng` no tiene esa variante (falta el sonido "sh" de "yo" y "calle").
+- **Tiempos por palabra:** ninguno los da de fábrica en español (Kokoro solo en inglés), pero **los dos dan la duración de cada fonema** (Kokoro: `pred_dur`; Piper: `include_alignments`). Agrupando por espacios salen palabras fonéticas con inicio y fin (`out/tts/samples/<voz>.json`), coherentes con el audio. Falta: (1) unir las palabras fonéticas con las del texto, porque los números se expanden ("1978" → "mil novecientos setenta y ocho"); (2) medir la precisión contra una referencia (Whisper), con el criterio de ≤ 100 ms.
+- **Calidad:** pendiente. La juzga el operador de oído, de 1 a 5 (muestras copiadas a `Descargas\v0-2-voces`).
 
 ## V0-7 · Licencias y condiciones
 

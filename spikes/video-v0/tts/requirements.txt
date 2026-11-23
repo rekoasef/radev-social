@@ -1,0 +1,6 @@
+# V0-2 (descartable). torch va aparte, desde el índice de solo CPU (ver setup.sh).
+kokoro==0.9.4
+misaki[en]==0.9.4
+piper-tts[alignment]==1.8.0
+soundfile==0.14.0
+huggingface_hub

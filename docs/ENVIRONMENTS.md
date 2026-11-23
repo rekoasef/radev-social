@@ -23,6 +23,7 @@ Verificado el 2026-11-20.
 | Node | Node 24 con nvm (`.nvmrc`); en shells no interactivos hace falta `source ~/.nvm/nvm.sh` |
 | Postgres | El del proyecto, en Docker, en `127.0.0.1:5433`. Hay un Postgres nativo de otros proyectos en 5432: no tocarlo |
 | `ffmpeg` | 6.1.1-3ubuntu5 (apt, solo para pruebas; desde el 2026-11-21) |
+| Python | 3.12.3 del sistema; `python3.12-venv` y `espeak-ng` 1.51 con apt (solo para V0-2, desde el 2026-11-23). El entorno virtual de las voces vive en `spikes/video-v0/out/tts/.venv` (1,7 GB, fuera de git) |
 | SSH a producción | **No**: no hay llave ni `Host radev-oracle` en `~/.ssh` |
 | `/etc/wsl.conf` | Mal formado: falta un salto de línea antes de `[boot]`, por eso **systemd no arranca** (PID 1 es `init`). Pendiente de decisión aparte: no tocar sin aprobar |
 
@@ -49,6 +50,7 @@ V0-0 de RAdev Studio, ver `docs/RADEV-STUDIO-REVISION.md` (D-I):
 |---|---|---|---|
 | 2026-11-21 | `.wslconfig` creado y aplicado con `wsl --shutdown`: 10 GB de RAM (WSL ve 9,7 GiB), 8 GB de swap, `autoMemoryReclaim=dropCache` | WSL 2.6.3.0 | Borrar `C:\Users\rekoa\.wslconfig` y `wsl --shutdown` |
 | 2026-11-21 | `ffmpeg` instalado con apt (solo para pruebas) | 6.1.1-3ubuntu5 | `sudo apt remove ffmpeg` |
+| 2026-11-23 | `python3.12-venv` y `espeak-ng` instalados con apt por el operador (V0-2: entornos virtuales de Python y fonemas para Kokoro) | 3.12.3-1ubuntu0.17 · 1.51+dfsg-12build1 | `sudo apt remove python3.12-venv espeak-ng` |
 
 ## PC de la fábrica (Crucianelli)
 
