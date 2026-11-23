@@ -7,7 +7,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "studio": "remotion studio src/index.ts",
-    "bench": "tsx scripts/bench.ts"
+    "bench": "tsx scripts/bench.ts",
+    "captions": "tsx scripts/captions.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter-tight": "5.3.0",
