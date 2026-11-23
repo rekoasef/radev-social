@@ -41,6 +41,9 @@ ELEVEN_VOICES: list[tuple[str, str]] = [
     ("9oPKasc15pfAbMr7N6Gs", "valeria"),
     ("p7AwDmKvTdoHTBuueGvP", "malena"),
     ("bN1bDXgDIGX5lw0rtY2B", "melanie"),
+    # Narrativas elegidas por el operador.
+    ("0bu1GUsOfNJYyXbmSTxD", "fran"),
+    ("dGjL92Li0y7ZUQ3MESQW", "juan"),
 ]
 ELEVEN_MODEL = "eleven_multilingual_v2"
 
