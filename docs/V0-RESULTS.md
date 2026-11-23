@@ -88,6 +88,14 @@ Descartadas por licencia antes de probar: Piper `en_US-ryan` y `hfc_female`/`hfc
 - **Más adelante:** una voz paga para que suene humana, como otro `TtsProvider` y con ADR.
 - Piper queda como alternativa rápida (8–18×), pero no se eligió ninguna de sus voces.
 
+### V0-2b · Voces pagas (en curso, 2026-11-23)
+
+- **Reabierto por el operador:** escuchando más, el español de Kokoro le parece "muy malo" (el inglés, `am_michael`, sí le gusta: "fluida y muy profesional"). Acepta pagar USD 6/mes; primero se prueba gratis y se paga recién cuando una voz convenza (con ADR por la regla 13).
+- **Comparación preparada** (`tts/cloud.py`, claves en el `.env`): ElevenLabs, Azure (`es-AR-TomasNeural`, `es-AR-ElenaNeural` + HD de México) y Google Chirp 3 HD (solo `es-US`/`es-ES`). Datos verificados en las páginas oficiales: ElevenLabs Free 10.000 créditos/mes sin licencia comercial, Starter USD 6 con 30.000 y licencia comercial; 1 crédito por carácter en Multilingual v2; `POST /v1/text-to-speech/{voz}/with-timestamps` devuelve tiempos por carácter.
+- **ElevenLabs gratis no puede usar voces de la biblioteca por la API** (HTTP 402 `paid_plan_required`); desde la web sí. Todas las voces argentinas son de la biblioteca. Hay muchas (filtro `accent=argentine`).
+- **Decisión del operador: varias voces, elegidas por video.** Las voces de los primeros resultados suenan "a comercial"; para historias quiere una voz **narrativa**. Se queda con **Carlos Pro** (`gBTPbHzRd0ZmV75Z5Zk4`, "Argentinian Documentary") para comerciales (por ejemplo de Lumus) y busca otra narrativa. En V1: catálogo de voces en la base (proveedor, id, nombre, uso: narrativa/comercial), voz por defecto por marca y selector al crear cada video (regla 6: nada de una marca en código).
+- Muestras gratis (las de la biblioteca, con su propio texto) en `Descargas\v0-2-voces\elevenlabs` y `...\narrativas` (12 voces argentinas narrativas por uso).
+
 ## V0-7 · Licencias y condiciones
 
 *En curso.* Primera lectura (2026-11-21), a confirmar en las páginas oficiales antes de cerrar:
