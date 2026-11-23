@@ -107,6 +107,36 @@ Descartadas por licencia antes de probar: Piper `en_US-ryan` y `hfc_female`/`hfc
   Los tiempos por carácter vienen del texto original: no hace falta la unión con números de `align.py`. Videos con subtítulos (42 s en ~38 s de render cada uno) en `Descargas\v0-2-voces\elevenlabs\videos`. Decisión en **ADR 0027**. **Elección del operador:** Fran como narrativa por defecto ("la que más me convenció"); Juan también sirve para relatos y Carlos Pro para lo comercial. **V0-2 cerrada.**
 - Muestras gratis (las de la biblioteca, con su propio texto) en `Descargas\v0-2-voces\elevenlabs` y `...\narrativas` (12 voces argentinas narrativas por uso).
 
+## V0-3 · Render por escena + FFmpeg (PC de casa, 2026-11-23)
+
+**Cómo:** el texto de prueba partido en 6 escenas (`tts/texts/scenes-es.json`). `tts/scenes.py` pide la voz de cada escena a ElevenLabs (Fran) con `previous_text`/`next_text` para que la entonación siga el hilo, la pasa a WAV 48 kHz mono y la rellena con silencio hasta un **número entero de cuadros** (48000/30 = 1600 muestras por cuadro; 0,25 s de aire al final). `scripts/scenes.ts` renderiza un clip Remotion por escena (composición `scene`, mismo navegador para todas) y arma con FFmpeg. Las dos cosas tienen **caché por hash**: voz = hash de voz + modelo + texto + parámetros (el texto de las vecinas no entra, así que cambiar una escena no rehace las de al lado); clip = hash de sus props + versión del render. Los clips se escriben con otro nombre y se renombran al terminar (un render cortado no queda en la caché).
+
+- **Variante A (audio aparte):** `concat -c copy` de los clips mudos + las voces concatenadas en PCM + música de prueba (generada con `aevalsrc`) bajada por la voz (`sidechaincompress`, *ducking*) + `loudnorm` a −14 LUFS + mux con AAC 192k y `-t` al largo exacto.
+- **Variante B (audio en los clips):** cada clip con su voz (AAC de Remotion) y `concat -c copy`.
+- **Medición** (`out/v0-3/<tag>/results.json`): cuadros y paso entre cuadros (`ffprobe`), largo del video y del audio, y **posición real de la voz en cada escena** (correlación de 0,25 s de la voz de referencia contra el audio final, ±40 ms).
+
+| | A: audio aparte | B: audio en los clips |
+|---|---|---|
+| Desfase final | **0 ms** (completo), −0,3 ms (editado) | 45,7 ms = **1,37 cuadros** ❌ |
+| Voz en cada escena | **0 ms** en las 6 | 8 a 35 ms corrida, distinta en cada unión |
+| Saltos en el paso de cuadros | 0 | 5 (uno por unión) |
+| Armado | **5,7–5,9 s** ✅ (< 15 s) | 0,3 s |
+| Volumen | −14,9 LUFS, pico −4,3 dBTP | −22 LUFS (sin normalizar) |
+
+| Render (48,2 s de video, 6 escenas, concurrency 4) | Tiempo |
+|---|---|
+| Bundle de Remotion (una vez por corrida) | 5–8 s |
+| Las 6 escenas (A) | 47,2 s (≈ un render único de V0-1: partir en escenas no agrega costo) |
+| Voz de las 6 escenas (ElevenLabs) | 11,5 s, 502 caracteres |
+| **Cambiar la escena 4** (13,6 s → 12,8 s de audio) | voz 2,7 s (123 caracteres) + **1 clip en 12,1 s (26 % del total)** + armado 5,7 s; 10 clips y 5 voces desde la caché |
+
+- **Trampa encontrada:** sin `-t` en el mux, el audio final salía 2 cuadros más largo que el video en la versión editada (AAC va en paquetes de 1024 muestras y el último se completa con silencio). Voz, música y video medían exacto; con `-t` queda en 0. En V1 el mux lleva siempre `-t` con el largo en cuadros.
+- **B falla por el códec:** cada clip con AAC arrastra su relleno de inicio y fin; al concatenar sin recodificar, la voz se corre entre 8 y 35 ms en cada escena y el total queda 1,4 cuadros largo. Confirma §4.5: el audio se arma una vez, aparte.
+- `loudnorm` en una pasada quedó en −14,9 LUFS (objetivo −14). En V1: dos pasadas (medir y aplicar), unos segundos más de armado.
+- Videos en `Descargas\v0-3-escenas`: `1-completo-audio-aparte`, `2-completo-audio-en-clips`, `3-escena4-cambiada-audio-aparte`.
+
+**Resultado:** criterios medidos cumplidos con la variante A (desfase < 1 cuadro, armado < 15 s, rehacer una escena ≈ un cuarto del render). **Falta el oído del operador** (cortes en las uniones, entonación entre escenas generadas por separado, música) para cerrar **D-D** y la variante de audio (**A: aparte**).
+
 ## V0-7 · Licencias y condiciones
 
 *En curso.* Primera lectura (2026-11-21), a confirmar en las páginas oficiales antes de cerrar:

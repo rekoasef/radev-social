@@ -30,12 +30,17 @@ def words_from_chars(al: dict) -> list[dict]:
     return words
 
 
-for voice in sys.argv[1:]:
-    al = json.loads((OUT / "cloud" / f"{voice}.alignment.json").read_text())
-    words = words_from_chars(al)
-    (OUT / "samples" / f"{voice}.words.json").write_text(json.dumps(words, ensure_ascii=False, indent=1))
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(OUT / "cloud" / f"{voice}.mp3"),
-                    "-ar", "24000", "-ac", "1", "-map_metadata", "-1", "-fflags", "+bitexact",
-                    str(OUT / "samples" / f"{voice}.wav")], check=True)
-    print(f"{voice}: {len(words)} palabras, {words[0]['start']}–{words[-1]['end']} s · "
-          f"últimas: {' '.join(w['word'] for w in words[-4:])}")
+def main() -> None:
+    for voice in sys.argv[1:]:
+        al = json.loads((OUT / "cloud" / f"{voice}.alignment.json").read_text())
+        words = words_from_chars(al)
+        (OUT / "samples" / f"{voice}.words.json").write_text(json.dumps(words, ensure_ascii=False, indent=1))
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(OUT / "cloud" / f"{voice}.mp3"),
+                        "-ar", "24000", "-ac", "1", "-map_metadata", "-1", "-fflags", "+bitexact",
+                        str(OUT / "samples" / f"{voice}.wav")], check=True)
+        print(f"{voice}: {len(words)} palabras, {words[0]['start']}–{words[-1]['end']} s · "
+              f"últimas: {' '.join(w['word'] for w in words[-4:])}")
+
+
+if __name__ == "__main__":
+    main()

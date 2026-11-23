@@ -12,6 +12,14 @@ import {
 // V0-2: voz + subtítulos palabra por palabra, para juzgar a ojo si los tiempos están sincronizados.
 export type Word = { word: string; start: number; end: number };
 export type CaptionsProps = { audio: string; words: Word[]; seconds: number };
+// V0-3: una escena. Sin `audio` el clip sale mudo (la voz se arma aparte con FFmpeg).
+export type SceneProps = {
+  audio: string;
+  words: Word[];
+  frames: number;
+  bg: string;
+  label: string;
+};
 
 const C = { bg: "#0E0F12", text: "#F4F1EA", accent: "#FF6A1A", dim: "rgba(244,241,234,0.35)" };
 const MAX_WORDS = 4;
@@ -31,7 +39,16 @@ const toLines = (words: Word[]) => {
   return lines;
 };
 
-export const Captions = ({ audio, words }: CaptionsProps) => {
+export const Scene = ({ audio, words, bg, label }: SceneProps) => (
+  <Captions audio={audio} words={words} seconds={0} bg={bg} label={label} />
+);
+
+export const Captions = ({
+  audio,
+  words,
+  bg = C.bg,
+  label = "",
+}: CaptionsProps & { bg?: string; label?: string }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = frame / fps;
@@ -40,10 +57,8 @@ export const Captions = ({ audio, words }: CaptionsProps) => {
   const line = [...lines].reverse().find((l) => (l[0]?.start ?? 0) <= t) ?? lines[0] ?? [];
 
   return (
-    <AbsoluteFill
-      style={{ backgroundColor: C.bg, fontFamily: "'Inter Tight Variable', sans-serif" }}
-    >
-      <Audio src={staticFile(audio)} />
+    <AbsoluteFill style={{ backgroundColor: bg, fontFamily: "'Inter Tight Variable', sans-serif" }}>
+      {audio ? <Audio src={staticFile(audio)} /> : null}
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: "0 90px" }}>
         <div
           style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px 22px" }}
@@ -84,6 +99,7 @@ export const Captions = ({ audio, words }: CaptionsProps) => {
           fontSize: 34,
         }}
       >
+        {label ? `${label} · ` : ""}
         {t.toFixed(2)} s
       </div>
     </AbsoluteFill>
