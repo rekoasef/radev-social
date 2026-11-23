@@ -10,7 +10,8 @@
 - **Tiempos por palabra** desde el endpoint `/v1/text-to-speech/{voz}/with-timestamps`, que devuelve tiempos por carácter del texto original. Las palabras salen sin alineación extra, también con números ("1978").
 - **Varias voces y una elegida por video.** Catálogo de voces en la base (proveedor, id de la voz, nombre, uso: narrativa o comercial, idioma), voz por defecto por marca y selector al crear cada video (regla 6). Primeras voces (biblioteca de ElevenLabs, acento argentino):
   - **Carlos Pro** (`gBTPbHzRd0ZmV75Z5Zk4`): comerciales, por ejemplo de Lumus.
-  - **Fran** (`0bu1GUsOfNJYyXbmSTxD`) y **Juan** (`dGjL92Li0y7ZUQ3MESQW`): narrativas, para historias. El operador elige entre las dos (o las dos) mirando los videos de prueba.
+  - **Fran** (`0bu1GUsOfNJYyXbmSTxD`): **narrativa por defecto** (la que más convenció al operador, 2026-11-23; además sube el tono en las preguntas).
+  - **Juan** (`dGjL92Li0y7ZUQ3MESQW`): narrativa alternativa, para relatos.
 - **La voz entra por una interfaz `TtsProvider`** (texto + voz → audio + tiempos por palabra). Proveedores: `elevenlabs` (principal) y `kokoro` (local y gratis: inglés con `am_michael` si el operador lo prefiere, y respaldo si se acaban los créditos o ElevenLabs no responde).
 - La clave `ELEVENLABS_API_KEY` va en el `.env` (de cada máquina y del servidor), nunca en la base ni en los logs.
 

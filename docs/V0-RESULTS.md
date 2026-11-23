@@ -104,7 +104,7 @@ Descartadas por licencia antes de probar: Piper `en_US-ryan` y `hfc_female`/`hfc
 | Carlos Pro | comercial | 33,7 s | 3,2 s | **+29 %** (sube) | 93/93 |
 | Kokoro `em_alex` (referencia) | — | 32,8 s | 22,8 s (local) | −28 % | 93/93 |
 
-  Los tiempos por carácter vienen del texto original: no hace falta la unión con números de `align.py`. Videos con subtítulos (42 s en ~38 s de render cada uno) en `Descargas\v0-2-voces\elevenlabs\videos`. Decisión en **ADR 0027**.
+  Los tiempos por carácter vienen del texto original: no hace falta la unión con números de `align.py`. Videos con subtítulos (42 s en ~38 s de render cada uno) en `Descargas\v0-2-voces\elevenlabs\videos`. Decisión en **ADR 0027**. **Elección del operador:** Fran como narrativa por defecto ("la que más me convenció"); Juan también sirve para relatos y Carlos Pro para lo comercial. **V0-2 cerrada.**
 - Muestras gratis (las de la biblioteca, con su propio texto) en `Descargas\v0-2-voces\elevenlabs` y `...\narrativas` (12 voces argentinas narrativas por uso).
 
 ## V0-7 · Licencias y condiciones
