@@ -322,6 +322,37 @@ Videos en `Descargas\v0-6-animado\escenas-1-y-2-voz-{1.1,1.2,1.3}.mp4` (fábrica
 - **Lo que se ve en 2 minutos** (`Descargas\v0-13-largo\banco-rio-2min.mp4` y la hoja de cuadros, fábrica): la historia se entiende y las cajas de datos entran a tiempo, pero **"la tienda" aparece en 11 de 20 escenas**, se repiten los textos fijos de los escenarios ("DEPÓSITO 261", "CARGA 261") y casi siempre los mismos dos personajes. Con 4 escenarios no alcanza: **V0-10 (biblioteca de dibujos) pasa a ser lo más urgente.** Además, cuando el karaoke ocupa dos renglones, el segundo pisa el escenario y se lee mal (control de calidad).
 - **Tiempos y costo de un video de 2 min:** ~3 min de investigación + ~2 min de guion + voz + ~3,3 min de render ≈ **8–9 min de máquina** en la fábrica. El render va a ~1,7 min por minuto de video (menos que los 2–3 estimados). Voz: ~800 créditos, así que 20 videos ≈ 16.000 por mes, dentro de los 38.439 del plan si el 0,4 por carácter se mantiene. `claude -p` (lista, no se paga aparte): ~USD 0,7 por video entre investigación y guion.
 
+## V0-10 · Biblioteca de lugares, elenco y variedad (PC de la fábrica, 2026-11-24)
+
+**Por qué:** en el video de 2 min de V0-13, "los dibujos nada que ver con la historia, no apareció el banco" (operador). Con 4 escenarios la IA elegía el más parecido (la tienda en 11 de 20 escenas). **Decisiones del operador (2026-11-24):** (1) los dibujos se hacen **en código**, en una biblioteca que crece: lugares genéricos que se dibujan una vez y quedan; (2) **variar sin prohibir**: el mismo lugar puede volver, pero nunca en dos escenas seguidas con el mismo encuadre y como máximo 3 veces por video; (3) **continuidad**: si el banco aparece dos veces, es el mismo banco; los personajes, igual.
+
+**Qué se hizo** (`spikes/video-v0/src/anim/`):
+
+- **4 lugares nuevos** (`places.tsx`, ~480 líneas, ~100–130 por lugar): `banco-fachada`, `banco-adentro`, `boveda` y `tunel`, más el objeto `boat` (gomón, que puede alejarse por el túnel achicándose). Reglas de la biblioteca: **genéricos** (un banco cualquiera), **sin textos fijos** y siempre algo vivo. Se sacaron los textos fijos que quedaban ("DEPÓSITO 261" del plano, "CARGA 261" del aeropuerto).
+- **Continuidad de lugares:** ya estaba: cada escenario se dibuja con números fijos, así que el banco de la escena 1 es idéntico al de la 15. Que cambie **entre videos** (variantes de color o detalles por video) queda pendiente.
+- **Elenco y aspecto (`cast`, `look`):** cada personaje con nombre se declara una vez (piel, pelo, color de pelo, ropa, barba o bigote, anteojos) y las escenas lo usan con `who`; mantiene la cara aunque cambie de ropa (de ladrón en el banco a civil cuando lo detienen). Los extras sacan el aspecto de su `id`: el mismo id se ve igual en cada escena y dos rehenes ya no son clones.
+- **Reglas en `checkGuion`:** el `who` tiene que estar en el elenco; ningún lugar en dos escenas seguidas con el mismo encuadre (zoom ±0,3 o centro a 250 px); ninguno en más de 3 escenas (el error muestra el uso de todos, para que la corrección reparta de una vez).
+- **`missingPlaces`:** el guion anota los lugares que la historia pedía y no están: la lista de qué dibujar después.
+- **Cámara:** nunca muestra fuera del escenario (zoom mínimo 1 y centro acotado). Antes, con zoom < 1 o el centro corrido, aparecían bordes negros.
+- **Guion con corrección:** hasta 2 intentos más con los errores del anterior, como en V0-8.
+
+**Guion de 2 min del Banco Río otra vez** (mismo dossier de V0-13, `pnpm research guion out/v0-13/dossier-2-low-long.json --effort low --long`):
+
+| Intento | Resultado | Tokens (entrada / salida) | Tiempo |
+|---|---|---|---|
+| 1 (antes de subir el límite) | se cortó a los 300 s | — | 300 s |
+| 1 | 2 palabras resaltadas que no están + 2 lugares seguidos con el mismo encuadre | 89.474 / 23.459 | 189 s |
+| 1 (con corrección) | 4 lugares seguidos con el mismo encuadre | 93.392 / 28.584 | 225 s |
+| corrección 1 | queda 1 | 107.672 / 19.514 | 135 s |
+| corrección 2 | **válido** · 20 escenas, 1.926 caracteres, 2 personajes en el elenco | 107.016 / 19.349 | 136 s |
+
+- **Ahora el video pasa en el banco**: fachada con la policía (3 escenas), el salón con el reloj (3), la bóveda con las cajas (3), el túnel con los gomones cargados (2), el plano para el armado de la banda (3). Elenco: Araujo y Vitette, distintos entre sí, reutilizados en varias escenas. Anotó como faltante **las sierras de San Juan**.
+- **Lo que falla todavía:** para las sierras igual usó el **aeropuerto** (el catálogo lo ofrecía para "cualquier cosa de noche afuera"; ya se sacó), y la **tienda** para el libro y la película, sin anotarla como faltante. Otra vez "furgoneta". El calendario de la escena 1 queda cortado contra el borde y el segundo renglón del karaoke a veces pisa el fondo (control de calidad).
+- **Costo:** el guion con lugares y elenco es más largo: la salida pasó de ~14.000 a ~20.000–28.000 tokens y el primer intento tardó 3–4 min; con dos correcciones, **~8 min y ~USD 1,15 de lista** (V0-13: 2 min y USD 0,28). El error más repetido es "mismo lugar con el mismo encuadre": para V1, que el código **arregle solo** lo que puede (correr la cámara de la segunda escena) en vez de pedirle otra vuelta a la IA.
+- **Voz:** 778 créditos (1.945 caracteres). Mes: 4.692 de 38.439. **Render:** 116,3 s en 183 s.
+- **Cuánto cuesta un lugar:** ~100–130 líneas de SVG, unos minutos de Claude Code por lugar más una vuelta de revisión con cuadros sueltos (acá: el reloj del salón quedó en la franja de subtítulos y hubo que bajarlo). Con 20 videos por mes, la biblioteca tiene que crecer con lo que pide `missingPlaces`.
+- Archivos (fábrica): `Descargas\v0-10-lugares\banco-rio-lugares.mp4`, la hoja de cuadros y `prueba-lugares-y-elenco.png` (los 4 lugares, el gomón y la continuidad de Araujo de ladrón a civil).
+
 ## V0-7 · Licencias y condiciones
 
 *En curso.* Primera lectura (2026-11-21), a confirmar en las páginas oficiales antes de cerrar:

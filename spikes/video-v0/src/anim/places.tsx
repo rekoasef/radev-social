@@ -1,0 +1,586 @@
+import { wave } from "./timing";
+
+// V0-10: lugares genéricos de la biblioteca (1080×1920). Reglas para sumar uno:
+// - sin textos fijos (nada de "DEPÓSITO 261": el texto lo pone el guion con etiquetas y cajas);
+// - genérico (un banco cualquiera, no el Banco Río), para que sirva a otras historias;
+// - siempre algo vivo (luces, agua, nubes) y la línea del piso documentada en catalog.md.
+
+/** Números pseudoaleatorios fijos: el mismo dibujo en cada cuadro y en cada render. */
+function random(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let x = a;
+    x = Math.imul(x ^ (x >>> 15), x | 1);
+    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const r = random(31);
+const SKYLINE = Array.from({ length: 14 }, (_, i) => ({
+  x: i * 82 - 20 + r() * 20,
+  w: 60 + r() * 60,
+  h: 160 + r() * 260,
+  lit: Array.from({ length: 10 }, () => ({ on: r() > 0.5, hz: 0.05 + r() * 0.15, phase: r() })),
+}));
+
+// --- banco-fachada ---------------------------------------------------------------------------
+
+/** Frente de un banco clásico al atardecer: columnas, escalinata, puerta iluminada. */
+export function BankFacade({ t }: { t: number }) {
+  const cols = [205, 335, 745, 875];
+  const flicker = 0.75 + 0.25 * Math.max(0, wave(t, 2.3)) * (wave(t, 0.37) > 0.6 ? 0.2 : 1);
+  return (
+    <g>
+      <defs>
+        <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1E1A3D" />
+          <stop offset="0.6" stopColor="#4B356F" />
+          <stop offset="1" stopColor="#B0627A" />
+        </linearGradient>
+        <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#8F86C4" />
+          <stop offset="1" stopColor="#6C639F" />
+        </linearGradient>
+        <radialGradient id="streetlamp" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#FFD58A" stopOpacity={0.55} />
+          <stop offset="1" stopColor="#FFD58A" stopOpacity={0} />
+        </radialGradient>
+      </defs>
+      <rect width={1080} height={1920} fill="url(#dusk)" />
+      {/* Nubes que pasan despacio. */}
+      {[0, 1, 2].map((i) => {
+        const x = ((t * (14 + i * 6) + i * 420) % 1500) - 300;
+        return (
+          <g key={i} opacity={0.18} fill="#FFFFFF">
+            <ellipse cx={x} cy={220 + i * 90} rx={150} ry={34} />
+            <ellipse cx={x + 80} cy={200 + i * 90} rx={90} ry={30} />
+          </g>
+        );
+      })}
+      {/* Ciudad detrás. */}
+      {SKYLINE.map((b) => (
+        <g key={b.x}>
+          <rect x={b.x} y={1000 - b.h} width={b.w} height={b.h + 200} fill="#2A2350" />
+          {b.lit.map((w, j) => (
+            <rect
+              // biome-ignore lint/suspicious/noArrayIndexKey: posiciones fijas
+              key={j}
+              x={b.x + 12 + (j % 2) * 26}
+              y={1020 - b.h + Math.floor(j / 2) * 40}
+              width={12}
+              height={18}
+              fill="#F6D98A"
+              opacity={w.on ? 0.25 + 0.5 * (0.5 + 0.5 * wave(t, w.hz, w.phase)) : 0.06}
+            />
+          ))}
+        </g>
+      ))}
+      {/* El edificio. */}
+      <path d="M 120 640 L 540 470 L 960 640 Z" fill="#7D74B4" />
+      <path d="M 200 615 L 540 500 L 880 615 Z" fill="#6C639F" />
+      <circle cx={540} cy={575} r={34} fill="#F2C14E" opacity={0.9} />
+      <path
+        d="M 540 552 L 540 598 M 552 562 Q 528 556 530 570 Q 532 580 548 582 Q 556 592 528 590"
+        stroke="#4B356F"
+        strokeWidth={6}
+        fill="none"
+        strokeLinecap="round"
+      />
+      <rect x={110} y={640} width={860} height={56} fill="#A39AD6" />
+      <rect x={140} y={696} width={800} height={480} fill="url(#stone)" />
+      {cols.map((x) => (
+        <g key={x}>
+          <rect x={x - 32} y={696} width={64} height={24} fill="#B3ABE0" />
+          <rect x={x - 24} y={720} width={48} height={430} fill="#A39AD6" />
+          {[-12, 0, 12].map((d) => (
+            <rect
+              key={d}
+              x={x + d - 2}
+              y={730}
+              width={3}
+              height={410}
+              fill="#6C639F"
+              opacity={0.5}
+            />
+          ))}
+          <rect x={x - 32} y={1150} width={64} height={26} fill="#B3ABE0" />
+        </g>
+      ))}
+      {/* Ventanas con rejas entre columnas. */}
+      {[270, 810].map((x) => (
+        <g key={x}>
+          <rect x={x - 40} y={780} width={80} height={150} rx={40} fill="#1B1638" />
+          <rect
+            x={x - 40}
+            y={780}
+            width={80}
+            height={150}
+            rx={40}
+            fill="#FFD58A"
+            opacity={0.25 + 0.15 * wave(t, 0.2, x / 1000)}
+          />
+          {[-20, 0, 20].map((d) => (
+            <rect key={d} x={x + d - 2} y={786} width={4} height={142} fill="#4B356F" />
+          ))}
+        </g>
+      ))}
+      {/* Puerta grande con luz adentro. */}
+      <rect x={430} y={820} width={220} height={356} rx={10} fill="#2A2350" />
+      <rect x={448} y={838} width={184} height={338} rx={6} fill="#FFD58A" opacity={0.55} />
+      <rect x={536} y={838} width={8} height={338} fill="#4B356F" />
+      <rect x={430} y={790} width={220} height={22} fill="#B3ABE0" />
+      {/* Escalinata. */}
+      {[0, 1, 2].map((i) => (
+        <rect
+          key={i}
+          x={100 - i * 30}
+          y={1176 + i * 28}
+          width={880 + i * 60}
+          height={28}
+          fill={["#9C93CF", "#8A81BE", "#776EAA"][i]}
+        />
+      ))}
+      {/* Vereda, cordón y calle. */}
+      <rect y={1260} width={1080} height={170} fill="#2E2752" />
+      {Array.from({ length: 9 }, (_, i) => (
+        <rect
+          // biome-ignore lint/suspicious/noArrayIndexKey: dibujo fijo, el orden nunca cambia
+          key={i}
+          x={i * 130}
+          y={1260}
+          width={3}
+          height={170}
+          fill="#FFFFFF"
+          opacity={0.05}
+        />
+      ))}
+      <rect y={1430} width={1080} height={18} fill="#4A3F78" />
+      <rect y={1448} width={1080} height={480} fill="#17132C" />
+      {Array.from({ length: 6 }, (_, i) => (
+        <rect
+          // biome-ignore lint/suspicious/noArrayIndexKey: dibujo fijo, el orden nunca cambia
+          key={i}
+          x={i * 200 + 30}
+          y={1640}
+          width={110}
+          height={12}
+          fill="#F2C14E"
+          opacity={0.4}
+        />
+      ))}
+      {/* Farol que titila un poco. */}
+      <rect x={1000} y={900} width={10} height={530} fill="#3B3266" />
+      <rect x={960} y={890} width={60} height={14} rx={6} fill="#3B3266" />
+      <circle cx={966} cy={918} r={16} fill="#FFE3A8" opacity={flicker} />
+      <circle cx={966} cy={918} r={160} fill="url(#streetlamp)" opacity={flicker} />
+    </g>
+  );
+}
+
+// --- banco-adentro ---------------------------------------------------------------------------
+
+/** El salón de un banco: mostrador con ventanillas, reloj de pared, piso de baldosas. */
+export function BankHall({ t }: { t: number }) {
+  const sec = (t * 6) % 360;
+  const min = 120 + t * 0.1;
+  return (
+    <g>
+      <defs>
+        <linearGradient id="hallwall" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#262049" />
+          <stop offset="1" stopColor="#3A3166" />
+        </linearGradient>
+        <radialGradient id="globe" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#FFE3A8" stopOpacity={0.4} />
+          <stop offset="1" stopColor="#FFE3A8" stopOpacity={0} />
+        </radialGradient>
+        <pattern id="tiles" width={120} height={120} patternUnits="userSpaceOnUse">
+          <rect width={120} height={120} fill="#2A2350" />
+          <rect width={60} height={60} fill="#352C60" />
+          <rect x={60} y={60} width={60} height={60} fill="#352C60" />
+        </pattern>
+      </defs>
+      <rect width={1080} height={1920} fill="url(#hallwall)" />
+      {/* Molduras de la pared. */}
+      {[120, 400, 680].map((x) => (
+        <rect
+          key={x}
+          x={x}
+          y={300}
+          width={280}
+          height={360}
+          rx={8}
+          fill="none"
+          stroke="#4A3F78"
+          strokeWidth={6}
+        />
+      ))}
+      {/* Reloj de pared (debajo de y = 520: arriba van los subtítulos). */}
+      <g transform="translate(540 612) scale(0.85)">
+        <circle r={104} fill="#4A3F78" />
+        <circle r={90} fill="#EDE8FA" />
+        {Array.from({ length: 12 }, (_, i) => (
+          <rect
+            // biome-ignore lint/suspicious/noArrayIndexKey: dibujo fijo, el orden nunca cambia
+            key={i}
+            x={-3}
+            y={-82}
+            width={6}
+            height={i % 3 === 0 ? 18 : 10}
+            fill="#262049"
+            transform={`rotate(${i * 30})`}
+          />
+        ))}
+        <rect
+          x={-4}
+          y={-50}
+          width={8}
+          height={56}
+          rx={4}
+          fill="#262049"
+          transform={`rotate(${min})`}
+        />
+        <rect
+          x={-3}
+          y={-70}
+          width={6}
+          height={76}
+          rx={3}
+          fill="#262049"
+          transform={`rotate(${min * 12})`}
+        />
+        <rect x={-1.5} y={-78} width={3} height={90} fill="#E5383B" transform={`rotate(${sec})`} />
+        <circle r={7} fill="#E5383B" />
+      </g>
+      {/* Lámparas de globo. */}
+      {[200, 880].map((x, i) => (
+        <g key={x}>
+          <rect x={x - 2} y={0} width={4} height={170} fill="#4A3F78" />
+          <circle cx={x} cy={200} r={34} fill="#FFE3A8" opacity={0.85 + 0.1 * wave(t, 0.3, i)} />
+          <circle cx={x} cy={200} r={220} fill="url(#globe)" />
+        </g>
+      ))}
+      {/* Ventanillas: vidrio, separadores y la luz de turno de cada una. */}
+      {[0, 1, 2].map((i) => {
+        const x = 90 + i * 310;
+        const on = wave(t, 0.25, i * 0.33) > 0.3;
+        return (
+          <g key={i}>
+            <rect x={x} y={760} width={280} height={250} fill="#8EC7FF" opacity={0.12} />
+            <rect x={x + 30} y={780} width={40} height={220} fill="#FFFFFF" opacity={0.06} />
+            <rect x={x + 80} y={780} width={14} height={220} fill="#FFFFFF" opacity={0.05} />
+            <circle cx={x + 140} cy={730} r={14} fill={on ? "#81B29A" : "#4A3F78"} />
+          </g>
+        );
+      })}
+      {[80, 390, 700, 1010].map((x) => (
+        <rect key={x} x={x - 10} y={740} width={20} height={280} fill="#4A3F78" />
+      ))}
+      {/* Mostrador. */}
+      <rect x={40} y={1010} width={1000} height={30} rx={6} fill="#B3ABE0" />
+      <rect x={60} y={1040} width={960} height={300} fill="#5B4E92" />
+      {[0, 1, 2].map((i) => (
+        <rect
+          key={i}
+          x={110 + i * 310}
+          y={1080}
+          width={240}
+          height={220}
+          rx={8}
+          fill="none"
+          stroke="#4A3F78"
+          strokeWidth={6}
+        />
+      ))}
+      {/* Piso de baldosas. */}
+      <rect y={1340} width={1080} height={580} fill="url(#tiles)" />
+      <rect y={1340} width={1080} height={6} fill="#FFFFFF" opacity={0.06} />
+    </g>
+  );
+}
+
+// --- boveda ----------------------------------------------------------------------------------
+
+const rv = random(77);
+const BOXES = Array.from({ length: 6 * 9 }, (_, i) => ({
+  col: i % 6,
+  row: Math.floor(i / 6),
+  open: rv() > 0.78,
+}));
+
+/** Bóveda: pared de cajas de seguridad (algunas abiertas) y la puerta redonda, abierta. */
+export function Vault({ t }: { t: number }) {
+  const sheen = ((t * 160) % 1600) - 300;
+  const sway = 4 * wave(t, 0.3);
+  return (
+    <g>
+      <defs>
+        <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#9AA3BD" />
+          <stop offset="1" stopColor="#6C7590" />
+        </linearGradient>
+        <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#FFFFFF" stopOpacity={0} />
+          <stop offset="0.5" stopColor="#FFFFFF" stopOpacity={0.22} />
+          <stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+        </linearGradient>
+        <clipPath id="boxwall">
+          <rect x={40} y={540} width={600} height={790} />
+        </clipPath>
+        <radialGradient id="bulb" cx="0.5" cy="0" r="1">
+          <stop offset="0" stopColor="#FFE3A8" stopOpacity={0.35} />
+          <stop offset="1" stopColor="#FFE3A8" stopOpacity={0} />
+        </radialGradient>
+      </defs>
+      <rect width={1080} height={1920} fill="#171A2C" />
+      <rect x={0} y={480} width={1080} height={880} fill="#20243A" />
+      {/* Pared de cajas. */}
+      <rect x={30} y={530} width={620} height={810} rx={8} fill="#3A4160" />
+      {BOXES.map((b) => {
+        const x = 46 + b.col * 99;
+        const y = 548 + b.row * 87;
+        return (
+          <g key={`${b.col}-${b.row}`}>
+            <rect
+              x={x}
+              y={y}
+              width={91}
+              height={79}
+              rx={5}
+              fill={b.open ? "#0D0F19" : "url(#steel)"}
+            />
+            {b.open ? (
+              <path
+                d={`M ${x} ${y} L ${x - 22} ${y + 10} L ${x - 22} ${y + 69} L ${x} ${y + 79} Z`}
+                fill="#8A93AD"
+              />
+            ) : (
+              <g>
+                <circle cx={x + 70} cy={y + 40} r={7} fill="#3A4160" />
+                <rect x={x + 68} y={y + 40} width={4} height={12} fill="#3A4160" />
+                <rect
+                  x={x + 14}
+                  y={y + 32}
+                  width={30}
+                  height={14}
+                  rx={3}
+                  fill="#C7CCDA"
+                  opacity={0.7}
+                />
+              </g>
+            )}
+          </g>
+        );
+      })}
+      <rect
+        x={sheen}
+        y={540}
+        width={180}
+        height={790}
+        fill="url(#sheen)"
+        clipPath="url(#boxwall)"
+      />
+      {/* Puerta redonda de la bóveda, abierta hacia la derecha. */}
+      <circle cx={870} cy={900} r={190} fill="#3A4160" />
+      <circle cx={870} cy={900} r={150} fill="#0D0F19" />
+      {Array.from({ length: 12 }, (_, i) => {
+        const a = (i * Math.PI) / 6;
+        return (
+          <circle
+            // biome-ignore lint/suspicious/noArrayIndexKey: dibujo fijo, el orden nunca cambia
+            key={i}
+            cx={870 + 170 * Math.cos(a)}
+            cy={900 + 170 * Math.sin(a)}
+            r={9}
+            fill="#9AA3BD"
+          />
+        );
+      })}
+      <g transform="translate(1030 900)">
+        <ellipse rx={60} ry={200} fill="url(#steel)" />
+        <ellipse rx={40} ry={150} fill="#6C7590" />
+        {[-90, -30, 30, 90].map((dy) => (
+          <rect key={dy} x={-80} y={dy - 8} width={30} height={16} rx={6} fill="#C7CCDA" />
+        ))}
+      </g>
+      {/* Lamparita colgando. */}
+      <g transform={`rotate(${sway} 540 0)`}>
+        <rect x={538} y={0} width={4} height={360} fill="#3A4160" />
+        <circle cx={540} cy={380} r={22} fill="#FFE3A8" />
+        <path d="M 540 380 L 980 1400 L 100 1400 Z" fill="url(#bulb)" />
+      </g>
+      {/* Piso. */}
+      <rect y={1340} width={1080} height={580} fill="#10121E" />
+      <rect y={1340} width={1080} height={6} fill="#FFFFFF" opacity={0.06} />
+    </g>
+  );
+}
+
+// --- tunel -----------------------------------------------------------------------------------
+
+const VP = { x: 540, y: 860 };
+const ARCHES = [1, 0.74, 0.54, 0.39, 0.28, 0.2, 0.14];
+
+/** Arco de túnel centrado en el punto de fuga, a la escala `k` (1 = boca del túnel). */
+function arch(k: number): string {
+  const w = 620 * k;
+  const top = VP.y - 640 * k;
+  const bottom = VP.y + 640 * k;
+  return `M ${VP.x - w} ${bottom} L ${VP.x - w} ${top + w * 0.6} Q ${VP.x - w} ${top} ${VP.x} ${top} Q ${VP.x + w} ${top} ${VP.x + w} ${top + w * 0.6} L ${VP.x + w} ${bottom}`;
+}
+
+const rd = random(5);
+const DRIPS = Array.from({ length: 6 }, () => ({
+  x: 160 + rd() * 760,
+  hz: 0.4 + rd() * 0.5,
+  ph: rd(),
+}));
+
+/** Desagüe o túnel en perspectiva: agua que corre, gotas, guirnalda de lamparitas. */
+export function Tunnel({ t }: { t: number }) {
+  return (
+    <g>
+      <defs>
+        <radialGradient id="tunnelend" cx="0.5" cy="0.45" r="0.6">
+          <stop offset="0" stopColor="#3B4A5E" />
+          <stop offset="0.25" stopColor="#1A2230" />
+          <stop offset="1" stopColor="#0B0F17" />
+        </radialGradient>
+        <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1E3A4F" />
+          <stop offset="1" stopColor="#2E5A70" />
+        </linearGradient>
+      </defs>
+      <rect width={1080} height={1920} fill="url(#tunnelend)" />
+      {/* Anillos del túnel: de afuera hacia el fondo. */}
+      {ARCHES.map((k, i) => (
+        <path
+          key={k}
+          d={arch(k)}
+          fill="none"
+          stroke="#5A4E3E"
+          strokeWidth={34 * k}
+          opacity={0.9 - i * 0.11}
+        />
+      ))}
+      {/* Ladrillos sugeridos en las paredes. */}
+      {Array.from({ length: 10 }, (_, i) => (
+        <g
+          // biome-ignore lint/suspicious/noArrayIndexKey: dibujo fijo, el orden nunca cambia
+          key={i}
+          opacity={0.18}
+          fill="#C9A27A"
+        >
+          <rect x={0} y={420 + i * 110} width={70} height={36} />
+          <rect x={1010} y={460 + i * 110} width={70} height={36} />
+        </g>
+      ))}
+      {/* Agua: un canal que se angosta hacia el fondo, con ondas que vienen hacia la cámara. */}
+      <path
+        d={`M 260 1920 L ${VP.x - 40} ${VP.y + 90} L ${VP.x + 40} ${VP.y + 90} L 820 1920 Z`}
+        fill="url(#water)"
+      />
+      {Array.from({ length: 9 }, (_, i) => {
+        const p = (i / 9 + t * 0.18) % 1;
+        const k = p * p;
+        const y = VP.y + 90 + (1920 - VP.y - 90) * k;
+        const half = 40 + 240 * k;
+        return (
+          <rect
+            // biome-ignore lint/suspicious/noArrayIndexKey: dibujo fijo, el orden nunca cambia
+            key={i}
+            x={540 - half * 0.6}
+            y={y}
+            width={half * 1.2}
+            height={2 + 6 * k}
+            rx={3}
+            fill="#9FD3E8"
+            opacity={0.15 + 0.35 * k}
+          />
+        );
+      })}
+      {/* Veredas a los costados. */}
+      <path d={`M 0 1920 L 0 1480 L ${VP.x - 60} ${VP.y + 80} L 260 1920 Z`} fill="#2B2A30" />
+      <path d={`M 1080 1920 L 1080 1480 L ${VP.x + 60} ${VP.y + 80} L 820 1920 Z`} fill="#2B2A30" />
+      <path d={`M 260 1920 L ${VP.x - 40} ${VP.y + 90}`} stroke="#4A4650" strokeWidth={8} />
+      <path d={`M 820 1920 L ${VP.x + 40} ${VP.y + 90}`} stroke="#4A4650" strokeWidth={8} />
+      {/* Guirnalda de lamparitas colgada del techo. */}
+      {Array.from({ length: 7 }, (_, i) => {
+        const k = ARCHES[i] ?? 0.1;
+        const x = VP.x - 420 * k;
+        const y = VP.y - 470 * k;
+        const on = 0.6 + 0.4 * (0.5 + 0.5 * wave(t, 1.7 + i * 0.3, i * 0.17));
+        return (
+          <g key={k}>
+            <circle cx={x} cy={y} r={60 * k} fill="#FFD58A" opacity={0.12 * on} />
+            <circle cx={x} cy={y} r={12 * k + 3} fill="#FFE3A8" opacity={on} />
+          </g>
+        );
+      })}
+      <path
+        d={ARCHES.map(
+          (k, i) => `${i === 0 ? "M" : "L"} ${VP.x - 420 * k} ${VP.y - 470 * k - 12 * k}`,
+        ).join(" ")}
+        stroke="#1A1A1A"
+        strokeWidth={3}
+        fill="none"
+      />
+      {/* Gotas que caen. */}
+      {DRIPS.map((d) => {
+        const p = (t * d.hz + d.ph) % 1;
+        return (
+          <ellipse
+            key={d.x}
+            cx={d.x}
+            cy={300 + p * 1200}
+            rx={4}
+            ry={9}
+            fill="#9FD3E8"
+            opacity={0.6 * (1 - p)}
+          />
+        );
+      })}
+    </g>
+  );
+}
+
+// --- gomón -----------------------------------------------------------------------------------
+
+/** Gomón con motor fuera de borda, centrado en (0, 0) con la línea del agua en y = 0 (~460 de ancho). */
+export function BoatShape({ loaded, t }: { loaded: boolean; t: number }) {
+  return (
+    <g>
+      {loaded && (
+        <g>
+          {[-120, -20, 80].map((x, i) => (
+            <g key={x} transform={`translate(${x} ${-70 - (i % 2) * 14})`}>
+              <ellipse rx={52} ry={44} fill="#C9A46A" />
+              <path d="M -16 -42 L 16 -42 L 10 -56 L -10 -56 Z" fill="#A88550" />
+              <text
+                y={14}
+                textAnchor="middle"
+                fontSize={40}
+                fontWeight={900}
+                fill="#7A5A2C"
+                fontFamily="'Inter Tight Variable', sans-serif"
+              >
+                $
+              </text>
+            </g>
+          ))}
+        </g>
+      )}
+      <rect x={-230} y={-50} width={440} height={70} rx={35} fill="#E07A5F" />
+      <rect x={-230} y={-50} width={440} height={22} rx={11} fill="#F29B83" />
+      <rect x={-200} y={-6} width={380} height={8} rx={4} fill="#B85A43" />
+      {/* Motor. */}
+      <rect x={196} y={-90} width={48} height={60} rx={10} fill="#2A2350" />
+      <rect x={212} y={-34} width={14} height={60} fill="#3B3266" />
+      <g transform={`translate(219 26) rotate(${(t * 900) % 360})`}>
+        <rect x={-18} y={-3} width={36} height={6} rx={3} fill="#9FD3E8" opacity={0.6} />
+      </g>
+    </g>
+  );
+}

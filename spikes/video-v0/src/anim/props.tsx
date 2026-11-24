@@ -1,5 +1,6 @@
 import type { PropItem } from "./guion";
 import { MoneyBagShape } from "./person";
+import { BoatShape } from "./places";
 import { cueTime, pop, ramp, type Word, wave } from "./timing";
 
 // Objetos del escenario. Todos entran con rebote y después siguen moviéndose un poco.
@@ -402,6 +403,23 @@ export function PropView({
         <g transform={`scale(${dead})`} stroke="#FF3B30" strokeWidth={14} strokeLinecap="round">
           <path d="M -60 -60 L 60 60 M 60 -60 L -60 60" />
         </g>
+      </g>
+    );
+  }
+  if (prop.kind === "boat") {
+    const go = prop.moveTo ? cueTime(prop.moveTo.at, words) : 0;
+    // Arranca despacio y navega ~2,5 s hasta el destino.
+    const move = prop.moveTo ? ramp(t, go, go + 2.5) : 0;
+    const ease = move * move * (3 - 2 * move);
+    const x = prop.x + ((prop.moveTo?.x ?? prop.x) - prop.x) * ease;
+    const y = prop.y + ((prop.moveTo?.y ?? prop.y) - prop.y) * ease;
+    const from = prop.scale ?? 1;
+    const k = from + ((prop.moveTo?.scale ?? from) - from) * ease;
+    const bob = 8 * wave(t, 0.6, prop.x / 400);
+    const roll = 2.5 * wave(t, 0.45);
+    return (
+      <g transform={`translate(${x} ${y + bob}) rotate(${roll}) scale(${enter * k})`}>
+        <BoatShape loaded={prop.loaded ?? false} t={t} />
       </g>
     );
   }

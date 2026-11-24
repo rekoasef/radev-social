@@ -57,10 +57,38 @@ const actionSchema = z.discriminatedUnion("do", [
   z.object({ do: z.literal("pop"), at: cueSchema }).strict(),
 ]);
 
+const short = (max: number) => z.string().min(1).max(max);
+
+const OUTFITS = ["ladron", "guardia", "civil", "dueno"] as const;
+
+const lookSchema = z
+  .object({
+    skin: z.enum(["clara", "media", "triguena", "morena"]).optional(),
+    hair: z.enum(["corto", "largo", "rulos", "pelado"]).optional(),
+    hairColor: z.enum(["negro", "castano", "rubio", "colorado", "gris"]).optional(),
+    top: z
+      .enum(["azul", "rojo", "verde", "gris", "mostaza", "bordo", "blanco", "negro"])
+      .optional(),
+    face: z.enum(["nada", "barba", "bigote"]).optional(),
+    glasses: z.boolean().optional(),
+  })
+  .strict();
+
+/** Personaje con nombre: se declara una vez y las escenas lo usan con `who` (continuidad). */
+const castSchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9-]{1,30}$/),
+    name: short(40),
+    outfit: z.enum(OUTFITS).describe("Ropa por defecto; una escena puede cambiarla."),
+    look: lookSchema,
+  })
+  .strict();
+
 const actorSchema = z
   .object({
     id: z.string().min(1).max(40),
-    outfit: z.enum(["ladron", "guardia", "civil", "dueno"]),
+    who: z.string().optional().describe("id del elenco, si es un personaje con nombre."),
+    outfit: z.enum(OUTFITS).optional(),
     x,
     y,
     scale,
@@ -69,8 +97,6 @@ const actorSchema = z
     actions: z.array(actionSchema).max(12).optional(),
   })
   .strict();
-
-const short = (max: number) => z.string().min(1).max(max);
 
 const propSchema = z.discriminatedUnion("kind", [
   z
@@ -91,6 +117,21 @@ const propSchema = z.discriminatedUnion("kind", [
     })
     .strict(),
   z.object({ kind: z.literal("securityCam"), x, y, at: cueSchema, off: cueSchema, scale }).strict(),
+  z
+    .object({
+      kind: z.literal("boat"),
+      x,
+      y,
+      at: cueSchema,
+      scale,
+      loaded: z.boolean().optional(),
+      // Al alejarse por el túnel se achica mucho más que el resto de los objetos.
+      moveTo: z
+        .object({ x, y, at: cueSchema, scale: z.number().min(0.1).max(2.5).optional() })
+        .strict()
+        .optional(),
+    })
+    .strict(),
   z
     .object({
       kind: z.literal("phone"),
@@ -141,7 +182,17 @@ const overlaySchema = z.discriminatedUnion("kind", [
     .strict(),
 ]);
 
-export const SETTINGS = ["aeropuerto-noche", "reloj-alarma", "plano", "tienda"] as const;
+export const SETTINGS = [
+  "aeropuerto-noche",
+  "reloj-alarma",
+  "plano",
+  "tienda",
+  // V0-10: biblioteca de lugares (places.tsx).
+  "banco-fachada",
+  "banco-adentro",
+  "boveda",
+  "tunel",
+] as const;
 
 export const sceneSchema = z
   .object({
@@ -167,6 +218,14 @@ export const sceneSchema = z
 export const guionSchema = z
   .object({
     title: short(80),
+    cast: z.array(castSchema).max(8).optional(),
+    /** Lugares que la historia pedía y no están en el catálogo: la lista de qué dibujar después. */
+    missingPlaces: z
+      .array(
+        z.object({ place: short(80), scenes: z.array(z.number().int().min(0)).max(25) }).strict(),
+      )
+      .max(10)
+      .optional(),
     scenes: z.array(sceneSchema).min(4).max(9),
     /**
      * Regla 9: los números no los inventa la IA. En un video de historia los datos salen de hechos
@@ -297,8 +356,55 @@ export function checkScene(scene: SceneDraft, where = ""): string[] {
   return errors;
 }
 
+/** Encuadres "parecidos": mismo lugar con la cámara casi en el mismo lugar y zoom. */
+const sameShot = (a: SceneDraft, b: SceneDraft) => {
+  const ca = a.camera[0];
+  const cb = b.camera[0];
+  if (!ca || !cb) return true;
+  return (
+    Math.abs(ca.zoom - cb.zoom) < 0.3 && Math.abs(ca.x - cb.x) < 250 && Math.abs(ca.y - cb.y) < 250
+  );
+};
+
+/** Máximo de escenas por lugar en un video (decisión del operador, 2026-11-24). */
+export const MAX_PER_SETTING = 3;
+
 export function checkGuion(guion: GuionDraft): string[] {
   const errors = guion.scenes.flatMap((s, i) => checkScene(s, `scenes.${i}.`));
+  // Continuidad: cada personaje con nombre se declara una vez en el elenco.
+  const cast = new Set<string>();
+  for (const c of guion.cast ?? []) {
+    if (cast.has(c.id)) errors.push(`cast › id repetido: ${c.id}`);
+    cast.add(c.id);
+  }
+  guion.scenes.forEach((s, i) => {
+    s.actors.forEach((a, j) => {
+      if (a.who && !cast.has(a.who)) {
+        errors.push(`scenes.${i}.actors.${j}.who › "${a.who}" no está en el elenco (cast)`);
+      }
+      if (!a.who && !a.outfit) errors.push(`scenes.${i}.actors.${j} › falta outfit (o who)`);
+    });
+  });
+  // Variar sin prohibir: el mismo lugar no va en dos escenas seguidas con el mismo encuadre, y
+  // ningún lugar más de MAX_PER_SETTING veces.
+  guion.scenes.forEach((s, i) => {
+    const prev = guion.scenes[i - 1];
+    if (prev && prev.setting === s.setting && sameShot(prev, s)) {
+      errors.push(
+        `scenes.${i}.setting › "${s.setting}" igual que la escena anterior y con el mismo encuadre: cambiá de lugar o de cámara (zoom ±0,3 o centro a 250 px)`,
+      );
+    }
+  });
+  const uses = new Map<string, number>();
+  for (const s of guion.scenes) uses.set(s.setting, (uses.get(s.setting) ?? 0) + 1);
+  const over = [...uses].filter(([, n]) => n > MAX_PER_SETTING);
+  if (over.length > 0) {
+    // Con el conteo de todos, para que la corrección reparta de una vez y no rompa otro lugar.
+    const all = [...uses].map(([k, n]) => `${k} ${n}`).join(", ");
+    errors.push(
+      `setting › ${over.map(([k, n]) => `"${k}" en ${n} escenas`).join(" y ")} (máximo ${MAX_PER_SETTING} por lugar). Uso actual: ${all}`,
+    );
+  }
   const last = guion.scenes.at(-1);
   if (last && !last.narration.includes("?")) {
     errors.push("scenes.última › tiene que cerrar con una pregunta (pedido de comentarios)");
@@ -308,10 +414,19 @@ export function checkGuion(guion: GuionDraft): string[] {
 
 /** El guion validado, en el formato del render (`voice` = índice de la escena). */
 export function toRenderGuion(guion: GuionDraft): GuionScene[] {
-  return guion.scenes.map((scene, voice) => ({ voice, ...scene }));
+  const cast = new Map((guion.cast ?? []).map((c) => [c.id, c]));
+  return guion.scenes.map((scene, voice) => ({
+    voice,
+    ...scene,
+    actors: scene.actors.map((a) => {
+      const c = a.who ? cast.get(a.who) : undefined;
+      return { ...a, outfit: a.outfit ?? c?.outfit ?? "civil", ...(c && { look: c.look }) };
+    }),
+  }));
 }
 
 // Si el schema acepta algo que el render no sabe dibujar, esto deja de compilar.
-type _Assignable = SceneDraft extends Omit<GuionScene, "voice"> ? true : never;
+type _Assignable =
+  Omit<SceneDraft, "actors"> extends Omit<GuionScene, "voice" | "actors"> ? true : never;
 const _check: _Assignable = true;
 void _check;

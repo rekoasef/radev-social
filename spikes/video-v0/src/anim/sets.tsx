@@ -1,4 +1,5 @@
 import type { Setting } from "./guion";
+import { BankFacade, BankHall, Tunnel, Vault } from "./places";
 import { wave } from "./timing";
 
 // Escenarios en SVG (1080×1920). Siempre hay algo vivo: estrellas, ventanas, balizas, un reflector.
@@ -106,7 +107,7 @@ function Depot({ t }: { t: number }) {
         fill="#F2C14E"
         fontFamily={FONT}
       >
-        CARGA 261
+        CARGA
       </text>
       <rect x={640} y={1000} width={200} height={HORIZON - 1000} fill="#141A2E" />
       <rect
@@ -318,9 +319,6 @@ export function Blueprint({ t }: { t: number }) {
       </g>
       <rect x={644} y={564} width={292} height={252} fill="url(#vault)" />
       <g fill={line} fontFamily={FONT} fontWeight={800} textAnchor="middle">
-        <text x={540} y={530} fontSize={36} letterSpacing={4}>
-          DEPÓSITO 261
-        </text>
         <text x={790} y={700} fontSize={34}>
           BÓVEDA
         </text>
@@ -432,5 +430,9 @@ export function SetView({ setting, t }: { setting: Setting; t: number }) {
   if (setting === "aeropuerto-noche") return <AirportNight t={t} />;
   if (setting === "plano") return <Blueprint t={t} />;
   if (setting === "tienda") return <Shop t={t} />;
+  if (setting === "banco-fachada") return <BankFacade t={t} />;
+  if (setting === "banco-adentro") return <BankHall t={t} />;
+  if (setting === "boveda") return <Vault t={t} />;
+  if (setting === "tunel") return <Tunnel t={t} />;
   return <AlarmRoom t={t} />;
 }

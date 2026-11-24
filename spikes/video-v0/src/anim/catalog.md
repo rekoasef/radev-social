@@ -39,16 +39,31 @@ Las cajas van entre y = 560 y 1360 (o 1580–1700). Los objetos y personajes pue
 
 Todos tienen movimiento propio (luces, ventanas que titilan): nunca hace falta "llenar" el fondo.
 
-- **`aeropuerto-noche`**: pista de un aeropuerto de noche. Cielo con estrellas y luna, ciudad con ventanas al fondo, torre de control con baliza, un reflector que barre el cielo, un **avión de carga** estacionado a la izquierda y un **depósito de carga** a la derecha (x 540–1080, y 880–1150) con la puerta entreabierta y luz. El piso empieza en y = 1150. **Personajes: pies en y ≈ 1250–1280, scale 0,8–0,95.** Sirve para: aeropuertos, robos, llegadas, cargamentos, cualquier cosa "de noche afuera".
+- **`aeropuerto-noche`**: pista de un aeropuerto de noche. Cielo con estrellas y luna, ciudad con ventanas al fondo, torre de control con baliza, un reflector que barre el cielo, un **avión de carga** estacionado a la izquierda y un **depósito de carga** a la derecha (x 540–1080, y 880–1150) con la puerta entreabierta y luz. El piso empieza en y = 1150. **Personajes: pies en y ≈ 1250–1280, scale 0,8–0,95.** Sirve para: aeropuertos, aviones, cargamentos, llegadas y salidas en avión. No lo uses como "afuera de noche" genérico.
 - **`reloj-alarma`**: fondo liso oscuro con luz de alarma que alterna rojo y azul. Piso desde y = 1420. **Personajes: pies en y ≈ 1370, scale 1,4–1,6.** Sirve para: tensión, tiempo que corre, preguntas, momentos de "¿cómo puede ser?". Va bien con el cronómetro y los signos de pregunta.
-- **`plano`**: plano azul tipo blueprint de un edificio, con textos fijos "DEPÓSITO 261", "BÓVEDA" (arriba a la derecha, x 644–936, y 564–816), "ENTRADA" (abajo a la izquierda, x ≈ 275, y ≈ 1150), "OFICINAS" y "CARGA", y una escala "80 m". **Sin personajes**: acá se usan `route`, `marker` y `securityCam` (solo existen en este escenario). Sirve para: planes, recorridos, cómo se organizó algo. Ojo: los textos del plano son fijos (es un depósito con bóveda).
+- **`plano`**: plano azul tipo blueprint de un edificio, con textos fijos genéricos: "BÓVEDA" (arriba a la derecha, x 644–936, y 564–816), "ENTRADA" (abajo a la izquierda, x ≈ 275, y ≈ 1150), "OFICINAS" y "CARGA", y una escala "80 m". **Sin personajes**: acá se usan `route`, `marker` y `securityCam` (solo existen en este escenario). Sirve para: planes, recorridos, cómo se organizó algo. Ojo: los textos del plano son fijos (un edificio con bóveda: banco, depósito, museo); para nombrar el lugar, usá un `tag`.
 - **`tienda`**: el interior de un negocio chico de noche: pared, ventana con la ciudad, estantes con cajas y una lámpara que se mece. Piso desde y ≈ 1340. **Personajes: pies en y ≈ 1330, scale 1,4–1,5.** Sirve para: negocios, comercios, clientes, dueños, compras online (con el celular).
+- **`banco-fachada`**: el frente de un banco clásico al atardecer: frontón con un "$", cuatro columnas, ventanas con rejas, puerta grande iluminada (x 430–650, y 820–1176) y escalinata; vereda, calle y un farol a la derecha. **Personajes: pies en y ≈ 1340, scale 1,0–1,2** (sobre la vereda). Sirve para: llegar al banco, la policía rodeando el edificio, "afuera", la prensa.
+- **`banco-adentro`**: el salón de atención de un banco: tres ventanillas con vidrio y luz de turno, mostrador largo (y 1010–1340), reloj de pared en el centro y piso de baldosas. **Personajes: pies en y ≈ 1330, scale 1,4–1,5** (delante del mostrador). Sirve para: clientes, empleados, la toma de rehenes, la negociación, el tiempo que pasa (el reloj avanza).
+- **`boveda`**: la bóveda: pared de cajas de seguridad a la izquierda (x 30–650, y 530–1340; algunas ya abiertas) y la puerta redonda abierta a la derecha (centro x 870, y 900), con una lamparita que se mece. **Personajes: pies en y ≈ 1330, scale 1,3–1,4.** Sirve para: cajas de seguridad, el botín, "abajo", lo que se llevaron.
+- **`tunel`**: un túnel o desagüe en perspectiva: arcos de ladrillo que se pierden al fondo (punto de fuga x 540, y 860), un canal de agua en el centro, veredas angostas a los costados y una guirnalda de lamparitas. **Personajes: sobre las veredas, abajo: pies en y ≈ 1650–1750, x 80–220 o 860–1000, scale 1,1–1,2.** El agua va por el centro (en y = 1560 mide de x 350 a 730). Sirve para: túneles, escapes por abajo, desagües, cloacas, minas. Va bien con el gomón.
+
+**Variá los lugares.** Un mismo escenario **nunca en dos escenas seguidas con el mismo encuadre** (si repetís, cambiá la cámara: zoom ±0,3 o el centro a 250 px o más) y **ningún escenario en más de 3 escenas del video**. Si la historia pasa en un lugar que no está en el catálogo (un juzgado, unas sierras, una redacción), usá el más cercano que tenga sentido o contalo con cajas de datos, y **anotalo en `missingPlaces`** (qué lugar y en qué escenas hubiera ido): así se dibuja para la próxima. Nunca uses un lugar que contradiga la historia (una tienda para un banco).
+
+## Elenco (`cast`): los personajes con nombre
+
+Cada persona con nombre de la historia (el protagonista, el negociador, el comisario) se declara **una vez** en `cast` con su aspecto, y en las escenas aparece con `who: "<id>"`. Así se ve **igual en todo el video** (continuidad), aunque cambie de ropa: con `who` y otro `outfit` (de `ladron` en el banco a `civil` cuando lo detienen) mantiene la cara, el pelo, la barba y los anteojos.
+
+- `cast: [{ id, name, outfit, look }]`. `id` en minúsculas sin espacios ("araujo"); `outfit` es la ropa por defecto.
+- `look`: `skin` (`clara`, `media`, `triguena`, `morena`), `hair` (`corto`, `largo`, `rulos`, `pelado`), `hairColor` (`negro`, `castano`, `rubio`, `colorado`, `gris`), `top` (color de la ropa de `civil`: `azul`, `rojo`, `verde`, `gris`, `mostaza`, `bordo`, `blanco`, `negro`), `face` (`nada`, `barba`, `bigote`), `glasses` (true/false; con `ladron` no se ven, por el antifaz).
+- Que los personajes principales **se distingan entre sí** (otro pelo, otra ropa, barba o no). Si no sabés cómo era la persona real, no lo inventes como dato: el aspecto es solo para reconocerlo en el video.
+- Los extras sin nombre (rehenes, policías, clientes) no van en el elenco: llevan `outfit` y su aspecto sale del `id`. **Usá el mismo `id` para el mismo extra en distintas escenas** ("rehen-1") y se va a ver igual.
 
 ## Personajes (`actors`)
 
 Personitas planas de ~290 px de alto a scale 1, con los pies en `(x, y)`. Miran a la derecha salvo `facing: "left"`. Respiran y parpadean solos.
 
-- **`outfit`**: `ladron` (gorro de lana y antifaz), `guardia` (uniforme y gorra), `civil` (ropa común), `dueno` (delantal de negocio).
+- **`who`** (personaje del elenco) **o `outfit`** (extra): `ladron` (gorro de lana y antifaz), `guardia` (uniforme y gorra), `civil` (ropa común), `dueno` (delantal de negocio). Con `who`, `outfit` es opcional y cambia la ropa solo en esa escena.
 - `id` único en la escena. `enter`: aparece recién en ese momento (si no, está desde el principio). Para que entre caminando desde afuera: `x` fuera del cuadro (−200 o 1280), `enter` y un `walk`.
 - **Acciones** (`actions`), **en orden de tiempo**:
   - `walk { at, toX, speed? }`: camina hasta `toX` (speed en px/s, 240 por defecto; 400–520 = apurado). Se da vuelta solo.
@@ -68,6 +83,7 @@ Entran con rebote en `at` y después se siguen moviendo un poco.
 - `moneyBag { x, y, at, scale? }`: bolsa de dinero con "$".
 - `stopwatch { x, y, at, spinUntil }`: cronómetro grande (~360 px) con las agujas girando rápido hasta `spinUntil`; ahí frena y tiembla.
 - `question { x, y, at, scale? }`: signo de pregunta grande que flota.
+- `boat { x, y, at, scale?, loaded?, moveTo? }`: gomón naranja con motor fuera de borda (~460 de ancho a scale 1), centrado en (x, y) con la línea del agua en y; flota y se mece. `loaded: true` lo carga con bolsas de dinero. `moveTo { x, y, at, scale? }` lo hace navegar ~2,5 s hasta ahí; en `tunel`, para que se aleje, mandalo al fondo (x 540, y ≈ 1010, scale 0,15). En `tunel` va sobre el agua (x 540, y ≈ 1500–1600, scale 0,7–0,8).
 - `phone { x, y, at, loadingAt?, scale? }`: celular (~380 × 740) con una tienda online; desde `loadingAt` la página de pago queda cargando (rueda y barra que no termina).
 - Solo en `plano`:
   - `route { at, until }`: ruta punteada roja que se dibuja de la ENTRADA a la BÓVEDA entre `at` y `until`.

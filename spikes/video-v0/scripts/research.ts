@@ -399,48 +399,69 @@ async function guionFromDossier(file: string) {
   // El catálogo pide un Short de 6–8 escenas; para el largo se cambia esa línea y se suma la estructura.
   const system = long ? catalog.replace(/^- \*\*6 a 8 escenas\*\*.*$/m, LONG_RULES) : catalog;
   if (long && system === catalog) throw new Error("No encontré la línea de duración en catalog.md");
-  const { run, data } = await ask(
-    name,
-    "guion",
-    {
-      prompt:
-        "Escribí el guion del Short sobre el tema de `task.json` **usando SOLO los hechos de " +
-        "`dossier.json`**. No agregues ningún dato, nombre, fecha, cifra ni cita que no esté ahí, " +
-        "aunque lo sepas: si no está en el dossier, no existe. Las citas van textuales, como en el " +
-        "dossier. Nada de `disputed` ni de `unconfirmed` (si hace falta, redondeá a lo que todas " +
-        "las versiones comparten). En `facts`, `source` es el id del hecho o la cita del dossier " +
-        "(F3, C1; varios separados por coma). Devolvé el objeto que pide el schema.",
-      files: {
-        "CLAUDE.md": system,
-        "ejemplo.json": example,
-        "dossier.json": JSON.stringify(saved.dossier, null, 1),
-        "task.json": JSON.stringify(
-          { tema: saved.topic, voz: "Fran", duracion: long ? "90–120 s" : "35–45 s" },
-          null,
-          1,
-        ),
+  const prompt =
+    "Escribí el guion del Short sobre el tema de `task.json` **usando SOLO los hechos de " +
+    "`dossier.json`**. No agregues ningún dato, nombre, fecha, cifra ni cita que no esté ahí, " +
+    "aunque lo sepas: si no está en el dossier, no existe. Las citas van textuales, como en el " +
+    "dossier. Nada de `disputed` ni de `unconfirmed` (si hace falta, redondeá a lo que todas " +
+    "las versiones comparten). En `facts`, `source` es el id del hecho o la cita del dossier " +
+    "(F3, C1; varios separados por coma). Devolvé el objeto que pide el schema.";
+  const files = {
+    "CLAUDE.md": system,
+    "ejemplo.json": example,
+    "dossier.json": JSON.stringify(saved.dossier, null, 1),
+    "task.json": JSON.stringify(
+      { tema: saved.topic, voz: "Fran", duracion: long ? "90–120 s" : "35–45 s" },
+      null,
+      1,
+    ),
+  };
+  const check = (g: GuionDraft) => {
+    const errors = checkAgainstDossier(g, saved.dossier);
+    if (long && g.scenes.length < 15)
+      errors.push(`scenes › ${g.scenes.length} escenas (mínimo 15)`);
+    const chars = g.scenes.reduce((sum, sc) => sum + sc.narration.length, 0);
+    if (long && chars < 1300) errors.push(`narración de ${chars} caracteres (mínimo 1.300, ~90 s)`);
+    return errors;
+  };
+  const settings = {
+    schema: long ? guionLargoSchema : guionSchema,
+    maxTurns: 3,
+    timeoutMs: (long ? 12 : 5) * 60_000,
+  };
+  let { run, data } = await ask(name, "guion", { prompt, files, ...settings }, check);
+  const finish = (r: Run, d: GuionDraft | null, n: string) => {
+    if (d) {
+      r.extra = {
+        scenes: d.scenes.length,
+        narrationChars: d.scenes.reduce((sum, sc) => sum + sc.narration.length, 0),
+        settings: [...new Set(d.scenes.map((sc) => sc.setting))].length,
+        cast: d.cast?.length ?? 0,
+        missingPlaces: d.missingPlaces?.map((m) => m.place) ?? [],
+      };
+    }
+    save(r, path.join(out, `${n}.json`), { source: file, topic: saved.topic, guion: d });
+  };
+  finish(run, data, name);
+  // Hasta dos correcciones (como en V0-8): el guion anterior y sus errores.
+  for (let attempt = 1; data && !run.valid && attempt <= 2; attempt++) {
+    ({ run, data } = await ask(
+      `${name}-repair${attempt}`,
+      "guion",
+      {
+        prompt:
+          `${prompt}\n\nEl intento anterior (\`anterior.json\`) tuvo estos errores. Corregilos ` +
+          "cambiando lo mínimo y devolvé el guion completo. Antes de devolverlo, revisá TODAS " +
+          "las reglas de variedad juntas (ningún lugar en más de 3 escenas, nunca el mismo lugar " +
+          "con el mismo encuadre en dos escenas seguidas): al mover una escena no rompas otra.\n" +
+          (run.checkErrors ?? []).map((e) => `- ${e}`).join("\n"),
+        files: { ...files, "anterior.json": JSON.stringify(data, null, 1) },
+        ...settings,
       },
-      schema: long ? guionLargoSchema : guionSchema,
-      maxTurns: 3,
-      timeoutMs: 5 * 60_000,
-    },
-    (g) => {
-      const errors = checkAgainstDossier(g, saved.dossier);
-      if (long && g.scenes.length < 15)
-        errors.push(`scenes › ${g.scenes.length} escenas (mínimo 15)`);
-      const chars = g.scenes.reduce((sum, sc) => sum + sc.narration.length, 0);
-      if (long && chars < 1300)
-        errors.push(`narración de ${chars} caracteres (mínimo 1.300, ~90 s)`);
-      return errors;
-    },
-  );
-  if (data) {
-    run.extra = {
-      scenes: data.scenes.length,
-      narrationChars: data.scenes.reduce((sum, s) => sum + s.narration.length, 0),
-    };
+      check,
+    ));
+    finish(run, data, `${name}-repair${attempt}`);
   }
-  save(run, path.join(out, `${name}.json`), { source: file, topic: saved.topic, guion: data });
 }
 
 function summary() {

@@ -1,4 +1,4 @@
-import type { Actor, Outfit } from "./guion";
+import type { Actor, Look, Outfit } from "./guion";
 import { blink, cueTime, pop, ramp, type Word, wave } from "./timing";
 
 // Una personita en SVG, plana, con las piezas separadas (piernas, brazos, cabeza) para que el
@@ -25,6 +25,97 @@ const OUTFITS: Record<Outfit, Colors> = {
   dueno: { top: "#E9E3D3", topDark: "#CFC7B3", legs: "#2F3442", shoes: "#16181F", skin: "#D9A27C" },
   civil: { top: "#8FB4E3", topDark: "#7397C4", legs: "#3B4252", shoes: "#1C1F27", skin: "#F0C29E" },
 };
+
+// --- Aspecto (V0-10: continuidad de personajes) -----------------------------------------------
+
+const SKIN: Record<NonNullable<Look["skin"]>, string> = {
+  clara: "#F0C29E",
+  media: "#E0A57F",
+  triguena: "#C98E68",
+  morena: "#8D5A3C",
+};
+const HAIR: Record<NonNullable<Look["hairColor"]>, string> = {
+  negro: "#1E1A1A",
+  castano: "#4A3426",
+  rubio: "#D9B26A",
+  colorado: "#A8482A",
+  gris: "#A3A3AE",
+};
+const TOP: Record<NonNullable<Look["top"]>, [string, string]> = {
+  azul: ["#8FB4E3", "#7397C4"],
+  rojo: ["#D9534F", "#B5403D"],
+  verde: ["#6FAF8A", "#568F6F"],
+  gris: ["#9AA3B5", "#7E8799"],
+  mostaza: ["#D9A83F", "#B88A2C"],
+  bordo: ["#8C2F45", "#6E2336"],
+  blanco: ["#ECE8DE", "#CFCABF"],
+  negro: ["#3A3C4A", "#2B2D3A"],
+};
+
+/** Aspecto de un extra sacado de su id: el mismo id, la misma cara en todas las escenas. */
+function lookFromId(id: string): Look {
+  let h = 2166136261;
+  for (const ch of id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  const pick = <T,>(xs: readonly T[], shift: number): T => xs[(h >>> shift) % xs.length] as T;
+  return {
+    skin: pick(["clara", "media", "triguena", "morena"] as const, 0),
+    hair: pick(["corto", "corto", "largo", "rulos", "pelado"] as const, 3),
+    hairColor: pick(["negro", "castano", "castano", "rubio", "gris"] as const, 7),
+    top: pick(["azul", "rojo", "verde", "gris", "mostaza", "bordo"] as const, 11),
+    face: pick(["nada", "nada", "nada", "barba", "bigote"] as const, 15),
+    glasses: (h >>> 19) % 6 === 0,
+  };
+}
+
+/** Colores finales: el vestuario, con la piel y (si es civil) la ropa del aspecto. */
+function colorsOf(outfit: Outfit, look: Look): Colors {
+  const base = OUTFITS[outfit];
+  const top = outfit === "civil" && look.top ? TOP[look.top] : undefined;
+  return {
+    ...base,
+    ...(look.skin && { skin: SKIN[look.skin] }),
+    ...(top && { top: top[0], topDark: top[1] }),
+  };
+}
+
+/** Pelo largo: va detrás de la cabeza (se dibuja antes). */
+function HairBack({ look }: { look: Look }) {
+  if (look.hair !== "largo") return null;
+  return (
+    <path
+      d="M -42 -258 Q -58 -196 -38 -176 L -4 -182 Q -18 -214 -12 -250 Z"
+      fill={HAIR[look.hairColor ?? "castano"]}
+    />
+  );
+}
+
+/** Barba (capa de abajo, antes de ojos y boca), y bigote y anteojos (capa de arriba). */
+function Face({ look, outfit, layer }: { look: Look; outfit: Outfit; layer: "under" | "over" }) {
+  const hair = HAIR[look.hairColor ?? "castano"];
+  if (layer === "under") {
+    return look.face === "barba" ? (
+      <path
+        d="M -26 -242 Q -24 -204 8 -202 Q 40 -204 42 -236 Q 34 -226 24 -228 Q 8 -228 -26 -242 Z"
+        fill={hair}
+      />
+    ) : null;
+  }
+  return (
+    <g>
+      {look.face === "bigote" || look.face === "barba" ? (
+        <path d="M 12 -226 Q 24 -234 38 -226 Q 30 -221 24 -223 Q 18 -221 12 -226 Z" fill={hair} />
+      ) : null}
+      {look.glasses && outfit !== "ladron" ? (
+        <g stroke="#1B1B22" strokeWidth={3.5} fill="#FFFFFF" fillOpacity={0.15}>
+          <circle cx={12} cy={-238} r={11} />
+          <circle cx={33} cy={-238} r={10} />
+          <path d="M 23 -239 L 23 -239" />
+          <path d="M 1 -240 L -30 -246" fill="none" />
+        </g>
+      ) : null}
+    </g>
+  );
+}
 
 type Pose = "idle" | "lookWatch" | "scratchHead" | "panic" | "point";
 
@@ -129,7 +220,7 @@ function Leg({ angle, color, shoe }: { angle: number; color: string; shoe: strin
   );
 }
 
-function Headwear({ outfit }: { outfit: Outfit }) {
+function Headwear({ outfit, look }: { outfit: Outfit; look: Look }) {
   if (outfit === "ladron") {
     // Gorro de lana y antifaz.
     return (
@@ -151,8 +242,22 @@ function Headwear({ outfit }: { outfit: Outfit }) {
       </g>
     );
   }
+  const hair = HAIR[look.hairColor ?? "castano"];
+  if (look.hair === "pelado") {
+    return <ellipse cx={-8} cy={-282} rx={16} ry={7} fill="#FFFFFF" opacity={0.18} />;
+  }
+  if (look.hair === "rulos") {
+    return (
+      <g fill={hair}>
+        {[-34, -18, 0, 18, 32].map((x, i) => (
+          <circle key={x} cx={x} cy={-280 + Math.abs(x) * 0.5 - (i % 2) * 4} r={16} />
+        ))}
+        <circle cx={-38} cy={-258} r={13} />
+      </g>
+    );
+  }
   return (
-    <path d="M -38 -252 Q -34 -294 2 -292 Q 36 -292 40 -256 Q 20 -268 -38 -252 Z" fill="#4A3426" />
+    <path d="M -38 -252 Q -34 -294 2 -292 Q 36 -292 40 -256 Q 20 -268 -38 -252 Z" fill={hair} />
   );
 }
 
@@ -168,7 +273,8 @@ export function Person({
   seed: number;
 }) {
   if (!state.visible) return null;
-  const c = OUTFITS[actor.outfit];
+  const look = actor.look ?? lookFromId(actor.id);
+  const c = colorsOf(actor.outfit, look);
   const s = (actor.scale ?? 1) * state.appear;
   const cycle = Math.sin(state.phase * Math.PI * 2);
   const legSwing = state.walking ? 28 * cycle : 0;
@@ -236,8 +342,10 @@ export function Person({
           <rect x={-10} y={-226} width={20} height={20} rx={6} fill={c.skin} />
         </g>
         <g transform={`rotate(${headTilt} 0 -224)`}>
+          <HairBack look={look} />
           <circle cx={0} cy={-252} r={40} fill={c.skin} />
           <circle cx={-34} cy={-250} r={9} fill={c.skin} />
+          <Face look={look} outfit={actor.outfit} layer="under" />
           {/* Ojos (con antifaz, se ven blancos) y boca, del lado al que mira. */}
           <ellipse
             cx={12}
@@ -264,7 +372,8 @@ export function Person({
               strokeLinecap="round"
             />
           )}
-          <Headwear outfit={actor.outfit} />
+          <Face look={look} outfit={actor.outfit} layer="over" />
+          <Headwear outfit={actor.outfit} look={look} />
         </g>
         <g transform="translate(26 -196)">
           <Arm angle={front} sleeve={c.top} skin={c.skin} watch={actor.outfit === "guardia"} />

@@ -19,6 +19,21 @@ export type Cue =
 
 export type Outfit = "ladron" | "guardia" | "civil" | "dueno";
 
+/**
+ * V0-10: cómo se ve una persona más allá de la ropa. Los personajes con nombre lo declaran una vez
+ * en el elenco del guion y se ven igual en todas las escenas (continuidad), aunque cambien de ropa.
+ * Los extras sin elenco lo sacan de su `id`: el mismo id se ve igual en cada escena.
+ */
+export type Look = {
+  skin?: "clara" | "media" | "triguena" | "morena";
+  hair?: "corto" | "largo" | "rulos" | "pelado";
+  hairColor?: "negro" | "castano" | "rubio" | "colorado" | "gris";
+  /** Color de la ropa (solo para `civil`: los demás vestuarios son uniformes). */
+  top?: "azul" | "rojo" | "verde" | "gris" | "mostaza" | "bordo" | "blanco" | "negro";
+  face?: "nada" | "barba" | "bigote";
+  glasses?: boolean;
+};
+
 export type Action =
   | { do: "walk"; at: Cue; toX: number; speed?: number }
   | { do: "lookWatch"; at: Cue; until?: Cue }
@@ -31,6 +46,9 @@ export type Action =
 export type Actor = {
   id: string;
   outfit: Outfit;
+  /** Personaje del elenco (resuelto por `toRenderGuion`: trae su `look`). */
+  who?: string;
+  look?: Look;
   /** Posición de los pies en el escenario (1080×1920) y tamaño. */
   x: number;
   y: number;
@@ -59,6 +77,16 @@ export type PropItem =
     }
   /** Cámara de seguridad que gira; en `off` se tacha. */
   | { kind: "securityCam"; x: number; y: number; at: Cue; off: Cue; scale?: number }
+  /** Gomón que flota; con `moveTo` navega hasta otro lugar (y escala, para alejarse en el túnel). */
+  | {
+      kind: "boat";
+      x: number;
+      y: number;
+      at: Cue;
+      scale?: number;
+      loaded?: boolean;
+      moveTo?: { x: number; y: number; at: Cue; scale?: number };
+    }
   /** Celular con una tienda; desde `loadingAt`, la página de pago cargando. */
   | { kind: "phone"; x: number; y: number; at: Cue; loadingAt?: Cue; scale?: number };
 
@@ -92,7 +120,15 @@ export type Overlay =
       count?: { to: number; until: Cue };
     };
 
-export type Setting = "aeropuerto-noche" | "reloj-alarma" | "plano" | "tienda";
+export type Setting =
+  | "aeropuerto-noche"
+  | "reloj-alarma"
+  | "plano"
+  | "tienda"
+  | "banco-fachada"
+  | "banco-adentro"
+  | "boveda"
+  | "tunel";
 
 export type GuionScene = {
   /** Índice de la escena en la voz de V0-3 (out/v0-3/manifest.json). */
