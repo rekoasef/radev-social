@@ -272,6 +272,38 @@ Videos en `Descargas\v0-6-animado\escenas-1-y-2-voz-{1.1,1.2,1.3}.mp4` (fábrica
 - **Render de un guion generado** (`pnpm anim --guion out/v0-11/guion-4-low-glow.json --voices out/v0-11/voice-mona --name mona-lisa-investigada`): **46,9 s de video en 75 s**, sin tocar nada a mano; voz de Fran a 1,2 + `atempo` 1,3 (631 caracteres de ElevenLabs). Video y cuadros de muestra en `Descargas\v0-11-investigado` (fábrica). Se ve: el escenario `plano` otra vez con "DEPÓSITO 261" y "BÓVEDA" (ahora para el Louvre), la etiqueta "SOSPECHOSOS" tapa la cara de los personajes (el chequeo de cajas no mira dónde están los personajes: tarea del control de calidad) y faltan dibujos del tema (museo, cuadro): todo pasa en "la tienda".
 - **Una historia completa de punta a punta:** ~2 min de investigación + ~1 min de guion + voz (~10 s) + render (~75 s), unos 4–5 min de máquina.
 
+## V0-12 · La voz en una sola toma, y la voz propia con Whisper (PC de la fábrica, 2026-11-24)
+
+**Por qué:** el operador dijo que la voz de V0-11 sonó "robótica, lenta, poco natural". Esa voz se pedía **escena por escena** (7 pedidos, la entonación arranca de cero en cada unión) y después se estiraba con `atempo` a 1,3. Además, si se acaba el cupo de ElevenLabs, el operador quiere narrar algunos videos él mismo: hace falta sacar los tiempos de cada palabra de una grabación.
+
+**Voz en una toma** (`spikes/video-v0/tts/whole.py`): todo el texto en **un solo pedido** con `with-timestamps`, sin `atempo`; se corta por escena en la mitad de la pausa entre la última palabra de una y la primera de la siguiente. Deja el mismo formato que `scenes.py` (sirve directo para `pnpm anim --voices`). Texto: el guion de la Mona Lisa de V0-11 (637 caracteres, 116 palabras).
+
+| Toma (`out/v0-12/<tag>`) | Voz · modelo · `speed` | Duración | Créditos descontados |
+|---|---|---|---|
+| `fran-v2-1.2` | Fran · `eleven_multilingual_v2` · 1,2 | 42,6 s | 255 |
+| `fran-v2-1.1` | Fran · `eleven_multilingual_v2` · 1,1 | 49,5 s | 255 |
+| `juan-v2-1.2` | Juan · `eleven_multilingual_v2` · 1,2 | 44,7 s | 255 |
+| `fran-flash-1.2` | Fran · `eleven_flash_v2_5` · 1,2 | 38,2 s | 127 |
+| `fran-v3` | Fran · `eleven_v3` · la guardada (0,92) | 53,1 s | 255 |
+
+- **Las cinco funcionan con `with-timestamps`**, también `eleven_v3`. El corte por pausas no necesitó ajustes: las palabras de la voz coinciden 1 a 1 con las del guion.
+- **Sin `atempo`, la toma única a 1,2 (42,6 s) dura menos que la versión anterior a 1,3 con `atempo` (46,9 s de video)**: el ritmo sube porque desaparecen los arranques y cierres de cada escena.
+- **Créditos (historial de la API):** `multilingual_v2` y `v3` descuentan **0,4 por carácter**, y `flash_v2_5`, 0,2. Las escenas de V0-11 ya cobraban 0,4. El plan Starter muestra un límite de **38.439** este mes. Si se mantiene, un video de 2 min (~1.700 caracteres ≈ 680 créditos) × 20 por mes ≈ **13.600**: entra en el plan. **Falta confirmar en la página de precios de ElevenLabs si el 0,4 es fijo o una promoción.**
+- **Falta lo principal: que el operador escuche** las cinco tomas (`Descargas\v0-12-voz\*.mp3`) y el video `mona-fran-toma-unica.mp4` (44,3 s, render en 72 s).
+
+**Voz propia con Whisper** (`spikes/video-v0/tts/whisper_words.py`): faster-whisper 1.2.1 en CPU (`int8`), en un entorno de Python aislado (`out/whisper/.venv`, 418 MB, más 3,4 GB de modelos en `out/whisper/models`). El texto que escucha Whisper **no se usa**: sus palabras se emparejan con las del guion (`difflib`) y el karaoke siempre muestra el guion; lo que no reconoció toma tiempos interpolados. Para medir sin grabación del operador, se le pasó la toma `fran-v2-1.2`, cuyos tiempos exactos ya da ElevenLabs:
+
+| Modelo | Transcripción (42,6 s de audio) | Palabras reconocidas | Error de inicio: mediana · p95 · máx | Palabras con > 100 ms |
+|---|---|---|---|---|
+| `small` | 17 s | 115/116 | 68 · 331 · 532 ms | 31 |
+| **`medium`** | 51 s | 115/116 | **37 · 169 · 246 ms** | 18 |
+| `large-v3-turbo` | 36 s | 115/116 | 64 · 383 · 553 ms | 30 |
+
+- **`medium` es el que sirve**: el peor error es ~7 cuadros, sin saltos de medio segundo. `turbo` es más rápido que `medium`, pero no es más preciso que `small` (fallan las palabras cortas: "le", "se", "y"). Un video de 2 min ≈ 2,5 min de CPU en la fábrica.
+- **De punta a punta:** el mismo audio cortado con los tiempos de Whisper `medium` se renderizó como `mona-tiempos-whisper.mp4` (`Descargas\v0-12-voz`): queda para que el operador compare la sincronía del karaoke con la de `mona-fran-toma-unica.mp4`.
+- **Detalle técnico:** el PyAV que trae faster-whisper 1.2.1 choca de versión (`metadata_errors`); el audio lo decodifica `ffmpeg` y se le pasa ya en memoria.
+- **Falta:** una grabación real del operador (con ruido de ambiente, respiraciones, errores y repeticiones). Ahí puede aparecer lo que esta prueba no ve: frases dichas dos veces (el emparejamiento toma una) o palabras cambiadas. Para repetirla: `out/whisper/.venv/bin/python tts/whisper_words.py <grabación> texts/v0-11-mona.json --tag yo --model medium` y `pnpm anim --guion out/v0-11/guion-4-low-glow.json --voices out/v0-12/whisper-yo --name mona-mi-voz`.
+
 ## V0-7 · Licencias y condiciones
 
 *En curso.* Primera lectura (2026-11-21), a confirmar en las páginas oficiales antes de cerrar:
