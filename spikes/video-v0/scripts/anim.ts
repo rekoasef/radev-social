@@ -1,12 +1,14 @@
 // Video animado guionado (V0-6 redefinida): renderiza el guion de src/anim/guion.ts con la voz
 // de V0-3 (Fran a 1,1; out/v0-3/audio). Uso:
 //   pnpm --filter @radev/spike-video-v0 anim [--stills 0:1.5,0:6,1:1] [--only 0] [--concurrency 2]
+//     [--guion out/v0-11/<archivo>.json --voices <carpeta> --name <nombre>]   (un guion generado)
 // Deja out/anim/anim.mp4 (o anim-<escena>.mp4) y, con --stills, cuadros sueltos escena:segundo.
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { bundle } from "@remotion/bundler";
 import { openBrowser, renderMedia, renderStill, selectComposition } from "@remotion/renderer";
-import { guion, sceneFrames } from "../src/anim/guion";
+import { guion as handWritten, sceneFrames } from "../src/anim/guion";
+import { guionSchema, toRenderGuion } from "../src/anim/schema";
 
 const root = path.resolve(import.meta.dirname, "..");
 // --voices: otra carpeta con manifest.json y audio/ (por ejemplo out/v0-3/x1.3, de tts/tempo.py).
@@ -29,6 +31,17 @@ const voices = manifest.scenes.map((s) => ({
   words: JSON.parse(readFileSync(path.join(v03, "audio", `${s.key}.words.json`), "utf8")),
   frames: s.frames,
 }));
+const guionFile = option("guion");
+const guion = guionFile
+  ? toRenderGuion(
+      guionSchema.parse(
+        (JSON.parse(readFileSync(path.resolve(guionFile), "utf8")) as { guion: unknown }).guion,
+      ),
+    )
+  : handWritten;
+if (guion.length !== voices.length) {
+  throw new Error(`El guion tiene ${guion.length} escenas y la voz ${voices.length}`);
+}
 const only = option("only") === undefined ? undefined : Number(option("only"));
 const since = (t0: number) => Number(((performance.now() - t0) / 1000).toFixed(1));
 
@@ -41,7 +54,7 @@ console.log(`bundle: ${since(t0)} s`);
 const browser = await openBrowser("chrome", {
   chromiumOptions: { flags: { "font-render-hinting": false } },
 });
-const inputProps = { voices, only };
+const inputProps = { voices, only, ...(guionFile && { script: guion }) };
 const composition = await selectComposition({
   serveUrl,
   id: "anim",

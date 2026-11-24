@@ -226,6 +226,52 @@ Videos en `Descargas\v0-6-animado\escenas-1-y-2-voz-{1.1,1.2,1.3}.mp4` (fábrica
 
 **Falta:** que el operador mire el video completo; después, decidir de dónde salen los dibujos (código, como ahora, o una biblioteca libre),
 
+## V0-8 · `claude -p` escribe guiones animados (PC de la fábrica, 2026-11-24)
+
+**La prueba:** `claude -p` con el proveedor real de `@radev/ai` (modo liviano: sin herramientas, `--json-schema`, suscripción del operador), Sonnet. Prompt de sistema = `spikes/video-v0/src/anim/catalog.md` (qué dibujos existen y cómo se usan), más el guion aprobado de V0-6 como ejemplo. Dos validaciones (`src/anim/schema.ts`): **Zod** (forma, límites, valores del catálogo) y **sentido** (`checkGuion`: cada palabra de enganche está en la narración, cajas fuera de las zonas fijas, acciones en orden, la última escena es una pregunta…). El guion escrito a mano de V0-6 pasa las dos. Código: `scripts/guion.ts`; cada pedido queda en `out/v0-8/` y `pnpm guion summary` arma la tabla.
+
+| Pedido | Esfuerzo | Válido 1.er intento | Entrada / salida (tokens) | Turnos | Tiempo |
+|---|---|---|---|---|---|
+| Short 1 (Amazon S3) | por defecto | sí | 24.379 / 20.253 | 2 | 181 s |
+| Short 1 (Amazon S3) | `low` | sí | 55.012 / 9.406 | 3 | 75 s |
+| Short 2 (Banco Río) | `low` | sí | 54.894 / 10.373 | 3 | 82 s |
+| Short 3 (valijas) | `low` | sí | 24.364 / 6.206 | 2 | 53 s |
+| Short 4 (Mona Lisa) | `low` | sí | 55.365 / 10.639 | 3 | 88 s |
+| Short 5 (Y2K) | `low` | sí | 24.371 / 3.394 | 2 | 28 s |
+| 5 reescrituras de una escena | `low` | 5 de 5 | ~23.000–47.000 / 640–1.440 | 2–3 | 6–14 s |
+| Plan de capítulos, 4 min (Banco Río) | `low` | sí | 5.579 / 2.549 | 2 | 30 s |
+
+- **El formato alcanza: 100 % válido al primer intento** (6 guiones, 5 reescrituras, 1 plan), sin necesitar el segundo intento con errores (`--repair`). 6–7 escenas, 500–590 caracteres de narración (35–42 s a 1,3), con cámara, personajes, objetos y cajas enganchados a palabras.
+- **Lo que pesa es el razonamiento, no el guion**: el JSON ocupa ~2.500 tokens; con el esfuerzo por defecto, Sonnet piensa ~17.000 más (181 s). Con `--effort low` baja a 28–88 s y 3.400–10.600 de salida, sin perder calidad visible. **El proveedor no pasa `--effort`** (la spike usa un envoltorio del binario): en V1, `effort` como opción de la tarea `video.script`. Los pedidos de 3 turnos (el contexto se manda entero cada vez) son los lentos; no se averiguó por qué a veces usa uno más.
+- **Meta de la prueba (< 60 s y < 15.000 tokens):** el tiempo, solo en 2 de 5 con `low` (mediana 75 s); los tokens de salida sí, los totales no (el catálogo + el ejemplo ya son ~7.000 tokens de entrada por turno). Para un paso que se aprueba a mano, 1–1,5 min alcanza.
+- **❌ Los datos no son confiables.** Con la orden de "no inventes" y la lista `facts` con fuentes, **inventó una cita** (Banco Río: la nota real decía "En barrio de ricos, sin armas ni rencores, es sólo plata y no amores") y hay detalles a verificar ("disfrazados de policías", "túnel desde una casa alquilada"). S3, valijas, Mona Lisa e Y2K coinciden con lo conocido. **Decisión del operador (2026-11-24): "siempre antes de hacer una historia la IA tiene que hacer una investigación profunda del tema, no tiene que inventar nada".** La investigación pasa de V2 a obligatoria desde V1 (ver `docs/PROGRESS.md`).
+- **Reescrituras: 3 de 5 hicieron lo pedido.** Bien: la cita corregida al texto exacto, Peruggia presentado, el cambio de escenario. Mal: "dejala en menos de 15 palabras, manteniendo la cifra" reescribió el contenido de la escena anterior y **perdió la cifra** (se confundió de índice); "arrancá con los 7.000 objetos por día" **cambió el dato** a "7.000 valijas". Para V1: mostrar el antes y el después (sobre todo las cifras) y mandar la escena sola, no un índice.
+- **Validaciones a sumar en V1:** largo total de la narración (Y2K: 779 caracteres ≈ 55 s, fuera de 35–45 s) y escenarios con textos fijos (`plano` dice "BÓVEDA" y "DEPÓSITO 261": lo usó para servidores de Amazon). El catálogo necesita escenarios genéricos (V0-10).
+- **Plan de capítulos de 4 min:** 7 capítulos que suman 240 s, con los escenarios del catálogo y **la lista de dibujos que faltan** por capítulo (túnel y cloacas, fachada de banco, patrulleros, periodistas, diarios, expediente…): sirve de entrada para V0-10.
+- **Costo:** sale del cupo de la suscripción (el "lista USD" de la CLI va de 0,06 a 0,30 por guion; no se paga). No se midió cuánto del cupo de 5 h consume.
+
+## V0-11 · Investigar antes de escribir (PC de la fábrica, 2026-11-24)
+
+**Por qué:** en V0-8 el guion inventó una cita. Decisión del operador: "siempre antes de hacer una historia la IA tiene que hacer una investigación profunda del tema, no tiene que inventar nada". Prueba de tres pasos (`spikes/video-v0/scripts/research.ts`, resultados en `out/v0-11/`), con `--effort low`:
+
+1. **Investigación** (`pnpm research dossier <n>`): `claude -p` con WebSearch y WebFetch (como `ideas.research`, ya permitido por el ADR 0005) devuelve un *dossier* validado con Zod: hechos (cada uno con un fragmento "textual" y su URL), citas, datos en disputa y lo que no pudo confirmar. Mínimo 3 sitios distintos.
+2. **Verificación** (`pnpm research verify <dossier>`), con código, sin IA: baja cada página y busca el fragmento y los números del hecho.
+3. **Guion** (`pnpm research guion <dossier>`): sin herramientas, solo con el dossier. Además de `checkGuion`: cada dato apunta a un id del dossier (F3, C1) y **ningún número de la narración, el titular o las cajas puede faltar en el dossier**.
+
+| Paso | Tema | Resultado | Tokens (entrada / salida) | Turnos | Tiempo |
+|---|---|---|---|---|---|
+| Investigación | Banco Río | válido · 14 hechos, 3 citas, 2 disputas, 4 páginas | 34.784 / 9.922 | 7 | 103 s |
+| Investigación | Mona Lisa | válido · 16 hechos, 2 disputas | 61.853 / 11.135 | 10 | 137 s |
+| Guion | Banco Río | válido · 8 escenas, 779 caracteres | 29.297 / 7.474 | 2 | 63 s |
+| Guion | Mona Lisa | válido · 7 escenas, 631 caracteres | 29.369 / 6.810 | 2 | 58 s |
+
+- **Los hechos salen bien.** Banco Río: fecha, 23 rehenes, 143 cajas, el túnel a los desagües y los gomones, condenas, la película; las cifras que no coinciden quedan en disputa (US$ 15, 17,8 o 19 millones; 143 o 145 cajas) y el guion usa lo que comparten ("más de 15 millones"). **Corrigió la cita**: el cartel decía "En barrio de **ricachones**…", no "ricos" (la versión que Claude dio de memoria en V0-8 y que hizo meter en una reescritura). Mona Lisa: el plomero, las 28 horas, Picasso y Apollinaire, las 500.000 liras, la vuelta el 4 de enero de 1914; deja en disputa cómo sacó el cuadro.
+- **❌ Los fragmentos "textuales" no son textuales:** 0 de 14 (Banco Río) y 3 de 16 (Mona Lisa) aparecen en la página. Causa: **WebFetch no le pasa la página al modelo**; un modelo chico la lee y le devuelve un resumen (por eso F4 vino en inglés y en formato de ficha). El dato es correcto, pero no se puede probar a máquina. El chequeo de **números** del hecho en la página da 8 de 11 y 3 de 6: sirve como alarma ("revisá este dato"), no como prueba (falla con "12:38" contra "12.38", con sitios que bloquean robots y cuando el dato está en otra página).
+- **Para V1:** que la **descarga de las páginas la haga el código** (la oficina de Verificación) y la IA extraiga los hechos del texto crudo que le pasamos: así el fragmento sí se puede comprobar. La IA busca y elige las páginas; el código las baja y verifica.
+- **El guion con dossier no inventa datos nuevos** (el chequeo de números lo garantiza), pero todavía adorna ("sin dejar rastro") o mezcla hechos ("cinco hombres armados entraron"; entraron de a poco). Eso lo tiene que mirar la oficina de Dirección antes del operador.
+- **Render de un guion generado** (`pnpm anim --guion out/v0-11/guion-4-low-glow.json --voices out/v0-11/voice-mona --name mona-lisa-investigada`): **46,9 s de video en 75 s**, sin tocar nada a mano; voz de Fran a 1,2 + `atempo` 1,3 (631 caracteres de ElevenLabs). Video y cuadros de muestra en `Descargas\v0-11-investigado` (fábrica). Se ve: el escenario `plano` otra vez con "DEPÓSITO 261" y "BÓVEDA" (ahora para el Louvre), la etiqueta "SOSPECHOSOS" tapa la cara de los personajes (el chequeo de cajas no mira dónde están los personajes: tarea del control de calidad) y faltan dibujos del tema (museo, cuadro): todo pasa en "la tienda".
+- **Una historia completa de punta a punta:** ~2 min de investigación + ~1 min de guion + voz (~10 s) + render (~75 s), unos 4–5 min de máquina.
+
 ## V0-7 · Licencias y condiciones
 
 *En curso.* Primera lectura (2026-11-21), a confirmar en las páginas oficiales antes de cerrar:

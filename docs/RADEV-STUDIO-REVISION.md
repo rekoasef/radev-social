@@ -356,6 +356,8 @@ Arreglar el salto de línea haría que **systemd empiece a arrancar** en Ubuntu.
   - **V0-10, nueva:** costo de sumar dibujos (incluye uno de "Educación").
   - **V0-7** suma la API de YouTube y el cupo de ElevenLabs.
 - **Videos largos:** de 3 a 5 minutos, nunca 10. Pasan a V2 junto con la publicación en YouTube.
+- **V0-11, nueva (y hecha):** investigar con búsqueda web antes de escribir el guion; el guion usa solo lo investigado. Decisión del operador: la investigación es obligatoria desde V1 (`docs/V0-RESULTS.md`).
+- **Estudio de oficinas (idea del operador):** la producción como una línea de oficinas (Ideas, Investigación, Verificación, Guion, Dirección, escritorio del operador, Locución, Animación, Control de calidad, escritorio del operador, Publicación), con una pantalla tipo juego para entrar a cada una. Detalle en `docs/PROGRESS.md`.
 - **El alcance de §7 se reescribe cuando terminen estas pruebas.**
 
 **Criterio de "terminado" de V0**: el informe con los números de V0-1 a V0-8, las decisiones D-D, D-G, D-H y D-J firmadas y los ADR escritos: Video Studio en el alcance del PRD, render por escena y caché por hash, voz local, y `claude -p` para Social y Video.

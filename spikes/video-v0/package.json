@@ -11,18 +11,23 @@
     "captions": "tsx scripts/captions.ts",
     "scenes": "tsx scripts/scenes.ts",
     "looks": "tsx scripts/looks.ts",
-    "anim": "tsx scripts/anim.ts"
+    "anim": "tsx scripts/anim.ts",
+    "guion": "tsx scripts/guion.ts",
+    "guion:check": "tsx scripts/guion-check.ts",
+    "research": "tsx scripts/research.ts"
   },
   "dependencies": {
-    "@radev/slides": "workspace:*",
     "@fontsource-variable/inter-tight": "5.3.0",
     "@fontsource-variable/space-grotesk": "5.3.0",
+    "@radev/ai": "workspace:*",
+    "@radev/slides": "workspace:*",
     "@remotion/bundler": "4.0.545",
     "@remotion/cli": "4.0.545",
     "@remotion/renderer": "4.0.545",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "remotion": "4.0.545"
+    "remotion": "4.0.545",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

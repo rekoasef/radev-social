@@ -22,7 +22,8 @@ import { cueTime, ramp, type Word } from "./timing";
 export type { SceneVoice } from "./guion";
 
 import type { SceneVoice } from "./guion";
-export type AnimVideoProps = { voices: SceneVoice[]; only?: number };
+/** `script`: otro guion (por ejemplo, uno escrito por `claude -p` en V0-8/V0-11); por defecto, el de V0-6. */
+export type AnimVideoProps = { voices: SceneVoice[]; only?: number; script?: GuionScene[] };
 
 /** Frena el render hasta que la tipografía cargó (si no, el primer cuadro sale con otra letra). */
 function useFonts() {
@@ -110,9 +111,9 @@ function Scene({ scene, voice }: { scene: GuionScene; voice: SceneVoice }) {
   );
 }
 
-export const AnimVideo = ({ voices, only }: AnimVideoProps) => {
+export const AnimVideo = ({ voices, only, script = guion }: AnimVideoProps) => {
   useFonts();
-  const scenes = guion
+  const scenes = script
     .map((scene, i) => ({ scene, i, voice: voices[scene.voice] }))
     .filter((s) => (only === undefined || s.i === only) && s.voice !== undefined);
   let from = 0;
@@ -134,8 +135,8 @@ export const AnimVideo = ({ voices, only }: AnimVideoProps) => {
 };
 
 /** Largo total en cuadros, para `calculateMetadata`. */
-export function animFrames({ voices, only }: AnimVideoProps): number {
-  return guion
+export function animFrames({ voices, only, script = guion }: AnimVideoProps): number {
+  return script
     .filter((_, i) => only === undefined || i === only)
     .reduce((sum, scene) => {
       const voice = voices[scene.voice];
