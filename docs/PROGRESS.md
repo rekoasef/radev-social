@@ -32,6 +32,13 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > git pull
 > nvm use && pnpm install        # Remotion; su Chrome se baja solo en el primer render
 > ```
+> Para ver el video animado de V0-6 en esa máquina (las voces y los videos no viajan con git; ~500 caracteres de ElevenLabs y ~1 min de render):
+> ```
+> cd spikes/video-v0
+> python3 tts/scenes.py texts/scenes-es.json --speed 1.2   # voz de Fran a 1,2
+> python3 tts/tempo.py 1.3                                  # 1,2 → 1,3 con atempo
+> pnpm anim                                                 # out/anim/anim.mp4 (--stills 0:1.2 para cuadros sueltos)
+> ```
 > Copiar a mano al `.env` de esa máquina **`ELEVENLABS_API_KEY`** (está en el `.env` de la PC de casa y en el gestor del operador; nunca en git ni en el chat).
 >
 > **Decisiones del 2026-11-23 (casa):**
