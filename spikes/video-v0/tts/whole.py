@@ -3,7 +3,7 @@ las palabras. Sin atempo. Para comparar con scenes.py (un pedido por escena + at
 robótico y lento.
 
 Uso: python3 tts/whole.py texts/v0-11-mona.json --tag fran-v2 \
-        [--voice 0bu1GUsOfNJYyXbmSTxD] [--model eleven_multilingual_v2] [--speed 1.2]
+        [--voice 0bu1GUsOfNJYyXbmSTxD] [--model eleven_multilingual_v2] [--speed 1.15]
 Escribe out/v0-12/<tag>/manifest.json y audio/<clave>.wav + .words.json, el mismo formato que
 scenes.py, así que sirve directo para `pnpm anim --guion ... --voices out/v0-12/<tag>`.
 También deja full.mp3 (la toma entera, para escucharla sola).
@@ -41,7 +41,11 @@ def main() -> None:
     tag = arg(args, "--tag", None) or sys.exit("falta --tag")
     voice = arg(args, "--voice", "0bu1GUsOfNJYyXbmSTxD")
     model = arg(args, "--model", "eleven_multilingual_v2")
-    speed = arg(args, "--speed", None)
+    # 1,15: el operador pidió "un poquito menos rápida" que 1,2 (2026-11-24). "--speed none" usa la
+    # velocidad guardada en la voz.
+    speed = arg(args, "--speed", "1.15")
+    if speed == "none":
+        speed = None
     texts: list[str] = json.loads((HERE / args[0]).read_text())
     out = HERE.parent / "out" / "v0-12" / tag
     (out / "audio").mkdir(parents=True, exist_ok=True)
