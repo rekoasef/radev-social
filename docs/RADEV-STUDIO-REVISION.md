@@ -346,6 +346,18 @@ Arreglar el salto de línea haría que **systemd empiece a arrancar** en Ubuntu.
 - **Éxito**: un guion en < 60 s y < 15.000 tokens, ≥ 90 % válido al primer intento.
 - **Decide**: si V1 incluye "Proponer guion con IA" y cuánto cupo reservar para Video.
 
+### Cambios del 2026-11-24 (después de V0-5 y V0-6)
+
+- **V0-5:** técnicamente viable, pero descartada como base del video: el video no son slides.
+- **V0-6, redefinida:** video animado guionado escena por escena. Estilo aprobado por el operador; voz a 1,3.
+- **Pruebas nuevas y ampliadas** (detalle en `docs/RADEV-STUDIO-CANALES-Y-FORMATOS.md` §7):
+  - **V0-8** también mide un guion en el formato de V0-6 y un plan de capítulos de 4 min.
+  - **V0-9, nueva:** render de un video 16:9 de 5 min.
+  - **V0-10, nueva:** costo de sumar dibujos (incluye uno de "Educación").
+  - **V0-7** suma la API de YouTube y el cupo de ElevenLabs.
+- **Videos largos:** de 3 a 5 minutos, nunca 10. Pasan a V2 junto con la publicación en YouTube.
+- **El alcance de §7 se reescribe cuando terminen estas pruebas.**
+
 **Criterio de "terminado" de V0**: el informe con los números de V0-1 a V0-8, las decisiones D-D, D-G, D-H y D-J firmadas y los ADR escritos: Video Studio en el alcance del PRD, render por escena y caché por hash, voz local, y `claude -p` para Social y Video.
 
 ---
