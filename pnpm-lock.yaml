@@ -162,6 +162,12 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    zod:
+      specifier: ^4.6.5
+      version: 4.6.5
+
 importers:
 
   .:
@@ -239,7 +245,7 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
       zod:
-        specifier: ^4.6.5
+        specifier: 'catalog:'
         version: 4.6.5
     devDependencies:
       '@tailwindcss/postcss':
@@ -291,7 +297,7 @@ importers:
         specifier: 4.23.15
         version: 4.23.15
       zod:
-        specifier: ^4.6.5
+        specifier: 'catalog:'
         version: 4.6.5
     devDependencies:
       '@types/node':
@@ -307,7 +313,7 @@ importers:
         specifier: workspace:*
         version: link:../core
       zod:
-        specifier: ^4.6.5
+        specifier: 'catalog:'
         version: 4.6.5
     devDependencies:
       '@radev/slides':
@@ -353,7 +359,7 @@ importers:
         specifier: workspace:*
         version: link:../core
       zod:
-        specifier: ^4.6.5
+        specifier: 'catalog:'
         version: 4.6.5
 
   packages/slides:
@@ -395,7 +401,7 @@ importers:
         specifier: 19.2.8
         version: 19.2.8
       zod:
-        specifier: ^4.6.5
+        specifier: 'catalog:'
         version: 4.6.5
     devDependencies:
       '@types/react':
@@ -422,6 +428,9 @@ importers:
       '@fontsource-variable/space-grotesk':
         specifier: 5.3.0
         version: 5.3.0
+      '@radev/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@radev/slides':
         specifier: workspace:*
         version: link:../../packages/slides
@@ -443,6 +452,9 @@ importers:
       remotion:
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
     devDependencies:
       '@types/node':
         specifier: 24.10.1

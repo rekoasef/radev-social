@@ -61,8 +61,8 @@ Relevada el 2026-11-24 (solo lectura, sin cambios).
 | Windows (equipo, usuario) | Windows 11 Pro, equipo `RASEFNOTE`, usuario `rasef` |
 | WSL (distro, versión, usuario) | **Debian 13 (trixie)**, usuario `renzoasef`, más la distro `docker-desktop` · WSL 2.6.1.0, kernel 6.6.87.2-1 |
 | CPU / GPU | AMD Ryzen 5 4600H (6 núcleos / 12 hilos) · AMD Radeon RX 5600M + Radeon integrada. Sin GPU NVIDIA: nada de `nvidia-smi` en WSL |
-| RAM total / RAM que ve WSL | 11,4 GB en Windows; WSL ve **~5,5 GiB + 2 GiB de swap** (valores por defecto) |
-| `.wslconfig` | No existe |
+| RAM total / RAM que ve WSL | 11,4 GB en Windows; WSL ve **7,8 GiB + 4 GiB de swap** desde el `.wslconfig` (antes, por defecto, ~5,5 GiB + 2 GiB) |
+| `.wslconfig` | `C:\Users\rasef\.wslconfig` (2026-11-24): 8 GB de RAM, 4 GB de swap, `autoMemoryReclaim=dropCache`. Aplicado y verificado con `free -h` el mismo día |
 | Docker | Docker Desktop instalado, pero el 2026-11-24 estaba **detenido** (distro `docker-desktop` en `Stopped`): `docker` no existe en Debian hasta abrirlo. Falta confirmar que la integración WSL con Debian esté activada |
 | Node / nvm | nvm en `~/.nvm` con Node 18.20.8, 20.19.6 y 24.21.0. **El de por defecto es el 20**: hace falta `nvm use` (`.nvmrc` pide 24). pnpm 12.5.1 en el Node 24 |
 | Postgres nativo en 5432 | Sí, escucha en `127.0.0.1:5432` (otros proyectos: no tocarlo) |
@@ -70,7 +70,7 @@ Relevada el 2026-11-24 (solo lectura, sin cambios).
 | SSH a producción (`radev-oracle`) | **Sí**: `Host radev-oracle` en `~/.ssh/config`, llave `id_ed25519_radev_oracle` |
 | `/etc/wsl.conf` / systemd | Bien formado: `[boot] systemd=true`, `[user] default=renzoasef`. PID 1 = `systemd` |
 
-Con 5,5 GiB, esta máquina tiene casi la mitad de memoria que la de casa (9,7 GiB): el render de video y Docker pueden quedar justos. Antes de medir, decidir con el operador si se le crea un `.wslconfig`.
+Sin `.wslconfig`, WSL veía 5,5 GiB (casi la mitad que la de casa) y el 2026-11-24 hubo un corte por falta de memoria (ver `docs/PROGRESS.md`). Por eso se creó uno con **8 GB** (Windows se queda con ~3,4 GB) y **4 GB de swap** (no 8: el disco `C:` está al 93 %, 35 GB libres). **El operador no tiene permisos de administrador en esta PC:** nada que se haga acá puede pedirlos (`.wslconfig` y `wsl --shutdown` no los piden).
 
 Comandos para relevarla (solo leen, no cambian nada):
 
@@ -88,4 +88,5 @@ En PowerShell: `wsl -l -v`, `$env:COMPUTERNAME` y `Test-Path $env:USERPROFILE\.w
 
 | Fecha | Cambio | Versión | Cómo deshacerlo |
 |---|---|---|---|
+| 2026-11-24 | `.wslconfig` creado: 8 GB de RAM, 4 GB de swap, `autoMemoryReclaim=dropCache`. Se aplica con `wsl --shutdown` desde PowerShell (apaga WSL y Docker); verificar con `free -h` | WSL 2.6.1.0 | Borrar `C:\Users\rasef\.wslconfig` y `wsl --shutdown` |
 | 2026-11-24 | Chromium de Playwright del repo bajado a `~/.cache/ms-playwright` (`pnpm --filter @radev/slides exec playwright install chromium --only-shell`, sin `--with-deps`: nada de apt), para `preview` en V0-5. **Efecto secundario:** Playwright borró los navegadores que ningún proyecto registrado usaba (`chromium_headless_shell-1255` y `ffmpeg-1013`, de otro proyecto); si alguno los necesita, `npx playwright install` en ese proyecto | headless shell 1243 (Chrome 153), Playwright 1.63.0 | Borrar `~/.cache/ms-playwright/chromium_headless_shell-1243` y `ffmpeg-1011` |

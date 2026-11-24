@@ -4,6 +4,12 @@ packages:
   # Solo en la rama spike/video-v0: pruebas descartables de RAdev Studio.
   - spikes/*
 
+# Versiones compartidas: los paquetes ponen "catalog:" y todos resuelven la misma. Zod va acá
+# porque sus tipos cruzan paquetes; dos copias hacen que tsc compare las dos librerías enteras
+# (2026-11-24: más de 2,5 GB y corte por falta de memoria).
+catalog:
+  zod: ^4.6.5
+
 # Paquetes autorizados a ejecutar scripts al instalarse (pnpm los bloquea por defecto).
 allowBuilds:
   esbuild: true
