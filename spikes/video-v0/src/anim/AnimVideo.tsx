@@ -57,8 +57,7 @@ function cameraAt(scene: GuionScene, t: number, words: Word[], duration: number)
   // Nunca se ve fuera del escenario (V0-10: con zoom < 1 o el centro corrido aparecían bordes
   // negros): zoom mínimo 1 y el centro, dentro de lo que deja ver ese zoom.
   const zoom = Math.max(1, cam.zoom) * (1 + 0.03 * (t / duration));
-  const clamp = (v: number, half: number, size: number) =>
-    Math.min(size - half, Math.max(half, v));
+  const clamp = (v: number, half: number, size: number) => Math.min(size - half, Math.max(half, v));
   return { zoom, x: clamp(cam.x, 540 / zoom, 1080), y: clamp(cam.y, 960 / zoom, 1920) };
 }
 

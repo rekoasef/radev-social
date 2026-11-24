@@ -1,6 +1,6 @@
 import type { PropItem } from "./guion";
 import { MoneyBagShape } from "./person";
-import { BoatShape } from "./places";
+import { BoatShape, BookShape } from "./places";
 import { cueTime, pop, ramp, type Word, wave } from "./timing";
 
 // Objetos del escenario. Todos entran con rebote y después siguen moviéndose un poco.
@@ -403,6 +403,16 @@ export function PropView({
         <g transform={`scale(${dead})`} stroke="#FF3B30" strokeWidth={14} strokeLinecap="round">
           <path d="M -60 -60 L 60 60 M 60 -60 L -60 60" />
         </g>
+      </g>
+    );
+  }
+  if (prop.kind === "book") {
+    const tilt = -4 + 2 * wave(t, 0.4, prop.x / 300);
+    return (
+      <g
+        transform={`translate(${prop.x} ${prop.y}) rotate(${tilt}) scale(${enter * (prop.scale ?? 1)})`}
+      >
+        <BookShape title={prop.title} />
       </g>
     );
   }

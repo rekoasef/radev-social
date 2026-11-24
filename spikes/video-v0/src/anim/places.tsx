@@ -584,3 +584,316 @@ export function BoatShape({ loaded, t }: { loaded: boolean; t: number }) {
     </g>
   );
 }
+
+// --- campo-sierras ---------------------------------------------------------------------------
+
+const rs = random(91);
+const TREES = Array.from({ length: 9 }, (_, i) => ({
+  x: 40 + i * 125 + rs() * 40,
+  y: 1210 + rs() * 60,
+  h: 90 + rs() * 70,
+}));
+
+/** Campo y sierras de día: cerros en capas, camino de tierra, una casita (escondite) y pájaros. */
+export function Hills({ t }: { t: number }) {
+  return (
+    <g>
+      <defs>
+        <linearGradient id="daysky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#3D5C9E" />
+          <stop offset="0.7" stopColor="#8FB4E3" />
+          <stop offset="1" stopColor="#F2D9A6" />
+        </linearGradient>
+      </defs>
+      <rect width={1080} height={1920} fill="url(#daysky)" />
+      <circle cx={820} cy={640} r={70} fill="#FFE3A8" opacity={0.9} />
+      <circle cx={820} cy={640} r={120} fill="#FFE3A8" opacity={0.18} />
+      {[0, 1].map((i) => {
+        const x = ((t * (10 + i * 7) + i * 600) % 1500) - 300;
+        return (
+          <g key={i} fill="#FFFFFF" opacity={0.55}>
+            <ellipse cx={x} cy={560 + i * 110} rx={130} ry={30} />
+            <ellipse cx={x + 70} cy={540 + i * 110} rx={80} ry={28} />
+          </g>
+        );
+      })}
+      {/* Pájaros que cruzan. */}
+      {[0, 1, 2].map((i) => {
+        const x = ((t * 60 + i * 70) % 1400) - 200;
+        const flap = 8 * wave(t, 2.5, i * 0.3);
+        return (
+          <path
+            key={i}
+            d={`M ${x - 14} ${700 + i * 26 - flap} Q ${x - 6} ${700 + i * 26} ${x} ${704 + i * 26} Q ${x + 6} ${700 + i * 26} ${x + 14} ${700 + i * 26 - flap}`}
+            stroke="#2A2350"
+            strokeWidth={4}
+            fill="none"
+            strokeLinecap="round"
+          />
+        );
+      })}
+      {/* Cerros: de atrás (más claros) hacia adelante. */}
+      <path
+        d="M 0 980 L 160 820 L 300 900 L 470 760 L 640 880 L 820 790 L 1080 930 L 1080 1920 L 0 1920 Z"
+        fill="#7C8FB8"
+      />
+      <path
+        d="M 0 1060 Q 200 930 380 1010 Q 560 1080 760 960 Q 920 880 1080 990 L 1080 1920 L 0 1920 Z"
+        fill="#5E7A6E"
+      />
+      <path
+        d="M 0 1180 Q 260 1090 540 1160 Q 800 1220 1080 1130 L 1080 1920 L 0 1920 Z"
+        fill="#4F6B4A"
+      />
+      {/* Casita con la ventana encendida. */}
+      <g transform="translate(760 1020)">
+        <rect x={0} y={0} width={170} height={110} fill="#C9A27A" />
+        <path d="M -16 4 L 85 -70 L 186 4 Z" fill="#8C4A3A" />
+        <rect
+          x={24}
+          y={34}
+          width={46}
+          height={40}
+          fill="#FFD58A"
+          opacity={0.6 + 0.3 * wave(t, 0.3)}
+        />
+        <rect x={104} y={46} width={40} height={64} fill="#5A3A2A" />
+      </g>
+      {/* Camino de tierra que baja hacia la cámara. */}
+      <path
+        d="M 520 1150 Q 470 1250 560 1330 Q 680 1440 560 1920 L 880 1920 Q 820 1440 650 1320 Q 560 1250 580 1150 Z"
+        fill="#C9A27A"
+        opacity={0.85}
+      />
+      {TREES.map((tr) => (
+        <g key={tr.x} transform={`rotate(${1.5 * wave(t, 0.4, tr.x / 300)} ${tr.x} ${tr.y})`}>
+          <rect x={tr.x - 6} y={tr.y - 30} width={12} height={34} fill="#5A3A2A" />
+          <path
+            d={`M ${tr.x - 38} ${tr.y - 24} L ${tr.x} ${tr.y - tr.h} L ${tr.x + 38} ${tr.y - 24} Z`}
+            fill="#3E5A3A"
+          />
+        </g>
+      ))}
+      <rect y={1360} width={1080} height={560} fill="#435E3F" />
+      <rect y={1360} width={1080} height={6} fill="#FFFFFF" opacity={0.08} />
+    </g>
+  );
+}
+
+// --- juzgado ---------------------------------------------------------------------------------
+
+/** Sala de un tribunal: estrado del juez con la balanza, paneles de madera, ventilador de techo. */
+export function Courtroom({ t }: { t: number }) {
+  const fan = (t * 140) % 360;
+  return (
+    <g>
+      <defs>
+        <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#5A3A2A" />
+          <stop offset="1" stopColor="#3E281D" />
+        </linearGradient>
+        <radialGradient id="courtlight" cx="0.5" cy="0" r="1">
+          <stop offset="0" stopColor="#FFE3A8" stopOpacity={0.28} />
+          <stop offset="1" stopColor="#FFE3A8" stopOpacity={0} />
+        </radialGradient>
+      </defs>
+      <rect width={1080} height={1920} fill="#2A2238" />
+      {/* Paneles de madera en la pared. */}
+      {[0, 1, 2, 3, 4].map((i) => (
+        <rect
+          key={i}
+          x={20 + i * 212}
+          y={540}
+          width={192}
+          height={620}
+          rx={8}
+          fill="url(#wood)"
+          opacity={0.75}
+        />
+      ))}
+      {/* Ventilador de techo. */}
+      <g transform="translate(540 200)">
+        <rect x={-3} y={-200} width={6} height={200} fill="#1E1828" />
+        <g transform={`scale(1 0.25) rotate(${fan})`}>
+          {[0, 90, 180, 270].map((a) => (
+            <rect
+              key={a}
+              x={-14}
+              y={0}
+              width={28}
+              height={190}
+              rx={10}
+              fill="#4A3F58"
+              transform={`rotate(${a})`}
+            />
+          ))}
+        </g>
+        <circle r={18} fill="#1E1828" />
+      </g>
+      <path d="M 540 220 L 980 1500 L 100 1500 Z" fill="url(#courtlight)" />
+      {/* La balanza sobre el estrado. */}
+      <g transform="translate(540 640)" fill="#F2C14E">
+        <rect x={-4} y={-70} width={8} height={120} />
+        <rect x={-70} y={-62} width={140} height={6} transform={`rotate(${3 * wave(t, 0.3)})`} />
+        <path d="M -70 -56 L -96 -6 L -44 -6 Z" opacity={0.85} />
+        <path d="M 70 -56 L 44 -6 L 96 -6 Z" opacity={0.85} />
+        <rect x={-34} y={46} width={68} height={10} rx={4} />
+      </g>
+      {/* Estrado del juez. */}
+      <rect x={250} y={760} width={580} height={40} rx={6} fill="#7A5038" />
+      <rect x={270} y={800} width={540} height={360} fill="url(#wood)" />
+      {[0, 1, 2].map((i) => (
+        <rect
+          key={i}
+          x={300 + i * 170}
+          y={840}
+          width={140}
+          height={280}
+          rx={6}
+          fill="none"
+          stroke="#7A5038"
+          strokeWidth={6}
+        />
+      ))}
+      {/* Baranda de madera delante. */}
+      <rect x={0} y={1180} width={1080} height={20} fill="#7A5038" />
+      {Array.from({ length: 14 }, (_, i) => (
+        <rect
+          // biome-ignore lint/suspicious/noArrayIndexKey: dibujo fijo, el orden nunca cambia
+          key={`b${i * 80}`}
+          x={20 + i * 78}
+          y={1200}
+          width={14}
+          height={140}
+          fill="#5A3A2A"
+        />
+      ))}
+      <rect y={1340} width={1080} height={580} fill="#2E2230" />
+      <rect y={1340} width={1080} height={6} fill="#FFFFFF" opacity={0.06} />
+    </g>
+  );
+}
+
+// --- cine ------------------------------------------------------------------------------------
+
+const rc = random(17);
+const DUST = Array.from({ length: 26 }, () => ({ x: rc(), y: rc(), hz: 0.05 + rc() * 0.1 }));
+
+/** Sala de cine: pantalla encendida que titila, haz del proyector con polvo y butacas. */
+export function Cinema({ t }: { t: number }) {
+  const flick = 0.82 + 0.12 * wave(t, 7.3) * wave(t, 2.1, 0.4);
+  return (
+    <g>
+      <defs>
+        <linearGradient id="screenlight" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#E9EEF7" />
+          <stop offset="1" stopColor="#B7C4E0" />
+        </linearGradient>
+        <linearGradient id="beam" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stopColor="#E9EEF7" stopOpacity={0.22} />
+          <stop offset="1" stopColor="#E9EEF7" stopOpacity={0.03} />
+        </linearGradient>
+      </defs>
+      <rect width={1080} height={1920} fill="#120E1E" />
+      {/* Telón y pantalla. */}
+      <rect x={30} y={540} width={1020} height={540} fill="#6E1F2E" />
+      {Array.from({ length: 17 }, (_, i) => (
+        <rect
+          // biome-ignore lint/suspicious/noArrayIndexKey: dibujo fijo, el orden nunca cambia
+          key={`c${i * 60}`}
+          x={30 + i * 60}
+          y={540}
+          width={22}
+          height={540}
+          fill="#541724"
+        />
+      ))}
+      <rect
+        x={110}
+        y={580}
+        width={860}
+        height={460}
+        rx={8}
+        fill="url(#screenlight)"
+        opacity={flick}
+      />
+      {/* Lo que se proyecta: manchas de luz que pasan (sin imagen concreta). */}
+      {[0, 1, 2].map((i) => (
+        <rect
+          key={i}
+          x={110 + ((t * 120 + i * 300) % 860)}
+          y={600 + i * 130}
+          width={160}
+          height={90}
+          rx={12}
+          fill="#7C8FB8"
+          opacity={0.25}
+        />
+      ))}
+      {/* Haz del proyector, desde atrás y arriba, con polvo flotando. */}
+      <path d="M 540 1920 L 110 600 L 970 600 Z" fill="url(#beam)" />
+      {DUST.map((d) => {
+        const y = 1900 - ((t * 40 * d.hz * 10 + d.y * 1300) % 1300);
+        const k = (1900 - y) / 1300;
+        const x = 540 + (d.x - 0.5) * 860 * k;
+        return <circle key={`${d.x}`} cx={x} cy={y} r={2.5} fill="#FFFFFF" opacity={0.35 * k} />;
+      })}
+      {/* Butacas, tres filas que se oscurecen hacia adelante. */}
+      {[0, 1, 2].map((row) => (
+        <g key={row}>
+          {Array.from({ length: 9 }, (_, i) => (
+            <rect
+              // biome-ignore lint/suspicious/noArrayIndexKey: dibujo fijo, el orden nunca cambia
+              key={`s${i * 120}`}
+              x={-20 + i * 124 + (row % 2) * 60}
+              y={1180 + row * 110}
+              width={104}
+              height={120}
+              rx={26}
+              fill={["#8C2F45", "#7A2638", "#661E2E"][row]}
+            />
+          ))}
+        </g>
+      ))}
+      <rect y={1500} width={1080} height={420} fill="#0E0A16" />
+      {/* Luz verde de salida, sin texto. */}
+      <rect x={950} y={470} width={90} height={40} rx={6} fill="#3FAF6A" opacity={0.85} />
+    </g>
+  );
+}
+
+// --- libro -----------------------------------------------------------------------------------
+
+/** Libro parado con título (lo pone el guion), centrado en (0, 0). ~260 × 360. */
+export function BookShape({ title }: { title: string }) {
+  const words = title.split(/\s+/);
+  const lines: string[] = [];
+  for (const w of words) {
+    const last = lines.at(-1);
+    if (last && `${last} ${w}`.length <= 11) lines[lines.length - 1] = `${last} ${w}`;
+    else lines.push(w);
+  }
+  return (
+    <g>
+      <rect x={-124} y={-170} width={260} height={360} rx={10} fill="#000" opacity={0.3} />
+      <rect x={-130} y={-180} width={260} height={360} rx={10} fill="#2E5BDA" />
+      <rect x={-130} y={-180} width={26} height={360} rx={6} fill="#1F3F9E" />
+      <rect x={-90} y={-140} width={190} height={4} fill="#F2C14E" />
+      {lines.slice(0, 4).map((l, i) => (
+        <text
+          key={l}
+          x={14}
+          y={-80 + i * 40}
+          textAnchor="middle"
+          fontSize={30}
+          fontWeight={900}
+          fill="#FFFFFF"
+          fontFamily="'Inter Tight Variable', sans-serif"
+        >
+          {l.toUpperCase()}
+        </text>
+      ))}
+      <rect x={-90} y={130} width={190} height={4} fill="#F2C14E" />
+    </g>
+  );
+}

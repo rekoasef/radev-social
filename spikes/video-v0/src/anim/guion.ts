@@ -87,6 +87,8 @@ export type PropItem =
       loaded?: boolean;
       moveTo?: { x: number; y: number; at: Cue; scale?: number };
     }
+  /** Libro parado con su título (por ejemplo, el libro que inspiró la historia). */
+  | { kind: "book"; title: string; x: number; y: number; at: Cue; scale?: number }
   /** Celular con una tienda; desde `loadingAt`, la página de pago cargando. */
   | { kind: "phone"; x: number; y: number; at: Cue; loadingAt?: Cue; scale?: number };
 
@@ -128,7 +130,10 @@ export type Setting =
   | "banco-fachada"
   | "banco-adentro"
   | "boveda"
-  | "tunel";
+  | "tunel"
+  | "campo-sierras"
+  | "juzgado"
+  | "cine";
 
 export type GuionScene = {
   /** Índice de la escena en la voz de V0-3 (out/v0-3/manifest.json). */

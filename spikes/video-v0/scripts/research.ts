@@ -26,6 +26,7 @@ import {
 } from "@radev/ai";
 import { z } from "zod";
 import { guion as ejemplo } from "../src/anim/guion";
+import { normalizeGuion } from "../src/anim/quality";
 import { checkGuion, type GuionDraft, guionLargoSchema, guionSchema } from "../src/anim/schema";
 import { TOPICS } from "./topics";
 
@@ -46,6 +47,8 @@ const flag = (name: string) => {
 };
 const model = flag("model") ?? "sonnet";
 const effort = flag("effort");
+// --from <guion.json>: retoma las correcciones desde un guion ya escrito (sin escribirlo de cero).
+const from = flag("from");
 const [mode, ...rest] = args;
 
 function effortBin(level: string): string {
@@ -115,6 +118,16 @@ const checkDossier = (d: Dossier): string[] => {
   }
   const domains = new Set(d.facts.map((f) => new URL(f.url).hostname.replace(/^www\./, "")));
   if (domains.size < 3) errors.push(`solo ${domains.size} sitios distintos (mínimo 3)`);
+  // V0-13: un intento devolvió un objeto de prueba ("test", example.com) como respuesta final.
+  const fake = d.facts.filter(
+    (f) =>
+      /(^|\.)example\.(com|org|net)$/.test(new URL(f.url).hostname) ||
+      /^(test|prueba|lorem)\d*$/i.test(f.claim.trim()) ||
+      f.claim.trim() === f.excerpt.trim(),
+  );
+  if (fake.length > 0) {
+    errors.push(`datos de prueba o de relleno en ${fake.map((f) => f.id).join(", ")}`);
+  }
   return errors;
 };
 
@@ -213,37 +226,41 @@ async function dossier(i: number) {
   const topic = TOPICS[i];
   if (!topic) throw new Error(`No hay tema ${i + 1}`);
   const name = `dossier-${i + 1}${effort ? `-${effort}` : ""}${long ? "-long" : ""}`;
-  const { run, data } = await ask(
-    name,
-    "dossier",
-    {
-      prompt: "Investigá el tema de `task.json` y devolvé el dossier.",
-      files: {
-        "CLAUDE.md": RESEARCH_SYSTEM,
-        "task.json": JSON.stringify(
-          long
-            ? {
-                tema: topic,
-                para:
-                  "Video de 1,5–2 min (15–22 escenas): hace falta material para contar la historia " +
-                  "entera, no solo el hecho: antecedentes y protagonistas, la preparación, el hecho " +
-                  "paso a paso, cómo se descubrió o investigó, qué pasó después y el dato final que " +
-                  "sorprende. Apuntá a 20–30 hechos y todas las citas textuales que encuentres.",
-              }
-            : { tema: topic, para: "Short de 35–45 s" },
-          null,
-          1,
-        ),
+  // Si sale inválido (por ejemplo, datos de prueba), se pide de nuevo una vez desde cero.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const { run, data } = await ask(
+      attempt === 1 ? name : `${name}-retry`,
+      "dossier",
+      {
+        prompt: "Investigá el tema de `task.json` y devolvé el dossier.",
+        files: {
+          "CLAUDE.md": RESEARCH_SYSTEM,
+          "task.json": JSON.stringify(
+            long
+              ? {
+                  tema: topic,
+                  para:
+                    "Video de 1,5–2 min (15–22 escenas): hace falta material para contar la historia " +
+                    "entera, no solo el hecho: antecedentes y protagonistas, la preparación, el hecho " +
+                    "paso a paso, cómo se descubrió o investigó, qué pasó después y el dato final que " +
+                    "sorprende. Apuntá a 20–30 hechos y todas las citas textuales que encuentres.",
+                }
+              : { tema: topic, para: "Short de 35–45 s" },
+            null,
+            1,
+          ),
+        },
+        schema: dossierSchema,
+        tools: ["WebSearch", "WebFetch"],
+        maxTurns: 40,
+        timeoutMs: 15 * 60_000,
       },
-      schema: dossierSchema,
-      tools: ["WebSearch", "WebFetch"],
-      maxTurns: 40,
-      timeoutMs: 15 * 60_000,
-    },
-    checkDossier,
-  );
-  if (data) run.extra = { facts: data.facts.length, quotes: data.quotes.length };
-  save(run, path.join(out, `${name}.json`), { topic, dossier: data });
+      checkDossier,
+    );
+    if (data) run.extra = { facts: data.facts.length, quotes: data.quotes.length };
+    save(run, path.join(out, `${name}.json`), { topic, dossier: data });
+    if (run.valid) return;
+  }
 }
 
 // --- verify: ¿el fragmento está en la página? ---
@@ -354,9 +371,36 @@ const example = JSON.stringify(
 const numbers = (s: string) =>
   (s.match(/\d+(?:[.,]\d+)*/g) ?? []).map((n) => n.replace(/[.,]/g, ""));
 
+type NumberPair = { raw: string; n: number; unit: string; qualifier: string };
+
+/**
+ * Número + la palabra que le sigue (salteando "de"), con el "más de" / "casi" de adelante:
+ * "más de 140 cajas", "19 millones", "21 años". El mismo número puede ser firme en un sentido y
+ * estar en disputa en otro ("a las 19" y "19 millones"), por eso va con la palabra.
+ */
+function numberPairs(s: string): NumberPair[] {
+  const re =
+    /(?:(más de|al menos|casi|cerca de|unos|unas|alrededor de)\s+)?(\d+(?:[.,]\d+)*)\s+(?:de\s+)?(\p{L}+)/giu;
+  return [...s.matchAll(re)].map((m) => {
+    const raw = (m[2] ?? "").replace(/[.,]/g, "");
+    const n = Number((m[2] ?? "").replace(/\./g, "").replace(",", "."));
+    return { raw, n, unit: norm(m[3] ?? ""), qualifier: (m[1] ?? "").toLowerCase() };
+  });
+}
+
 /** Además de checkGuion: cada dato apunta al dossier y ningún número sale de la nada (regla 9). */
 function checkAgainstDossier(g: GuionDraft, d: Dossier): string[] {
   const errors = checkGuion(g);
+  // Datos en disputa: por cada unidad ("millones", "cajas"), los valores de las versiones.
+  const disputed = new Map<string, { point: string; values: number[] }>();
+  for (const x of d.disputed) {
+    const byUnit = new Map<string, number[]>();
+    for (const p of numberPairs(x.versions))
+      byUnit.set(p.unit, [...(byUnit.get(p.unit) ?? []), p.n]);
+    for (const [unit, values] of byUnit) {
+      if (new Set(values).size > 1) disputed.set(unit, { point: x.point, values });
+    }
+  }
   const ids = new Set([...d.facts.map((f) => f.id), ...d.quotes.map((q) => q.id)]);
   for (const f of g.facts) {
     const refs = f.source.match(/[FC]\d{1,2}/g) ?? [];
@@ -382,12 +426,39 @@ function checkAgainstDossier(g: GuionDraft, d: Dossier): string[] {
       ...(s.overlays ?? []).map((o) =>
         "text" in o ? `${o.text} ${"sub" in o ? (o.sub ?? "") : ""}` : "",
       ),
-    ];
-    for (const n of numbers(texts.join(" "))) {
-      if (!known.has(n)) errors.push(`scenes.${i} › el número ${n} no está en el dossier`);
+    ].join(" ");
+    // Un dato en disputa solo va redondeado a lo que comparten todas las versiones: "más de 140
+    // cajas" (143 o 146) sí; "143 cajas" o "más de 150 cajas", no. El redondeo puede no estar
+    // escrito en el dossier: se acepta igual.
+    const rounded = new Set<string>();
+    for (const p of numberPairs(texts)) {
+      const dis = disputed.get(p.unit);
+      if (!dis) continue;
+      const min = Math.min(...dis.values);
+      const max = Math.max(...dis.values);
+      const ok =
+        p.qualifier === "más de" || p.qualifier === "al menos"
+          ? p.n <= min
+          : p.qualifier
+            ? p.n >= min * 0.85 && p.n <= max * 1.15
+            : false;
+      if (ok) {
+        rounded.add(p.raw);
+      } else if (!p.qualifier && !dis.values.includes(p.n)) {
+        // Un número que no es ninguna versión: lo controla el chequeo de abajo.
+      } else {
+        errors.push(
+          `scenes.${i} › "${p.qualifier ? `${p.qualifier} ` : ""}${p.n} ${p.unit}" no va: está en disputa (${dis.point}: ${dis.values.join(" o ")}). Decí "más de ${min >= 100 ? Math.floor(min / 10) * 10 : Math.floor(min)} ${p.unit}" o no lo digas`,
+        );
+      }
+    }
+    for (const n of numbers(texts)) {
+      if (!known.has(n) && !rounded.has(n)) {
+        errors.push(`scenes.${i} › el número ${n} no está en el dossier`);
+      }
     }
   });
-  return errors;
+  return [...new Set(errors)];
 }
 
 async function guionFromDossier(file: string) {
@@ -416,7 +487,13 @@ async function guionFromDossier(file: string) {
       1,
     ),
   };
+  // Antes de controlar: lo que el código arregla solo (palabras, encuadres, objetos cortados).
+  // Se aplica sobre el mismo objeto, así lo que se guarda ya va arreglado.
+  let fixes: string[] = [];
   const check = (g: GuionDraft) => {
+    const normalized = normalizeGuion(g);
+    Object.assign(g, normalized.guion);
+    fixes = normalized.fixes;
     const errors = checkAgainstDossier(g, saved.dossier);
     if (long && g.scenes.length < 15)
       errors.push(`scenes › ${g.scenes.length} escenas (mínimo 15)`);
@@ -429,7 +506,27 @@ async function guionFromDossier(file: string) {
     maxTurns: 3,
     timeoutMs: (long ? 12 : 5) * 60_000,
   };
-  let { run, data } = await ask(name, "guion", { prompt, files, ...settings }, check);
+  let run: Run;
+  let data: GuionDraft | null;
+  if (from) {
+    data = (JSON.parse(readFileSync(path.resolve(from), "utf8")) as { guion: GuionDraft }).guion;
+    const errors = check(data);
+    run = {
+      name: `${name}-from`,
+      step: "guion",
+      model,
+      effort: effort ?? "default",
+      zodOk: true,
+      checkErrors: errors,
+      valid: errors.length === 0,
+      usage: null,
+      wallMs: 0,
+    };
+    console.log(`→ desde ${from}: ${errors.length} errores`);
+    for (const e of errors) console.log(`    ${e}`);
+  } else {
+    ({ run, data } = await ask(name, "guion", { prompt, files, ...settings }, check));
+  }
   const finish = (r: Run, d: GuionDraft | null, n: string) => {
     if (d) {
       r.extra = {
@@ -438,30 +535,148 @@ async function guionFromDossier(file: string) {
         settings: [...new Set(d.scenes.map((sc) => sc.setting))].length,
         cast: d.cast?.length ?? 0,
         missingPlaces: d.missingPlaces?.map((m) => m.place) ?? [],
+        fixes,
       };
+      for (const f of fixes) console.log(`    arreglado: ${f}`);
     }
     save(r, path.join(out, `${n}.json`), { source: file, topic: saved.topic, guion: d });
   };
-  finish(run, data, name);
-  // Hasta dos correcciones (como en V0-8): el guion anterior y sus errores.
-  for (let attempt = 1; data && !run.valid && attempt <= 2; attempt++) {
+  if (!from) finish(run, data, name);
+  // Una corrección: el guion anterior y la lista de problemas (del código o de Dirección).
+  const repair = async (issues: string[], label: string, header: string) => {
+    if (!data) return;
     ({ run, data } = await ask(
-      `${name}-repair${attempt}`,
+      `${name}-${label}`,
       "guion",
       {
         prompt:
-          `${prompt}\n\nEl intento anterior (\`anterior.json\`) tuvo estos errores. Corregilos ` +
+          `${prompt}\n\nEl intento anterior (\`anterior.json\`) ${header} Corregilo ` +
           "cambiando lo mínimo y devolvé el guion completo. Antes de devolverlo, revisá TODAS " +
           "las reglas de variedad juntas (ningún lugar en más de 3 escenas, nunca el mismo lugar " +
           "con el mismo encuadre en dos escenas seguidas): al mover una escena no rompas otra.\n" +
-          (run.checkErrors ?? []).map((e) => `- ${e}`).join("\n"),
+          issues.map((e) => `- ${e}`).join("\n"),
         files: { ...files, "anterior.json": JSON.stringify(data, null, 1) },
         ...settings,
       },
       check,
     ));
-    finish(run, data, `${name}-repair${attempt}`);
+    finish(run, data, `${name}-${label}`);
+  };
+  // Hasta dos correcciones (como en V0-8) con los errores del código.
+  for (let attempt = 1; data && !run.valid && attempt <= 2; attempt++) {
+    await repair(run.checkErrors ?? [], `repair${attempt}`, "tuvo estos errores.");
   }
+  // Dirección: una IA lo revisa contra el dossier. Si deja notas, una corrección con las notas (y
+  // otra más si esa corrección rompe algún control del código).
+  if (data && run.valid) {
+    const r = await review(data, saved.dossier, `${name}-direccion`);
+    save(r.run, path.join(out, `${name}-direccion.json`), { review: r.data });
+    const notes = r.data?.notes ?? [];
+    if (notes.length > 0) {
+      await repair(
+        notes.map(
+          (n) => `escena ${n.scene} [${n.kind}]: "${n.quote}" — ${n.why} Corrección: ${n.fix}`,
+        ),
+        "direccion-fix",
+        "pasó por Dirección, que dejó estas notas.",
+      );
+      if (data && !run.valid) {
+        await repair(run.checkErrors ?? [], "direccion-fix2", "tuvo estos errores.");
+      }
+    }
+  }
+}
+
+// --- Dirección: una IA revisa el guion contra el dossier (oficina de Dirección de V1) ---
+
+const noteSchema = z
+  .object({
+    scene: z.number().int().min(1).describe("Número de escena, desde 1."),
+    kind: z.enum(["adorno", "no-esta", "disputa", "mezcla", "idioma", "lugar"]),
+    quote: text(220).describe("El fragmento TEXTUAL del guion que está mal."),
+    why: text(300),
+    fix: text(300).describe("Cómo corregirlo, citando el id del dossier (F3, C1) si corresponde."),
+  })
+  .strict();
+const reviewSchema = z
+  .object({
+    notes: z.array(noteSchema).max(15),
+    verdict: z.enum(["aprobado", "corregir"]),
+  })
+  .strict();
+type Review = z.infer<typeof reviewSchema>;
+
+const REVIEW_SYSTEM = `# Dirección
+
+Sos el director de un canal de videos de historias reales en español rioplatense. Antes de que el guion vaya a la voz y a la animación, lo revisás **contra el dossier de investigación** (\`dossier.json\`), que es la única fuente válida.
+
+Marcá SOLO problemas reales, de estos tipos:
+
+- **adorno**: la narración dice más de lo que dice el dossier ("nunca se supo", "sin dejar rastro", "el mayor de la historia") o exagera.
+- **no-esta**: un hecho, nombre, fecha o cifra que no está en el dossier.
+- **disputa**: un dato que el dossier tiene en \`disputed\`, dicho como firme.
+- **mezcla**: hechos mezclados, en orden equivocado o atribuidos a quien no corresponde.
+- **idioma**: palabras o giros que no son rioplatenses (furgoneta, coche, vosotros) o que suenan a traducción.
+- **lugar**: el escenario de la escena contradice lo que se cuenta (un aeropuerto cuando la escena pasa en unas sierras; una tienda para un banco).
+
+No marques estilo, ritmo ni gustos si no está mal. Si no hay problemas, \`notes\` vacío y \`verdict: "aprobado"\`. Cada nota cita el fragmento textual y propone cómo corregirlo con lo que está en el dossier.`;
+
+/** Lo que Dirección necesita ver: textos y lugar de cada escena (sin la animación, más barato). */
+function forReview(g: GuionDraft) {
+  return g.scenes.map((sc, i) => ({
+    escena: i + 1,
+    lugar: sc.setting,
+    narracion: sc.narration,
+    titular: sc.headline?.text,
+    cajas: sc.overlays.map((o) =>
+      "text" in o ? o.text : o.items.map((it) => it.text).join(" / "),
+    ),
+  }));
+}
+
+async function review(
+  g: GuionDraft,
+  d: Dossier,
+  name: string,
+): Promise<{ run: Run; data: Review | null }> {
+  const result = await ask(
+    name,
+    "direccion",
+    {
+      prompt: "Revisá el guion de `guion.json` contra `dossier.json` y devolvé tus notas.",
+      files: {
+        "CLAUDE.md": REVIEW_SYSTEM,
+        "dossier.json": JSON.stringify(d, null, 1),
+        "guion.json": JSON.stringify(forReview(g), null, 1),
+      },
+      schema: reviewSchema,
+      maxTurns: 2,
+      timeoutMs: 6 * 60_000,
+    },
+    () => [],
+  );
+  if (result.data) {
+    result.run.extra = {
+      notes: result.data.notes.length,
+      kinds: result.data.notes.map((n) => n.kind),
+      verdict: result.data.verdict,
+    };
+    for (const n of result.data.notes) {
+      console.log(`    [${n.kind}] escena ${n.scene}: "${n.quote}" → ${n.fix}`);
+    }
+  }
+  return result;
+}
+
+/** Prueba suelta: `pnpm research review <guion.json> <dossier.json>`. */
+async function reviewFile(guionFile: string, dossierFile: string) {
+  const g = (JSON.parse(readFileSync(path.resolve(guionFile), "utf8")) as { guion: GuionDraft })
+    .guion;
+  const d = (JSON.parse(readFileSync(path.resolve(dossierFile), "utf8")) as { dossier: Dossier })
+    .dossier;
+  const name = `review-${path.basename(guionFile, ".json")}`;
+  const { run, data } = await review(g, d, name);
+  save(run, path.join(out, `${name}.json`), { source: guionFile, review: data });
 }
 
 function summary() {
@@ -491,5 +706,6 @@ function summary() {
 if (mode === "dossier") await dossier(Number(rest[0] ?? "2") - 1);
 else if (mode === "verify" && rest[0]) await verify(rest[0]);
 else if (mode === "guion" && rest[0]) await guionFromDossier(rest[0]);
+else if (mode === "review" && rest[0] && rest[1]) await reviewFile(rest[0], rest[1]);
 else if (mode === "summary") summary();
 else console.log("Uso: pnpm research dossier <1-5> | verify <dossier> | guion <dossier> | summary");

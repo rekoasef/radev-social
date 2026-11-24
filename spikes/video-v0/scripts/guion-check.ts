@@ -4,7 +4,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { guion } from "../src/anim/guion";
-import { checkGuion, guionSchema } from "../src/anim/schema";
+import { normalizeGuion } from "../src/anim/quality";
+import { checkGuion, guionLargoSchema } from "../src/anim/schema";
 
 const file = process.argv[2];
 const raw: unknown = file
@@ -15,14 +16,17 @@ const raw: unknown = file
       facts: [],
     };
 
-const parsed = guionSchema.safeParse(raw);
+const parsed = guionLargoSchema.safeParse(raw);
 if (!parsed.success) {
   console.log("Zod: NO pasa");
   for (const issue of parsed.error.issues)
     console.log(`  ${issue.path.join(".")} › ${issue.message}`);
   process.exit(1);
 }
-const errors = checkGuion(parsed.data);
+// V0-10: primero lo que el código arregla solo.
+const { guion: fixed, fixes } = normalizeGuion(parsed.data);
+for (const f of fixes) console.log(`arreglado: ${f}`);
+const errors = checkGuion(fixed);
 console.log(`Zod: pasa · sentido: ${errors.length === 0 ? "pasa" : `${errors.length} errores`}`);
 for (const e of errors) console.log(`  ${e}`);
 process.exit(errors.length === 0 ? 0 : 1);

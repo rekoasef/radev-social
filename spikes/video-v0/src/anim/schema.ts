@@ -9,6 +9,7 @@
 // comprueba que lo que valida el schema se puede renderizar.
 import { z } from "zod";
 import type { GuionScene } from "./guion";
+import { qualityErrors, sameShot } from "./quality";
 
 const W = 1080;
 const H = 1920;
@@ -132,6 +133,7 @@ const propSchema = z.discriminatedUnion("kind", [
         .optional(),
     })
     .strict(),
+  z.object({ kind: z.literal("book"), title: short(40), x, y, at: cueSchema, scale }).strict(),
   z
     .object({
       kind: z.literal("phone"),
@@ -192,6 +194,9 @@ export const SETTINGS = [
   "banco-adentro",
   "boveda",
   "tunel",
+  "campo-sierras",
+  "juzgado",
+  "cine",
 ] as const;
 
 export const sceneSchema = z
@@ -356,21 +361,12 @@ export function checkScene(scene: SceneDraft, where = ""): string[] {
   return errors;
 }
 
-/** Encuadres "parecidos": mismo lugar con la cámara casi en el mismo lugar y zoom. */
-const sameShot = (a: SceneDraft, b: SceneDraft) => {
-  const ca = a.camera[0];
-  const cb = b.camera[0];
-  if (!ca || !cb) return true;
-  return (
-    Math.abs(ca.zoom - cb.zoom) < 0.3 && Math.abs(ca.x - cb.x) < 250 && Math.abs(ca.y - cb.y) < 250
-  );
-};
-
 /** Máximo de escenas por lugar en un video (decisión del operador, 2026-11-24). */
 export const MAX_PER_SETTING = 3;
 
 export function checkGuion(guion: GuionDraft): string[] {
   const errors = guion.scenes.flatMap((s, i) => checkScene(s, `scenes.${i}.`));
+  errors.push(...qualityErrors(guion));
   // Continuidad: cada personaje con nombre se declara una vez en el elenco.
   const cast = new Set<string>();
   for (const c of guion.cast ?? []) {

@@ -8,6 +8,7 @@ import path from "node:path";
 import { bundle } from "@remotion/bundler";
 import { openBrowser, renderMedia, renderStill, selectComposition } from "@remotion/renderer";
 import { guion as handWritten, sceneFrames } from "../src/anim/guion";
+import { normalizeGuion } from "../src/anim/quality";
 import { guionLargoSchema, toRenderGuion } from "../src/anim/schema";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -32,13 +33,19 @@ const voices = manifest.scenes.map((s) => ({
   frames: s.frames,
 }));
 const guionFile = option("guion");
-const guion = guionFile
-  ? toRenderGuion(
-      guionLargoSchema.parse(
-        (JSON.parse(readFileSync(path.resolve(guionFile), "utf8")) as { guion: unknown }).guion,
-      ),
+// V0-10: el guion pasa por los mismos arreglos que al escribirlo, y no se anima si le faltan
+// lugares (`missingPlaces`): primero se dibujan o se cambia el guion. `--allow-missing` lo fuerza.
+const draft = guionFile
+  ? guionLargoSchema.parse(
+      (JSON.parse(readFileSync(path.resolve(guionFile), "utf8")) as { guion: unknown }).guion,
     )
-  : handWritten;
+  : undefined;
+if (draft?.missingPlaces?.length && !process.argv.includes("--allow-missing")) {
+  throw new Error(
+    `Faltan lugares por dibujar: ${draft.missingPlaces.map((m) => `${m.place} (escenas ${m.scenes.map((n) => n + 1).join(", ")})`).join("; ")}. Dibujalos o usá --allow-missing.`,
+  );
+}
+const guion = draft ? toRenderGuion(normalizeGuion(draft).guion) : handWritten;
 if (guion.length !== voices.length) {
   throw new Error(`El guion tiene ${guion.length} escenas y la voz ${voices.length}`);
 }

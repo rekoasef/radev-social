@@ -44,13 +44,20 @@ export function Karaoke({
     <div
       style={{
         position: "absolute",
-        top: 300,
-        left: 70,
-        right: 70,
+        top: 286,
+        left: "50%",
+        transform: "translateX(-50%)",
+        width: "max-content",
+        maxWidth: 940,
         display: "flex",
         flexWrap: "wrap",
         justifyContent: "center",
         gap: "6px 14px",
+        // V0-10: franja oscura detrás, del ancho del texto. Sin ella, el segundo renglón se perdía
+        // contra el escenario (estantes, el plano).
+        background: "rgba(12, 10, 30, 0.62)",
+        borderRadius: 26,
+        padding: "14px 22px",
         fontFamily: FONT,
         fontSize: 60,
         fontWeight: 800,

@@ -48,6 +48,10 @@ Todos tienen movimiento propio (luces, ventanas que titilan): nunca hace falta "
 - **`boveda`**: la bóveda: pared de cajas de seguridad a la izquierda (x 30–650, y 530–1340; algunas ya abiertas) y la puerta redonda abierta a la derecha (centro x 870, y 900), con una lamparita que se mece. **Personajes: pies en y ≈ 1330, scale 1,3–1,4.** Sirve para: cajas de seguridad, el botín, "abajo", lo que se llevaron.
 - **`tunel`**: un túnel o desagüe en perspectiva: arcos de ladrillo que se pierden al fondo (punto de fuga x 540, y 860), un canal de agua en el centro, veredas angostas a los costados y una guirnalda de lamparitas. **Personajes: sobre las veredas, abajo: pies en y ≈ 1650–1750, x 80–220 o 860–1000, scale 1,1–1,2.** El agua va por el centro (en y = 1560 mide de x 350 a 730). Sirve para: túneles, escapes por abajo, desagües, cloacas, minas. Va bien con el gomón.
 
+- **`campo-sierras`**: campo y sierras de día: cerros en capas, un camino de tierra que baja hacia la cámara, una casita con la ventana encendida (x 760–930, y 950–1130), árboles, nubes y pájaros. **Personajes: pies en y ≈ 1400–1450, scale 1,1–1,3.** Sirve para: sierras, campo, pueblos, escondites, viajes por la ruta, "se fue lejos".
+- **`juzgado`**: sala de un tribunal: estrado del juez (x 250–830, y 760–1160) con una balanza dorada arriba, paneles de madera, baranda delante y ventilador de techo. **Personajes: pies en y ≈ 1420, scale 1,3–1,4** (delante de la baranda). Sirve para: juicios, condenas, declaraciones, abogados.
+- **`cine`**: sala de cine a oscuras: pantalla encendida que titila (x 110–970, y 580–1040, sin imagen concreta), el haz del proyector con polvo y filas de butacas. **Personajes: pies en y ≈ 1560, scale 1,2–1,3** (delante de las butacas). Sirve para: películas, series, estrenos, "la historia llegó al cine", fama.
+
 **Variá los lugares.** Un mismo escenario **nunca en dos escenas seguidas con el mismo encuadre** (si repetís, cambiá la cámara: zoom ±0,3 o el centro a 250 px o más) y **ningún escenario en más de 3 escenas del video**. Si la historia pasa en un lugar que no está en el catálogo (un juzgado, unas sierras, una redacción), usá el más cercano que tenga sentido o contalo con cajas de datos, y **anotalo en `missingPlaces`** (qué lugar y en qué escenas hubiera ido): así se dibuja para la próxima. Nunca uses un lugar que contradiga la historia (una tienda para un banco).
 
 ## Elenco (`cast`): los personajes con nombre
@@ -84,6 +88,7 @@ Entran con rebote en `at` y después se siguen moviendo un poco.
 - `stopwatch { x, y, at, spinUntil }`: cronómetro grande (~360 px) con las agujas girando rápido hasta `spinUntil`; ahí frena y tiembla.
 - `question { x, y, at, scale? }`: signo de pregunta grande que flota.
 - `boat { x, y, at, scale?, loaded?, moveTo? }`: gomón naranja con motor fuera de borda (~460 de ancho a scale 1), centrado en (x, y) con la línea del agua en y; flota y se mece. `loaded: true` lo carga con bolsas de dinero. `moveTo { x, y, at, scale? }` lo hace navegar ~2,5 s hasta ahí; en `tunel`, para que se aleje, mandalo al fondo (x 540, y ≈ 1010, scale 0,15). En `tunel` va sobre el agua (x 540, y ≈ 1500–1600, scale 0,7–0,8).
+- `book { title, x, y, at, scale? }`: libro parado (~260 × 360) con su título en la tapa (hasta 40 caracteres, se parte solo en renglones). Para "inspiró un libro", una investigación publicada, un diario.
 - `phone { x, y, at, loadingAt?, scale? }`: celular (~380 × 740) con una tienda online; desde `loadingAt` la página de pago queda cargando (rueda y barra que no termina).
 - Solo en `plano`:
   - `route { at, until }`: ruta punteada roja que se dibuja de la ENTRADA a la BÓVEDA entre `at` y `until`.
