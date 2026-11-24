@@ -199,7 +199,26 @@ Con concurrency 2 (por los 5,5 GiB de esta PC) da ~1,5–1,9 s de render por seg
 
 Videos y hojas en `Descargas\v0-5-looks` (fábrica): `clip-<look>-<a|b>-stagger.mp4`.
 
-**Resultado (2026-11-24, falta la mirada del operador):** éxito técnico. Los looks se renderizan en Remotion sin cambios en `slides` y se ven igual que en el carrusel, con una opción de Chrome del lado del video. Falta que el operador mire los clips y elija entre A y B.
+**Resultado (2026-11-24): técnicamente viable, pero descartado como base del video.** El operador aclaró que las slides "no tienen nada que ver" con el video que busca: video animado como la referencia de @curioarchivo_ (ver V0-6). De V0-5 queda: Remotion espera las fuentes antes de cada cuadro, la opción de Chrome que cambiaba el ancho de las letras y que los colores y las tipografías de una marca se pueden usar en cajas y subtítulos.
+
+## V0-6 (redefinida) · Video animado guionado escena por escena (PC de la fábrica, 2026-11-24)
+
+**Pedido del operador:** "tiene que ser un video animado", con movimiento (una personita que camina, cosas que entran), no fotos ni slides, y "todo tiene que estar guionado, escena por escena". Reemplaza la V0-6 original (personaje SVG) y la idea de V1 de escenas tipo slide: **cambio del plan, a documentar en `RADEV-STUDIO-REVISION.md` §7 cuando el operador apruebe el estilo.**
+
+**La referencia** (TikTok de @curioarchivo_, "el hackeo de la TV de Chicago, 1987", 2:45, 576×1024): se abrió con el Chromium de Playwright y el navegador bajó el video (queda solo en la carpeta temporal de la sesión, no en el repo). Cuadros cada 3 s y de a 4 por segundo:
+- Ilustración 2D vectorial plana, personajes geométricos simples, paleta oscura y cálida; objetos que se repiten (el televisor, un calendario, la ciudad de noche, diarios).
+- Unos 14 cortes en 2:45 (tomas de 5–20 s), pero **nunca hay un cuadro quieto**: personajes que se balancean o entran en pánico, luz de alarma roja y azul cada ~0,5 s, ventanas y antenas que titilan, objetos y cajas de datos que entran con rebote ("25 SEG.", "90 SEGUNDOS", "CASI 40 AÑOS"), etiquetas ("MÁSCARA DE PLÁSTICO"), cámara que se acerca despacio.
+- Subtítulos tipo karaoke arriba (lo dicho en blanco, lo que falta en gris, 1–2 palabras en caja azul) y un titular en mayúsculas abajo con una palabra en rojo, que entra palabra por palabra. Abre con "¿Sabías que…?" y cierra pidiendo comentarios.
+- No usa IA de video: son motion graphics, justo lo que hace Remotion.
+
+**La prueba:** escenas 1 y 2 del guion de V0-3 con la voz de Fran (15,2 s). Código en `spikes/video-v0/src/anim/`:
+- `guion.ts`: **el guion**. Por escena: narración, escenario, cámara (puntos clave), personajes con acciones (`walk`, `lookWatch`, `scratchHead`, `panic`, `carry`, `pop`), objetos, cajas de datos, palabras resaltadas y titular. **Todos los tiempos se enganchan a palabras de la voz** (`{ word: "seis", offset: 0.25 }`): si cambia la voz, todo se reacomoda solo. Es el formato que en V1 escribiría `claude -p` (V0-8) y validaría Zod.
+- `person.tsx`: personita en SVG con piezas separadas (piernas, brazos, cabeza, gorro), ciclo de caminata, parpadeo, respiración y poses. Tres vestuarios: ladrón (gorro y antifaz), guardia, civil.
+- `sets.tsx`: aeropuerto de noche (estrellas, luna, ciudad con ventanas, torre con baliza, reflector, avión de carga sin marca, depósito "CARGA 261" con luz en la puerta, balizas de pista) y sala de alarma (luz roja y azul).
+- `props.tsx` y `overlays.tsx`: calendario, bolsas de dinero, cronómetro (la aguja gira y la caja cuenta de 0 a 64), signos de pregunta, karaoke, titular y cajas de datos.
+- Render: `pnpm --filter @radev/spike-video-v0 anim` (o `--stills 0:1.2,1:4.4` para cuadros sueltos): **15,2 s de video en 35,4 s** con concurrency 2 en la fábrica.
+
+Video en `Descargas\v0-6-animado\escenas-1-y-2.mp4` (fábrica). **Falta la mirada del operador:** si el estilo va, sigue el resto del guion (6 escenas) y definir de dónde salen los dibujos (hechos en código, como ahora, o una biblioteca de ilustraciones con licencia libre).
 
 ## V0-7 · Licencias y condiciones
 

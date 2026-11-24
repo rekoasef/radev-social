@@ -1,5 +1,6 @@
 import { exampleSlides, FORMAT } from "@radev/slides";
 import { Composition } from "remotion";
+import { AnimVideo, type AnimVideoProps, animFrames } from "./anim/AnimVideo";
 import { Captions, type CaptionsProps, Scene, type SceneProps } from "./Captions";
 import { clipSlides } from "./looks/clip-slides";
 import {
@@ -112,6 +113,17 @@ export const Root = () => (
       calculateMetadata={({ props }) => ({
         durationInFrames: props.scenes.reduce((sum, s) => sum + s.frames, 0),
       })}
+    />
+    {/* Video animado guionado escena por escena (V0-6 redefinida). */}
+    <Composition
+      id="anim"
+      component={AnimVideo}
+      width={WIDTH}
+      height={HEIGHT}
+      fps={FPS}
+      durationInFrames={1}
+      defaultProps={{ voices: [] } satisfies AnimVideoProps}
+      calculateMetadata={({ props }) => ({ durationInFrames: Math.max(1, animFrames(props)) })}
     />
   </>
 );

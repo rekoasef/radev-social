@@ -10,7 +10,8 @@
     "bench": "tsx scripts/bench.ts",
     "captions": "tsx scripts/captions.ts",
     "scenes": "tsx scripts/scenes.ts",
-    "looks": "tsx scripts/looks.ts"
+    "looks": "tsx scripts/looks.ts",
+    "anim": "tsx scripts/anim.ts"
   },
   "dependencies": {
     "@radev/slides": "workspace:*",
