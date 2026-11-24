@@ -1,0 +1,9 @@
+{
+  "colors": { "ink": "#0B0B0B", "accent": "#FF7A00" },
+  "fonts": {
+    "display": { "family": "Inter Tight", "weight": 900 },
+    "body": { "family": "Inter", "weight": 400 }
+  },
+  "wordmark": { "text": "RAdev", "dot": true },
+  "handle": { "site": "radev.tech" }
+}

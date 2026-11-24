@@ -162,6 +162,45 @@ La duración baja menos de lo que sube la velocidad, porque ElevenLabs genera la
 
 **Resultado (cerrada el 2026-11-24, PC de la fábrica):** criterios medidos cumplidos con la variante A (desfase < 1 cuadro, armado < 15 s, rehacer una escena ≈ un cuarto del render). El operador miró y escuchó los videos y aprobó: **D-D en firme, con el audio armado aparte (variante A)**. Voz de Fran a `speed` 1,1 (ADR 0027).
 
+## V0-5 · Los looks de `packages/slides` en Remotion (PC de la fábrica, 2026-11-24)
+
+**Cómo:** la spike suma `@radev/slides` como dependencia del workspace (`workspace:*`) y lo importa tal como está. Composiciones nuevas en `spikes/video-v0/src/looks/`: `look-still` (1080×1350, un cuadro por slide), `look-scene` (una slide en 9:16) y `looks-clip` (las 6 escenas de V0-3 con la voz de Fran a 1,1 y subtítulos). Script: `pnpm --filter @radev/spike-video-v0 looks compare|scenes|clip`. Paleta de RAdev del seed (`looks/radev-tokens.json`: tinta `#0B0B0B`, acento `#FF7A00`, Inter Tight 900): las tokens reales de producción no se leyeron.
+
+**Compila sin cambios en `slides`.** El bundler de Remotion (webpack) toma el TypeScript, los JSON (métricas de fuentes, íconos), el CSS de `@fontsource-variable` y `lucide-react` sin configuración extra. `slides` no depende de Next ni de `/render`. Lo único que hubo que sumar del lado del video es lo mismo que hacen `preview` y `/render` antes de la captura: esperar las fuentes y correr `fitSlide`. En Remotion va con `delayRender`/`continueRender` (`src/looks/use-fit.ts`). Bundle: 8–19 s.
+
+**¿Se ve igual que en el carrusel?** Los 16 looks × 13 tipos de slide (208 pares), sacados con Remotion y con `preview` (el Playwright de Social), comparados con SSIM de `ffmpeg` (1 = idénticas):
+
+| | SSIM a tamaño real (mín. / prom.) | SSIM a 1/4 (dónde está cada cosa) |
+|---|---|---|
+| Remotion tal cual | 0,81 / 0,978 | **0,68** / 0,984 (127 de 208 bajo 0,99) |
+| Remotion sin `--font-render-hinting=none` | **0,9975** / 0,9998 | 0,996 / 0,9996 (0 bajo 0,99) |
+
+- **La diferencia era una opción de Chrome, no el código.** Remotion abre Chrome con `--font-render-hinting=none`; Playwright no. Sin el *hinting* (el ajuste de las letras a la grilla de píxeles), el mismo texto mide un poco menos, así que los títulos cortan en otro lugar (bauhaus: "realmente tener" en una línea) y `fitSlide` decide otro zoom (recibo con pasos: todo 7 px corrido). Se confirmó con las 4 combinaciones (Chrome 153 de Playwright y 158 de Remotion, con y sin la opción, `scripts/hinting.ts`): la versión de Chrome no cambia nada y la opción lo cambia todo.
+- **Arreglo, del lado del video:** `openBrowser("chrome", { chromiumOptions: { flags: { "font-render-hinting": false } } })` (opción documentada de Remotion). Con eso, lo único distinto son los símbolos que la tipografía no tiene y dibuja una fuente del sistema (`❯`, `→`).
+- Remotion dibuja las 13 slides de un look en 1,6–3,1 s (concurrency 2). `preview`, los 16 looks en 44–57 s.
+
+**9:16, dos variantes** (hojas por look en `out/v0-5/sheet-<look>.png`):
+
+- **A, la slide 4:5 centrada** con bandas del color de su fondo (cero cambios en `slides`). Anda bien en los looks de color plano. En los que tienen fondo con luces o textura (`atmosfera`, `gradiente`) se ve el corte donde termina la slide. La caja de contenido queda en la zona segura de Shorts, pero no queda lugar propio para los subtítulos: van encima de la slide.
+- **B, un marco 9:16 propio** (`src/looks/vertical-slide.tsx`, una copia de `StudioSlide` con otra altura) que reusa fondo, decoración, encabezado, pie y plantillas. La caja de contenido es la misma del carrusel (850×1020), así que las plantillas, los tamaños de título y `fitSlide` funcionan igual. Fondo, decoración y pie se acomodan solos a 1920 (el ticket de `recibo` ocupa todo el alto). Los fondos pensados para 1350 (las luces de `atmosfera`) quedan en la parte de arriba. Abajo queda lugar para los subtítulos. Para V1 hace falta que `slides` **exporte** estas piezas (hoy la spike las importa por ruta relativa) o un marco vertical propio: es un cambio que suma y no toca a Social.
+
+**Movimiento sin tocar `slides`.** Remotion dibuja cada cuadro por separado, así que las animaciones CSS no sirven: se anima desde afuera con estilos puestos en cada cuadro. Se usan `translate` y `opacity`, que son propiedades aparte del `transform` que usan las capas movidas a mano (ADR 0013). Las plantillas ya marcan sus capas (`data-layer="title"`, `"body"`): entra primero el título, después el cuerpo y los ítems de a uno (`stagger`). El fondo, el encabezado y el pie quedan quietos. Funciona en los dos looks probados. Encontrar "los ítems" es una heurística de la spike (el primer contenedor con 2 o más hijos): en V1 conviene que las plantillas marquen sus ítems.
+
+**Clip con voz y subtítulos** (42,4 s, 6 escenas, concurrency 2, audio dentro del render: acá no se prueba el armado):
+
+| Look | A | B |
+|---|---|---|
+| `editorial` | 71,2 s | 63,7 s |
+| `atmosfera` | 78,8 s | 77,0 s |
+
+Con concurrency 2 (por los 5,5 GiB de esta PC) da ~1,5–1,9 s de render por segundo de video. La escena de prueba de V0-3 tardaba 45,6 s con concurrency 4: los looks cuestan más que los fondos lisos, pero siguen lejos del límite de V0-1 (45 s en ≤ 3 min). Memoria: 2 GiB libres al terminar, sin problemas.
+
+**Pendientes para V1:** los subtítulos de la spike (pastilla negra al 55 %) se ven grises sobre las superficies claras: tienen que tomar los colores de la superficie del look. Las imágenes generadas (`ArtLayer`) no entraron en la prueba.
+
+Videos y hojas en `Descargas\v0-5-looks` (fábrica): `clip-<look>-<a|b>-stagger.mp4`.
+
+**Resultado (2026-11-24, falta la mirada del operador):** éxito técnico. Los looks se renderizan en Remotion sin cambios en `slides` y se ven igual que en el carrusel, con una opción de Chrome del lado del video. Falta que el operador mire los clips y elija entre A y B.
+
 ## V0-7 · Licencias y condiciones
 
 *En curso.* Primera lectura (2026-11-21), a confirmar en las páginas oficiales antes de cerrar:

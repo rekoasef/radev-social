@@ -88,4 +88,4 @@ En PowerShell: `wsl -l -v`, `$env:COMPUTERNAME` y `Test-Path $env:USERPROFILE\.w
 
 | Fecha | Cambio | Versión | Cómo deshacerlo |
 |---|---|---|---|
-| — | (todavía ninguno) | | |
+| 2026-11-24 | Chromium de Playwright del repo bajado a `~/.cache/ms-playwright` (`pnpm --filter @radev/slides exec playwright install chromium --only-shell`, sin `--with-deps`: nada de apt), para `preview` en V0-5. **Efecto secundario:** Playwright borró los navegadores que ningún proyecto registrado usaba (`chromium_headless_shell-1255` y `ffmpeg-1013`, de otro proyecto); si alguno los necesita, `npx playwright install` en ese proyecto | headless shell 1243 (Chrome 153), Playwright 1.63.0 | Borrar `~/.cache/ms-playwright/chromium_headless_shell-1243` y `ffmpeg-1011` |

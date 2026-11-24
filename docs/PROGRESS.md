@@ -10,9 +10,11 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 > ### ▶ Retomar acá (última sesión: 2026-11-24, PC de la fábrica)
 >
-> **En qué estamos:** pruebas V0 de RAdev Studio (módulo de video), en la rama **`spike/video-v0`**, no en `main`. **V0-0 a V0-3 cerradas.** Resultados en `docs/V0-RESULTS.md`; plan de cada prueba en `docs/RADEV-STUDIO-REVISION.md` §6.
+> **En qué estamos:** pruebas V0 de RAdev Studio (módulo de video), en la rama **`spike/video-v0`**, no en `main`. **V0-0 a V0-3 cerradas; V0-5 hecha, falta la mirada del operador.** Resultados en `docs/V0-RESULTS.md`; plan de cada prueba en `docs/RADEV-STUDIO-REVISION.md` §6.
 >
-> **Próximo paso:** elegir con el operador la próxima prueba de §6. Recomendada: **V0-5** (los looks de `packages/slides` dentro de Remotion), porque define si las escenas de V1 reusan la identidad de marca o arrancan con plantillas propias. Las otras: V0-6 (personaje SVG), V0-8 (`claude -p` para guiones), terminar V0-7 (licencias); V0-4 (Ollama) es opcional.
+> **Próximo paso:** que el operador mire los clips de V0-5 (`Descargas\v0-5-looks` en la fábrica: `editorial` y `atmosfera`, variantes A y B, con voz y subtítulos) y elija **A** (slide 4:5 centrada con bandas, cero cambios en `slides`) o **B** (marco 9:16 propio que reusa las piezas del look; recomendada: lugar propio para subtítulos y fondos a todo el alto, pide que `slides` exporte esas piezas, un cambio que suma y no toca a Social). Con eso V0-5 se cierra. Después: V0-6 (personaje SVG), V0-8 (`claude -p` para guiones) o terminar V0-7 (licencias); V0-4 (Ollama) es opcional.
+>
+> **V0-5 (2026-11-24, fábrica):** `@radev/slides` compila en Remotion **sin cambios** (`workspace:*`; fuentes + `fitSlide` con `delayRender`). Los 16 looks × 13 tipos se ven igual que en el carrusel (SSIM ≥ 0,9975) **si Remotion abre Chrome sin `--font-render-hinting=none`** (`chromiumOptions.flags`); con esa opción, el texto mide distinto y cortan otros títulos. Movimiento sin tocar `slides`: título, cuerpo e ítems de a uno, desde afuera (`translate`/`opacity` por cuadro sobre `data-layer`). Clip de 42,4 s en 64–79 s con concurrency 2. Para repetir: `cd spikes/video-v0 && pnpm looks compare` (o `scenes`, o `clip --looks editorial`). Se bajó el Chromium de Playwright del repo en la fábrica y Playwright borró los navegadores de otro proyecto (ver `docs/ENVIRONMENTS.md`). Ya se explicó: `workspace:*`, `delayRender`, por qué las animaciones CSS no sirven en Remotion y el *hinting* de fuentes.
 >
 > **Decisiones del 2026-11-24 (fábrica):**
 > - **V0-3 cerrada: D-D en firme con el audio armado aparte (variante A).** El operador miró y escuchó los videos y aprobó.
@@ -75,7 +77,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 - **Ya se explicó también (2026-11-21):** qué es una spike, qué es Remotion y cómo arma un video cuadro por cuadro, qué es la concurrency, y qué viaja con git (paquetes de Node vía el lockfile) y qué no (configuración del sistema, `.env`, base, `media/`, modelos de voz).
 - **PC de la fábrica (Debian):** relevada el 2026-11-24 (`docs/ENVIRONMENTS.md`). Las mediciones de V0 dicen en qué máquina se hicieron: las de casa no valen para la fábrica, y al revés.
 - **Forma de trabajo nueva (2026-11-21):** el operador quiere aprender mientras construimos. Explicar el qué y el porqué de cada herramienta o concepto que aparezca (ver "Sobre el operador" en `CLAUDE.md`). Ya se explicó: qué es un worker y por qué está separado de la web, la cola de jobs con pg-boss, la idempotencia y para qué sirve Docker. **2026-11-24:** ramas de git y `fetch` contra `pull`, nvm y `.nvmrc`, la caché por hash aplicada a la voz (y por qué todo lo que cambia el resultado tiene que entrar en la clave), PCM contra AAC en las uniones, el *ducking*, y la velocidad de ElevenLabs contra acelerar el audio después.
-- **Última actualización:** 2026-11-24, V0-3 cerrada en la PC de la fábrica (D-D en firme con audio aparte, Fran a `speed` 1,1); sigue elegir entre V0-5, V0-6, V0-7 y V0-8
+- **Última actualización:** 2026-11-24, V0-5 hecha en la PC de la fábrica (looks de `slides` en Remotion sin cambios; falta que el operador elija la variante A o B mirando los clips)
 
 ## Mejora — composiciones por slide (2026-10-07, ADR 0026)
 
