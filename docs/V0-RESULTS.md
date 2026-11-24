@@ -218,7 +218,9 @@ Videos y hojas en `Descargas\v0-5-looks` (fábrica): `clip-<look>-<a|b>-stagger.
 - `props.tsx` y `overlays.tsx`: calendario, bolsas de dinero, cronómetro (la aguja gira y la caja cuenta de 0 a 64), signos de pregunta, karaoke, titular y cajas de datos.
 - Render: `pnpm --filter @radev/spike-video-v0 anim` (o `--stills 0:1.2,1:4.4` para cuadros sueltos): **15,2 s de video en 35,4 s** con concurrency 2 en la fábrica.
 
-Video en `Descargas\v0-6-animado\escenas-1-y-2.mp4` (fábrica). **Falta la mirada del operador:** si el estilo va, sigue el resto del guion (6 escenas) y definir de dónde salen los dibujos (hechos en código, como ahora, o una biblioteca de ilustraciones con licencia libre).
+**El operador lo aprobó (2026-11-24): "es tal cual lo quería".** Pidió más ritmo en la voz: de 1,1 a 1,2 o 1,3. ElevenLabs acepta hasta `speed` 1,2, así que 1,3 sale de la toma a 1,2 acelerada con `atempo` de `ffmpeg` (×1,083, sin cambiar el tono; `tts/tempo.py`, que divide los tiempos de cada palabra por el mismo factor). Las 6 escenas: 42,4 s (1,1) → 37,9 s (1,2, 502 caracteres) → 34,9 s (1,3). Las escenas 1 y 2: 15,2 → 13,8 → 12,7 s; render 31 y 26 s. Como todo está enganchado a palabras, el video se reacomodó solo a cada velocidad, sin tocar el guion.
+
+Videos en `Descargas\v0-6-animado\escenas-1-y-2-voz-{1.1,1.2,1.3}.mp4` (fábrica). **Falta:** que el operador elija la velocidad de oído; si el estilo va, sigue el resto del guion (6 escenas) y definir de dónde salen los dibujos (hechos en código, como ahora, o una biblioteca de ilustraciones con licencia libre).
 
 ## V0-7 · Licencias y condiciones
 

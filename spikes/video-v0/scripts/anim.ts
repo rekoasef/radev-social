@@ -9,7 +9,10 @@ import { openBrowser, renderMedia, renderStill, selectComposition } from "@remot
 import { guion } from "../src/anim/guion";
 
 const root = path.resolve(import.meta.dirname, "..");
-const v03 = path.join(root, "out", "v0-3");
+// --voices: otra carpeta con manifest.json y audio/ (por ejemplo out/v0-3/x1.3, de tts/tempo.py).
+const voicesArg = process.argv.indexOf("--voices");
+const v03 =
+  voicesArg > 0 ? path.resolve(process.argv[voicesArg + 1] ?? "") : path.join(root, "out", "v0-3");
 const out = path.join(root, "out", "anim");
 mkdirSync(out, { recursive: true });
 const option = (name: string) => {
@@ -64,7 +67,8 @@ if (stills) {
     console.log(`cuadro ${spec} → ${file}`);
   }
 } else {
-  const file = path.join(out, only === undefined ? "anim.mp4" : `anim-${only}.mp4`);
+  const name = option("name") ?? (only === undefined ? "anim" : `anim-${only}`);
+  const file = path.join(out, `${name}.mp4`);
   t0 = performance.now();
   await renderMedia({
     composition,
