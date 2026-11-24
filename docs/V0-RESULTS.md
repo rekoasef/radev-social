@@ -220,7 +220,11 @@ Videos y hojas en `Descargas\v0-5-looks` (fábrica): `clip-<look>-<a|b>-stagger.
 
 **El operador lo aprobó (2026-11-24): "es tal cual lo quería".** Pidió más ritmo en la voz: de 1,1 a 1,2 o 1,3. ElevenLabs acepta hasta `speed` 1,2, así que 1,3 sale de la toma a 1,2 acelerada con `atempo` de `ffmpeg` (×1,083, sin cambiar el tono; `tts/tempo.py`, que divide los tiempos de cada palabra por el mismo factor). Las 6 escenas: 42,4 s (1,1) → 37,9 s (1,2, 502 caracteres) → 34,9 s (1,3). Las escenas 1 y 2: 15,2 → 13,8 → 12,7 s; render 31 y 26 s. Como todo está enganchado a palabras, el video se reacomodó solo a cada velocidad, sin tocar el guion.
 
-Videos en `Descargas\v0-6-animado\escenas-1-y-2-voz-{1.1,1.2,1.3}.mp4` (fábrica). **Falta:** que el operador elija la velocidad de oído; si el estilo va, sigue el resto del guion (6 escenas) y definir de dónde salen los dibujos (hechos en código, como ahora, o una biblioteca de ilustraciones con licencia libre).
+Videos en `Descargas\v0-6-animado\escenas-1-y-2-voz-{1.1,1.2,1.3}.mp4` (fábrica). **Velocidad: 1,3** (al operador le gustó 1,3, "el 1,2 tampoco está mal", y dejó la elección a criterio de Claude). Para el catálogo de voces (ADR 0027): la velocidad de una voz = `speed` de ElevenLabs (hasta 1,2) + un factor de `atempo` para lo que falte.
+
+**Las 6 escenas (2026-11-24): 36,5 s de video en 62,7 s** (concurrency 2, fábrica; 11,9 MB). Escenas nuevas en el guion: 3) plano azul del depósito con la ruta roja que se dibuja hasta la bóveda, el punto del guardia que se va en "cambiaba la guardia", dos cámaras que se tachan en "nadie revisó" y una lista ✓ que se completa; 4) tienda de noche con un cliente que entra, un celular con la tienda, "−23 % de las ventas" contando, la página de pago cargando, "+3 SEG" y el cliente que mira el reloj y se va en "cargar"; 5) el dueño (delantal) señala un calendario "VIERNES 15" y la etiqueta "REVISÁ TU PÁGINA DE PAGO"; 6) el celular cargando, signos de pregunta y "CONTANOS EN LOS COMENTARIOS" con 1,6 s de cola después de la voz. Nuevo en el formato: escenarios `plano` y `tienda`, objetos `route`, `marker`, `securityCam` y `phone`, textos `checklist` y `tag`, pose `point`, vestuario `dueno` y `tail`. Video: `Descargas\v0-6-animado\completo-6-escenas-voz-1.3.mp4`.
+
+**Falta:** que el operador mire el video completo; después, decidir de dónde salen los dibujos (código, como ahora, o una biblioteca libre),
 
 ## V0-7 · Licencias y condiciones
 

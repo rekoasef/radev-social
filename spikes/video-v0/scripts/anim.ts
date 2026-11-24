@@ -6,13 +6,16 @@ import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { bundle } from "@remotion/bundler";
 import { openBrowser, renderMedia, renderStill, selectComposition } from "@remotion/renderer";
-import { guion } from "../src/anim/guion";
+import { guion, sceneFrames } from "../src/anim/guion";
 
 const root = path.resolve(import.meta.dirname, "..");
 // --voices: otra carpeta con manifest.json y audio/ (por ejemplo out/v0-3/x1.3, de tts/tempo.py).
 const voicesArg = process.argv.indexOf("--voices");
+// Por defecto, la voz elegida por el operador: speed 1,3 (toma a 1,2 + atempo, tts/tempo.py).
 const v03 =
-  voicesArg > 0 ? path.resolve(process.argv[voicesArg + 1] ?? "") : path.join(root, "out", "v0-3");
+  voicesArg > 0
+    ? path.resolve(process.argv[voicesArg + 1] ?? "")
+    : path.join(root, "out", "v0-3", "x1.3");
 const out = path.join(root, "out", "anim");
 mkdirSync(out, { recursive: true });
 const option = (name: string) => {
@@ -50,7 +53,13 @@ const stills = option("stills");
 if (stills) {
   // escena:segundo → el cuadro de ese momento dentro del video completo.
   const starts = guion.map((_, i) =>
-    guion.slice(0, i).reduce((sum, s) => sum + (voices[s.voice]?.frames ?? 0), 0),
+    guion
+      .slice(0, i)
+      .reduce(
+        (sum, s) =>
+          sum + (voices[s.voice] ? sceneFrames(s, voices[s.voice] as (typeof voices)[number]) : 0),
+        0,
+      ),
   );
   for (const spec of stills.split(",")) {
     const [scene, second] = spec.split(":").map(Number);

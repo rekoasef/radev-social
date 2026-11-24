@@ -10,8 +10,8 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { type GuionScene, guion } from "./guion";
-import { DataBox, Headline, Karaoke } from "./overlays";
+import { type GuionScene, guion, sceneFrames } from "./guion";
+import { Headline, Karaoke, OverlayView } from "./overlays";
 import { actorState, Person } from "./person";
 import { PropView } from "./props";
 import { SetView } from "./sets";
@@ -19,7 +19,9 @@ import { cueTime, ramp, type Word } from "./timing";
 
 // El video animado: cada escena del guion con su voz (de V0-3). Todo lo que se ve sale del guion.
 
-export type SceneVoice = { audio: string; words: Word[]; frames: number };
+export type { SceneVoice } from "./guion";
+
+import type { SceneVoice } from "./guion";
 export type AnimVideoProps = { voices: SceneVoice[]; only?: number };
 
 /** Frena el render hasta que la tipografía cargó (si no, el primer cuadro sale con otra letra). */
@@ -58,7 +60,7 @@ function Scene({ scene, voice }: { scene: GuionScene; voice: SceneVoice }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = frame / fps;
-  const duration = voice.frames / fps;
+  const duration = sceneFrames(scene, voice) / fps;
   const words = voice.words;
   const { zoom, x: cx, y: cy } = cameraAt(scene, t, words, duration);
   // Los personajes de más abajo van adelante.
@@ -84,14 +86,8 @@ function Scene({ scene, voice }: { scene: GuionScene; voice: SceneVoice }) {
           aria-label={scene.narration}
         >
           <SetView setting={scene.setting} t={t} />
-          {scene.props.map((prop) => (
-            <PropView
-              key={`${prop.kind}-${prop.x}-${prop.y}`}
-              prop={prop}
-              t={t}
-              words={words}
-              fps={fps}
-            />
+          {scene.props.map((prop, n) => (
+            <PropView key={`${prop.kind}-${n}`} prop={prop} t={t} words={words} fps={fps} />
           ))}
           {actors.map(({ actor, i, state }) => (
             <Person key={actor.id} actor={actor} state={state} t={t} seed={i + 1} />
@@ -99,7 +95,13 @@ function Scene({ scene, voice }: { scene: GuionScene; voice: SceneVoice }) {
         </svg>
       </div>
       {scene.overlays.map((box) => (
-        <DataBox key={`${box.text}-${box.y}`} box={box} words={words} t={t} fps={fps} />
+        <OverlayView
+          key={`${box.kind}-${box.x}-${box.y}`}
+          box={box}
+          words={words}
+          t={t}
+          fps={fps}
+        />
       ))}
       <Karaoke words={words} highlight={scene.highlight} t={t} />
       <Headline scene={scene} words={words} t={t} fps={fps} />
@@ -119,9 +121,10 @@ export const AnimVideo = ({ voices, only }: AnimVideoProps) => {
       {scenes.map(({ scene, i, voice }) => {
         if (!voice) return null;
         const start = from;
-        from += voice.frames;
+        const frames = sceneFrames(scene, voice);
+        from += frames;
         return (
-          <Sequence key={i} from={start} durationInFrames={voice.frames}>
+          <Sequence key={i} from={start} durationInFrames={frames}>
             <Scene scene={scene} voice={voice} />
           </Sequence>
         );
@@ -134,5 +137,8 @@ export const AnimVideo = ({ voices, only }: AnimVideoProps) => {
 export function animFrames({ voices, only }: AnimVideoProps): number {
   return guion
     .filter((_, i) => only === undefined || i === only)
-    .reduce((sum, scene) => sum + (voices[scene.voice]?.frames ?? 0), 0);
+    .reduce((sum, scene) => {
+      const voice = voices[scene.voice];
+      return sum + (voice ? sceneFrames(scene, voice) : 0);
+    }, 0);
 }

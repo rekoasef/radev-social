@@ -17,13 +17,14 @@ export type Cue =
       offset?: number;
     };
 
-export type Outfit = "ladron" | "guardia" | "civil";
+export type Outfit = "ladron" | "guardia" | "civil" | "dueno";
 
 export type Action =
   | { do: "walk"; at: Cue; toX: number; speed?: number }
   | { do: "lookWatch"; at: Cue; until?: Cue }
   | { do: "scratchHead"; at: Cue; until?: Cue }
   | { do: "panic"; at: Cue; until?: Cue }
+  | { do: "point"; at: Cue; until?: Cue }
   | { do: "carry"; at: Cue }
   | { do: "pop"; at: Cue };
 
@@ -44,22 +45,54 @@ export type PropItem =
   | { kind: "calendar"; month: string; year: string; x: number; y: number; at: Cue; until?: Cue }
   | { kind: "moneyBag"; x: number; y: number; at: Cue; scale?: number }
   | { kind: "stopwatch"; x: number; y: number; at: Cue; spinUntil: Cue }
-  | { kind: "question"; x: number; y: number; at: Cue; scale?: number };
+  | { kind: "question"; x: number; y: number; at: Cue; scale?: number }
+  /** Ruta punteada que se dibuja sola sobre el plano (de la entrada a la bóveda). */
+  | { kind: "route"; at: Cue; until: Cue }
+  /** Punto con nombre sobre el plano; con `moveTo` se va a otro lugar. */
+  | {
+      kind: "marker";
+      label: string;
+      x: number;
+      y: number;
+      at: Cue;
+      moveTo?: { x: number; y: number; at: Cue };
+    }
+  /** Cámara de seguridad que gira; en `off` se tacha. */
+  | { kind: "securityCam"; x: number; y: number; at: Cue; off: Cue; scale?: number }
+  /** Celular con una tienda; desde `loadingAt`, la página de pago cargando. */
+  | { kind: "phone"; x: number; y: number; at: Cue; loadingAt?: Cue; scale?: number };
 
 export type Overlay =
-  /** Caja de dato con rebote. `count` cuenta desde 0 hasta el número entre `at` y `countUntil`. */
-  {
-    kind: "dataBox";
-    text: string;
-    sub?: string;
-    x: number;
-    y: number;
-    at: Cue;
-    until?: Cue;
-    count?: { to: number; until: Cue };
-  };
+  /** Lista que se completa ítem por ítem (✓ o ✗). */
+  | {
+      kind: "checklist";
+      x: number;
+      y: number;
+      items: { text: string; mark: "ok" | "no"; at: Cue }[];
+    }
+  /** Etiqueta chica en mayúsculas ("CAMBIO DE GUARDIA"). */
+  | {
+      kind: "tag";
+      text: string;
+      x: number;
+      y: number;
+      at: Cue;
+      until?: Cue;
+      color?: "rojo" | "azul";
+    }
+  /** Caja de dato con rebote. `count` cuenta desde 0 hasta el número entre `at` y `count.until`. */
+  | {
+      kind: "dataBox";
+      text: string;
+      sub?: string;
+      x: number;
+      y: number;
+      at: Cue;
+      until?: Cue;
+      count?: { to: number; until: Cue };
+    };
 
-export type Setting = "aeropuerto-noche" | "reloj-alarma";
+export type Setting = "aeropuerto-noche" | "reloj-alarma" | "plano" | "tienda";
 
 export type GuionScene = {
   /** Índice de la escena en la voz de V0-3 (out/v0-3/manifest.json). */
@@ -79,6 +112,8 @@ export type GuionScene = {
   highlight: string[];
   /** Titular de abajo, en mayúsculas; `*palabra*` va en rojo. Entra palabra por palabra. */
   headline?: { text: string; at: Cue };
+  /** Segundos de imagen después de la voz (el cierre, para leer el pedido de comentarios). */
+  tail?: number;
 };
 
 /** Los seis entran en fila desde la izquierda, uno detrás del otro. */
@@ -188,4 +223,196 @@ export const guion: GuionScene[] = [
     highlight: ["64", "hicieron"],
     headline: { text: "¿CÓMO LO *HICIERON*?", at: { word: "cómo" } },
   },
+  {
+    voice: 2,
+    narration:
+      "Tenían un plano del depósito de Lufthansa, sabían a qué hora cambiaba la guardia y nadie revisó las cámaras.",
+    setting: "plano",
+    camera: [
+      { at: 0, zoom: 1, x: 540, y: 960 },
+      { at: { word: "cámaras", edge: "end" }, zoom: 1.1, x: 560, y: 900 },
+    ],
+    actors: [],
+    props: [
+      {
+        kind: "route",
+        at: { word: "plano", offset: 0.1 },
+        until: { word: "lufthansa", edge: "end" },
+      },
+      {
+        kind: "marker",
+        label: "GUARDIA",
+        x: 230,
+        y: 1010,
+        at: 0,
+        moveTo: { x: 40, y: 1180, at: { word: "cambiaba" } },
+      },
+      { kind: "securityCam", x: 470, y: 600, at: 0.2, off: { word: "nadie" }, scale: 0.8 },
+      { kind: "securityCam", x: 900, y: 1040, at: 0.35, off: { word: "revisó" }, scale: 0.8 },
+    ],
+    overlays: [
+      {
+        kind: "checklist",
+        x: 110,
+        y: 1300,
+        items: [
+          { text: "EL PLANO", mark: "ok", at: { word: "plano" } },
+          { text: "LA HORA DEL CAMBIO", mark: "ok", at: { word: "guardia" } },
+          { text: "CÁMARAS SIN MIRAR", mark: "ok", at: { word: "cámaras" } },
+        ],
+      },
+      {
+        kind: "tag",
+        text: "CAMBIO DE GUARDIA",
+        x: 300,
+        y: 960,
+        at: { word: "cambiaba" },
+        until: { word: "nadie", offset: -0.1 },
+        color: "azul",
+      },
+    ],
+    highlight: ["plano", "guardia", "cámaras"],
+  },
+  {
+    voice: 3,
+    narration:
+      "Hoy, una tienda online pierde el 23 % de sus ventas por un error igual de simple: una página de pago que tarda más de 3 segundos en cargar.",
+    setting: "tienda",
+    camera: [
+      { at: 0, zoom: 1.04, x: 540, y: 960 },
+      { at: { word: "página" }, zoom: 1.04, x: 560, y: 960 },
+      { at: { word: "cargar", edge: "end" }, zoom: 1.14, x: 620, y: 940 },
+    ],
+    actors: [
+      {
+        id: "cliente",
+        outfit: "civil",
+        x: -200,
+        y: 1330,
+        scale: 1.45,
+        facing: "right",
+        enter: { word: "tienda" },
+        actions: [
+          { do: "walk", at: { word: "tienda" }, toX: 280, speed: 420 },
+          { do: "lookWatch", at: { word: "tarda" }, until: { word: "segundos", edge: "end" } },
+          { do: "walk", at: { word: "cargar" }, toX: -260, speed: 520 },
+        ],
+      },
+    ],
+    props: [
+      {
+        kind: "phone",
+        x: 730,
+        y: 820,
+        at: { word: "tienda", offset: 0.15 },
+        loadingAt: { word: "página" },
+        scale: 0.9,
+      },
+    ],
+    overlays: [
+      { kind: "dataBox", text: "HOY", x: 540, y: 820, at: 0, until: { word: "una", offset: 0.1 } },
+      {
+        kind: "dataBox",
+        text: "−23 %",
+        sub: "DE LAS VENTAS",
+        x: 540,
+        y: 640,
+        at: { word: "23", offset: -0.1 },
+        until: { word: "una", nth: 2, offset: -0.2 },
+        count: { to: 23, until: { word: "ventas", edge: "end" } },
+      },
+      {
+        kind: "dataBox",
+        text: "+3 SEG",
+        sub: "CARGANDO EL PAGO",
+        x: 730,
+        y: 1250,
+        at: { word: "más" },
+        count: { to: 3, until: { word: "segundos", edge: "end" } },
+      },
+    ],
+    highlight: ["23", "%", "pago", "3", "segundos"],
+    headline: { text: "VENTAS *PERDIDAS*", at: { word: "pierde" } },
+  },
+  {
+    voice: 4,
+    narration: "Si tu negocio vende por internet, revisá esto antes del viernes 15.",
+    setting: "tienda",
+    camera: [
+      { at: 0, zoom: 1.1, x: 480, y: 980 },
+      { at: { word: "viernes" }, zoom: 1.02, x: 540, y: 960 },
+    ],
+    actors: [
+      {
+        id: "duenio",
+        outfit: "dueno",
+        x: 300,
+        y: 1330,
+        scale: 1.5,
+        facing: "right",
+        actions: [{ do: "point", at: { word: "revisá" } }],
+      },
+    ],
+    props: [
+      {
+        kind: "calendar",
+        month: "VIERNES",
+        year: "15",
+        x: 730,
+        y: 980,
+        at: { word: "viernes", offset: -0.15 },
+      },
+    ],
+    overlays: [
+      {
+        kind: "tag",
+        text: "REVISÁ TU PÁGINA DE PAGO",
+        x: 700,
+        y: 640,
+        at: { word: "esto" },
+        color: "rojo",
+      },
+    ],
+    highlight: ["negocio", "viernes", "15"],
+    headline: { text: "ANTES DEL *VIERNES*", at: { word: "antes" } },
+  },
+  {
+    voice: 5,
+    narration: "¿Vos sabés cuánto tarda la tuya?",
+    setting: "tienda",
+    camera: [
+      { at: 0, zoom: 1, x: 540, y: 960 },
+      { at: { word: "tuya", edge: "end" }, zoom: 1.12, x: 540, y: 900 },
+    ],
+    actors: [],
+    props: [
+      { kind: "phone", x: 540, y: 820, at: 0, loadingAt: 0, scale: 1 },
+      { kind: "question", x: 200, y: 700, at: { word: "cuánto" }, scale: 0.7 },
+      { kind: "question", x: 880, y: 640, at: { word: "tuya" }, scale: 0.9 },
+    ],
+    overlays: [
+      {
+        kind: "tag",
+        text: "CONTANOS EN LOS COMENTARIOS",
+        x: 540,
+        y: 1260,
+        at: { word: "tuya", edge: "end", offset: 0.2 },
+        color: "azul",
+      },
+    ],
+    highlight: ["cuánto", "tuya"],
+    headline: { text: "¿CUÁNTO TARDA *LA TUYA*?", at: { word: "cuánto" } },
+    tail: 1.6,
+  },
 ];
+
+export type SceneVoice = {
+  audio: string;
+  words: { word: string; start: number; end: number }[];
+  frames: number;
+};
+
+/** Cuadros de una escena: los de su voz más la cola del guion (a 30 fps). */
+export function sceneFrames(scene: GuionScene, voice: SceneVoice): number {
+  return voice.frames + Math.round((scene.tail ?? 0) * 30);
+}

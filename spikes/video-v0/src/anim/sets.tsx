@@ -259,6 +259,178 @@ export function AlarmRoom({ t }: { t: number }) {
   );
 }
 
+/** Plano del depósito (estilo blueprint). Las rutas, marcas y cámaras son objetos del guion. */
+export function Blueprint({ t }: { t: number }) {
+  const line = "#DCEBFF";
+  const scan = ((t * 260) % 2200) - 140;
+  return (
+    <g>
+      <defs>
+        <radialGradient id="paper" cx="0.5" cy="0.45" r="0.75">
+          <stop offset="0" stopColor="#1C5DA8" />
+          <stop offset="1" stopColor="#0B2F5C" />
+        </radialGradient>
+        <pattern
+          id="vault"
+          width={18}
+          height={18}
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect width={4} height={18} fill={line} opacity={0.25} />
+        </pattern>
+        <linearGradient id="scan" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#8EC7FF" stopOpacity={0} />
+          <stop offset="1" stopColor="#8EC7FF" stopOpacity={0.18} />
+        </linearGradient>
+      </defs>
+      <rect width={1080} height={1920} fill="url(#paper)" />
+      {Array.from({ length: 28 }, (_, i) => (
+        <rect
+          key={`v${i}`}
+          x={i * 40}
+          y={0}
+          width={1.5}
+          height={1920}
+          fill={line}
+          opacity={i % 5 === 0 ? 0.16 : 0.06}
+        />
+      ))}
+      {Array.from({ length: 48 }, (_, i) => (
+        <rect
+          key={`h${i}`}
+          x={0}
+          y={i * 40}
+          width={1080}
+          height={1.5}
+          fill={line}
+          opacity={i % 5 === 0 ? 0.16 : 0.06}
+        />
+      ))}
+      {/* Una línea de escaneo que baja: el plano "se está leyendo". */}
+      <rect x={0} y={scan} width={1080} height={140} fill="url(#scan)" />
+      <g stroke={line} strokeWidth={7} fill="none" strokeLinejoin="round">
+        <path d="M 330 1100 L 940 1100 L 940 560 L 140 560 L 140 1100 L 220 1100" />
+        <path d="M 640 560 L 640 720 M 640 800 L 640 820 L 940 820" />
+        <path d="M 140 840 L 420 840 L 420 880 M 420 960 L 420 1100" />
+        <path d="M 420 700 L 640 700" strokeDasharray="18 14" strokeWidth={4} />
+        <rect x={150} y={950} width={130} height={140} strokeWidth={5} />
+      </g>
+      <rect x={644} y={564} width={292} height={252} fill="url(#vault)" />
+      <g fill={line} fontFamily={FONT} fontWeight={800} textAnchor="middle">
+        <text x={540} y={530} fontSize={36} letterSpacing={4}>
+          DEPÓSITO 261
+        </text>
+        <text x={790} y={700} fontSize={34}>
+          BÓVEDA
+        </text>
+        <text x={275} y={1150} fontSize={26} opacity={0.8}>
+          ENTRADA
+        </text>
+        <text x={280} y={720} fontSize={24} opacity={0.7}>
+          OFICINAS
+        </text>
+        <text x={680} y={980} fontSize={24} opacity={0.7}>
+          CARGA
+        </text>
+      </g>
+      <g stroke={line} strokeWidth={3} opacity={0.5}>
+        <path d="M 140 1180 L 940 1180" />
+        <path d="M 140 1166 L 140 1194 M 940 1166 L 940 1194" />
+      </g>
+      <text
+        x={540}
+        y={1214}
+        textAnchor="middle"
+        fontSize={22}
+        fill={line}
+        opacity={0.6}
+        fontFamily={FONT}
+      >
+        80 m
+      </text>
+    </g>
+  );
+}
+
+/** La tienda de noche: pared, ventana con la ciudad, estantes con cajas y una lámpara que se mece. */
+export function Shop({ t }: { t: number }) {
+  const swing = 3 * wave(t, 0.35);
+  return (
+    <g>
+      <defs>
+        <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#221B3F" />
+          <stop offset="1" stopColor="#332A58" />
+        </linearGradient>
+        <radialGradient id="lamp" cx="0.5" cy="0" r="1">
+          <stop offset="0" stopColor="#FFD58A" stopOpacity={0.45} />
+          <stop offset="1" stopColor="#FFD58A" stopOpacity={0} />
+        </radialGradient>
+      </defs>
+      <rect width={1080} height={1920} fill="url(#wall)" />
+      {/* Ventana con la ciudad. */}
+      <rect x={90} y={420} width={400} height={420} rx={12} fill="#0B1026" />
+      {BUILDINGS.slice(0, 7).map((b) => (
+        <g key={b.x} transform="translate(90 420) scale(0.55)">
+          <rect x={b.x + 20} y={760 - b.h} width={b.w} height={b.h + 40} fill="#18204A" />
+          {b.windows.slice(0, 12).map((w) => (
+            <rect
+              key={`${w.col}-${w.row}`}
+              x={b.x + 26 + w.col * 18}
+              y={770 - b.h + w.row * 26}
+              width={8}
+              height={12}
+              fill="#F6D98A"
+              opacity={w.on ? 0.3 + 0.6 * (0.5 + 0.5 * wave(t, w.hz, w.phase)) : 0.08}
+            />
+          ))}
+        </g>
+      ))}
+      <rect
+        x={90}
+        y={420}
+        width={400}
+        height={420}
+        rx={12}
+        fill="none"
+        stroke="#4A3F78"
+        strokeWidth={18}
+      />
+      <rect x={281} y={420} width={18} height={420} fill="#4A3F78" />
+      {/* Estantes con cajas. */}
+      {[560, 760].map((y) => (
+        <g key={y}>
+          <rect x={600} y={y} width={420} height={14} rx={4} fill="#4A3F78" />
+          {[0, 1, 2, 3].map((i) => (
+            <rect
+              key={i}
+              x={620 + i * 100}
+              y={y - 70 - (i % 2) * 24}
+              width={80}
+              height={70 + (i % 2) * 24}
+              rx={6}
+              fill={["#E07A5F", "#F2C14E", "#81B29A", "#6EA8FF"][(i + (y === 560 ? 0 : 2)) % 4]}
+              opacity={0.85}
+            />
+          ))}
+        </g>
+      ))}
+      {/* Lámpara del techo. */}
+      <g transform={`rotate(${swing} 540 0)`}>
+        <rect x={538} y={0} width={4} height={250} fill="#4A3F78" />
+        <path d="M 480 250 L 600 250 L 570 210 L 510 210 Z" fill="#F2C14E" />
+        <path d="M 480 250 L 600 250 L 860 1400 L 220 1400 Z" fill="url(#lamp)" />
+      </g>
+      <rect y={1360} width={1080} height={560} fill="#191433" />
+      <rect y={1360} width={1080} height={6} fill="#FFFFFF" opacity={0.06} />
+    </g>
+  );
+}
+
 export function SetView({ setting, t }: { setting: Setting; t: number }) {
-  return setting === "aeropuerto-noche" ? <AirportNight t={t} /> : <AlarmRoom t={t} />;
+  if (setting === "aeropuerto-noche") return <AirportNight t={t} />;
+  if (setting === "plano") return <Blueprint t={t} />;
+  if (setting === "tienda") return <Shop t={t} />;
+  return <AlarmRoom t={t} />;
 }

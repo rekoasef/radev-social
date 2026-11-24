@@ -22,10 +22,11 @@ const OUTFITS: Record<Outfit, Colors> = {
     shoes: "#111522",
     skin: "#C98E68",
   },
+  dueno: { top: "#E9E3D3", topDark: "#CFC7B3", legs: "#2F3442", shoes: "#16181F", skin: "#D9A27C" },
   civil: { top: "#8FB4E3", topDark: "#7397C4", legs: "#3B4252", shoes: "#1C1F27", skin: "#F0C29E" },
 };
 
-type Pose = "idle" | "lookWatch" | "scratchHead" | "panic";
+type Pose = "idle" | "lookWatch" | "scratchHead" | "panic" | "point";
 
 export type ActorState = {
   x: number;
@@ -188,6 +189,11 @@ export function Person({
     back = back * (1 - a) + (-160 + 12 * wave(t, 3)) * a;
     headTilt = -8 * a;
     mouthOpen = 0.4 * a;
+  } else if (state.pose === "point") {
+    // Brazo adelante, a la altura del hombro, con un leve "¡eso!" al principio.
+    front = front * (1 - a) + (-86 + 6 * wave(t, 1.5)) * a;
+    headTilt = -4 * a;
+    mouthOpen = 0.3 * a;
   } else if (state.pose === "panic") {
     front = front * (1 - a) + (-165 + 10 * wave(t, 4)) * a;
     back = back * (1 - a) + (-150 + 10 * wave(t, 4, 0.5)) * a;
@@ -219,6 +225,13 @@ export function Person({
           ) : null}
           {actor.outfit === "ladron" ? (
             <rect x={-4} y={-208} width={8} height={100} rx={4} fill="#1A1B24" />
+          ) : null}
+          {actor.outfit === "dueno" ? (
+            // Delantal del negocio.
+            <>
+              <path d="M -30 -180 L 30 -180 L 36 -94 L -36 -94 Z" fill="#2E8B57" />
+              <rect x={-12} y={-150} width={24} height={16} rx={4} fill="#226B43" />
+            </>
           ) : null}
           <rect x={-10} y={-226} width={20} height={20} rx={6} fill={c.skin} />
         </g>

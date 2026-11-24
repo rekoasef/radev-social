@@ -116,7 +116,9 @@ export function Headline({
     >
       {parts.map((part, i) => {
         const s = pop(t, at + i * 0.14, fps);
-        const red = part.startsWith("*");
+        // Rojo desde la palabra que abre `*` hasta la que lo cierra ("*LA TUYA*?").
+        const opened = parts.slice(0, i).join(" ").split("*").length % 2 === 0;
+        const red = opened || part.startsWith("*");
         const text = part.replaceAll("*", "");
         return (
           <span
@@ -142,7 +144,7 @@ export function DataBox({
   t,
   fps,
 }: {
-  box: Overlay;
+  box: Extract<Overlay, { kind: "dataBox" }>;
   words: Word[];
   t: number;
   fps: number;
@@ -203,4 +205,129 @@ export function DataBox({
       ) : null}
     </div>
   );
+}
+
+/** Lista ✓/✗ que se completa ítem por ítem. */
+function Checklist({
+  box,
+  words,
+  t,
+  fps,
+}: {
+  box: Extract<Overlay, { kind: "checklist" }>;
+  words: Word[];
+  t: number;
+  fps: number;
+}) {
+  const first = Math.min(...box.items.map((item) => cueTime(item.at, words)));
+  if (t < first - 0.1) return null;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: box.x,
+        top: box.y,
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        fontFamily: FONT,
+      }}
+    >
+      {box.items.map((item) => {
+        const s = pop(t, cueTime(item.at, words), fps);
+        const ok = item.mark === "ok";
+        return (
+          <div
+            key={item.text}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 18,
+              padding: "10px 26px 10px 12px",
+              background: "rgba(10,14,30,0.82)",
+              borderRadius: 16,
+              transform: `translateX(${(1 - Math.min(1, s)) * -60}px) scale(${0.9 + 0.1 * s})`,
+              opacity: Math.min(1, s * 2),
+              transformOrigin: "left center",
+            }}
+          >
+            <svg
+              width={54}
+              height={54}
+              viewBox="-27 -27 54 54"
+              role="img"
+              aria-label={ok ? "sí" : "no"}
+            >
+              <circle r={25} fill={ok ? "#2EB872" : "#E5383B"} />
+              <path
+                d={ok ? "M -11 1 L -3 9 L 12 -8" : "M -9 -9 L 9 9 M 9 -9 L -9 9"}
+                stroke="#FFFFFF"
+                strokeWidth={6}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+                strokeDasharray={60}
+                strokeDashoffset={60 * (1 - Math.min(1, s))}
+              />
+            </svg>
+            <span
+              style={{ color: "#FFFFFF", fontSize: 46, fontWeight: 900, letterSpacing: "0.01em" }}
+            >
+              {item.text}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Etiqueta chica en mayúsculas, con rebote. */
+function Tag({
+  box,
+  words,
+  t,
+  fps,
+}: {
+  box: Extract<Overlay, { kind: "tag" }>;
+  words: Word[];
+  t: number;
+  fps: number;
+}) {
+  const at = cueTime(box.at, words);
+  const leave =
+    box.until === undefined
+      ? 0
+      : ramp(t, cueTime(box.until, words), cueTime(box.until, words) + 0.2);
+  const s = pop(t, at, fps) * (1 - leave);
+  if (s <= 0.001) return null;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: box.x,
+        top: box.y,
+        transform: `translate(-50%, -50%) scale(${s}) rotate(-2deg)`,
+        background: box.color === "azul" ? "#2E5BDA" : "#E5383B",
+        color: "#FFFFFF",
+        fontFamily: FONT,
+        fontSize: 40,
+        fontWeight: 900,
+        letterSpacing: "0.04em",
+        padding: "10px 24px",
+        borderRadius: 10,
+        whiteSpace: "nowrap",
+        boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
+      }}
+    >
+      {box.text}
+    </div>
+  );
+}
+
+export function OverlayView(props: { box: Overlay; words: Word[]; t: number; fps: number }) {
+  const { box } = props;
+  if (box.kind === "checklist") return <Checklist {...props} box={box} />;
+  if (box.kind === "tag") return <Tag {...props} box={box} />;
+  return <DataBox {...props} box={box} />;
 }
