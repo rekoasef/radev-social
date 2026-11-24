@@ -179,6 +179,18 @@ export const guionSchema = z
   })
   .strict();
 
+/**
+ * V0-13: videos de 1,5–2 min (pedido del operador, 2026-11-24). Mismas escenas, más cantidad.
+ * Acepta también los guiones cortos: el render lee cualquiera con este schema.
+ */
+export const guionLargoSchema = guionSchema.extend({
+  scenes: z.array(sceneSchema).min(4).max(25),
+  facts: z
+    .array(z.object({ claim: short(200), source: short(200) }).strict())
+    .max(30)
+    .describe("Cada dato o cifra de la narración y dónde se puede verificar."),
+});
+
 export type GuionDraft = z.infer<typeof guionSchema>;
 export type SceneDraft = z.infer<typeof sceneSchema>;
 

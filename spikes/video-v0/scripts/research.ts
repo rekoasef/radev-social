@@ -7,6 +7,8 @@
 //   pnpm research guion <dossier>      el guion, escrito solo con el dossier
 //   pnpm research summary
 // --effort <low|medium|high>: como en `pnpm guion` (envoltorio del binario; el proveedor no lo pasa).
+// --long (V0-13): video de 1,5–2 min en vez de un Short: dossier con más material y guion de
+// 15–22 escenas. Deja todo en out/v0-13.
 import {
   appendFileSync,
   chmodSync,
@@ -24,16 +26,17 @@ import {
 } from "@radev/ai";
 import { z } from "zod";
 import { guion as ejemplo } from "../src/anim/guion";
-import { checkGuion, type GuionDraft, guionSchema } from "../src/anim/schema";
+import { checkGuion, type GuionDraft, guionLargoSchema, guionSchema } from "../src/anim/schema";
 import { TOPICS } from "./topics";
 
 const root = path.resolve(import.meta.dirname, "..");
 const envFile = path.resolve(root, "..", "..", ".env");
 if (existsSync(envFile)) process.loadEnvFile(envFile);
-const out = path.join(root, "out", "v0-11");
-mkdirSync(out, { recursive: true });
-
 const args = process.argv.slice(2);
+const long = args.includes("--long");
+if (long) args.splice(args.indexOf("--long"), 1);
+const out = path.join(root, "out", long ? "v0-13" : "v0-11");
+mkdirSync(out, { recursive: true });
 const flag = (name: string) => {
   const i = args.indexOf(`--${name}`);
   if (i < 0) return undefined;
@@ -204,12 +207,12 @@ Investigás a fondo un tema para un video corto de historias reales (canal en es
 - **Citas** (frases de personas, notas, carteles): solo si la fuente las reproduce textualmente; copiá el texto como está.
 - Si las fuentes no coinciden (por ejemplo, el monto de un robo), no elijas una: ponelo en \`disputed\` con las versiones.
 - Lo que se dice pero no pudiste confirmar va en \`unconfirmed\`. Es mejor un dossier corto y seguro que uno largo con dudas.
-- Devolvé solo el objeto del schema.`;
+- Devolvé solo el objeto del schema. **El primer objeto que entregás es el definitivo**: nunca mandes uno de prueba ni con datos de ejemplo ("test", example.com) para ver si el formato pasa.`;
 
 async function dossier(i: number) {
   const topic = TOPICS[i];
   if (!topic) throw new Error(`No hay tema ${i + 1}`);
-  const name = `dossier-${i + 1}${effort ? `-${effort}` : ""}`;
+  const name = `dossier-${i + 1}${effort ? `-${effort}` : ""}${long ? "-long" : ""}`;
   const { run, data } = await ask(
     name,
     "dossier",
@@ -217,7 +220,20 @@ async function dossier(i: number) {
       prompt: "Investigá el tema de `task.json` y devolvé el dossier.",
       files: {
         "CLAUDE.md": RESEARCH_SYSTEM,
-        "task.json": JSON.stringify({ tema: topic, para: "Short de 35–45 s" }, null, 1),
+        "task.json": JSON.stringify(
+          long
+            ? {
+                tema: topic,
+                para:
+                  "Video de 1,5–2 min (15–22 escenas): hace falta material para contar la historia " +
+                  "entera, no solo el hecho: antecedentes y protagonistas, la preparación, el hecho " +
+                  "paso a paso, cómo se descubrió o investigó, qué pasó después y el dato final que " +
+                  "sorprende. Apuntá a 20–30 hechos y todas las citas textuales que encuentres.",
+              }
+            : { tema: topic, para: "Short de 35–45 s" },
+          null,
+          1,
+        ),
       },
       schema: dossierSchema,
       tools: ["WebSearch", "WebFetch"],
@@ -323,6 +339,11 @@ async function verify(file: string) {
 
 // --- guion: solo con el dossier ---
 
+/** Reemplaza la línea de duración del catálogo cuando el video es largo (V0-13). */
+const LONG_RULES = `- **Esta vez NO es un Short: es un video de 1,5 a 2 minutos.** **15 a 22 escenas**, unos 1.500–1.800 caracteres de narración en total (Fran dice ~15 caracteres por segundo). Cada escena, 60–110 caracteres: una idea por escena, para que siempre esté pasando algo en pantalla.
+- **Estructura**, como un buen video de historias: (1) **gancho** en las primeras 2 escenas: el dato más fuerte o una pregunta, antes de explicar nada; (2) **contexto**: quiénes eran y por qué importa; (3) **el hecho paso a paso**, con tensión; (4) **el giro**: cómo se descubrió, qué salió mal o lo que nadie esperaba; (5) **qué pasó después**; (6) **cierre** con una pregunta a la audiencia. Cada 4–5 escenas, una frase que tire hacia adelante ("pero eso no fue lo más raro").
+- Variá escenarios, cámara y cajas a lo largo del video: que no se repita el mismo plano dos escenas seguidas.`;
+
 const catalog = readFileSync(path.join(root, "src", "anim", "catalog.md"), "utf8");
 const example = JSON.stringify(
   { title: "El robo del siglo", scenes: ejemplo.map(({ voice: _, ...s }) => s), facts: [] },
@@ -375,6 +396,9 @@ async function guionFromDossier(file: string) {
     dossier: Dossier;
   };
   const name = `${path.basename(file, ".json").replace(/^dossier/, "guion")}${effort ? `-g${effort}` : ""}`;
+  // El catálogo pide un Short de 6–8 escenas; para el largo se cambia esa línea y se suma la estructura.
+  const system = long ? catalog.replace(/^- \*\*6 a 8 escenas\*\*.*$/m, LONG_RULES) : catalog;
+  if (long && system === catalog) throw new Error("No encontré la línea de duración en catalog.md");
   const { run, data } = await ask(
     name,
     "guion",
@@ -387,20 +411,28 @@ async function guionFromDossier(file: string) {
         "las versiones comparten). En `facts`, `source` es el id del hecho o la cita del dossier " +
         "(F3, C1; varios separados por coma). Devolvé el objeto que pide el schema.",
       files: {
-        "CLAUDE.md": catalog,
+        "CLAUDE.md": system,
         "ejemplo.json": example,
         "dossier.json": JSON.stringify(saved.dossier, null, 1),
         "task.json": JSON.stringify(
-          { tema: saved.topic, voz: "Fran", duracion: "35–45 s" },
+          { tema: saved.topic, voz: "Fran", duracion: long ? "90–120 s" : "35–45 s" },
           null,
           1,
         ),
       },
-      schema: guionSchema,
+      schema: long ? guionLargoSchema : guionSchema,
       maxTurns: 3,
       timeoutMs: 5 * 60_000,
     },
-    (g) => checkAgainstDossier(g, saved.dossier),
+    (g) => {
+      const errors = checkAgainstDossier(g, saved.dossier);
+      if (long && g.scenes.length < 15)
+        errors.push(`scenes › ${g.scenes.length} escenas (mínimo 15)`);
+      const chars = g.scenes.reduce((sum, sc) => sum + sc.narration.length, 0);
+      if (long && chars < 1300)
+        errors.push(`narración de ${chars} caracteres (mínimo 1.300, ~90 s)`);
+      return errors;
+    },
   );
   if (data) {
     run.extra = {

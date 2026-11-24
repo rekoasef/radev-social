@@ -8,7 +8,7 @@ import path from "node:path";
 import { bundle } from "@remotion/bundler";
 import { openBrowser, renderMedia, renderStill, selectComposition } from "@remotion/renderer";
 import { guion as handWritten, sceneFrames } from "../src/anim/guion";
-import { guionSchema, toRenderGuion } from "../src/anim/schema";
+import { guionLargoSchema, toRenderGuion } from "../src/anim/schema";
 
 const root = path.resolve(import.meta.dirname, "..");
 // --voices: otra carpeta con manifest.json y audio/ (por ejemplo out/v0-3/x1.3, de tts/tempo.py).
@@ -34,7 +34,7 @@ const voices = manifest.scenes.map((s) => ({
 const guionFile = option("guion");
 const guion = guionFile
   ? toRenderGuion(
-      guionSchema.parse(
+      guionLargoSchema.parse(
         (JSON.parse(readFileSync(path.resolve(guionFile), "utf8")) as { guion: unknown }).guion,
       ),
     )

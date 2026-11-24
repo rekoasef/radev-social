@@ -304,6 +304,24 @@ Videos en `Descargas\v0-6-animado\escenas-1-y-2-voz-{1.1,1.2,1.3}.mp4` (fábrica
 - **Detalle técnico:** el PyAV que trae faster-whisper 1.2.1 choca de versión (`metadata_errors`); el audio lo decodifica `ffmpeg` y se le pasa ya en memoria.
 - **Falta:** una grabación real del operador (con ruido de ambiente, respiraciones, errores y repeticiones). Ahí puede aparecer lo que esta prueba no ve: frases dichas dos veces (el emparejamiento toma una) o palabras cambiadas. Para repetirla: `out/whisper/.venv/bin/python tts/whisper_words.py <grabación> texts/v0-11-mona.json --tag yo --model medium` y `pnpm anim --guion out/v0-11/guion-4-low-glow.json --voices out/v0-12/whisper-yo --name mona-mi-voz`.
 
+## V0-13 · Un video de 2 minutos de punta a punta (PC de la fábrica, 2026-11-24)
+
+**Por qué:** el operador pidió videos de **1,5 a 2 min** que "cuenten bien la historia". Se repitió la cadena de V0-11 (investigar → guion solo con el dossier → voz → render) con la opción `--long` de `scripts/research.ts`: el dossier pide material para la historia entera (antecedentes, preparación, el hecho, la investigación, qué pasó después) y el guion, 15–22 escenas con estructura (gancho, contexto, hecho, giro, después, cierre con pregunta). `guionLargoSchema` acepta hasta 25 escenas y 30 datos; el render lee cualquier guion con ese schema. Tema: Banco Río. Resultados en `out/v0-13/`.
+
+| Paso | Resultado | Tokens (entrada / salida) | Turnos | Tiempo |
+|---|---|---|---|---|
+| Investigación, 1.er intento | ❌ Zod ok pero **datos de prueba** ("test", `example.com`); el chequeo de 3 sitios lo frenó | 173.956 / 33.528 | 12 | 307 s |
+| Investigación, 2.º intento | válido · 30 hechos, 2 citas, 4 disputas, 4 sitios | 46.693 / 18.107 | 8 | 173 s |
+| Guion | válido al primer intento · 20 escenas, 1.974 caracteres | 33.167 / 14.324 | 2 | 115 s |
+| Voz (`tts/whole.py`, Fran 1,2, una toma) | 117,7 s · 797 créditos | — | — | ~15 s |
+| Render (`pnpm anim`) | 119,7 s de video · pico de 2,7 GB de RAM (de 7,9) | — | — | 198 s |
+
+- **El primer intento de investigación entregó un objeto de prueba** como respuesta final. Con `--json-schema`, el primer objeto que entrega el modelo es el definitivo; parece que "probó" el formato. No hay registro para confirmarlo (`--no-session-persistence`). Se agregó al prompt: "el primer objeto que entregás es el definitivo: nunca mandes uno de prueba". **Para V1:** además del chequeo de sitios, rechazar dominios de ejemplo y textos de relleno, y reintentar solo.
+- **El dossier es bueno, pero depende de Wikipedia** (22 de 30 hechos). Corrigió de nuevo la cita del cartel ("ricachones") y sumó una nueva ("no pierdan tiempo, yo soy Fernando Araujo"). Los números de los hechos aparecen en sus páginas (14 de 14); los fragmentos "textuales", no (1 de 30, lo de WebFetch de V0-11).
+- **El guion largo sale de una**, con la estructura pedida y una idea por escena. Pero: usa "19 millones" como dato firme cuando el dossier lo tiene **en disputa** (18 o 19; el chequeo de números lo deja pasar porque las versiones en disputa cuentan como conocidas), cierra con "nunca se supo qué pasó con los 19 millones" (el dossier dice que se recuperó una fracción) y usa "furgoneta" (no es rioplatense). Las tres son tareas de la oficina de **Dirección**.
+- **Lo que se ve en 2 minutos** (`Descargas\v0-13-largo\banco-rio-2min.mp4` y la hoja de cuadros, fábrica): la historia se entiende y las cajas de datos entran a tiempo, pero **"la tienda" aparece en 11 de 20 escenas**, se repiten los textos fijos de los escenarios ("DEPÓSITO 261", "CARGA 261") y casi siempre los mismos dos personajes. Con 4 escenarios no alcanza: **V0-10 (biblioteca de dibujos) pasa a ser lo más urgente.** Además, cuando el karaoke ocupa dos renglones, el segundo pisa el escenario y se lee mal (control de calidad).
+- **Tiempos y costo de un video de 2 min:** ~3 min de investigación + ~2 min de guion + voz + ~3,3 min de render ≈ **8–9 min de máquina** en la fábrica. El render va a ~1,7 min por minuto de video (menos que los 2–3 estimados). Voz: ~800 créditos, así que 20 videos ≈ 16.000 por mes, dentro de los 38.439 del plan si el 0,4 por carácter se mantiene. `claude -p` (lista, no se paga aparte): ~USD 0,7 por video entre investigación y guion.
+
 ## V0-7 · Licencias y condiciones
 
 *En curso.* Primera lectura (2026-11-21), a confirmar en las páginas oficiales antes de cerrar:
