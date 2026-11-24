@@ -135,7 +135,32 @@ Descartadas por licencia antes de probar: Piper `en_US-ryan` y `hfc_female`/`hfc
 - `loudnorm` en una pasada quedó en −14,9 LUFS (objetivo −14). En V1: dos pasadas (medir y aplicar), unos segundos más de armado.
 - Videos en `Descargas\v0-3-escenas`: `1-completo-audio-aparte`, `2-completo-audio-en-clips`, `3-escena4-cambiada-audio-aparte`.
 
-**Resultado:** criterios medidos cumplidos con la variante A (desfase < 1 cuadro, armado < 15 s, rehacer una escena ≈ un cuarto del render). **Falta el oído del operador** (cortes en las uniones, entonación entre escenas generadas por separado, música) para cerrar **D-D** y la variante de audio (**A: aparte**).
+**Repetida en la PC de la fábrica (2026-11-24).** Ryzen 5 4600H, WSL con 5,5 GiB, Debian 13 y `ffmpeg` 7.1.3 (ver `docs/ENVIRONMENTS.md`). Las voces se volvieron a pedir: es otra toma de ElevenLabs, así que el video dura 49,3 s (casa: 48,2 s) y la escena 4 editada, 14,4 s.
+
+| | Fábrica | Casa |
+|---|---|---|
+| A: desfase final / voz en cada escena / saltos | −0,3 ms (completo), −0,7 ms (editado) / **0 ms** en las 6 / 0 | igual |
+| B: desfase final / voz por escena | 45,7 ms (1,37 cuadros) / −37 a +34 ms | igual |
+| Las 6 escenas (A) | **59,7 s** (~26 % más lenta) | 47,2 s |
+| Bundle de Remotion | 50 s la primera vez (en frío), 7 s después | 5–8 s |
+| Cambiar la escena 4 | 1 clip en 16,3 s (26 % del render) + armado 4,4 s | 12,1 s + 5,7 s |
+| Armado A | 4,4–4,7 s | 5,7–5,9 s |
+| ElevenLabs | 502 + 123 = 625 caracteres | igual |
+| Memoria durante el render | mínimo **640 MiB libres** de 5,5 GiB, 17 MiB de swap: alcanza, justo | — |
+
+La primera corrida baja además el Chrome Headless Shell de Remotion (102,5 MB, queda en `node_modules`). Los resultados de sincronía no dependen de la máquina; el tiempo de render sí.
+
+**Velocidad de la voz (fábrica, 2026-11-24).** Fran trae guardado `speed` 0,92. `tts/scenes.py --speed` lee los ajustes guardados de la voz (`GET /v1/voices/{id}/settings`: stability 0,8, similarity 0,7, style 0,5, speaker boost) y cambia solo la velocidad. Mandar `speed` solo podría dejar el resto en los valores por defecto de la API. La velocidad entra en la clave de la caché.
+
+| `speed` | Duración | Render A (6 escenas) | Voz por escena (A) |
+|---|---|---|---|
+| 0,92 (guardada) | 49,3 s | 59,7 s | 0 ms |
+| 1,0 | 46,6 s (−5,5 %) | 51,0 s | 0 ms |
+| **1,1** | 42,4 s (−14 %) | 45,6 s | 0 ms |
+
+La duración baja menos de lo que sube la velocidad, porque ElevenLabs genera la voz de nuevo (respeta las pausas) y cada escena conserva 0,25 s de aire. Cada versión gastó 502 caracteres. **Elegida por el operador: 1,1.**
+
+**Resultado (cerrada el 2026-11-24, PC de la fábrica):** criterios medidos cumplidos con la variante A (desfase < 1 cuadro, armado < 15 s, rehacer una escena ≈ un cuarto del render). El operador miró y escuchó los videos y aprobó: **D-D en firme, con el audio armado aparte (variante A)**. Voz de Fran a `speed` 1,1 (ADR 0027).
 
 ## V0-7 · Licencias y condiciones
 

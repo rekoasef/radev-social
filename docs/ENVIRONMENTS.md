@@ -54,21 +54,23 @@ V0-0 de RAdev Studio, ver `docs/RADEV-STUDIO-REVISION.md` (D-I):
 
 ## PC de la fábrica (Crucianelli)
 
-**Sin verificar.** Lo único que se sabe es que usa WSL con **Debian**. La primera vez que se trabaje desde ahí, completar esta tabla antes de instalar o medir nada:
+Relevada el 2026-11-24 (solo lectura, sin cambios).
 
 | Dato | Valor |
 |---|---|
-| Windows (equipo, usuario) | ? |
-| WSL (distro, versión, usuario) | Debian, ? |
-| CPU / GPU | ? |
-| RAM total / RAM que ve WSL | ? |
-| `.wslconfig` | ? |
-| Docker | ? |
-| Node / nvm | ? |
-| Postgres nativo en 5432 | ? |
-| `ffmpeg` | ? |
-| SSH a producción (`radev-oracle`) | ? (posiblemente sí: falta confirmar) |
-| `/etc/wsl.conf` / systemd | ? |
+| Windows (equipo, usuario) | Windows 11 Pro, equipo `RASEFNOTE`, usuario `rasef` |
+| WSL (distro, versión, usuario) | **Debian 13 (trixie)**, usuario `renzoasef`, más la distro `docker-desktop` · WSL 2.6.1.0, kernel 6.6.87.2-1 |
+| CPU / GPU | AMD Ryzen 5 4600H (6 núcleos / 12 hilos) · AMD Radeon RX 5600M + Radeon integrada. Sin GPU NVIDIA: nada de `nvidia-smi` en WSL |
+| RAM total / RAM que ve WSL | 11,4 GB en Windows; WSL ve **~5,5 GiB + 2 GiB de swap** (valores por defecto) |
+| `.wslconfig` | No existe |
+| Docker | Docker Desktop instalado, pero el 2026-11-24 estaba **detenido** (distro `docker-desktop` en `Stopped`): `docker` no existe en Debian hasta abrirlo. Falta confirmar que la integración WSL con Debian esté activada |
+| Node / nvm | nvm en `~/.nvm` con Node 18.20.8, 20.19.6 y 24.21.0. **El de por defecto es el 20**: hace falta `nvm use` (`.nvmrc` pide 24). pnpm 12.5.1 en el Node 24 |
+| Postgres nativo en 5432 | Sí, escucha en `127.0.0.1:5432` (otros proyectos: no tocarlo) |
+| `ffmpeg` | **7.1.3-0+deb13u1** (apt; ya estaba instalado). La de casa es 6.1.1 |
+| SSH a producción (`radev-oracle`) | **Sí**: `Host radev-oracle` en `~/.ssh/config`, llave `id_ed25519_radev_oracle` |
+| `/etc/wsl.conf` / systemd | Bien formado: `[boot] systemd=true`, `[user] default=renzoasef`. PID 1 = `systemd` |
+
+Con 5,5 GiB, esta máquina tiene casi la mitad de memoria que la de casa (9,7 GiB): el render de video y Docker pueden quedar justos. Antes de medir, decidir con el operador si se le crea un `.wslconfig`.
 
 Comandos para relevarla (solo leen, no cambian nada):
 
