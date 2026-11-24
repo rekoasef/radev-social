@@ -107,6 +107,24 @@ Todo editable, y cada escena se puede rehacer sola.
 - La revisión humana (las dos aprobaciones) se mantiene.
 - Nada de publicar el mismo video en varios canales.
 
+## 6 bis. Lumus también hace videos (pedido del operador, 2026-11-24)
+
+El sistema tiene que servir también para videos de **Lumus**, como un canal más:
+- **Identidad:** violeta `#6E5CE8`, la orbe como elemento de marca y sus tipografías.
+- **Voz:** Carlos Pro, la comercial (ADR 0027).
+
+Lo que Lumus necesita y los videos de historias no:
+- **Datos reales en pantalla.** Dólar, inflación, rendimientos: los números salen de Bluelytics y los pone el código, nunca la IA (regla 9). El guion dice qué dato va en cada lugar.
+- **Gráficos animados.** Una línea que se dibuja o barras que crecen.
+- **Capturas reales de la app dentro del celular** (como la slide `screen`, ADR 0024).
+- **Personajes y escenarios con la paleta de la marca.**
+
+Impacto en las pruebas:
+- **V0-8:** dos guiones, uno de historias (Fran) y uno de Lumus (Carlos Pro, con datos y una captura).
+- **V0-10:** los primeros dibujos nuevos son el gráfico animado y el celular con captura real.
+
+Pendiente del operador: qué tipo de videos de Lumus (educación financiera, promoción de la app o una mezcla) y qué capturas usar.
+
 ## 7. Recomendación
 
 **V1:**
