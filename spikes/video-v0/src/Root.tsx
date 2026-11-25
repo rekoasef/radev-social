@@ -1,6 +1,7 @@
 import { exampleSlides, FORMAT } from "@radev/slides";
 import { Composition } from "remotion";
 import { AnimVideo, type AnimVideoProps, animFrames } from "./anim/AnimVideo";
+import { THUMB_SIZE, Thumb, type ThumbProps } from "./photo/Thumb";
 import { PhotoVideo, type PhotoVideoProps, photoFrames } from "./photo/PhotoVideo";
 import { StudioSheet, type StudioSheetProps, sheetHeight } from "./anim/studio-draw";
 import { Captions, type CaptionsProps, Scene, type SceneProps } from "./Captions";
@@ -148,6 +149,17 @@ export const Root = () => (
       durationInFrames={30 * FPS}
       defaultProps={{ voices: [], shots: [] } satisfies PhotoVideoProps}
       calculateMetadata={({ props }) => ({ durationInFrames: Math.max(1, photoFrames(props)) })}
+    />
+    {/* Miniatura del video documental (16:9 para YouTube y 9:16). */}
+    <Composition
+      id="thumb"
+      component={Thumb}
+      width={1280}
+      height={720}
+      fps={FPS}
+      durationInFrames={1}
+      defaultProps={{ format: "16x9", image: "", aspect: 1, view: { cx: 0.5, cy: 0.5, vw: 1 }, kicker: "", lines: [], accent: "" } satisfies ThumbProps}
+      calculateMetadata={({ props }) => THUMB_SIZE[props.format]}
     />
   </>
 );

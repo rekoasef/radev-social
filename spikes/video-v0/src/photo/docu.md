@@ -16,6 +16,7 @@ Tu salida es el guion escena por escena en JSON. El código lo valida, pone la v
 
 ## Imágenes: elegí con criterio
 
+- **Nunca uses el retrato o la foto de una persona para hablar de otra** (ni el de Apollinaire mientras se habla del ladrón). Mirá bien qué muestra cada imagen.
 - Cada escena usa **una imagen candidata** (`image`: su id). **Que la imagen tenga que ver con lo que se dice** en ese momento: la persona, el lugar, el objeto o el documento. Si no hay una imagen exacta, usá una relacionada (el edificio, la época, un detalle) pero **nunca insinúes que muestra lo que no muestra**: una reconstrucción de 1913 no es el hecho real; un retrato posterior no es la escena. Si la imagen es una reconstrucción, un cuadro o un montaje, aclaralo en `caption` («Reconstrucción publicada en 1913»).
 - Usá **al menos 6 imágenes distintas**; ninguna más de 3 veces. Si repetís una imagen en escenas seguidas, mostrá otra zona (de un detalle a otro).
 - **Encuadre (`from` → `to`)**: `cx`, `cy` es el centro de lo que se ve (0 a 1 sobre la imagen) y `vw` el ancho visible (1 = toda la imagen a lo ancho, 0,3 = un detalle chico). El cuadro es vertical, así que una imagen horizontal se recorta: elegí `cx` para quedarte con lo importante. Tiene que haber movimiento: de general a detalle (acercarse a lo que se nombra) o un paneo entre dos zonas. Si la imagen es un collage o un diario con varios recuadros, usá `vw` chico (0,25–0,4) para ir recuadro por recuadro. No hagas zoom a zonas borrosas: si la imagen es chica, `vw` ≥ 0,5.
@@ -36,6 +37,6 @@ Van sobre la imagen y entran/salen en palabras de la voz. Usalos para lo que la 
 
 ## Lo demás
 
-- `highlight`: 1 a 3 palabras de la narración de la escena que se resaltan en los subtítulos (la cifra, el nombre, la palabra clave).
+- `highlight`: 1 a 3 **palabras sueltas** (nunca frases) de la narración de la escena que se resaltan en los subtítulos (la cifra, el nombre, la palabra clave).
 - Español rioplatense: «vos», «tenés», «se llevó»; nada de «vosotros», «coger», «ordenador», «móvil», «tío».
 - Frases cortas, sin adornos ni latiguillos («para siempre», «increíble»). El tono es de documental: serio, preciso, con intriga.

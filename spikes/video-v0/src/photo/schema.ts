@@ -57,21 +57,21 @@ export const graphicSchema = z.discriminatedUnion("kind", [
 ]);
 export type DocuGraphic = z.infer<typeof graphicSchema>;
 
-const view = z
+export const viewSchema = z
   .object({
     cx: z.number().min(0).max(1).describe("Centro horizontal del encuadre (0 = borde izquierdo de la imagen, 1 = derecho)."),
     cy: z.number().min(0).max(1).describe("Centro vertical (0 = arriba, 1 = abajo)."),
     vw: z.number().min(0.2).max(1).describe("Ancho de imagen que se ve: 1 = todo el ancho, 0,3 = un detalle chico."),
   })
   .strict();
-export type DocuView = z.infer<typeof view>;
+export type DocuView = z.infer<typeof viewSchema>;
 
 export const docuSceneSchema = z
   .object({
     narration: z.string().min(10).max(260),
     image: z.string().regex(/^i\d{2,3}$/).describe("El id de una imagen candidata (i01, i02…)."),
-    from: view.describe("Encuadre al empezar la escena."),
-    to: view.describe("Encuadre al terminar: el zoom o paneo lento."),
+    from: viewSchema.describe("Encuadre al empezar la escena."),
+    to: viewSchema.describe("Encuadre al terminar: el zoom o paneo lento."),
     caption: short(70).optional().describe("Qué es la imagen, si no es obvio (p. ej. «Reconstrucción publicada en 1913»)."),
     highlight: z.array(z.string().min(1)).max(4).optional().describe("Palabras de la narración que se resaltan en los subtítulos."),
     graphics: z.array(graphicSchema).max(2),
@@ -142,6 +142,13 @@ export function checkDocu(g: DocuGuion, candidates: Candidate[], dossierText: st
       else if (count < (c.nth ?? 1)) errors.push(`${at}.${path} › la palabra "${c.word}" no está en la narración de la escena`);
     };
     s.graphics.forEach((gr, j) => {
+      // una fecha en pantalla tiene que ser la que dice la voz (si no, es un dato sin respaldo)
+      if (gr.kind === "fecha") {
+        const said = new Set(numbersIn(`${s.narration} ${s.caption ?? ""}`));
+        for (const n of numbersIn(`${gr.text} ${gr.sub ?? ""}`)) {
+          if (!said.has(n)) errors.push(`${at}.graphics.${j} › la fecha en pantalla incluye ${n}, que la narración de la escena no dice`);
+        }
+      }
       if (gr.kind === "cronologia") {
         gr.items.forEach((it, k) => cue(it.at, `graphics.${j}.items.${k}.at`));
       } else cue(gr.at, `graphics.${j}.at`);

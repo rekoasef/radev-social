@@ -102,7 +102,8 @@ python3 tts/whole.py texts/<archivo>.json --tag <nombre>  # voz (ElevenLabs, Alb
 pnpm anim --guion <guion.json> --voices out/v0-12/<nombre> --name <video>  # render
 pnpm docu search <dossier.json> --name <video>   # formato documental: imágenes reales de Commons
 pnpm docu guion <dossier.json> --name <video>    # la IA mira las imágenes y escribe el guion
-pnpm docu texts|render --name <video> [--voices <carpeta>]  # texto para la voz · render
+pnpm docu review|pin|meta --name <video>          # verificación de hechos · sumar imagen · miniatura y descripción
+pnpm docu texts|render --name <video> [--voices <carpeta>]  # texto para la voz · render (+ miniatura y descripción)
 pnpm studio draw <guion.json>      # el Estudio dibuja las piezas nuevas que pide el guion
 pnpm studio sheet [--all]          # hoja con las piezas pendientes (o todas) → out/studio
 pnpm studio approve <pieza...>     # entran al kit · reject <pieza> "<motivo>" las redibuja
