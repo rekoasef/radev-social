@@ -389,16 +389,17 @@ Qué hace cada oficina y qué documento deja: ADR 0029. Cada oficina es una cola
 ```
 researching → checking_sources → finding_images → scripting → checking_facts → script_review
   → voicing → rendering → packaging → in_review → approved
-cualquiera (salvo approved) → archived      [scheduled → publishing → published]: reservadas (V6)
+cualquiera (salvo archived) → archived      [scheduled → publishing → published]: reservadas (V6)
 ```
 
 - **Eventos.**
   - `officeDone`: la oficina terminó y el video pasa a la etapa siguiente.
   - `approveScript` / `rejectScript(nota)`: el rechazo vuelve a `scripting`, con la nota para la IA.
-  - `approveVideo` / `rejectVideo(nota, a)`: el rechazo vuelve a `scripting` o a `voicing`.
+  - `approveVideo`, `reopen` (un video aprobado vuelve a `in_review`) y tres rechazos con nota: `rejectVideoToScript` (→ `scripting`), `rejectVideoToVoice` (→ `voicing`) y `rejectVideoToRender` (→ `rendering`: solo se corrige la imagen, sin volver a pagar la voz).
   - `editScript`: en `script_review` crea una versión nueva del guion, validada con `checkDocu`.
   - `archive`.
 - **Condición aparte**, como en §4.4: `paused_at`, `pause_reason`, `resume_at` y `failure`. Una pausa por el límite de Claude retoma sola a la hora indicada. Una falla no borra nada, y "Reintentar" vuelve a encolar la oficina actual.
+- Código: `packages/core/src/videos` (`nextStage`, `availableVideoEvents`, `videoDisplayStatus`, `canRunOffice`, `voiceFingerprint`, `canDownload`).
 - **`transitionVideo`** (`packages/db`) es lo único que escribe la etapa: la regla 2, aplicada a los videos.
 - **Invariantes con test:**
   - No hay voz sin guion aprobado.

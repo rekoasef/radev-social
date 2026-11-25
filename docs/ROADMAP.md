@@ -141,7 +141,7 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 **A. Las oficinas como sistema**
 - [x] T1 Docs (ADR 0029, REVISION §7, ARCHITECTURE §14, PRD, PROGRESS)
 - [x] T2 `packages/video`: schemas, controles, prompts, descripciones
-- [ ] T3 `core/videos`: etapas y eventos con tests de invariantes
+- [x] T3 `core/videos`: etapas y eventos con tests de invariantes
 - [ ] T4 `db`: tablas de video, `transitionVideo`, seed de voces
 - [ ] T5 Voz de ElevenLabs en una toma (`packages/ai/src/tts`)
 - [ ] T6 Cliente de Wikimedia Commons con filtro de licencias
