@@ -467,3 +467,45 @@ Alcance, tareas y criterio de aceptación: `docs/RADEV-STUDIO-REVISION.md` §7. 
   <slug>/normal/video.mp4 · miniatura.png · descripcion.txt
   ```
 - **Tablas nuevas**: `videos`, `video_documents`, `voices` y `usage_events`. Además, `generation_runs.video_id`. Detalle en REVISION §7.3.
+
+### 14.1 `video-worker` por dentro (T7, diseño del 2026-11-25)
+
+**Una cola por oficina.** Los nombres van en `core` (`VIDEO_JOBS`), igual que `JOBS`: `video.research`, `video.sources`, `video.images`, `video.script`, `video.review` (T7) y `video.voice`, `video.render`, `video.package` (T8). Payload: `{ videoId, stage, limitAttempt }`. Cada cola tiene su propia tarjeta en el estudio, con lo que tiene en cola, lo que está haciendo y lo que falló (los datos salen de pg-boss).
+
+**El "corredor" de oficinas** (`src/runner.ts`) es lo único que conoce la línea de montaje. Cada oficina es una función `run(ctx, video) → { document, extra? }` que no sabe de colas ni de etapas. El corredor:
+1. **Guarda la regla 8.** Lee el video. Si su etapa ya no es la del job (un job repetido o viejo) o `canRunOffice` dice que no (pausado, con falla), termina sin hacer nada. Una pausa por límite que ya venció se levanta acá.
+2. **Corre la oficina.** Las que usan IA pasan por el **candado de IA** (`src/ai-lock.ts`): un semáforo en memoria que deja un solo `claude -p` a la vez en todo el proceso, sin importar cuántas colas trabajen. Commons, la descarga de fuentes y el render no lo usan.
+3. **Guarda y avanza en una sola transacción:** `addVideoDocument` + `transitionVideo(officeDone)`. Si el proceso se corta en el medio, no queda un documento sin avanzar ni un avance sin documento.
+4. **Encola la oficina siguiente** después del commit, si la nueva etapa es de trabajo. Si ese envío se pierde, el **barrido** (`video.sweep`, cron cada 10 min) vuelve a encolar los videos en etapa de trabajo sin job activo. Los duplicados no hacen daño: cada cola trabaja de a uno y el paso 1 frena al segundo.
+5. **Límite de Claude** (`rate_limited`): `pauseVideoById(provider_limit, resumeAt)` con la espera de `rateLimitDelayMs(limitAttempt)` (15 min → 4 h). Encola el mismo job con `startAfter = resumeAt` y `limitAttempt + 1`, y termina **sin error**: no gasta reintentos de pg-boss.
+6. **Otras fallas.** Una excepción la reintenta pg-boss (`retryLimit` por cola). En el último intento, `recordVideoFailure(stage, mensaje, retryable)`. Una salida de la IA que no pasa los controles después de los intentos internos de la oficina cuenta como falla: "Reintentar" la vuelve a correr.
+
+**Cada intento de IA** va a `generation_runs`, con `video_id`, `brand_id` (el del video o null) y la tarea `video.*`. El documento guarda el id de la corrida que salió bien. Las rutas (`ai_routes`) dicen modelo y proveedor; el esfuerzo lo fija el código por oficina:
+
+| Oficina | Esfuerzo | Turnos | Tiempo máx. | Intentos internos |
+|---|---|---|---|---|
+| Investigación | low | 40 (WebSearch + WebFetch) | 15 min | 2 (un dossier con datos de prueba se pide de nuevo) |
+| Imágenes (consultas y curaduría) | low | 2 | 5 min | 1 cada paso |
+| Guion | low | 3 | 10 min | 3 (con los errores de `checkScript`; las imágenes solo en el primero) |
+| Verificación de hechos | medium | 5 | 8 min | 1 |
+
+Para eso, `GenerationTask` suma `effort?: "low" | "medium" | "high"`, que `claude-code` pasa como `--effort`. Medido en V0-8: con `low` un guion tarda 28–88 s; sin él, ~181 s.
+
+**Las oficinas de T7:**
+- **Investigación:** `RESEARCH_RULES` (pasa a `packages/video/prompts.ts`) + `task.json` con el tema y para qué es (video de 1,5–2,5 min, 20–30 hechos). El resultado pasa por `dossierSchema` y `checkDossier`.
+- **Fuentes:** solo código. Baja cada URL del dossier (20 s de tiempo máximo, User-Agent genérico), saca el texto y mide cuánto del `excerpt` está en la página (grupos de 5 palabras) y si están los números. Deja `sources`: por hecho, `textual`, `casi`, `no está` o `sin página`. **En V1 es informativo:** el operador lo ve en su escritorio. Después de 5 videos se decide si los hechos no verificados dejan de pasar al guion. Las funciones puras van en `packages/video/sources.ts`.
+- **Imágenes:**
+  1. La IA propone las consultas.
+  2. `buildPool` arma el conjunto.
+  3. La IA elige (`curatedHits`).
+  4. Se baja cada imagen a `media/videos/<id>/images/iNN.jpg`, con una copia de 640 px (`.small.jpg`, ffmpeg) para que la IA las mire sin gastar de más.
+  5. Queda el documento `images` con `{ candidates }`.
+- **Guion:** el dossier compacto, las candidatas (texto e imágenes chicas) y, si hubo un rechazo, la nota del operador (`rejection_note`) con el guion anterior. Pasa por `scriptSchema` y `checkScript`, con hasta 3 intentos. Las palabras de `highlight` se normalizan. Queda el documento `script` y se pone el `title` del video.
+- **Verificación de hechos:** `reviewSchema` y `applyFixes`. Deja el documento `review` (lo aplicado y lo rechazado) y una versión nueva de `script` si algo cambió.
+
+**Lo que no está en el proceso:**
+- Avisos por Telegram: fuera de V1.
+- El candado entre procesos: el worker social corre en el servidor y este en la notebook; comparten la suscripción, pero no la base. Si `pnpm dev` levanta los dos en local, pueden coincidir dos `claude -p`, y está aceptado.
+- El logger es una copia del de `apps/worker`: los apps no se importan entre sí (regla 1). Si aparece un tercer uso, pasa a un paquete.
+
+**Tests.** El corredor recibe sus dependencias (el almacén de videos, el ruteo, el envío de jobs y el reloj), así se prueba con dobles en memoria: regla 8, pausa por límite, falla en el último intento, encolado de la siguiente oficina y candado de IA. Cada oficina se prueba con un `router` falso y respuestas guardadas. La prueba de punta a punta con Claude de verdad es T9.
