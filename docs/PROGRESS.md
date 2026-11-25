@@ -76,6 +76,8 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - **Claude Code mata los comandos en segundo plano si el sistema se queda sin memoria** (pasó con la corrida, ya en el escritorio del guion; sin daño porque no había nada a medias). No reiniciar solo: confirmar con el operador. WSL tiene 9,7 GiB en esta PC; con Docker, Chrome y el render a la vez, queda justo.
 > - **`claude setup-token` es interactivo:** correrlo con `!` en una terminal de WSL, sin `| tail`, y pegar el token en el `.env` entre comillas simples (nunca en el chat).
 >
+> **Decisión del operador (2026-11-25, noche):** mañana (2026-11-26) **arranca B en la PC de la fábrica** (T10: diseño del estudio, con Opus) y **aprueba el video cuando lo vea**. T10 es solo diseño (capturas, sin servicios) y no necesita el video ni la base de esta PC. T9 queda sin tildar hasta que apruebe. Si la fábrica va a correr el worker, ver la opción 2 de arriba.
+>
 > **Después de T9:** B (T10: diseño del estudio con Opus, capturas aprobadas). Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
