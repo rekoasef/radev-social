@@ -1,0 +1,20 @@
+[
+ "El 28 de febrero de 2017, un solo comando mal escrito dejó sin funcionar a cientos de sitios de internet.",
+ "¿Cómo un simple error de tipeo logró tirar abajo buena parte de internet?",
+ "A las 9:37 de la mañana, un ingeniero de Amazon ejecutó un comando para dar de baja unos pocos servidores.",
+ "El equipo estaba resolviendo un problema que hacía que la facturación avanzara más lento de lo esperado.",
+ "Pero uno de los datos del comando estaba mal escrito: se dieron de baja muchos más servidores de los previstos.",
+ "Esos servidores también sostenían el sistema de índice y el de ubicación de archivos de S3.",
+ "Todo pasó en la región de Amazon llamada US-EAST-1, en el norte de Virginia.",
+ "Cayeron de un saque sitios como GitHub, Slack, Trello, Quora e Imgur.",
+ "Hasta las cámaras de seguridad de Nest dejaron de grabar video durante horas.",
+ "Lamparitas inteligentes conectadas a IFTTT dejaron de responder a sus dueños.",
+ "Lo más irónico: los sitios que avisan cuándo algo está caído, como DownDetector, también se cayeron.",
+ "Ni Amazon pudo actualizar su propio panel de estado: dependía del mismo servicio caído.",
+ "Arreglarlo no fue rápido: revisar la integridad de los datos tardó horas, no los minutos previstos.",
+ "Una estimación citada por el Wall Street Journal calculó una pérdida de 150 millones de dólares para empresas del S&P 500.",
+ "La misma estimación calculó que las empresas de servicios financieros de Estados Unidos perdieron 160 millones de dólares.",
+ "La recuperación total llegó recién a la 1:54 de la tarde, más de cuatro horas después del primer comando.",
+ "Amazon después cambió la herramienta: ahora no deja bajar un sistema por debajo de su capacidad mínima.",
+ "¿Te acordás qué página dejaste de poder usar esa tarde?"
+]

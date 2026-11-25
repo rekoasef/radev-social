@@ -377,11 +377,12 @@ type NumberPair = { raw: string; n: number; unit: string; qualifier: string };
 /**
  * Número + la palabra que le sigue (salteando "de"), con el "más de" / "casi" de adelante:
  * "más de 140 cajas", "19 millones", "21 años". El mismo número puede ser firme en un sentido y
- * estar en disputa en otro ("a las 19" y "19 millones"), por eso va con la palabra.
+ * estar en disputa en otro ("a las 19" y "19 millones"), por eso va con la palabra. Los minutos de
+ * una hora ("1:54 PM") no cuentan como número aparte: un horario no es una cifra en disputa.
  */
 function numberPairs(s: string): NumberPair[] {
   const re =
-    /(?:(más de|al menos|casi|cerca de|unos|unas|alrededor de)\s+)?(\d+(?:[.,]\d+)*)\s+(?:de\s+)?(\p{L}+)/giu;
+    /(?:(más de|al menos|casi|cerca de|unos|unas|alrededor de)\s+)?(?<![:\d])(\d+(?:[.,]\d+)*)\s+(?:de\s+)?(\p{L}+)/giu;
   return [...s.matchAll(re)].map((m) => {
     const raw = (m[2] ?? "").replace(/[.,]/g, "");
     const n = Number((m[2] ?? "").replace(/\./g, "").replace(",", "."));
