@@ -20,7 +20,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 >
 > **Modelos:** Opus para diseño y docs; Sonnet para portar y codear (la regla del operador: avisarle cuál conviene antes de cada etapa).
 >
-> **▶ Próximo paso:** T1 (docs) hecho, falta que el operador lo revise. Después, **T2** (`packages/video`, con Sonnet): portar los schemas y controles de `spikes/video-v0/src/photo/schema.ts` y las partes puras de `scripts/docu.ts`, con tests.
+> **▶ Próximo paso:** T1 (docs) y **T2 hechos**. T2 = `packages/video` (`@radev/video`, sin I/O, 53 tests con el video real de la Mona Lisa como fixture): `dossier.ts` (schema + `checkDossier`: ids, 3 sitios, sin datos de prueba), `script.ts` (schema del guion + `checkScript`, la regla 9 incluida), `review.ts` (`applyFixes`: solo aplica correcciones que no suman errores), `publication.ts` (schema, `checkPublication`, `sceneStarts`, `buildDescription` con capítulos y `buildShortDescription` con #Shorts), `images.ts` (licencias, créditos) y `prompts.ts` (las instrucciones de Guion, Verificación y Publicación, con `PROMPT_VERSION`). Falta portar a `packages/video` la composición de Remotion y la miniatura (T8, con el render). **Sigue T3**: la máquina de estados del video en `packages/core/src/videos` (Sonnet), con los tests de las invariantes de REVISION §7.2. Para correr los tests: `npx vitest run packages/video`.
 >
 > **Primer video publicado:** la Mona Lisa (`Descargas\mona-v2\short` y `\normal`), que el operador está subiendo a mano a YouTube (2026-11-25). La voz "safa, pero no es del todo fluida": ya sale de una sola toma; para mejorarla, probar `eleven_v3`, los ajustes de la voz y la puntuación del guion (anotado para después).
 >

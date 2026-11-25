@@ -1,0 +1,255 @@
+{
+  "topic": "El robo de la Mona Lisa del Louvre en 1911",
+  "summary": "El lunes 21 de agosto de 1911, Vincenzo Peruggia, un inmigrante italiano de 29 años que había trabajado en el Louvre, entró disfrazado de empleado, se escondió y robó la Mona Lisa, escapando con la ayuda involuntaria de un plomero. El robo no se descubrió hasta 26 horas después, y desató una investigación masiva que incluyó el arresto por sospecha de Pablo Picasso y Guillaume Apollinaire. Peruggia guardó el cuadro escondido en un baúl de su apartamento parisino durante más de dos años, hasta que en diciembre de 1913 intentó venderlo a un anticuario de Florencia y fue detenido. Fue condenado a poco más de un año de cárcel pero cumplió solo siete meses, mientras el cuadro, antes una obra menor, se convirtió en la pintura más famosa del mundo.",
+  "facts": [
+    {
+      "id": "F1",
+      "claim": "El robo ocurrió el 21 de agosto de 1911, un lunes, cuando el Louvre estaba cerrado al público por el cierre semanal.",
+      "excerpt": "**Fecha:** 21 de agosto de 1911, aproximadamente 7 a.m. Peruggia entró por la puerta donde ingresaban otros trabajadores, vistiendo un uniforme blanco estándar de empleado. Ese día era lunes y el Louvre estaba prácticamente vacío porque era el cierre semanal durante las vacaciones de verano.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F2",
+      "claim": "Peruggia tenía 29 años y había trabajado brevemente en el Louvre.",
+      "excerpt": "On August 21, 1911, Vincenzo Peruggia, an Italian immigrant working at the Louvre, stole Leonardo da Vinci's Mona Lisa from the French museum.",
+      "url": "https://www.thecollector.com/man-who-stole-mona-lisa-vincenzo-peruggia/",
+      "sourceTitle": "The Man Who Stole the Mona Lisa"
+    },
+    {
+      "id": "F3",
+      "claim": "La pintura colgaba entre dos obras: 'Mystic Marriage of Saint Catherine' de Correggio y 'Allegory of Alfonso d'Avalos' de Titian, sostenida por cuatro clavijas de hierro.",
+      "excerpt": "Cuando la sala estaba desocupada, levantó el cuadro de las cuatro clavijas de hierro que lo aseguraban a la pared. La obra colgaba entre dos pinturas: Mystic Marriage of Saint Catherine de Correggio y Allegory of Alfonso d'Avalos de Titian.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F4",
+      "claim": "Peruggia llevó la pintura a una escalera de servicio, le quitó el marco y la caja protectora, y escondió esos elementos entre obras de estudiantes almacenadas allí.",
+      "excerpt": "Llevó la pintura a una escalera de servicio, removió el marco y la caja protectora, ocultando estos elementos detrás de obras de estudiantes almacenadas allí.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F5",
+      "claim": "Un plomero del museo, creyendo que Peruggia era un colega, le abrió una puerta de servicio y le permitió escapar.",
+      "excerpt": "Un plomero, creyendo que era empleado, le abrió una puerta de servicio, permitiéndole escapar.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F6",
+      "claim": "El robo no se descubrió hasta el día siguiente, cuando un pintor que iba a copiar la obra encontró el lugar vacío.",
+      "excerpt": "El robo no se detectó hasta el día siguiente cuando un pintor llegó para hacer una copia y encontró el lugar vacío.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F7",
+      "claim": "Pasaron 26 horas entre el robo y su descubrimiento.",
+      "excerpt": "**Tiempo de descubrimiento:** 26 horas después de su desaparición.",
+      "url": "https://www.artchive.com/blog/mona-lisa-theft/",
+      "sourceTitle": "The Mona Lisa Theft in 1911 that Propelled the Painting to Fame"
+    },
+    {
+      "id": "F8",
+      "claim": "El director del Louvre, Jean Théophile Homolle, renunció tras la indignación pública por el robo.",
+      "excerpt": "The theft caused a sensation — amid a public outcry, the Louvre's director, Jean Théophile Homolle, resigned.",
+      "url": "https://www.thecollector.com/man-who-stole-mona-lisa-vincenzo-peruggia/",
+      "sourceTitle": "The Man Who Stole the Mona Lisa"
+    },
+    {
+      "id": "F9",
+      "claim": "La policía francesa desplegó al menos 60 agentes para registrar el Louvre durante la investigación.",
+      "excerpt": "**Búsqueda extensa:** Al menos 60 policías registraron el Louvre. Se revisaron pasajeros de buques oceánicos en Nueva York.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F10",
+      "claim": "Durante la investigación fueron detenidos por sospecha el pintor Pablo Picasso y el poeta Guillaume Apollinaire.",
+      "excerpt": "**Figuras arrestadas:** Pablo Picasso y Guillaume Apollinaire fueron detenidos durante la investigación.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F11",
+      "claim": "Las autoridades distribuyeron carteles de 'Se Busca' y realizaron controles en puntos de salida.",
+      "excerpt": "Las autoridades realizaron búsquedas en puntos de control, distribuyeron carteles de \"Se Busca\" y detuvieron al poeta Guillaume Apollinaire bajo sospecha.",
+      "url": "https://www.artchive.com/blog/mona-lisa-theft/",
+      "sourceTitle": "The Mona Lisa Theft in 1911 that Propelled the Painting to Fame"
+    },
+    {
+      "id": "F12",
+      "claim": "Peruggia dejó una huella digital en el cristal protector, pero la policía olvidó incluir su nombre en la lista de huellas a verificar, por lo que no fue detectado a pesar de tener antecedentes.",
+      "excerpt": "**Evidencia:** Peruggia dejó una huella digital en el cristal protector. Sus datos estaban en archivos policiales, pero olvidaron incluir su nombre en la lista de huellas a verificar.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F13",
+      "claim": "Peruggia fue interrogado dos veces por la policía durante la investigación pero no fue considerado sospechoso principal.",
+      "excerpt": "**Búsqueda extensa:** ... Peruggia fue interrogado dos veces pero no fue considerado sospechoso principal inicialmente.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F14",
+      "claim": "Peruggia mantuvo la pintura escondida en un baúl con doble fondo en su apartamento de París durante casi dos años y medio.",
+      "excerpt": "**Tiempo escondiendo el cuadro**: Aproximadamente dos años y medio",
+      "url": "https://www.thecollector.com/man-who-stole-mona-lisa-vincenzo-peruggia/",
+      "sourceTitle": "The Man Who Stole the Mona Lisa"
+    },
+    {
+      "id": "F15",
+      "claim": "Peruggia viajó en tren a Italia y contactó al anticuario de Florencia Alfredo Geri usando el seudónimo 'Leonardo V'.",
+      "excerpt": "**Captura:** En Florencia, contactó a Alfredo Geri, dueño de una galería de arte, usando el seudónimo \"Leonardo V\".",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F16",
+      "claim": "Geri avisó a Giovanni Poggi, director de los Uffizi, quien autenticó la obra; ambos informaron a la policía.",
+      "excerpt": "Geri llamó a Giovanni Poggi, director de los Uffizi, quien autenticó la obra. Poggi y Geri informaron a la policía, que arrestó a Peruggia en su hotel el 12 de diciembre de 1913.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F17",
+      "claim": "Peruggia fue arrestado en su hotel de Florencia el 12 de diciembre de 1913.",
+      "excerpt": "**Diciembre 12, 1913:** Peruggia intentó vender la obra a un marchante en Florencia usando alias falso. Fue detenido.",
+      "url": "https://www.artchive.com/blog/mona-lisa-theft/",
+      "sourceTitle": "The Mona Lisa Theft in 1911 that Propelled the Painting to Fame"
+    },
+    {
+      "id": "F18",
+      "claim": "El 5 de junio de 1914 Peruggia fue condenado a un año y 15 días de cárcel, pero cumplió solo siete meses.",
+      "excerpt": "**Sentencia (5 de junio de 1914):** Condenado a 1 año y 15 días, pero liberado después de servir solo 7 meses.",
+      "url": "https://www.artchive.com/blog/mona-lisa-theft/",
+      "sourceTitle": "The Mona Lisa Theft in 1911 that Propelled the Painting to Fame"
+    },
+    {
+      "id": "F19",
+      "claim": "Un psiquiatra, Paolo Amaldi, le hizo un test sobre pájaros a Peruggia que influyó en una sentencia benévola por supuesta discapacidad mental.",
+      "excerpt": "El psiquiatra Paolo Amaldi sometió a Peruggia a un test: preguntó cuántos pájaros quedarían en un árbol si se dispara a uno. Peruggia respondió \"uno\", cuando la respuesta correcta era cero. Esto contribuyó al diagnostico de discapacidad mental que influyó en la sentencia benévola.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F20",
+      "claim": "Peruggia alegó motivos patrióticos, creyendo erróneamente que Napoleón había robado la obra a Italia (en realidad Francia la poseía legítimamente desde hacía casi cuatro siglos).",
+      "excerpt": "He reportedly believed it had been taken from Italy by force, though in reality the Mona Lisa had been French property for nearly four centuries through legitimate purchase, not through Napoleonic conquest as Peruggia mistakenly believed.",
+      "url": "https://www.thecollector.com/man-who-stole-mona-lisa-vincenzo-peruggia/",
+      "sourceTitle": "The Man Who Stole the Mona Lisa"
+    },
+    {
+      "id": "F21",
+      "claim": "Cartas de Peruggia a su padre revelan intenciones económicas, no solo patrióticas: el 22 de diciembre de 1911 escribió sobre hacer fortuna de un golpe.",
+      "excerpt": "Cartas posteriores a su padre revelan intenciones económicas. El 22 de diciembre de 1911 escribió sobre hacer 'su fortuna de un golpe'. Intentó vender la obra a comerciantes londinenses, incluyendo al marchante Joseph Duveen, quien se burló de él.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F22",
+      "claim": "La Mona Lisa fue exhibida en Italia antes de regresar al Louvre en 1913-1914.",
+      "excerpt": "La pintura fue exhibida en Italia antes de regresar al Louvre en 1913.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F23",
+      "claim": "Peruggia luego sirvió en el ejército italiano en la Primera Guerra Mundial, fue prisionero de Austria-Hungría dos años, se casó, tuvo una hija y trabajó como decorador en Francia bajo su nombre original.",
+      "excerpt": "Peruggia fue liberado, sirvió en el ejército italiano durante la Primera Guerra Mundial, fue capturado por Austria-Hungría y estuvo prisionero dos años. Posteriormente se casó con Annunciata Rossi, tuvo una hija (Celestina, 1924-2011) y trabajó como decorador de pinturas en Francia bajo su nombre original Pietro Peruggia.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F24",
+      "claim": "Peruggia murió el 8 de octubre de 1925 en Saint-Maur-des-Fossés, cerca de París, a los 44 años, de un infarto.",
+      "excerpt": "**Muerte:** 8 de octubre de 1925, Saint-Maur-des-Fossés (París), a los 44 años, por infarto.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F25",
+      "claim": "La teoría de que el argentino Eduardo de Valfierno fue el autor intelectual del robo (para vender copias falsas) proviene de un único artículo de 1932 de un periodista poco confiable, y es ampliamente puesta en duda.",
+      "excerpt": "La afirmación de que Valfierno mastermind el hurto se basa únicamente en un artículo de 1932. El periodista Karl Decker publicó en la Saturday Evening Post que 'Valfierno paid several men to steal the work of art from the Louvre, including museum employee Vincenzo Peruggia.'",
+      "url": "https://en.wikipedia.org/wiki/Eduardo_de_Valfierno",
+      "sourceTitle": "Eduardo de Valfierno - Wikipedia"
+    },
+    {
+      "id": "F26",
+      "claim": "Existen dudas serias sobre si Valfierno realmente existió, y ninguna de las supuestas copias falsas que habría vendido fue encontrada nunca.",
+      "excerpt": "There are serious doubts as to whether or not he existed... A century later none of the alleged copies have been found.",
+      "url": "https://en.wikipedia.org/wiki/Eduardo_de_Valfierno",
+      "sourceTitle": "Eduardo de Valfierno - Wikipedia"
+    },
+    {
+      "id": "F27",
+      "claim": "Peruggia negó haber conocido a Valfierno más allá de un encuentro casual en el Louvre.",
+      "excerpt": "Peruggia later denied knowing him.",
+      "url": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia",
+      "sourceTitle": "Vincenzo Peruggia - Wikipedia"
+    },
+    {
+      "id": "F28",
+      "claim": "Un oficial de policía creyó al principio que el caso se resolvería en pocos días.",
+      "excerpt": "Un oficial declaró: \"The theft took place on closing day, we know who came in and out, and this investigation will only take two to three days\" (aunque esto resultó ser incorrecto).",
+      "url": "https://www.artchive.com/blog/mona-lisa-theft/",
+      "sourceTitle": "The Mona Lisa Theft in 1911 that Propelled the Painting to Fame"
+    },
+    {
+      "id": "F29",
+      "claim": "Antes del robo, la Mona Lisa era considerada una obra menor de Leonardo da Vinci; tras el robo se convirtió en la pintura más famosa del mundo.",
+      "excerpt": "El robo transformó la Mona Lisa en la pintura más famosa del mundo, cuando antes era considerada \"una creación menor de Leonardo da Vinci\".",
+      "url": "https://www.artchive.com/blog/mona-lisa-theft/",
+      "sourceTitle": "The Mona Lisa Theft in 1911 that Propelled the Painting to Fame"
+    },
+    {
+      "id": "F30",
+      "claim": "Peruggia había sufrido saturnismo (envenenamiento por plomo) en 1900 por su trabajo con pinturas.",
+      "excerpt": "**Envenenamiento**: En 1900 sufrió saturnismo por exposición prolongada a pintura con plomo",
+      "url": "https://www.thecollector.com/man-who-stole-mona-lisa-vincenzo-peruggia/",
+      "sourceTitle": "The Man Who Stole the Mona Lisa"
+    }
+  ],
+  "quotes": [
+    {
+      "id": "C1",
+      "text": "I had only to choose an opportune moment, and a mere twist would put the painting in my hands",
+      "who": "Peruggia, sobre cómo decidió robar el cuadro",
+      "url": "https://www.thecollector.com/man-who-stole-mona-lisa-vincenzo-peruggia/"
+    },
+    {
+      "id": "C2",
+      "text": "I sometimes wondered in those two and a half years whether or not I would do better to burn the painting",
+      "who": "Peruggia, sobre los dos años y medio que mantuvo la pintura escondida",
+      "url": "https://www.thecollector.com/man-who-stole-mona-lisa-vincenzo-peruggia/"
+    },
+    {
+      "id": "C3",
+      "text": "The theft took place on closing day, we know who came in and out, and this investigation will only take two to three days",
+      "who": "Un oficial de policía francés al inicio de la investigación",
+      "url": "https://www.artchive.com/blog/mona-lisa-theft/"
+    }
+  ],
+  "disputed": [
+    {
+      "point": "Motivación de Peruggia para robar el cuadro",
+      "versions": "Él mismo alegó patriotismo italiano (creía que Napoleón había robado la obra a Italia, cosa falsa). Sus propias cartas a su padre y su intento de venderla a marchantes londinenses sugieren que el móvil real fue económico."
+    },
+    {
+      "point": "Existencia de un autor intelectual detrás del robo (Eduardo de Valfierno)",
+      "versions": "Una única fuente (artículo de Karl Decker en Saturday Evening Post, 1932) sostiene que el argentino Eduardo de Valfierno pagó a Peruggia para robar la obra y vender copias falsas a compradores crédulos; pero se duda de que Valfierno haya existido realmente y nunca se encontraron las copias."
+    },
+    {
+      "point": "Tiempo que Peruggia mantuvo escondida la obra",
+      "versions": "Una fuente dice 'dos años' (Wikipedia/TheCollector general) y otra especifica 'aproximadamente dos años y medio' antes de intentar venderla en Florencia."
+    }
+  ],
+  "unconfirmed": [
+    "Que Peruggia tuviera un cómplice directo dentro del museo más allá del plomero que lo ayudó sin saberlo.",
+    "Detalles exactos de las copias falsas que supuestamente Valfierno habría vendido a coleccionistas estadounidenses.",
+    "El monto exacto del rescate o pago que Peruggia pretendía obtener de Alfredo Geri."
+  ]
+}

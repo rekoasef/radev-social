@@ -420,6 +420,12 @@ importers:
         specifier: 4.23.15
         version: 4.23.15
 
+  packages/video:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
+
   spikes/video-v0:
     dependencies:
       '@fontsource-variable/inter-tight':

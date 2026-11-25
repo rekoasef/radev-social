@@ -1,0 +1,16 @@
+{
+  "name": "@radev/video",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Video documental de RAdev Studio: documentos de cada oficina (Zod), controles, prompts y armado de la publicación. Sin I/O.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  }
+}

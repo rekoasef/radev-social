@@ -1,0 +1,544 @@
+{
+  "title": "El robo que convirtió a la Mona Lisa en la obra más famosa del mundo",
+  "scenes": [
+    {
+      "narration": "21 de agosto de 1911. El Louvre amanece cerrado y, en el Salón Carré, la Mona Lisa ya no está.",
+      "image": "i33",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.4,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.45,
+        "vw": 0.6
+      },
+      "caption": "El hueco en la pared tras el robo, agosto de 1911",
+      "highlight": ["Louvre", "cerrado"],
+      "graphics": [
+        {
+          "kind": "fecha",
+          "text": "21 DE AGOSTO DE 1911",
+          "sub": "Museo del Louvre, París",
+          "pos": "arriba",
+          "at": 0
+        }
+      ]
+    },
+    {
+      "narration": "¿Cómo pudo desaparecer el cuadro sin que nadie viera nada?",
+      "image": "i09",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.3,
+        "vw": 0.5
+      },
+      "graphics": [],
+      "caption": "El techo del Salón Carré, hoy (foto actual)"
+    },
+    {
+      "narration": "El ladrón era Vincenzo Peruggia, un inmigrante italiano de 29 años que había trabajado en el museo.",
+      "image": "i03",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.35,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.6,
+        "cy": 0.33,
+        "vw": 0.5
+      },
+      "caption": "Vincenzo Peruggia, el hombre detrás del robo",
+      "highlight": ["Peruggia", "29"],
+      "graphics": [
+        {
+          "kind": "nombre",
+          "name": "Vincenzo Peruggia",
+          "role": "Ex empleado del Louvre",
+          "pos": "abajo",
+          "at": 0
+        }
+      ]
+    },
+    {
+      "narration": "La obra colgaba entre un Correggio y un Tiziano, sostenida apenas por cuatro clavijas de hierro.",
+      "image": "i08",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.35,
+        "vw": 0.4
+      },
+      "caption": "El Salón Carré, en una pintura de Louis Béroud, 1911",
+      "graphics": []
+    },
+    {
+      "narration": "Peruggia se escondió, descolgó el cuadro, le sacó el marco y la caja, y los ocultó en una escalera de servicio.",
+      "image": "i25",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.3,
+        "vw": 0.5
+      },
+      "caption": "Afiche del guion de un film de 1911 sobre el robo",
+      "graphics": []
+    },
+    {
+      "narration": "Al salir, un plomero del museo le abrió una puerta de servicio, creyendo que era un colega.",
+      "image": "i26",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.3,
+        "cy": 0.6,
+        "vw": 0.5
+      },
+      "caption": "El Sena junto al Louvre, fotografiado por Atget en 1911",
+      "graphics": []
+    },
+    {
+      "narration": "Nadie notó la falta hasta el día siguiente, cuando un pintor llegó a copiarlo y encontró la pared vacía.",
+      "image": "i33",
+      "from": {
+        "cx": 0.6,
+        "cy": 0.4,
+        "vw": 0.5
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.55,
+        "vw": 1
+      },
+      "highlight": ["vacía", "pintor"],
+      "graphics": [
+        {
+          "kind": "cifra",
+          "value": 26,
+          "unit": "horas",
+          "label": "tardaron en notarlo",
+          "pos": "centro",
+          "at": 0
+        }
+      ]
+    },
+    {
+      "narration": "Un oficial de policía estaba seguro de resolver el caso en pocos días.",
+      "image": "i26",
+      "from": {
+        "cx": 0.3,
+        "cy": 0.5,
+        "vw": 0.7
+      },
+      "to": {
+        "cx": 0.6,
+        "cy": 0.55,
+        "vw": 0.5
+      },
+      "graphics": [
+        {
+          "kind": "cita",
+          "text": "El robo fue en día de cierre, sabemos quién entró y salió, y esta investigación va a tardar dos o tres días",
+          "by": "Un oficial de la policía francesa",
+          "pos": "abajo",
+          "at": 0
+        }
+      ],
+      "caption": "El puerto del Louvre en 1911, fotografiado por Atget"
+    },
+    {
+      "narration": "El director del Louvre, Théophile Homolle, terminó renunciando ante la indignación pública.",
+      "image": "i23",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.4,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.55,
+        "cy": 0.35,
+        "vw": 0.5
+      },
+      "highlight": ["Homolle", "renunciando"],
+      "graphics": [
+        {
+          "kind": "nombre",
+          "name": "Théophile Homolle",
+          "role": "Director del Louvre",
+          "pos": "abajo",
+          "at": 0
+        }
+      ]
+    },
+    {
+      "narration": "La policía desplegó al menos sesenta agentes y repartió carteles de búsqueda por todo París.",
+      "image": "i05",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.4,
+        "vw": 0.5
+      },
+      "caption": "Ilustración de la época sobre el robo",
+      "graphics": [
+        {
+          "kind": "cifra",
+          "value": 60,
+          "unit": "agentes",
+          "label": "buscando el cuadro",
+          "pos": "abajo",
+          "at": 0
+        }
+      ]
+    },
+    {
+      "narration": "Entre los detenidos estuvo el poeta Apollinaire, amigo del pintor Picasso.",
+      "image": "i30",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.3,
+        "cy": 0.4,
+        "vw": 0.5
+      },
+      "highlight": ["Apollinaire", "Picasso"],
+      "graphics": [
+        {
+          "kind": "nombre",
+          "name": "Guillaume Apollinaire",
+          "role": "Poeta, detenido por sospecha",
+          "pos": "abajo",
+          "at": 0
+        }
+      ]
+    },
+    {
+      "narration": "Peruggia había dejado una huella en el cristal protector, pero un error policial dejó su nombre afuera de la lista.",
+      "image": "i04",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.3,
+        "vw": 0.4
+      },
+      "caption": "Reconstrucción del robo publicada en 1913",
+      "graphics": []
+    },
+    {
+      "narration": "Lo interrogaron dos veces, pero nadie lo tomó como sospechoso principal. El cuadro quedó guardado en un baúl de su casa.",
+      "image": "i06",
+      "from": {
+        "cx": 0.3,
+        "cy": 0.3,
+        "vw": 0.4
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.6,
+        "vw": 0.8
+      },
+      "graphics": [],
+      "caption": "Ilustración de 1913 reconstruyendo las distintas etapas del robo"
+    },
+    {
+      "narration": "Más de dos años después, confesó que a veces pensaba en quemar la pintura.",
+      "image": "i03",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.45,
+        "vw": 0.6
+      },
+      "graphics": [
+        {
+          "kind": "cita",
+          "text": "A veces, en esos dos años y medio, pensaba si no sería mejor quemar la pintura",
+          "by": "Vincenzo Peruggia",
+          "pos": "abajo",
+          "at": 0
+        }
+      ]
+    },
+    {
+      "narration": "En diciembre de 1913 fue a Florencia y contactó al anticuario Alfredo Geri con un seudónimo.",
+      "image": "i24",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.45,
+        "cy": 0.5,
+        "vw": 0.6
+      },
+      "highlight": ["Florencia", "seudónimo"],
+      "graphics": [
+        {
+          "kind": "fecha",
+          "text": "DICIEMBRE DE 1913",
+          "sub": "Florencia, Italia",
+          "pos": "arriba",
+          "at": 0
+        }
+      ],
+      "caption": "Los Uffizi, en Florencia (foto de época)"
+    },
+    {
+      "narration": "Geri avisó a Giovanni Poggi, director de los Uffizi, que autenticó la obra y llamó a la policía de inmediato.",
+      "image": "i20",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.4,
+        "cy": 0.4,
+        "vw": 0.5
+      },
+      "caption": "Objetos vinculados al museo de los Uffizi",
+      "graphics": [
+        {
+          "kind": "nombre",
+          "name": "Giovanni Poggi",
+          "role": "Director de los Uffizi",
+          "pos": "abajo",
+          "at": 0
+        }
+      ]
+    },
+    {
+      "narration": "Peruggia fue arrestado en su hotel el 12 de diciembre de 1913, poco más de dos años después del robo.",
+      "image": "i07",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.7,
+        "cy": 0.4,
+        "vw": 0.5
+      },
+      "highlight": ["arrestado"],
+      "graphics": [
+        {
+          "kind": "fecha",
+          "text": "12 DE DICIEMBRE DE 1913",
+          "sub": "Hotel en Florencia",
+          "pos": "arriba",
+          "at": 0
+        }
+      ],
+      "caption": "El peritaje de la obra en los Uffizi, diciembre de 1913"
+    },
+    {
+      "narration": "Fue condenado a un año y 15 días de cárcel gracias a un test psiquiátrico que jugó a su favor, pero terminó cumpliendo solo siete meses.",
+      "image": "i28",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 0.6
+      },
+      "highlight": ["siete"],
+      "graphics": [
+        {
+          "kind": "cifra",
+          "value": 7,
+          "unit": "meses",
+          "label": "de condena cumplida",
+          "pos": "abajo",
+          "at": 0
+        }
+      ]
+    },
+    {
+      "narration": "El cuadro volvió al Louvre, ya convertido en la pintura más famosa del mundo.",
+      "image": "i14",
+      "from": {
+        "cx": 0.3,
+        "cy": 0.4,
+        "vw": 0.5
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.4,
+        "vw": 0.9
+      },
+      "highlight": ["famosa"],
+      "graphics": [
+        {
+          "kind": "fecha",
+          "text": "DE VUELTA EN EL LOUVRE",
+          "pos": "arriba",
+          "at": 0
+        }
+      ]
+    },
+    {
+      "narration": "¿Peruggia fue un ladrón patriota o solo un hombre que vio una fortuna en una pared mal custodiada?",
+      "image": "i11",
+      "from": {
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
+      },
+      "to": {
+        "cx": 0.5,
+        "cy": 0.35,
+        "vw": 0.5
+      },
+      "graphics": [],
+      "tail": 1.5
+    }
+  ],
+  "facts": [
+    {
+      "claim": "El robo fue el 21 de agosto de 1911, lunes, con el Louvre cerrado",
+      "source": "F1"
+    },
+    {
+      "claim": "Peruggia tenía 29 años y había trabajado en el Louvre",
+      "source": "F2"
+    },
+    {
+      "claim": "La obra colgaba entre Correggio y Tiziano, sostenida por cuatro clavijas",
+      "source": "F3"
+    },
+    {
+      "claim": "Peruggia escondió marco y caja en una escalera de servicio",
+      "source": "F4"
+    },
+    {
+      "claim": "Un plomero le abrió la puerta creyendo que era colega",
+      "source": "F5"
+    },
+    {
+      "claim": "El robo se descubrió al día siguiente cuando un pintor halló el lugar vacío",
+      "source": "F6"
+    },
+    {
+      "claim": "Pasaron 26 horas entre el robo y su descubrimiento",
+      "source": "F7"
+    },
+    {
+      "claim": "El director del Louvre, Homolle, renunció",
+      "source": "F8"
+    },
+    {
+      "claim": "Se desplegaron al menos 60 agentes",
+      "source": "F9"
+    },
+    {
+      "claim": "Picasso y Apollinaire fueron detenidos por sospecha",
+      "source": "F10"
+    },
+    {
+      "claim": "Un oficial creyó que el caso se resolvería en pocos días",
+      "source": "F28"
+    },
+    {
+      "claim": "Peruggia dejó una huella digital no detectada por un error policial",
+      "source": "F12"
+    },
+    {
+      "claim": "Fue interrogado dos veces sin ser considerado sospechoso principal",
+      "source": "F13"
+    },
+    {
+      "claim": "Guardó la pintura casi dos años y medio en un baúl con doble fondo",
+      "source": "F14"
+    },
+    {
+      "claim": "Contactó al anticuario Alfredo Geri con el seudónimo Leonardo V",
+      "source": "F15"
+    },
+    {
+      "claim": "Geri avisó a Giovanni Poggi, director de los Uffizi, que autenticó la obra",
+      "source": "F16"
+    },
+    {
+      "claim": "Peruggia fue arrestado el 12 de diciembre de 1913 en su hotel de Florencia",
+      "source": "F17"
+    },
+    {
+      "claim": "Fue condenado a un año y 15 días pero cumplió solo siete meses",
+      "source": "F18"
+    },
+    {
+      "claim": "Un test de un psiquiatra influyó en una sentencia benévola",
+      "source": "F19"
+    },
+    {
+      "claim": "Alegó motivos patrióticos sobre un supuesto robo de Napoleón, que era falso",
+      "source": "F20"
+    },
+    {
+      "claim": "Cartas a su padre en 1911 sugieren motivos económicos",
+      "source": "F21"
+    },
+    {
+      "claim": "La obra fue exhibida en Italia antes de volver al Louvre en 1913-1914",
+      "source": "F22"
+    },
+    {
+      "claim": "Antes del robo era una obra menor; después, la más famosa del mundo",
+      "source": "F29"
+    },
+    {
+      "claim": "Peruggia murió el 8 de octubre de 1925 a los 44 años",
+      "source": "F24"
+    },
+    {
+      "claim": "Cita de Peruggia sobre robar la obra",
+      "source": "C1"
+    },
+    {
+      "claim": "Cita de Peruggia sobre dudar si quemar la pintura",
+      "source": "C2"
+    },
+    {
+      "claim": "Cita de un oficial de policía al inicio de la investigación",
+      "source": "C3"
+    }
+  ]
+}

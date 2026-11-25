@@ -1,0 +1,40 @@
+{
+  "title": "El robo de la Mona Lisa: el misterio que vació el Louvre en 1911",
+  "hook": "21 de agosto de 1911: el Louvre amanece y la Mona Lisa ya no está en su lugar. El responsable fue un ex empleado del museo que la escondió durante más de dos años en un baúl de su casa. ¿Cómo logró burlar a la policía de París durante tanto tiempo?",
+  "hashtags": ["#MonaLisa", "#Louvre", "#HistoriaReal", "#CasoReal", "#Robo1911"],
+  "chapters": [
+    {
+      "scene": 1,
+      "title": "El cuadro que desapareció"
+    },
+    {
+      "scene": 4,
+      "title": "La trampa dentro del museo"
+    },
+    {
+      "scene": 8,
+      "title": "La cacería policial"
+    },
+    {
+      "scene": 12,
+      "title": "El error que lo dejó libre"
+    },
+    {
+      "scene": 15,
+      "title": "La confesión en Florencia"
+    },
+    {
+      "scene": 18,
+      "title": "El juicio y el regreso"
+    }
+  ],
+  "thumbnail": {
+    "image": "i33",
+    "cx": 0.5,
+    "cy": 0.45,
+    "vw": 0.65,
+    "kicker": "CASO 1911",
+    "lines": ["ROBO", "AL LOUVRE"],
+    "accent": "ROBO"
+  }
+}

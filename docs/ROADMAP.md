@@ -139,8 +139,8 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7.6; decisión: ADR 0029. Corre en la notebook.
 
 **A. Las oficinas como sistema**
-- [ ] T1 Docs (ADR 0029, REVISION §7, ARCHITECTURE §14, PRD, PROGRESS)
-- [ ] T2 `packages/video`: schemas, controles, prompts, descripciones
+- [x] T1 Docs (ADR 0029, REVISION §7, ARCHITECTURE §14, PRD, PROGRESS)
+- [x] T2 `packages/video`: schemas, controles, prompts, descripciones
 - [ ] T3 `core/videos`: etapas y eventos con tests de invariantes
 - [ ] T4 `db`: tablas de video, `transitionVideo`, seed de voces
 - [ ] T5 Voz de ElevenLabs en una toma (`packages/ai/src/tts`)
