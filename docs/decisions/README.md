@@ -8,7 +8,7 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0002 | Postgres como base y como cola (pg-boss) | aceptada |
 | 0003 | Better Auth en lugar de NextAuth | aceptada |
 | 0004 | Slides con plantillas en código, no con generación de imágenes | aceptada (ampliada por 0008, 0013, 0015 y 0016) |
-| 0005 | Generación con Claude Code headless, aislada del repo | ampliada por 0009 (modo liviano: 2026-09-29) |
+| 0005 | Generación con Claude Code headless, aislada del repo | ampliada por 0009 (modo liviano: 2026-09-29) y 0029 (búsqueda web en `video.research`) |
 | 0006 | Multi-marca desde el día uno | ampliada por 0008 |
 | 0007 | Infraestructura de costo cero | aceptada |
 | 0008 | Marcas como datos, estilos como presets | aceptada (ampliada por 0015) |
@@ -31,4 +31,5 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0025 | Imágenes con FLUX.2 klein 4B y prompt de foto editorial | aceptada |
 | 0026 | Composiciones por slide, escenas a sangre e imagen del medio | aceptada |
 | 0027 | Voces del video con ElevenLabs (pago) y voz elegida por video | aceptada |
-| 0028 | Escenarios del video armados con piezas, a medida de cada historia | aceptada |
+| 0028 | Escenarios del video armados con piezas, a medida de cada historia | reemplazada por 0029 |
+| 0029 | Video documental producido por oficinas, en dos formatos | aceptada |

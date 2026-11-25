@@ -134,6 +134,32 @@ Fases 0 a 3: **100% local** (WSL + Docker Desktop). Servidor recién en la Fase 
 
 ---
 
+## Video — V1 (RAdev Studio, formato documental)
+
+Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7.6; decisión: ADR 0029. Corre en la notebook.
+
+**A. Las oficinas como sistema**
+- [ ] T1 Docs (ADR 0029, REVISION §7, ARCHITECTURE §14, PRD, PROGRESS)
+- [ ] T2 `packages/video`: schemas, controles, prompts, descripciones
+- [ ] T3 `core/videos`: etapas y eventos con tests de invariantes
+- [ ] T4 `db`: tablas de video, `transitionVideo`, seed de voces
+- [ ] T5 Voz de ElevenLabs en una toma (`packages/ai/src/tts`)
+- [ ] T6 Cliente de Wikimedia Commons con filtro de licencias
+- [ ] T7 `apps/video-worker` + oficinas 1 a 5 (hasta el guion)
+- [ ] T8 Oficinas 6 a 8 (voz, render 9:16 y 16:9, publicación)
+- [ ] T9 Comando de punta a punta: un video completo sin pantallas
+
+**B. Tu escritorio en la web**
+- [ ] T10 Diseño visual del estudio y del escritorio (capturas aprobadas)
+- [ ] T11 `/media` con `Range` y ZIP del paquete por streaming
+- [ ] T12 Panel `/videos`: estudio, nuevo video, aprobar guion y video, descarga del paquete, informes
+- [ ] T13 Docker: destino `video-worker` y perfil `video`
+- [ ] T14 Punta a punta
+
+**Terminado cuando:** dos videos de temas distintos salen desde el panel, los apruebo y descargo cada uno como una carpeta con el Short y el normal (video, miniatura y descripción), listos para subir a YouTube y guardar en Drive.
+
+---
+
 ## Después de la v1
 
 - Instagram (el formato ya es 4:5)

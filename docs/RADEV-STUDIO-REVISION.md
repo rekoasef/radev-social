@@ -155,6 +155,8 @@ flowchart LR
 
 ### 4.4 Estados de producción (D-F)
 
+> **2026-11-25:** las etapas de V1 son las de §7.2 (una por oficina). La condición aparte, la pausa y la reanudación siguen como se describe acá.
+
 **Etapa** (máquina de estados en `core/videos`, la única forma de cambiarla):
 
 ```
@@ -188,6 +190,8 @@ cualquiera (salvo published) → archived
 **Reglas:** mientras hay pausa, ningún job avanza la etapa (cada job lo revisa al empezar). "Reanudar" borra la pausa y vuelve a encolar las tareas `pending` o `stale` de la etapa actual; las `ready` no se tocan. "Reintentar" hace lo mismo después de una falla. **Tests de invariantes**: no hay voz definitiva sin guion aprobado; no se publica sin el video aprobado; editar después de aprobar invalida la aprobación; una falla no borra resultados; una pausa no avanza la etapa.
 
 ### 4.5 D-D en detalle: render por escena desde V1, sin un editor complejo
+
+> **2026-11-25: no va en V1 (ADR 0029).** Con la voz en una sola toma, el video se renderiza entero. Esto queda para cuando haga falta rehacer escenas sueltas.
 
 **Pipeline:**
 1. **Guion guardado** = una versión de `video_scripts` (JSON validado con Zod) con sus escenas en orden.
@@ -366,46 +370,125 @@ Arreglar el salto de línea haría que **systemd empiece a arrancar** en Ubuntu.
 
 ## 7. Alcance definitivo de V1
 
-**Objetivo**: desde el panel, en la notebook, producir un Short de 30–45 s (9:16) de **cualquier tema**, en español o en inglés, con o sin marca, verlo, aprobarlo y descargar el MP4. Costo cero.
+> **Reescrito el 2026-11-25 al cerrar V0 (ADR 0029).** La versión anterior (Shorts de 30–45 s con escenas de plantilla, voz local y render por escena) queda en el historial de git. Lo que cambió: formato documental, investigación y verificación en V1, voz de ElevenLabs en una toma, render del video entero en dos formatos, y oficinas en vez de un único job de guion.
 
-**Dentro:**
-- Proyecto de video: tema, idioma, marca opcional (identidad copiada), duración objetivo.
-- Guion por escenas: lo escribís vos en un formulario o lo propone `claude -p` (`video.script`, si V0-8 sale bien), validado por Zod. Primera puerta: aprobar el guion.
-- 6–8 tipos de escena: título animado, afirmación, lista, número grande (cifras dadas por vos, regla 9), cita, personaje (el SVG de V0-6), imagen (un recurso propio subido) y cierre.
-- Voz local por escena (el TTS de V0-2) con caché por hash, y subtítulos palabra por palabra dentro de la zona segura de Shorts.
-- Render por escena (Remotion) + armado (FFmpeg: concat, música opcional con *ducking*, normalización, miniatura) + QA del video.
-- Etapas y condiciones de §4.4, con pausa y reanudación si `claude -p` llega al límite.
-- Revisión: Remotion Player + MP4 real, aprobar, rechazar con nota, editar escenas (solo se rehace lo que cambió) y "Rehacer escena". Segunda puerta: aprobar el video.
-- Descarga del MP4.
-- Registro: `generation_runs` (Claude) y `usage_events` (voz, render, armado: tiempo, CPU, RAM pico, tamaño; costo 0).
-- `/media` con streaming y `Range` (audio y video), detrás de la sesión.
+**Objetivo**: desde el panel, en la notebook, producir un video documental de 1,5 a 2,5 min sobre **cualquier tema** (en español; inglés después), con o sin marca, aprobar el guion, aprobar el video y **descargar el paquete listo para subir a YouTube y guardar en Drive**. Gasto: el de ElevenLabs ya aceptado (ADR 0027); nada más.
 
-**Fuera de V1:** investigación con fuentes y modo automático (V2), storyboard con imágenes (V2), editor con línea de tiempo y personajes persistentes generados (V3), Blender, ComfyUI e imágenes locales (V4), video con IA y proveedores pagos (V5), YouTube y analytics (V6), formato horizontal y videos largos (V2 y V7), música generada, Ollama como proveedor (V2 si V0-4 sale bien).
+### 7.1 La línea de montaje
 
-**Tareas de V1:**
+```
+Investigación → Fuentes → Imágenes → Guion → Verificación de hechos
+  → [TU ESCRITORIO: aprobar guion] → Locución → Render (9:16 y 16:9) → Publicación
+  → [TU ESCRITORIO: aprobar video] → Descarga
+```
+
+Qué hace cada oficina y qué documento deja: ADR 0029. Cada oficina es una cola de pg-boss del `video-worker`. Lee el documento vigente de la anterior y guarda el suyo como una versión nueva en `video_documents`. Nunca pisa uno anterior: un rechazo con nota vuelve a la oficina de Guion, que escribe una versión nueva, y todo lo anterior queda para comparar.
+
+### 7.2 Etapas (`packages/core/src/videos`)
+
+```
+researching → checking_sources → finding_images → scripting → checking_facts → script_review
+  → voicing → rendering → packaging → in_review → approved
+cualquiera (salvo approved) → archived      [scheduled → publishing → published]: reservadas (V6)
+```
+
+- **Eventos.**
+  - `officeDone`: la oficina terminó y el video pasa a la etapa siguiente.
+  - `approveScript` / `rejectScript(nota)`: el rechazo vuelve a `scripting`, con la nota para la IA.
+  - `approveVideo` / `rejectVideo(nota, a)`: el rechazo vuelve a `scripting` o a `voicing`.
+  - `editScript`: en `script_review` crea una versión nueva del guion, validada con `checkDocu`.
+  - `archive`.
+- **Condición aparte**, como en §4.4: `paused_at`, `pause_reason`, `resume_at` y `failure`. Una pausa por el límite de Claude retoma sola a la hora indicada. Una falla no borra nada, y "Reintentar" vuelve a encolar la oficina actual.
+- **`transitionVideo`** (`packages/db`) es lo único que escribe la etapa: la regla 2, aplicada a los videos.
+- **Invariantes con test:**
+  - No hay voz sin guion aprobado.
+  - No hay descarga sin video aprobado.
+  - Un rechazo no borra documentos.
+  - Una pausa no avanza la etapa.
+  - Repetir un job no duplica documentos ni archivos (regla 8).
+  - La voz no se vuelve a pagar si la narración y la voz no cambiaron: se compara el hash del texto y de la voz con el documento `voice` vigente.
+
+### 7.3 Datos (migración solo aditiva)
+
+| Tabla | Campos principales |
+|---|---|
+| `videos` | id, brand_id (nullable, D-B), topic, language, voice_id, stage, paused_at, pause_reason, resume_at, failure (jsonb), rejection_note, slug (nombre de la carpeta descargada), created_at, updated_at, approved_at |
+| `video_documents` | id, video_id, kind (`dossier` \| `sources` \| `images` \| `script` \| `review` \| `voice` \| `render` \| `package`), version, data (jsonb, validado con Zod antes de guardarse), schema_version, origin (`office` \| `operator`), generation_run_id, created_at. Única por video, tipo y versión; vale la versión más alta |
+| `voices` | id, provider (`elevenlabs`), external_id, name, use (`narrative` \| `commercial`), language, speed, active. El seed carga Alberto (por defecto), Fran, Juan y Carlos Pro (ADR 0027) |
+| `usage_events` | id, video_id, office, kind (`tts` \| `render` \| `download`), quantity, unit (créditos, segundos, MB), duration_ms, data (jsonb), created_at |
+| `generation_runs` | + `video_id` (nullable) y las tareas `video.research`, `video.images`, `video.script`, `video.review` y `video.package` en el CHECK |
+
+**Archivos** en `media/videos/<id>/`:
+- `images/<id>.jpg` y `.small.jpg`
+- `voice/` (narración y cortes)
+- `render/video-9x16.mp4` y `render/video-16x9.mp4`
+- `package/miniatura-9x16.png`, `package/miniatura-16x9.png`, `package/descripcion-short.txt` y `package/descripcion.txt`
+
+Re-renderizar pisa el archivo, y la web lo pide con `?v=<checksum>`, como los PNG de los posts.
+
+### 7.4 Dónde vive el código
+
+| Lugar | Qué |
+|---|---|
+| `packages/core/src/videos` | Etapas, transiciones, condición, `videoDisplayStatus` |
+| `packages/video` (nuevo) | Schemas de cada documento; controles (`checkDocu`, números contra el dossier, fechas en pantalla); prompts versionados; armado de las descripciones y capítulos; cliente de Commons y filtro de licencias; composiciones de Remotion (`photos` en dos formatos, `thumb`) |
+| `packages/ai/src/tts` | `TtsProvider` + ElevenLabs (una toma, tiempos por palabra, corte por escena: hoy es `tts/whole.py`) |
+| `packages/db` | Tablas, `transitionVideo`, queries, seed de voces |
+| `apps/video-worker` (nuevo) | Un job por oficina; `claude -p` de a uno (concurrency 1 en las colas de IA); pausa ante el límite |
+| `apps/web` `/videos` | El estudio, el escritorio, el reproductor y la descarga |
+
+### 7.5 Tu escritorio (panel)
+
+- **El estudio** ("como un juego", idea del operador): las oficinas dibujadas, cada video como una carpeta que pasa de escritorio en escritorio y un cartel cuando algo te espera. Al entrar a una oficina se ve qué está haciendo, su cola, el historial y los informes: tiempo, tokens, créditos, errores, y qué se devolvió y por qué. **Primero el diseño con capturas, aprobado por el operador; después se implementa.**
+- **Nuevo video**: tema, marca opcional, voz (Alberto por defecto).
+- **Aprobar el guion**: las escenas con su imagen y su texto, la hoja de imágenes candidatas, las correcciones de la verificación y los hechos sin verificar marcados. Se puede editar el texto, cambiar la imagen de una escena, sumar una imagen de Commons por nombre, aprobar, o rechazar con una nota.
+- **Aprobar el video**: los dos formatos en el navegador (con `Range`, para poder adelantar), las miniaturas y las descripciones. Se aprueba, o se rechaza con una nota.
+- **Descargar el paquete** (pedido del operador, 2026-11-25: "que entregue todo"): un ZIP con la misma carpeta que entregó la spike, para subir a YouTube y guardar en Drive.
+  ```
+  <slug>/short/video.mp4 · miniatura.png · descripcion.txt
+  <slug>/normal/video.mp4 · miniatura.png · descripcion.txt
+  ```
+  Se arma por streaming, sin comprimir los MP4 ni cargarlos en memoria.
+
+### 7.6 Tareas
 
 | # | Tarea | Hecho cuando |
 |---|---|---|
-| T1 | Docs y ADR: PRD (video en el alcance), ARCHITECTURE (sección Video), ROADMAP, CLAUDE.md (comandos del `video-worker`) | Revisados por vos |
-| T2 | `packages/video`: schemas de guion, escenas, identidad y `VideoSpec`; `TEMPLATE_VERSION`; claves de hash (JSON canónico + sha256) | Tests de schemas y de claves (misma entrada → misma clave; cualquier cambio relevante → clave distinta) |
-| T3 | `core/videos`: etapas, transiciones, condición, `videoDisplayStatus`, reglas de invalidación | Tests de invariantes de §4.4 |
-| T4 | `db`: migración solo aditiva: `videos`, `video_scripts`, `video_scenes`, `video_artifacts` (por clave), `media_items` (con origen y licencia), `usage_events`; `generation_runs.video_id` y la tarea `video.script` en los CHECK | Aplicada en local; Social sin cambios (sus tests en verde) |
-| T5 | `/media` con streaming y `Range`; escritura por streaming; subida de recursos por Route Handler | Un MP4 de 200 MB se reproduce y se adelanta sin cargar la memoria de la web |
-| T6 | `apps/video-worker`: arranque, logger, apagado, colas; candado global de `claude -p` (también en el worker social: es el único cambio en Social, y no cambia su comportamiento) | Los dos workers nunca corren `claude -p` a la vez |
-| T7 | TTS: `TtsProvider` en `packages/ai/src/tts/` con el proveedor elegido, caché, alineación si hace falta | Tests de la caché y de los errores |
-| T8 | Composiciones Remotion: los tipos de escena, subtítulos, zona segura, identidad visual, personaje | Revisión visual con capturas (como DESIGN-SYSTEM §10) |
-| T9 | `scene.render` y `video.assemble` con caché, QA y medición | Repetir un job no rehace nada; cambiar una escena rehace solo esa y el armado |
-| T10 | Panel → Video: listado por estado visible, nuevo proyecto, editor de escenas (formulario), aprobar guion, progreso por escena, Player, revisión, descarga | Usable también desde el celular para revisar |
-| T11 | Pausa y reanudación ante el límite de Claude; aviso por Telegram | Probado simulando un `rate_limited` en un test |
-| T12 | Docker: destino `video-worker` (ffmpeg + Chrome de Remotion) y perfil `video` en Compose, sin tocar los servicios actuales | `docker compose up -d` sigue igual; `--profile video` suma el worker |
-| T13 | Punta a punta y `PROGRESS.md` | Criterio de abajo |
+| T1 | Docs: ADR 0029, este §7, ARCHITECTURE §14, ROADMAP, PRD, PROGRESS | Revisados por el operador |
+| T2 | `packages/video`: schemas, controles, prompts, descripciones y capítulos (portado de `spikes/video-v0`) | Tests con los guiones de la spike (uno bueno, uno con errores conocidos) |
+| T3 | `core/videos`: etapas, eventos, condición, `videoDisplayStatus` | Tests de las invariantes de §7.2 |
+| T4 | `db`: migración aditiva, `transitionVideo`, queries, seed de voces | Aplicada en local; tests de Social en verde |
+| T5 | `packages/ai/src/tts`: ElevenLabs en una toma | Tests con `fetch` falso (cortes por escena, errores, sin créditos) |
+| T6 | Commons en `packages/video`: búsqueda, licencias, descarga con pausas | Tests con respuestas guardadas (sin red) |
+| T7 | `apps/video-worker`: arranque, logger, colas, oficinas 1 a 5, pausa ante el límite | Un tema llega a `script_review` solo |
+| T8 | Oficinas 6 a 8: voz, render de los dos formatos con control de calidad, publicación | Un guion aprobado llega a `in_review` con el paquete completo |
+| T9 | Comando de punta a punta (`pnpm --filter @radev/video-worker video "<tema>"`) | **Cierre de A**: un video completo sin pantallas |
+| T10 | Diseño visual del estudio y del escritorio, con capturas | Aprobado por el operador |
+| T11 | `/media` con `Range` y ZIP por streaming | Un MP4 de 50 MB se adelanta en el navegador; el ZIP baja sin cargar la memoria de la web |
+| T12 | Panel `/videos`: estudio, nuevo video, aprobar guion (con edición), aprobar video, descarga, informes por oficina | Usable desde el celular para revisar |
+| T13 | Docker: destino `video-worker` (Chrome de Remotion; amd64 y arm64) y perfil `video` en Compose | `docker compose up -d` sigue igual; `--profile video` suma el worker |
+| T14 | Punta a punta y `PROGRESS.md` | Criterio de abajo |
 
-**Criterio de aceptación de V1:**
-1. Dos Shorts de 30–45 s, uno en español y otro en inglés, de dos temas que no tengan nada que ver entre sí (por ejemplo, "cómo funciona la IA" y un tema de historia), uno con marca y otro sin marca.
-2. Los dos producidos desde el panel en la notebook, aprobados por vos como "calidad aceptable" y descargados en MP4.
-3. Cambiar el texto de una escena rehace **solo** su voz, su clip y el armado; reordenar escenas rehace solo el armado.
-4. Un límite de Claude durante `video.script` pausa el video, avisa y retoma solo, sin perder nada.
+### 7.7 Criterio de aceptación
+
+1. Dos videos de temas sin relación (uno de historia y uno de tecnología), hechos desde el panel en la notebook, aprobados por el operador como "listos para subir" y descargados como paquete (los dos formatos, miniaturas y descripciones).
+2. Rechazar el guion con una nota rehace solo Guion y Verificación, sin repetir investigación ni imágenes. Rechazar el video para corregir una imagen no vuelve a pagar la voz.
+3. Si Claude llega al límite en cualquier oficina, el video se pausa, muestra hasta cuándo, retoma solo y no pierde ningún documento.
+4. Cada oficina muestra su informe: tiempo, tokens, créditos de voz, errores y devoluciones.
 5. Social Studio sigue igual: tests en verde y un carrusel generado y renderizado de punta a punta en local.
+
+**Fuera de V1:**
+- Inglés.
+- Subir a YouTube y analytics (V0-7 y V6).
+- Videos de 3–5 min para el canal.
+- Ideas propuestas por la IA (el tema lo escribe el operador).
+- Avisos por Telegram (el estudio muestra el cartel).
+- Rehacer escenas sueltas (D-D).
+- Fuentes de imágenes además de Commons (Library of Congress, Europeana).
+- Gráficos de mapa.
+- Voz propia con Whisper.
+- Videos de Lumus.
+- Video en el servidor.
 
 ---
 

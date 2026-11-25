@@ -96,6 +96,8 @@ packages/
   publishers/
     types.ts                interfaz PublisherAdapter
     manual/ tiktok/
+  video/                    (V1 de video, §14) schemas de las oficinas, controles, prompts, Commons, Remotion
+apps/video-worker/          (V1 de video, §14) un job por oficina; corre en la notebook
 seeds/brands/<slug>/        voice.md, pricing.md, cases.md, assets/ — datos iniciales
 ```
 
@@ -440,3 +442,28 @@ BACKUP_S3_ENDPOINT, BACKUP_S3_REGION, BACKUP_S3_BUCKET, BACKUP_S3_KEY, BACKUP_S3
 | Backups | R2 o B2 (capa gratuita) | Fuera del servidor, sin costo |
 
 Decisiones razonadas en `docs/decisions/`.
+
+## 14. Video (RAdev Studio, V1)
+
+Alcance, tareas y criterio de aceptación: `docs/RADEV-STUDIO-REVISION.md` §7. Por qué este diseño: ADR 0029.
+
+- **Formato documental**: imágenes de archivo de Wikimedia Commons con licencia libre, zoom lento, gráficos animados, subtítulos karaoke y voz de ElevenLabs (ADR 0027). Cada video dura 1,5–2,5 min y sale en **dos formatos**: Short (9:16) y normal (16:9).
+- **Oficinas**: una línea de montaje fija. Cada oficina es una cola de pg-boss del `video-worker` que lee el documento vigente de la anterior y guarda el suyo en `video_documents`, validado con Zod (regla 4):
+  ```
+  Investigación → Fuentes → Imágenes → Guion → Verificación de hechos → [operador: guion]
+    → Locución → Render → Publicación → [operador: video] → Descarga (ZIP)
+  ```
+- **Etapas**: máquina de estados en `packages/core/src/videos`; solo `transitionVideo` escribe la etapa (regla 2). Pausa y falla van como condición aparte, no como etapas.
+- **Dónde corre**: en la notebook (`video-worker` + web local + Postgres local). El servidor no hace video. El backup es el paquete que el operador descarga y sube a Drive.
+- **IA**:
+  - `video.research` usa WebSearch y WebFetch, la misma excepción que `ideas.research` (ADR 0005).
+  - `video.script` y `video.review` reciben las imágenes como visión (ADR 0024).
+  - Todo número que se ve o se dice tiene que estar en el dossier (regla 9, controlado en código).
+  - Corre un solo `claude -p` a la vez dentro del `video-worker`.
+- **Render**: Remotion renderiza el video entero (sin clips por escena) con un Chrome propio, en las dos medidas. Lo usa solo el `video-worker`; la web nunca renderiza (regla 5).
+- **Archivos**: en `media/videos/<id>/`. La web sirve los MP4 con `Range` y arma el ZIP del paquete por streaming:
+  ```
+  <slug>/short/video.mp4 · miniatura.png · descripcion.txt
+  <slug>/normal/video.mp4 · miniatura.png · descripcion.txt
+  ```
+- **Tablas nuevas**: `videos`, `video_documents`, `voices` y `usage_events`. Además, `generation_runs.video_id`. Detalle en REVISION §7.3.

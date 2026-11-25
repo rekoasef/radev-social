@@ -8,6 +8,24 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
+> ### ▶ Retomar acá (última sesión: 2026-11-25, PC de la fábrica)
+>
+> **En qué estamos: V1 del video (RAdev Studio), rama `feat/video-v1`** (sale de `spike/video-v0`; `main` no cambió desde que empezó la spike). **V0 está cerrada.** El formato es el **documental**: imágenes de archivo + gráficos animados + voz de Alberto, en **dos formatos** (Short 9:16 y normal 16:9). Los monigotes y el kit quedaron descartados. Decisión: **ADR 0029**. Alcance, etapas, datos, tareas y criterio de aceptación: **`docs/RADEV-STUDIO-REVISION.md` §7**. Lista para tildar: `docs/ROADMAP.md` → "Video — V1".
+>
+> **Orden aprobado por el operador (2026-11-25):**
+> - **A**: las oficinas como sistema (T2–T9), con `packages/video`, `core/videos`, las tablas y `apps/video-worker`, hasta un video completo sin pantallas.
+> - **B**: el escritorio en la web (T10–T14), empezando por el diseño del "estudio como un juego", con capturas.
+>
+> **Pedido del operador (2026-11-25):** desde la plataforma tiene que poder **descargar la carpeta completa**, igual a la que dejó la spike: `short/` y `normal/`, cada una con `video.mp4`, `miniatura.png` y `descripcion.txt`. La usa para subir a YouTube y como backup en Drive (REVISION §7.5).
+>
+> **Modelos:** Opus para diseño y docs; Sonnet para portar y codear (la regla del operador: avisarle cuál conviene antes de cada etapa).
+>
+> **▶ Próximo paso:** T1 (docs) hecho, falta que el operador lo revise. Después, **T2** (`packages/video`, con Sonnet): portar los schemas y controles de `spikes/video-v0/src/photo/schema.ts` y las partes puras de `scripts/docu.ts`, con tests.
+>
+> **Primer video publicado:** la Mona Lisa (`Descargas\mona-v2\short` y `\normal`), que el operador está subiendo a mano a YouTube (2026-11-25). La voz "safa, pero no es del todo fluida": ya sale de una sola toma; para mejorarla, probar `eleven_v3`, los ajustes de la voz y la puntuación del guion (anotado para después).
+>
+> ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
+>
 > ### ▶ Retomar acá (última sesión: 2026-11-24, PC de la fábrica)
 >
 > **En qué estamos:** pruebas V0 de RAdev Studio (módulo de video), en la rama **`spike/video-v0`**, no en `main`. **V0-0 a V0-3 cerradas. V0-5 descartada como base del video. V0-6 redefinida: video animado guionado, primera prueba hecha.** Resultados en `docs/V0-RESULTS.md`; plan de cada prueba en `docs/RADEV-STUDIO-REVISION.md` §6.

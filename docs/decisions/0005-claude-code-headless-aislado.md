@@ -9,3 +9,5 @@
 **Consecuencias.** Dos "Claude" separados: el que desarrolla (CLAUDE.md raíz) y el que crea contenido (CLAUDE.md de marca). Cada ejecución queda registrada con costo y sesión.
 
 **Modo liviano (2026-09-29).** El CLAUDE.md de la marca ya no se escribe en el directorio: va como prompt de sistema (`--system-prompt-file`), que reemplaza al de Claude Code, y los archivos de contexto van dentro del prompt, sin herramientas (salvo `ideas.research`, que usa WebSearch y WebFetch). El aislamiento no cambia: se sigue ejecutando en una carpeta temporal fuera del repo y la voz de marca sigue saliendo de la base. Motivo: el prompt de sistema y las herramientas de Claude Code pesaban ~27.000 tokens reenviados en cada turno; un carrusel consumía ~128.000 tokens de entrada de la suscripción. Ver `docs/ARCHITECTURE.md` §7.
+
+**Video (2026-11-25, ADR 0029).** `video.research` también usa WebSearch y WebFetch, igual que `ideas.research`. El resto de las tareas de video siguen sin herramientas.

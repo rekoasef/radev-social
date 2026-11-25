@@ -127,7 +127,7 @@ Todo lo listado en §6 (fases 0 a 6): marcas gestionables, RAdev y Lumus, **solo
 ### Fuera de la v1
 - Instagram (el formato ya es 4:5; se suma después).
 - LinkedIn y otras redes.
-- Video de cualquier tipo.
+- Video de cualquier tipo. *(2026-11-25: el video llega como un módulo aparte, RAdev Studio; alcance en `docs/RADEV-STUDIO-REVISION.md` §7 y ADR 0029. No cambia el alcance de los carruseles.)*
 - Generación de imágenes con IA: las slides se construyen con plantillas; nunca fotos ni personas.
 - Tipo de slide `code`.
 - Presets de estilo adicionales a `bold` y `soft` (se agregan con código cuando haga falta).

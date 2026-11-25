@@ -1,6 +1,6 @@
 # 0028 — Escenarios del video armados con piezas, a medida de cada historia
 
-**Estado:** aceptada · 2026-11-25 · amplía la biblioteca de lugares de V0-10 (`docs/V0-RESULTS.md`)
+**Estado:** reemplazada por 0029 (formato documental, 2026-11-25) · aceptada el 2026-11-25 · amplía la biblioteca de lugares de V0-10 (`docs/V0-RESULTS.md`)
 
 **Contexto.** Desde V0-10, cada escena elegía un lugar de una biblioteca fija dibujada en código (banco, bóveda, túnel, cine, plano…) con la regla de variedad del operador: ningún lugar en más de 3 escenas. En el video del apagón de S3 (V0-14, 18 escenas) la regla obligó a usar al menos 6 lugares, pero para una historia de servidores calzaban 2 o 3: el guion rellenó con el cine, el plano (con "BÓVEDA" escrito), la tienda y el banco. Dirección marcó algunos y propuso otros que tampoco calzaban. Pedido del operador: **"cada video tiene que tener escenas personalizadas"**.
 
