@@ -7,7 +7,7 @@ import { loadRootEnv } from "../load-root-env";
 import { createBrandAsset, listBrandAssets, setBrandAssetToken } from "../queries/brand-assets";
 import { listCurrentBrandDocuments, saveBrandDocument } from "../queries/brand-documents";
 import { addScheduleSlots } from "../queries/schedule";
-import { aiRoutes, brands, contentPillars } from "../schema";
+import { aiRoutes, brands, contentPillars, voices } from "../schema";
 import { seedAiRoutes } from "./ai-routes";
 import {
   pendingSeedAssets,
@@ -17,6 +17,7 @@ import {
   seedPillars,
   seedSlots,
 } from "./brands";
+import { seedVoices } from "./voices";
 
 loadRootEnv();
 
@@ -132,6 +133,16 @@ try {
     .returning({ task: aiRoutes.task });
   console.log(
     `Rutas de IA creadas: ${routesAdded.map((r) => r.task).join(", ") || "ninguna (ya estaban)"}`,
+  );
+
+  // The narrators (ADR 0027). Only missing ones are added: the catalog is edited from the panel.
+  const voicesAdded = await db
+    .insert(voices)
+    .values(seedVoices)
+    .onConflictDoNothing()
+    .returning({ name: voices.name });
+  console.log(
+    `Voces creadas: ${voicesAdded.map((v) => v.name).join(", ") || "ninguna (ya estaban)"}`,
   );
 } finally {
   await pool.end();

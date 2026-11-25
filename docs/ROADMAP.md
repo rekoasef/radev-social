@@ -142,7 +142,7 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 - [x] T1 Docs (ADR 0029, REVISION §7, ARCHITECTURE §14, PRD, PROGRESS)
 - [x] T2 `packages/video`: schemas, controles, prompts, descripciones
 - [x] T3 `core/videos`: etapas y eventos con tests de invariantes
-- [ ] T4 `db`: tablas de video, `transitionVideo`, seed de voces
+- [ ] T4 `db`: tablas de video, `transitionVideo`, seed de voces — **escrito y con tests; falta aplicar la migración `0028` en Postgres local y probarla con la base real**
 - [ ] T5 Voz de ElevenLabs en una toma (`packages/ai/src/tts`)
 - [ ] T6 Cliente de Wikimedia Commons con filtro de licencias
 - [ ] T7 `apps/video-worker` + oficinas 1 a 5 (hasta el guion)

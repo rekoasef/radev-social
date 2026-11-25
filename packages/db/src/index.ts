@@ -235,5 +235,30 @@ export {
   type TiktokOutcome,
   type TiktokPublishContext,
 } from "./queries/tiktok-publishing";
+export {
+  type AddVideoDocumentInput,
+  addVideoDocument,
+  type CreateVideoInput,
+  clearVideoCondition,
+  createVideo,
+  getCurrentVideoDocument,
+  getDefaultVoice,
+  getVideo,
+  listUsageEvents,
+  listVideoDocumentVersions,
+  listVideos,
+  listVoices,
+  pauseVideoById,
+  type RecordUsageInput,
+  recordUsageEvent,
+  recordVideoFailure,
+  resumeVideoById,
+  retryVideoById,
+  rowCondition,
+  setVideoTitle,
+  type TransitionVideoOptions,
+  transitionVideo,
+  type VideoTransitionOutcome,
+} from "./queries/videos";
 export * from "./schema";
 export { decryptToken, encryptToken, tokenEncryptionKey } from "./token-crypto";

@@ -21,4 +21,9 @@ export const seedAiRoutes: {
   { task: "ideas.research", primary: claude, fallback: null },
   { task: "caption.variants", primary: free, fallback: claude },
   { task: "metrics.extract", primary: claude, fallback: null },
+  { task: "video.research", primary: claude, fallback: null },
+  { task: "video.images", primary: claude, fallback: null },
+  { task: "video.script", primary: claude, fallback: null },
+  { task: "video.review", primary: claude, fallback: null },
+  { task: "video.package", primary: claude, fallback: null },
 ];

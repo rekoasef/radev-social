@@ -89,3 +89,15 @@ export type PauseReason = (typeof PAUSE_REASONS)[number];
 /** A rejection note tells the AI (or the operator's future self) what to fix. */
 export const REJECTION_NOTE_MIN = 5;
 export const REJECTION_NOTE_MAX = 500;
+
+/** Where a voice comes from (ADR 0027: ElevenLabs; Kokoro stays a local backup). */
+export const VOICE_PROVIDERS = ["elevenlabs", "kokoro"] as const;
+export type VoiceProvider = (typeof VOICE_PROVIDERS)[number];
+
+/** What a voice is for: stories (narrative) or ads (commercial). */
+export const VOICE_USES = ["narrative", "commercial"] as const;
+export type VoiceUse = (typeof VOICE_USES)[number];
+
+/** What `usage_events` counts: voice credits, render time and downloads (cost is always 0 here). */
+export const USAGE_KINDS = ["tts", "render", "download"] as const;
+export type UsageKind = (typeof USAGE_KINDS)[number];

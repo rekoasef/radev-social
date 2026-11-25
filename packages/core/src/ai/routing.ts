@@ -11,6 +11,11 @@ export const AI_TASK_LABELS: Record<AiTask, string> = {
   "ideas.research": "Investigar temas",
   "caption.variants": "Variantes de descripción",
   "metrics.extract": "Leer capturas de métricas",
+  "video.research": "Video: investigar el tema",
+  "video.images": "Video: elegir imágenes de archivo",
+  "video.script": "Video: escribir el guion",
+  "video.review": "Video: verificar los hechos",
+  "video.package": "Video: título, capítulos y miniatura",
 };
 
 export const AI_PROVIDER_LABELS: Record<AiProviderId, string> = {
@@ -19,7 +24,15 @@ export const AI_PROVIDER_LABELS: Record<AiProviderId, string> = {
 };
 
 /** Tasks that need tools (web search, reading images): only claude-code has them. */
-export const TOOL_TASKS: readonly AiTask[] = ["ideas.research", "metrics.extract"];
+export const TOOL_TASKS: readonly AiTask[] = [
+  "ideas.research",
+  "metrics.extract",
+  "video.research",
+  "video.images",
+  "video.script",
+  "video.review",
+  "video.package",
+];
 
 export const MAX_MODEL_ID_LENGTH = 200;
 

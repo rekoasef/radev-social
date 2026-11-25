@@ -1,0 +1,331 @@
+import {
+  CLEAR_CONDITION,
+  canAdvance,
+  checkRejectionNote,
+  failVideo,
+  INITIAL_STAGE,
+  needsNote,
+  nextStage,
+  type PauseReason,
+  pauseVideo,
+  resumeVideo,
+  retryVideo,
+  type UsageKind,
+  type VideoCondition,
+  type VideoDocumentKind,
+  type VideoEvent,
+  type VideoFailure,
+  type VideoStage,
+  type WorkingStage,
+} from "@radev/core";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import {
+  type UsageEvent,
+  usageEvents,
+  type Video,
+  type VideoDocument,
+  type VideoFailureRecord,
+  type Voice,
+  videoDocuments,
+  videos,
+  voices,
+} from "../schema";
+import type { Executor } from "./brand-assets";
+
+// Videos, the documents the offices leave and their usage. `transitionVideo` is the only code that
+// writes `videos.stage` (CLAUDE.md, rule 2): it applies the state machine of packages/core inside a
+// transaction. Documents must be validated with their Zod schema (packages/video) before they get
+// here (rule 4): this package stores them as given.
+
+/** The pause and failure of a row, as the `VideoCondition` of packages/core. */
+export function rowCondition(
+  row: Pick<Video, "pausedAt" | "pauseReason" | "resumeAt" | "failure">,
+): VideoCondition {
+  return {
+    pausedAt: row.pausedAt,
+    pauseReason: row.pauseReason,
+    resumeAt: row.resumeAt,
+    failure: row.failure ? { ...row.failure, at: new Date(row.failure.at) } : null,
+  };
+}
+
+const failureRecord = (failure: VideoFailure): VideoFailureRecord => ({
+  ...failure,
+  at: failure.at.toISOString(),
+});
+
+export type CreateVideoInput = {
+  topic: string;
+  brandId?: string | null;
+  language?: string;
+  voiceId?: string | null;
+};
+
+/** A new video starts at the first office (Research). The job is queued by the caller. */
+export async function createVideo(db: Executor, input: CreateVideoInput): Promise<Video> {
+  const [video] = await db
+    .insert(videos)
+    .values({
+      topic: input.topic.trim(),
+      brandId: input.brandId ?? null,
+      language: input.language ?? "es",
+      voiceId: input.voiceId ?? null,
+      stage: INITIAL_STAGE,
+    })
+    .returning();
+  if (!video) throw new Error("No se pudo crear el video.");
+  return video;
+}
+
+export async function getVideo(db: Executor, videoId: string): Promise<Video | null> {
+  const [video] = await db.select().from(videos).where(eq(videos.id, videoId));
+  return video ?? null;
+}
+
+export function listVideos(
+  db: Executor,
+  filter: { stages?: readonly VideoStage[] } = {},
+): Promise<Video[]> {
+  const where = filter.stages?.length ? inArray(videos.stage, [...filter.stages]) : undefined;
+  return db.select().from(videos).where(where).orderBy(desc(videos.createdAt));
+}
+
+export type VideoTransitionOutcome =
+  | { ok: true; from: VideoStage; to: VideoStage }
+  | { ok: false; reason: string };
+
+export type TransitionVideoOptions = {
+  /** The rejection note (required by the three rejections and by `rejectScript`). */
+  note?: string | null;
+  now?: Date;
+};
+
+/**
+ * Applies an event of the state machine to a video, locking its row. A paused video does not
+ * advance (it can still be discarded); a rejection needs its note. Moving to another stage clears
+ * the failure of the old one. This is the only place that writes `videos.stage`.
+ */
+export async function transitionVideo(
+  db: Executor,
+  videoId: string,
+  event: VideoEvent,
+  options: TransitionVideoOptions = {},
+): Promise<VideoTransitionOutcome> {
+  const now = options.now ?? new Date();
+  const [video] = await db.select().from(videos).where(eq(videos.id, videoId)).for("update");
+  if (!video) return { ok: false, reason: "Ese video no existe." };
+
+  const result = nextStage(video.stage, event);
+  if (!result.ok) return result;
+  const advance = canAdvance(rowCondition(video), event, now);
+  if (!advance.ok) return advance;
+
+  let rejectionNote = video.rejectionNote;
+  if (needsNote(event)) {
+    const note = checkRejectionNote(options.note);
+    if (!note.ok) return note;
+    rejectionNote = note.note;
+  } else if (event === "approveScript" || event === "approveVideo") {
+    rejectionNote = null;
+  }
+
+  const changes: Partial<typeof videos.$inferInsert> = { rejectionNote };
+  if (result.to !== video.stage) {
+    Object.assign(changes, { stage: result.to, failure: null });
+  }
+  if (event === "approveVideo") changes.approvedAt = now;
+  if (event === "reopen") changes.approvedAt = null;
+  // A discarded video is never worked on again: its pause is over.
+  if (event === "archive")
+    Object.assign(changes, { pausedAt: null, pauseReason: null, resumeAt: null });
+
+  await db.update(videos).set(changes).where(eq(videos.id, videoId));
+  return { ok: true, from: video.stage, to: result.to };
+}
+
+// ───────────── condition: pause, failure (they never change the stage) ─────────────
+
+async function updateCondition(
+  db: Executor,
+  videoId: string,
+  change: (condition: VideoCondition) => VideoCondition,
+): Promise<Video | null> {
+  const [video] = await db.select().from(videos).where(eq(videos.id, videoId)).for("update");
+  if (!video) return null;
+  const next = change(rowCondition(video));
+  const [updated] = await db
+    .update(videos)
+    .set({
+      pausedAt: next.pausedAt,
+      pauseReason: next.pauseReason,
+      resumeAt: next.resumeAt,
+      failure: next.failure ? failureRecord(next.failure) : null,
+    })
+    .where(eq(videos.id, videoId))
+    .returning();
+  return updated ?? null;
+}
+
+export const pauseVideoById = (
+  db: Executor,
+  videoId: string,
+  reason: PauseReason,
+  resumeAt: Date | null = null,
+  now = new Date(),
+) => updateCondition(db, videoId, (c) => pauseVideo(c, reason, now, resumeAt));
+
+export const resumeVideoById = (db: Executor, videoId: string) =>
+  updateCondition(db, videoId, resumeVideo);
+
+/** An office failed: recorded on the video, nothing else changes. */
+export const recordVideoFailure = (db: Executor, videoId: string, failure: VideoFailure) =>
+  updateCondition(db, videoId, (c) => failVideo(c, failure));
+
+/** "Reintentar": the failure goes away so the office can run again. */
+export const retryVideoById = (db: Executor, videoId: string) =>
+  updateCondition(db, videoId, retryVideo);
+
+export const clearVideoCondition = (db: Executor, videoId: string) =>
+  updateCondition(db, videoId, () => CLEAR_CONDITION);
+
+/** Sets the title once the script exists (the downloaded folder is a slug of it). */
+export async function setVideoTitle(db: Executor, videoId: string, title: string): Promise<void> {
+  await db.update(videos).set({ title: title.trim() }).where(eq(videos.id, videoId));
+}
+
+// ───────────── documents ─────────────
+
+export type AddVideoDocumentInput = {
+  videoId: string;
+  kind: VideoDocumentKind;
+  /** Already validated with the document's Zod schema (rule 4). */
+  data: Record<string, unknown>;
+  origin: "office" | "operator";
+  schemaVersion?: number;
+  generationRunId?: string | null;
+};
+
+/**
+ * Saves a new version of a document (the highest is the current one). Locks the video row so two
+ * jobs never take the same number; never overwrites an older version.
+ */
+export async function addVideoDocument(
+  db: Executor,
+  input: AddVideoDocumentInput,
+): Promise<VideoDocument> {
+  const [locked] = await db
+    .select({ id: videos.id })
+    .from(videos)
+    .where(eq(videos.id, input.videoId))
+    .for("update");
+  if (!locked) throw new Error("Ese video no existe.");
+  const [last] = await db
+    .select({ version: sql<number>`max(${videoDocuments.version})` })
+    .from(videoDocuments)
+    .where(and(eq(videoDocuments.videoId, input.videoId), eq(videoDocuments.kind, input.kind)));
+  const [doc] = await db
+    .insert(videoDocuments)
+    .values({
+      videoId: input.videoId,
+      kind: input.kind,
+      version: Number(last?.version ?? 0) + 1,
+      data: input.data,
+      schemaVersion: input.schemaVersion ?? 1,
+      origin: input.origin,
+      generationRunId: input.generationRunId ?? null,
+    })
+    .returning();
+  if (!doc) throw new Error("No se pudo guardar el documento.");
+  return doc;
+}
+
+/** The current (highest) version of a document, or null if its office has not left one. */
+export async function getCurrentVideoDocument(
+  db: Executor,
+  videoId: string,
+  kind: VideoDocumentKind,
+): Promise<VideoDocument | null> {
+  const [doc] = await db
+    .select()
+    .from(videoDocuments)
+    .where(and(eq(videoDocuments.videoId, videoId), eq(videoDocuments.kind, kind)))
+    .orderBy(desc(videoDocuments.version))
+    .limit(1);
+  return doc ?? null;
+}
+
+/** Every version of a document, oldest first (to compare after a rejection). */
+export function listVideoDocumentVersions(
+  db: Executor,
+  videoId: string,
+  kind: VideoDocumentKind,
+): Promise<VideoDocument[]> {
+  return db
+    .select()
+    .from(videoDocuments)
+    .where(and(eq(videoDocuments.videoId, videoId), eq(videoDocuments.kind, kind)))
+    .orderBy(asc(videoDocuments.version));
+}
+
+// ───────────── usage ─────────────
+
+export type RecordUsageInput = {
+  videoId: string;
+  kind: UsageKind;
+  office?: WorkingStage | null;
+  quantity: number;
+  unit: string;
+  durationMs?: number | null;
+  data?: Record<string, unknown> | null;
+};
+
+export async function recordUsageEvent(db: Executor, input: RecordUsageInput): Promise<UsageEvent> {
+  const [event] = await db
+    .insert(usageEvents)
+    .values({
+      videoId: input.videoId,
+      kind: input.kind,
+      office: input.office ?? null,
+      quantity: input.quantity,
+      unit: input.unit,
+      durationMs: input.durationMs ?? null,
+      data: input.data ?? null,
+    })
+    .returning();
+  if (!event) throw new Error("No se pudo registrar el uso.");
+  return event;
+}
+
+export function listUsageEvents(db: Executor, videoId: string): Promise<UsageEvent[]> {
+  return db
+    .select()
+    .from(usageEvents)
+    .where(eq(usageEvents.videoId, videoId))
+    .orderBy(asc(usageEvents.createdAt));
+}
+
+// ───────────── voices ─────────────
+
+export function listVoices(db: Executor): Promise<Voice[]> {
+  return db.select().from(voices).where(eq(voices.active, true)).orderBy(asc(voices.name));
+}
+
+/** The voice a new video gets for its use and language, if one is marked as the default. */
+export async function getDefaultVoice(
+  db: Executor,
+  use: Voice["use"] = "narrative",
+  language = "es",
+): Promise<Voice | null> {
+  const [voice] = await db
+    .select()
+    .from(voices)
+    .where(
+      and(
+        eq(voices.use, use),
+        eq(voices.language, language),
+        eq(voices.isDefault, true),
+        eq(voices.active, true),
+      ),
+    );
+  return voice ?? null;
+}

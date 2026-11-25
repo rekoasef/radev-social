@@ -8,6 +8,12 @@ export const AI_TASKS = [
   "ideas.research",
   "caption.variants",
   "metrics.extract",
+  // RAdev Studio (ADR 0029): the offices of the video that use AI.
+  "video.research",
+  "video.images",
+  "video.script",
+  "video.review",
+  "video.package",
 ] as const;
 
 export type AiTask = (typeof AI_TASKS)[number];

@@ -42,6 +42,11 @@ const TASK_HINTS: Record<AiTask, string> = {
   "ideas.research": "Busca temas del nicho en la web.",
   "caption.variants": "Variantes de la descripción del post.",
   "metrics.extract": "Lee capturas de las analíticas de TikTok.",
+  "video.research": "Video: investiga el tema en la web y arma el dossier con fuentes.",
+  "video.images": "Video: elige entre las imágenes de archivo encontradas en Commons.",
+  "video.script": "Video: escribe el guion mirando las imágenes. Conviene la mejor calidad.",
+  "video.review": "Video: verifica los hechos del guion contra el dossier.",
+  "video.package": "Video: título, capítulos y miniatura para subir a YouTube.",
 };
 
 // Which provider and model each AI task uses, and its fallback (docs/ARCHITECTURE.md §7).

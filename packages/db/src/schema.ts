@@ -6,6 +6,7 @@ import {
   BRAND_DOCUMENT_KINDS,
   DATA_SOURCES,
   type DataSeries,
+  DOCUMENT_ORIGINS,
   GENERATION_RUN_STATUSES,
   type GenerationRequest,
   IDEA_REQUEST_STATUSES,
@@ -19,6 +20,7 @@ import {
   METRIC_SOURCES,
   NETWORKS,
   NOTIFICATION_KINDS,
+  PAUSE_REASONS,
   PILLAR_GOALS,
   POST_STATUSES,
   type PostArt,
@@ -28,7 +30,13 @@ import {
   SLIDE_REWRITE_STATUSES,
   SOCIAL_ACCOUNT_STATUSES,
   SOCIAL_NETWORKS,
+  USAGE_KINDS,
   VERSION_ORIGINS,
+  VIDEO_DOCUMENT_KINDS,
+  VIDEO_STAGES,
+  VOICE_PROVIDERS,
+  VOICE_USES,
+  WORKING_STAGES,
 } from "@radev/core";
 import { sql } from "drizzle-orm";
 import {
@@ -709,10 +717,10 @@ export const generationRuns = pgTable(
   "generation_runs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    brandId: uuid("brand_id")
-      .notNull()
-      .references(() => brands.id, { onDelete: "cascade" }),
+    // Null for a video without a brand (ADR 0029, D-B): then `videoId` says whose run it is.
+    brandId: uuid("brand_id").references(() => brands.id, { onDelete: "cascade" }),
     postId: uuid("post_id").references(() => posts.id, { onDelete: "set null" }),
+    videoId: uuid("video_id").references((): AnyPgColumn => videos.id, { onDelete: "set null" }),
     task: text("task", { enum: AI_TASKS }).notNull(),
     role: text("role", { enum: ROUTE_ROLES }).notNull(),
     provider: text("provider", { enum: AI_PROVIDERS }).notNull(),
@@ -737,6 +745,135 @@ export const generationRuns = pgTable(
     check("generation_runs_role_valid", sql`${t.role} in (${inList(ROUTE_ROLES)})`),
     check("generation_runs_provider_valid", sql`${t.provider} in (${inList(AI_PROVIDERS)})`),
     check("generation_runs_status_valid", sql`${t.status} in (${inList(GENERATION_RUN_STATUSES)})`),
+    check("generation_runs_owner", sql`${t.brandId} is not null or ${t.videoId} is not null`),
+    index("generation_runs_video_idx").on(t.videoId),
+  ],
+);
+
+// ───────────── RAdev Studio: video (docs/RADEV-STUDIO-REVISION.md §7.3, ADR 0029) ─────────────
+
+/** A narrator's voice (ADR 0027). The video picks one; the brand may have a default. */
+export const voices = pgTable(
+  "voices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: text("provider", { enum: VOICE_PROVIDERS }).notNull(),
+    /** The provider's id for the voice (ElevenLabs: `l1zE9xgNpUTaQCZzpNJa`). */
+    externalId: text("external_id").notNull(),
+    name: text("name").notNull(),
+    use: text("use", { enum: VOICE_USES }).notNull(),
+    language: text("language").notNull().default("es"),
+    /** Null: the speed saved in the voice. */
+    speed: real("speed"),
+    /** The voice a new video gets for its use and language. One per use and language. */
+    isDefault: boolean("is_default").notNull().default(false),
+    /** A voice the library no longer offers is marked inactive, never deleted. */
+    active: boolean("active").notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique("voices_provider_external_unique").on(t.provider, t.externalId),
+    uniqueIndex("voices_default_unique").on(t.use, t.language).where(sql`${t.isDefault}`),
+    check("voices_provider_valid", sql`${t.provider} in (${inList(VOICE_PROVIDERS)})`),
+    check("voices_use_valid", sql`${t.use} in (${inList(VOICE_USES)})`),
+  ],
+);
+
+/** The last failure of a video's office, as stored (dates as ISO strings). */
+export type VideoFailureRecord = {
+  stage: (typeof VIDEO_STAGES)[number];
+  message: string;
+  retryable: boolean;
+  at: string;
+};
+
+/**
+ * A video moving through the offices. `stage` only changes through `transitionVideo`
+ * (queries/videos.ts; rule 2); pause and failure are a separate condition.
+ */
+export const videos = pgTable(
+  "videos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Optional (D-B): a video of history or curiosities needs no brand. Archived, never deleted.
+    brandId: uuid("brand_id").references(() => brands.id, { onDelete: "restrict" }),
+    topic: text("topic").notNull(),
+    /** Set when the script exists; the folder of the downloaded package is a slug of it. */
+    title: text("title"),
+    language: text("language").notNull().default("es"),
+    voiceId: uuid("voice_id").references(() => voices.id, { onDelete: "restrict" }),
+    stage: text("stage", { enum: VIDEO_STAGES }).notNull(),
+    pausedAt: timestamp("paused_at", { withTimezone: true }),
+    pauseReason: text("pause_reason", { enum: PAUSE_REASONS }),
+    /** When a `provider_limit` pause ends by itself. */
+    resumeAt: timestamp("resume_at", { withTimezone: true }),
+    failure: jsonb("failure").$type<VideoFailureRecord>(),
+    /** The operator's last rejection: the Script office reads it when it writes again. */
+    rejectionNote: text("rejection_note"),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("videos_stage_idx").on(t.stage),
+    index("videos_brand_idx").on(t.brandId),
+    check("videos_stage_valid", sql`${t.stage} in (${inList(VIDEO_STAGES)})`),
+    check("videos_pause_reason_valid", sql`${t.pauseReason} in (${inList(PAUSE_REASONS)})`),
+    check("videos_pause_consistent", sql`(${t.pausedAt} is null) = (${t.pauseReason} is null)`),
+  ],
+);
+
+/**
+ * What each office leaves for the next one: a versioned, Zod-validated document (rule 4). A
+ * rejection writes a new version and never touches the old ones; the highest version is current.
+ */
+export const videoDocuments = pgTable(
+  "video_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    videoId: uuid("video_id")
+      .notNull()
+      .references(() => videos.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: VIDEO_DOCUMENT_KINDS }).notNull(),
+    version: integer("version").notNull(),
+    data: jsonb("data").$type<Record<string, unknown>>().notNull(),
+    schemaVersion: integer("schema_version").notNull().default(1),
+    origin: text("origin", { enum: DOCUMENT_ORIGINS }).notNull(),
+    generationRunId: uuid("generation_run_id").references((): AnyPgColumn => generationRuns.id, {
+      onDelete: "set null",
+    }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("video_documents_video_kind_version_unique").on(t.videoId, t.kind, t.version),
+    check("video_documents_kind_valid", sql`${t.kind} in (${inList(VIDEO_DOCUMENT_KINDS)})`),
+    check("video_documents_origin_valid", sql`${t.origin} in (${inList(DOCUMENT_ORIGINS)})`),
+    check("video_documents_version_valid", sql`${t.version} >= 1`),
+  ],
+);
+
+/** Voice credits, render time and downloads of a video, for the offices' reports. Cost is 0. */
+export const usageEvents = pgTable(
+  "usage_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    videoId: uuid("video_id")
+      .notNull()
+      .references(() => videos.id, { onDelete: "cascade" }),
+    /** The office that did the work; null for a download. */
+    office: text("office", { enum: WORKING_STAGES }),
+    kind: text("kind", { enum: USAGE_KINDS }).notNull(),
+    quantity: real("quantity").notNull(),
+    /** credits, seconds, MB… */
+    unit: text("unit").notNull(),
+    durationMs: integer("duration_ms"),
+    data: jsonb("data").$type<Record<string, unknown>>(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("usage_events_video_idx").on(t.videoId, t.createdAt),
+    check("usage_events_kind_valid", sql`${t.kind} in (${inList(USAGE_KINDS)})`),
+    check("usage_events_office_valid", sql`${t.office} in (${inList(WORKING_STAGES)})`),
   ],
 );
 
@@ -820,3 +957,8 @@ export type Lead = typeof leads.$inferSelect;
 export type NewGenerationRun = typeof generationRuns.$inferInsert;
 
 export * from "./auth-schema";
+
+export type Voice = typeof voices.$inferSelect;
+export type Video = typeof videos.$inferSelect;
+export type VideoDocument = typeof videoDocuments.$inferSelect;
+export type UsageEvent = typeof usageEvents.$inferSelect;
