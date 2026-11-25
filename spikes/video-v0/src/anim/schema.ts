@@ -9,6 +9,7 @@
 // comprueba que lo que valida el schema se puede renderizar.
 import { z } from "zod";
 import type { GuionScene } from "./guion";
+import { checkSet, setSchema } from "./kit-catalog";
 import { qualityErrors, sameShot } from "./quality";
 
 const W = 1080;
@@ -205,7 +206,11 @@ export const SETTINGS = [
 export const sceneSchema = z
   .object({
     narration: z.string().min(10).max(220),
-    setting: z.enum(SETTINGS),
+    setting: z
+      .string()
+      .min(3)
+      .max(30)
+      .describe("El `id` de un escenario de `sets` (lo normal) o una plantilla del catálogo."),
     camera: z
       .array(z.object({ at: cueSchema, zoom: z.number().min(0.8).max(2), x, y }).strict())
       .min(1)
@@ -226,6 +231,8 @@ export const sceneSchema = z
 export const guionSchema = z
   .object({
     title: short(80),
+    /** ADR 0028: los escenarios de este video, armados con piezas del kit. */
+    sets: z.array(setSchema).max(8).optional(),
     cast: z.array(castSchema).max(8).optional(),
     /** Lugares que la historia pedía y no están en el catálogo: la lista de qué dibujar después. */
     missingPlaces: z
@@ -384,6 +391,21 @@ export function checkGuion(guion: GuionDraft): string[] {
       if (!a.who && !a.outfit) errors.push(`scenes.${i}.actors.${j} › falta outfit (o who)`);
     });
   });
+  // Escenarios: cada escena usa uno de `sets` o una plantilla; los `sets` se validan aparte.
+  const setIds = new Set<string>();
+  (guion.sets ?? []).forEach((spec, i) => {
+    if (setIds.has(spec.id)) errors.push(`sets.${i}.id › "${spec.id}" repetido`);
+    if ((SETTINGS as readonly string[]).includes(spec.id)) {
+      errors.push(`sets.${i}.id › "${spec.id}" es el nombre de una plantilla: usá otro`);
+    }
+    setIds.add(spec.id);
+    errors.push(...checkSet(spec, `sets.${i}.`));
+  });
+  guion.scenes.forEach((s, i) => {
+    if (!setIds.has(s.setting) && !(SETTINGS as readonly string[]).includes(s.setting)) {
+      errors.push(`scenes.${i}.setting › "${s.setting}" no es un id de \`sets\` ni una plantilla`);
+    }
+  });
   // Variar sin prohibir: el mismo lugar no va en dos escenas seguidas con el mismo encuadre, y
   // ningún lugar más de MAX_PER_SETTING veces.
   guion.scenes.forEach((s, i) => {
@@ -414,9 +436,11 @@ export function checkGuion(guion: GuionDraft): string[] {
 /** El guion validado, en el formato del render (`voice` = índice de la escena). */
 export function toRenderGuion(guion: GuionDraft): GuionScene[] {
   const cast = new Map((guion.cast ?? []).map((c) => [c.id, c]));
+  const sets = new Map((guion.sets ?? []).map((s) => [s.id, s]));
   return guion.scenes.map((scene, voice) => ({
     voice,
     ...scene,
+    set: sets.get(scene.setting),
     actors: scene.actors.map((a) => {
       const c = a.who ? cast.get(a.who) : undefined;
       return { ...a, outfit: a.outfit ?? c?.outfit ?? "civil", ...(c && { look: c.look }) };

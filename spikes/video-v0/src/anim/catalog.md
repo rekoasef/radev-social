@@ -35,9 +35,20 @@ Las cajas van entre y = 560 y 1360 (o 1580–1700). Los objetos y personajes pue
 
 **Cámara**: lista de puntos `{ at, zoom, x, y }`. `x, y` es el centro del cuadro en el escenario y `zoom` va de 0,8 a 2 (1 = todo el escenario). Entre dos puntos se mueve suave. Con 2–4 puntos por escena alcanza; acercate a lo que importa en cada momento. Si hacés zoom > 1,3, poné el centro cerca de la acción para que no se salga de cuadro.
 
-## Escenarios (`setting`)
+## Escenarios: armalos para esta historia (`sets`)
 
-Todos tienen movimiento propio (luces, ventanas que titilan): nunca hace falta "llenar" el fondo.
+**Cada video tiene sus propios escenarios.** En `sets` armás de 3 a 7 escenarios con piezas del kit (lista al final), pensados para ESTA historia: la oficina del ingeniero, la sala de servidores, la casa de la víctima, el banco, la ruta. Cada escena dice en `setting` el `id` de su escenario. Un escenario se repite en varias escenas: así hay continuidad (el mismo banco en todo el video).
+
+Cómo se arma uno:
+- `kind`: `interior` (pared de color `wall` y piso) o `exterior` (cielo según `light` y piso de afuera). `light`: `dia`, `atardecer` o `noche`, según cuándo pasa.
+- `pieces`: de 3 a 16 piezas. **(x, y) es el centro de la BASE de la pieza.** Sin `y`, la pieza va a su altura de siempre (los muebles en el piso, y = 1340; los cuadros en la pared; las luces en el techo). Lo que va encima de un mueble (monitor, notebook, taza…) lleva **`on`: el índice del mueble en la lista** (que tiene que estar antes), y el código calcula la altura. `scale` de 0,5 a 1,8; `flip` lo espeja; `tone` le cambia el color.
+- El piso está siempre en y = 1340: **los personajes, con los pies en y ≈ 1330, scale 1,3–1,5.**
+- Llená el cuadro sin taparlo: 5 a 10 piezas suele alcanzar. Los muebles grandes (escritorio, mesa, mostrador) van en el centro, donde están los personajes; lo de la pared, detrás y a los costados. El ancho del cuadro es 0–1080: una pieza de 620 de ancho centrada en x = 540 ocupa de 230 a 850.
+- Que se note dónde estamos y cuándo: una oficina de noche tiene el ventanal con la ciudad iluminada; un centro de control, pantallas con gráficos; una casa, sillón, cuadro y lámpara.
+
+## Plantillas (escenarios ya armados)
+
+Sirven solo si la historia pasa EXACTAMENTE ahí (un robo a un banco, un juicio, un aeropuerto). Si no, armá el escenario con piezas: **nunca uses una plantilla que no tenga que ver con lo que se cuenta** (un cine o un plano en una historia de servidores, una tienda para una casa). Todas tienen movimiento propio.
 
 - **`aeropuerto-noche`**: pista de un aeropuerto de noche. Cielo con estrellas y luna, ciudad con ventanas al fondo, torre de control con baliza, un reflector que barre el cielo, un **avión de carga** estacionado a la izquierda y un **depósito de carga** a la derecha (x 540–1080, y 880–1150) con la puerta entreabierta y luz. El piso empieza en y = 1150. **Personajes: pies en y ≈ 1250–1280, scale 0,8–0,95.** Sirve para: aeropuertos, aviones, cargamentos, llegadas y salidas en avión. No lo uses como "afuera de noche" genérico.
 - **`reloj-alarma`**: fondo liso oscuro con luz de alarma que alterna rojo y azul. Piso desde y = 1420. **Personajes: pies en y ≈ 1370, scale 1,4–1,6.** Sirve para: tensión, tiempo que corre, preguntas, momentos de "¿cómo puede ser?". Va bien con el cronómetro y los signos de pregunta.
@@ -55,7 +66,7 @@ Todos tienen movimiento propio (luces, ventanas que titilan): nunca hace falta "
 - **`oficina`**: oficina de noche: ventanal con la ciudad (x 70–720, y 560–1000), pizarra con notas de colores a la derecha (x 770–1020, y 600–930, sin texto), escritorio largo (tapa en y = 1070) con **dos monitores con código** (x 190–510 y 600–920, y 850–1040), taza con vapor y una planta. **Personajes: pies en y ≈ 1330, scale 1,3–1,5** (delante del escritorio). Sirve para: empresas de tecnología, programadores, ingenieros, gente trabajando, "en la oficina", el error de una persona frente a la computadora, decisiones, reuniones.
 - **`sala-servidores`**: centro de datos: una fila de seis racks de pared a pared (x 24–1058, y 560–1340) llenos de **luces que titilan**, bandeja con cables de colores arriba (y 480–560) y piso técnico con aire frío que corre. **Personajes: pies en y ≈ 1330, scale 1,2–1,4** (delante de los racks). Sirve para: servidores, la nube, internet, centros de datos, caídas de servicios, datos, hackeos, "adentro de la máquina".
 
-**Variá los lugares.** Un mismo escenario **nunca en dos escenas seguidas con el mismo encuadre** (si repetís, cambiá la cámara: zoom ±0,3 o el centro a 250 px o más) y **ningún escenario en más de 3 escenas del video**. Si la historia pasa en un lugar que no está en el catálogo (una redacción, un hospital, un estadio), usá el más cercano que tenga sentido o contalo con cajas de datos, y **anotalo en `missingPlaces`** (qué lugar y en qué escenas hubiera ido): así se dibuja para la próxima. Nunca uses un lugar que contradiga la historia (una tienda para un banco).
+**Variá los lugares.** Un mismo escenario **nunca en dos escenas seguidas con el mismo encuadre** (si repetís, cambiá la cámara: zoom ±0,3 o el centro a 250 px o más) y **ningún escenario en más de 3 escenas del video**. Si un escenario necesita algo que no está en el kit (una cama de hospital, un arco de fútbol), armalo igual con lo más cercano y **anotá en `missingPlaces` la pieza que faltó** (qué pieza y en qué escenas): así se dibuja para la próxima. Nunca uses un lugar que contradiga la historia (una tienda para un banco).
 
 ## Elenco (`cast`): los personajes con nombre
 

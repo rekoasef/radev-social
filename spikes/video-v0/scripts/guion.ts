@@ -28,6 +28,7 @@ import {
 } from "@radev/ai";
 import { z } from "zod";
 import { guion as ejemplo } from "../src/anim/guion";
+import { kitDoc } from "../src/anim/kit-catalog";
 import {
   checkGuion,
   checkScene,
@@ -57,7 +58,7 @@ const repair = flag("repair") !== undefined;
 const effort = flag("effort");
 const [mode, ...rest] = args;
 
-const catalog = readFileSync(path.join(root, "src", "anim", "catalog.md"), "utf8");
+const catalog = `${readFileSync(path.join(root, "src", "anim", "catalog.md"), "utf8")}\n\n${kitDoc()}\n`;
 const example = JSON.stringify(
   { title: "El robo del siglo", scenes: ejemplo.map(({ voice: _, ...s }) => s), facts: [] },
   null,

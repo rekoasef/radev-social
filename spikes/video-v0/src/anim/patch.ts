@@ -27,6 +27,9 @@ export const patchSchema = z
       .max(25)
       .describe("SOLO las escenas que cambian. Las que no nombrás quedan como estaban."),
     title: z.string().optional().describe("Solo si cambia el título."),
+    sets: guionLargoSchema.shape.sets.describe(
+      "Solo si cambia algún escenario: la lista completa.",
+    ),
     cast: guionLargoSchema.shape.cast.describe("Solo si cambia el elenco: la lista completa."),
     missingPlaces: guionLargoSchema.shape.missingPlaces.describe(
       "Solo si cambia: la lista completa.",
@@ -67,6 +70,7 @@ export function applyPatch(base: GuionDraft, patch: GuionPatch): PatchResult {
   const guion: GuionDraft = {
     ...base,
     title: patch.title ?? base.title,
+    sets: patch.sets ?? base.sets,
     cast: patch.cast ?? base.cast,
     missingPlaces: patch.missingPlaces ?? base.missingPlaces,
     facts: patch.facts ?? base.facts,

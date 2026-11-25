@@ -1,4 +1,6 @@
 import type { Setting } from "./guion";
+import { CustomSet } from "./kit";
+import type { SetSpec } from "./kit-catalog";
 import {
   BankFacade,
   BankHall,
@@ -436,7 +438,8 @@ export function Shop({ t }: { t: number }) {
   );
 }
 
-export function SetView({ setting, t }: { setting: Setting; t: number }) {
+export function SetView({ setting, set, t }: { setting: string; set?: SetSpec; t: number }) {
+  if (set) return <CustomSet spec={set} t={t} />;
   if (setting === "aeropuerto-noche") return <AirportNight t={t} />;
   if (setting === "plano") return <Blueprint t={t} />;
   if (setting === "tienda") return <Shop t={t} />;

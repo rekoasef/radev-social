@@ -4,6 +4,8 @@
 // que si cambia la voz, todo se reacomoda solo. En V1 este JSON lo escribiría `claude -p` (o el
 // operador) y se validaría con Zod antes de renderizar.
 
+import type { SetSpec } from "./kit-catalog";
+
 /** Cuándo pasa algo: segundos desde el inicio de la escena, o una palabra de la voz. */
 export type Cue =
   | number
@@ -141,7 +143,9 @@ export type GuionScene = {
   /** Índice de la escena en la voz de V0-3 (out/v0-3/manifest.json). */
   voice: number;
   narration: string;
-  setting: Setting;
+  /** Una plantilla (`Setting`) o el id de un escenario armado (`set`, ADR 0028). */
+  setting: Setting | (string & {});
+  set?: SetSpec;
   /**
    * Cámara: puntos clave (zoom y centro del cuadro en el escenario) enganchados a la voz. Entre
    * dos puntos se mueve suave; antes del primero y después del último, se queda (con un leve

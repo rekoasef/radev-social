@@ -26,6 +26,7 @@ import {
 } from "@radev/ai";
 import { z } from "zod";
 import { guion as ejemplo } from "../src/anim/guion";
+import { kitDoc } from "../src/anim/kit-catalog";
 import { applyPatch, patchSchema } from "../src/anim/patch";
 import { normalizeGuion } from "../src/anim/quality";
 import { checkGuion, type GuionDraft, guionLargoSchema, guionSchema } from "../src/anim/schema";
@@ -362,7 +363,7 @@ const LONG_RULES = `- **Esta vez NO es un Short: es un video de 1,5 a 2 minutos.
 - **Estructura**, como un buen video de historias: (1) **gancho** en las primeras 2 escenas: el dato más fuerte o una pregunta, antes de explicar nada; (2) **contexto**: quiénes eran y por qué importa; (3) **el hecho paso a paso**, con tensión; (4) **el giro**: cómo se descubrió, qué salió mal o lo que nadie esperaba; (5) **qué pasó después**; (6) **cierre** con una pregunta a la audiencia. Cada 4–5 escenas, una frase que tire hacia adelante ("pero eso no fue lo más raro").
 - Variá escenarios, cámara y cajas a lo largo del video: que no se repita el mismo plano dos escenas seguidas.`;
 
-const catalog = readFileSync(path.join(root, "src", "anim", "catalog.md"), "utf8");
+const catalog = `${readFileSync(path.join(root, "src", "anim", "catalog.md"), "utf8")}\n\n${kitDoc()}\n`;
 const example = JSON.stringify(
   { title: "El robo del siglo", scenes: ejemplo.map(({ voice: _, ...s }) => s), facts: [] },
   null,
@@ -634,15 +635,22 @@ Marcá SOLO problemas reales, de estos tipos:
 - **disputa**: un dato que el dossier tiene en \`disputed\`, dicho como firme.
 - **mezcla**: hechos mezclados, en orden equivocado o atribuidos a quien no corresponde.
 - **idioma**: palabras o giros que no son rioplatenses (furgoneta, coche, vosotros) o que suenan a traducción.
-- **lugar**: el escenario de la escena contradice lo que se cuenta (un aeropuerto cuando la escena pasa en unas sierras; una tienda para un banco).
+- **lugar**: el escenario no tiene que ver con lo que cuenta la escena o lo contradice (un cine o un plano en una historia de servidores; una tienda para un banco; de día cuando pasa de noche). La corrección propone qué armar con piezas del kit ("oficina de noche con escritorio y monitores"), **nunca otra plantilla que tampoco tenga que ver**.
 
 No marques estilo, ritmo ni gustos si no está mal. Si no hay problemas, \`notes\` vacío y \`verdict: "aprobado"\`. Cada nota cita el fragmento textual y propone cómo corregirlo con lo que está en el dossier.`;
+
+/** El lugar en palabras: una plantilla por su nombre; un escenario armado, con su hora y piezas. */
+function describePlace(g: GuionDraft, id: string): string {
+  const set = g.sets?.find((s) => s.id === id);
+  if (!set) return `plantilla "${id}"`;
+  return `${id} (${set.kind}, ${set.light}): ${set.pieces.map((p) => p.kind).join(", ")}`;
+}
 
 /** Lo que Dirección necesita ver: textos y lugar de cada escena (sin la animación, más barato). */
 function forReview(g: GuionDraft) {
   return g.scenes.map((sc, i) => ({
     escena: i + 1,
-    lugar: sc.setting,
+    lugar: describePlace(g, sc.setting),
     narracion: sc.narration,
     titular: sc.headline?.text,
     cajas: sc.overlays.map((o) =>
