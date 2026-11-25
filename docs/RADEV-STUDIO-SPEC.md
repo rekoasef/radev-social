@@ -1,4 +1,7 @@
 # RAdev Studio — Especificación funcional y arquitectónica
+
+> **⚠ Documento histórico (2026-11-25).** Es la especificación original (v0.1, 2026-11-20), anterior a V0. Cambió: el formato del video es **documental** (imágenes de archivo + gráficos + voz de ElevenLabs), no escenas de plantilla ni personajes; la investigación y la verificación de hechos **entran en V1**; el render es del video **entero** en dos formatos (Short 9:16 y normal 16:9); la voz es de ElevenLabs (ADR 0027), no local; la producción es una **línea de oficinas** (no un Director IA con modos automático y colaborativo). Lo vigente de V1 está en `docs/RADEV-STUDIO-REVISION.md` §7, `docs/decisions/0029-video-documental-y-oficinas.md` y `docs/ARCHITECTURE.md` §14.
+
 **Versión:** 0.1  
 **Fecha:** 20 de noviembre de 2026  
 **Estado:** Documento de definición y planificación. No autoriza implementación automática.  

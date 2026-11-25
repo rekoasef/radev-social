@@ -1,5 +1,7 @@
 # Resultados de V0 (RAdev Studio)
 
+> **⚠ Documento histórico (2026-11-25).** Son los resultados de las pruebas de V0 (spike `spike/video-v0`, cerrada el 2026-11-25). Las pruebas de **animación con monigotes, lugares y kit de piezas** (V0-6, V0-8 a V0-14 y el Estudio) se descartaron como formato; quedan como medición (tokens, tiempos, voz). Resultado final de V0: el **formato documental** (ver `PROGRESS.md`, «Spike de video: formato documental»). Lo vigente de V1 está en `docs/RADEV-STUDIO-REVISION.md` §7, `docs/decisions/0029-video-documental-y-oficinas.md` y `docs/ARCHITECTURE.md` §14.
+
 Pruebas definidas en `RADEV-STUDIO-REVISION.md` §6. Cada resultado indica la máquina en la que se midió: **los números de una máquina no valen para la otra** (`ENVIRONMENTS.md`).
 
 Código de las pruebas: `spikes/video-v0/` en la rama `spike/video-v0` (descartable). Las salidas (MP4, audio, mediciones crudas) quedan en `spikes/video-v0/out/`, fuera de git.

@@ -889,6 +889,17 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Barrido de tipografías (T12)**: las 9 × 2 presets × 12 tipos × normal/extremo. Pasan todas salvo las monoespaciadas como texto (en `flow` y en extremos de `steps`): documentadas como no recomendadas; el editor avisa.
 - **Preview interna**: `/render/preview/<marca>/<tipo|frame>?token=RENDER_TOKEN&page=&total=&seed=&overlay=safe|tiktok`. Sin login; sin token da 404 (`apps/web/lib/render-token.ts`, excluida del proxy de auth). Marca `window.__renderReady` cuando cargaron las fuentes y las imágenes. Captura con `pnpm capture <ruta> <salida.png>` (Playwright + Chromium, `scripts/capture.mjs`), con la web levantada.
 
+**Video, RAdev Studio (decisiones del 2026-11-25, ADR 0029):**
+- **Formato documental**: imágenes de archivo (Wikimedia Commons, sin licencias NC/ND, siempre acreditadas) con zoom lento, gráficos animados (fecha, cifra, nombre, cronología, cita), subtítulos karaoke y voz de Alberto (ElevenLabs, una sola toma). Los monigotes, el kit de piezas y el Estudio (ADR 0028) quedaron descartados: «no me gustan nada estos videos» / «me encanta el video, quiero que así sea el formato».
+- **Cada video sale en dos formatos** del mismo guion y la misma voz: Short (9:16, descripción corta con #Shorts, sin capítulos) y normal (16:9, descripción completa con capítulos). Se renderiza el video entero, no por escena.
+- **Línea de oficinas**: Investigación → Fuentes → Imágenes → Guion → Verificación de hechos → *escritorio: aprobar guion* → Locución → Render → Publicación → *escritorio: aprobar video* → Descarga. Cada oficina deja un documento versionado y validado con Zod; un rechazo con nota vuelve a la oficina que corresponde sin repetir lo anterior.
+- **Investigación y verificación en V1** («no tiene que inventar nada»): todo número de la narración y de los gráficos tiene que estar en el dossier (regla 9, controlado en código).
+- **El operador descarga el paquete** (`<slug>/short/` y `<slug>/normal/`, cada uno con `video.mp4`, `miniatura.png`, `descripcion.txt`) para subirlo a YouTube y guardarlo en Drive como backup.
+- **Corre en la notebook** (`apps/video-worker`); el servidor sigue solo con los carruseles. La marca es opcional en un video.
+- **Fuera de V1:** inglés, subir a YouTube por API, avisos por Telegram, ideas propuestas por la IA, rehacer escenas sueltas, otras fuentes de imágenes, videos de Lumus.
+- **Para monetizar en YouTube:** marcar «No, no es contenido para niños»; revisar la política de contenido repetitivo antes de pedir la monetización (V0-7).
+- **Modelos:** Sonnet por defecto, Opus para diseño; el asistente le avisa al operador cuál conviene antes de cada etapa (regla del operador).
+
 ## Anotado para más adelante
 
 **Pendiente de la Fase 2 (criterio de terminado):**

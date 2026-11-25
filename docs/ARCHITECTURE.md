@@ -2,10 +2,11 @@
 
 ## 1. Estilo general
 
-**Monolito modular + worker.** Un repo, una base de datos, dos procesos:
+**Monolito modular + workers.** Un repo, una base de datos, tres procesos:
 
 - **web**: lo que el operador ve y toca (panel, marcas, editor, calendario, revisión) y la ruta interna de render.
-- **worker**: lo que trabaja solo (generar con IA, renderizar, publicar, sincronizar métricas).
+- **worker**: lo que trabaja solo en los carruseles (generar con IA, renderizar, publicar, sincronizar métricas).
+- **video-worker** (RAdev Studio, ADR 0029): una cola por oficina del video. Corre en la notebook, no en el servidor (§14).
 
 Postgres es la única fuente de verdad **y** el canal de comunicación: la web encola jobs (pg-boss), el worker los ejecuta. Sin llamadas HTTP de la web al worker, sin Redis, sin microservicios.
 
@@ -56,6 +57,7 @@ Los registros DNS se crean donde estén los nameservers del dominio (Hostinger o
        + contenedor de backup: pg_dump + assets a R2/B2 (capa gratuita)
 ```
 
+- El `video-worker` **no** está en esta topología: corre en la notebook del operador (V1, ADR 0029); el servidor sigue solo con los carruseles. El backup de un video es el paquete que el operador descarga y sube a Drive.
 - `web` se construye con `output: "standalone"`.
 - `worker` incluye Node, Chromium (Playwright) y Claude Code CLI.
 - Postgres **no** publica puertos; solo accesible en la red de Docker.
@@ -185,6 +187,8 @@ Todos idempotentes (clave `singletonKey` derivada del objetivo), con reintentos 
 | `tokens.refresh` | cron diario 04:30 (Buenos Aires) | renueva los tokens de cada cuenta `active`; si TikTok la rechaza, `reauth_required` + aviso "reconectá" (una vez por día); avisa 14 días antes de que venza el permiso (el refresh token dura un año); TikTok caído → sigue con las demás y reintenta |
 | `backup.run` | cron diario | lo ejecuta el contenedor de backup |
 
+**Jobs del video** (`video-worker`, §14; una cola por oficina, un video a la vez por cola): `video.research`, `video.sources`, `video.images`, `video.script`, `video.review` (hechos; T7) y `video.voice`, `video.render`, `video.package` (T8); `video.sweep` (cron cada 10 min) vuelve a encolar los videos trabados. Payload `{ videoId, stage, limitAttempt }`; un job de una etapa que el video ya dejó no hace nada (regla 8).
+
 ## 7. IA
 
 ### Proveedores
@@ -258,10 +262,11 @@ Tabla `ai_routes` editable desde el panel. Valores iniciales:
 | `ideas.research` | claude-code (con búsqueda web) | — |
 | `caption.variants` | openrouter | claude-code |
 | `metrics.extract` (capturas) | claude-code | — |
+| `video.research`, `video.images`, `video.script`, `video.review`, `video.package` (ADR 0029) | claude-code (`sonnet`; el código fija el esfuerzo por oficina) | — |
 
 Seed (Fase 3, T6): claude-code con `sonnet` y openrouter con `nvidia/nemotron-3-super-120b-a12b:free` (hasta la T13 era `nex-agi/nex-n2.5-pro:free`, que OpenRouter dio de baja); solo se cargan si la tarea no tiene ruta global. Se editan en **Ajustes → Ruteo de IA** (`/settings`), que por ahora edita solo las rutas globales; la tabla ya admite rutas por marca (`brand_id`), que ganan sobre la global (`resolveAiRoute`).
 
-Reglas de una ruta (`checkAiRoute`, `packages/core/src/ai/routing.ts`; las aplican el panel y el servidor): modelo obligatorio; con openrouter, solo modelos `:free`; las tareas con herramientas (`ideas.research`, `metrics.extract`) solo con claude-code; el respaldo no puede ser igual al principal.
+Reglas de una ruta (`checkAiRoute`, `packages/core/src/ai/routing.ts`; las aplican el panel y el servidor): modelo obligatorio; con openrouter, solo modelos `:free`; las tareas con herramientas o imágenes (`ideas.research`, `metrics.extract` y las cinco `video.*`) solo con claude-code; el respaldo no puede ser igual al principal.
 
 Router (`packages/ai/src/router.ts`): prueba el principal y pasa al respaldo ante `rate_limited` o `provider_error` (cualquiera, también una credencial faltante), **nunca ante `validation`** (la respuesta llegó mal: se regenera con el mismo proveedor, T8), ni si el job se canceló. Devuelve todos los intentos para registrarlos. Si fallan los dos, decide el fallo más útil para el job: `rate_limited` (esperar y reintentar) antes que un error reintentable, y este antes que el resto; en empate, el del principal.
 
@@ -373,7 +378,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `social_accounts` | id, brand_id, network (`tiktok`), external_id (TikTok: `open_id`), handle, display_name, scopes (text[]: los otorgados), access_token_enc, access_expires_at, refresh_token_enc, refresh_expires_at, status (`active` \| `reauth_required`), last_error, created_at, updated_at. Única por marca y red, y por red y cuenta (una cuenta no puede estar en dos marcas). Desconectar borra la fila |
 | `publications` | id, post_id, network, status (`pending` \| `inbox` \| `published` \| `failed`; `inbox`: borrador en la bandeja de TikTok), external_id (TikTok: `publish_id`), url, error, attempts, published_at. Una por post y red |
 | `ai_routes` | id, task, brand_id (nullable = global), provider, model, fallback_provider, fallback_model. Única por tarea y marca, con una sola global por tarea (`NULLS NOT DISTINCT`) |
-| `generation_runs` | id, brand_id, post_id (null en pedidos de ideas), task, role (`primary` \| `fallback`), provider, model, status (`succeeded` \| `failed`), error_kind, error, input_tokens, output_tokens, cost_usd (nullable), duration_ms, num_turns, session_id, created_at. Una fila por intento |
+| `generation_runs` | id, brand_id (null en un video sin marca), post_id (null en pedidos de ideas), video_id (CASCADE; `brand_id` o `video_id` tiene que estar), task, role (`primary` \| `fallback`), provider, model, status (`succeeded` \| `failed`), error_kind, error, input_tokens, output_tokens, cost_usd (nullable), duration_ms, num_turns, session_id, created_at. Una fila por intento |
 | `notifications` | id, key (única: nunca se guarda ni se envía dos veces la misma), kind (`review` \| `publish` \| `failure` \| `limit` \| `cap` \| `test`), text, silent, created_at, sent_at, error |
 | `settings` | clave/valor global: `generation_window`, `slots_fill_last` (resultado de la última pasada del llenado) |
 | `data_snapshots` | id, source (`bluelytics`), as_of (fecha del dato), fetched_at, payload (jsonb, validado al bajarlo). Uno por fuente y día: otro refresh el mismo día lo reemplaza |
@@ -383,6 +388,10 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | `leads` (F6) | id, brand_id, name, contact, channel, post_ref, network_post_id, status (`new` \| `talking` \| `client` \| `lost`), notes, created_at, updated_at |
 | `leads` (F6) | id, brand_id, name, contact, channel, post_code, source_post_id, status, notes, created_at |
 | Better Auth | `user`, `session`, `account`, `verification` |
+| `videos` (RAdev Studio, ADR 0029) | id, brand_id (nullable), topic, title, language, voice_id, stage (una etapa por oficina), paused_at, pause_reason, resume_at, failure (jsonb), rejection_note, approved_at. La etapa solo cambia con `transitionVideo` (regla 2) |
+| `video_documents` | id, video_id, kind (`dossier` \| `sources` \| `images` \| `script` \| `review` \| `voice` \| `render` \| `package`), version, data (jsonb validado con Zod), schema_version, origin (`office` \| `operator`), generation_run_id. Versionados: una versión nueva nunca pisa la anterior |
+| `voices` | id, provider (`elevenlabs` \| `kokoro`), external_id, name, use, language, speed, is_default, active |
+| `usage_events` | id, video_id, office, kind (`tts` \| `render` \| `download`), quantity, unit, duration_ms, data |
 
 `hook_type`: `cost`, `warning`, `myth`, `comparison`, `question`, `data`, `story`, `howto`.
 
@@ -410,6 +419,7 @@ MEDIA_DIR, MEDIA_BASE_URL        # MEDIA_DIR vacío = <repo>/media (local)
 TOKEN_ENCRYPTION_KEY
 TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET   (F5)
+ELEVENLABS_API_KEY               # voz del video (ADR 0027); solo la usa el video-worker, en la notebook
 BACKUP_S3_ENDPOINT, BACKUP_S3_REGION, BACKUP_S3_BUCKET, BACKUP_S3_KEY, BACKUP_S3_SECRET, BACKUP_PASSPHRASE (cifra los volcados; ver infra/backup/README.md)
 ```
 

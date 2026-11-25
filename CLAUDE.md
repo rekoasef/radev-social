@@ -1,6 +1,8 @@
 # RAdev Social
 
-Gestor de redes sociales que genera, renderiza, programa y publica carruseles para múltiples marcas (hoy: RAdev y Lumus). La IA escribe el contenido; las imágenes se dibujan con plantillas en código. Uso personal de un solo operador (Renzo). Objetivo de costo: **USD 0 extra por mes**.
+Gestor de redes sociales que genera, renderiza, programa y publica carruseles para múltiples marcas (hoy: RAdev y Lumus). La IA escribe el contenido; las imágenes se dibujan con plantillas en código. Uso personal de un solo operador (Renzo). Objetivo de costo: **USD 0 extra por mes** (única excepción: la voz de ElevenLabs del video, USD 6/mes, ADR 0027).
+
+En la rama `feat/video-v1` crece **RAdev Studio**: videos documentales para YouTube (imágenes de archivo + gráficos + voz), producidos por una línea de oficinas y descargables como paquete (Short 9:16 y normal 16:9). Ver ADR 0029.
 
 ## Antes de trabajar, leé lo que corresponda
 
@@ -13,6 +15,7 @@ Gestor de redes sociales que genera, renderiza, programa y publica carruseles pa
 | Qué incluye cada fase | `docs/ROADMAP.md` |
 | Por qué se tomó una decisión | `docs/decisions/` |
 | **Siempre, antes de instalar, configurar o medir algo en la máquina**: en cuál de las dos PCs estás y cómo está cada una | `docs/ENVIRONMENTS.md` |
+| El módulo de video (RAdev Studio): alcance, etapas, tablas, tareas | `docs/RADEV-STUDIO-REVISION.md` §7, `docs/decisions/0029-video-documental-y-oficinas.md`, `docs/ARCHITECTURE.md` §14 |
 
 Trabajamos **una fase del roadmap a la vez**. No implementes cosas de fases futuras salvo que se pida explícitamente.
 
@@ -34,18 +37,20 @@ Renzo desarrolla con IA y tiene **poca experiencia en infraestructura** (Docker,
 
 ## Stack
 
-TypeScript (strict) · Next.js App Router · Tailwind · shadcn/ui · Postgres + Drizzle · pg-boss · Better Auth (GitHub) · Zod · Playwright (render y tests) · Vitest · Biome · pnpm + Turborepo · Docker Compose + Caddy · Claude Code headless (`claude -p`) con la suscripción del operador · OpenRouter (modelos gratuitos) como proveedor secundario de IA.
+TypeScript (strict) · Next.js App Router · Tailwind · shadcn/ui · Postgres + Drizzle · pg-boss · Better Auth (GitHub) · Zod · Playwright (render y tests) · Vitest · Biome · pnpm + Turborepo · Docker Compose + Caddy · Claude Code headless (`claude -p`) con la suscripción del operador · OpenRouter (modelos gratuitos) como proveedor secundario de IA · Remotion + ElevenLabs + Wikimedia Commons (video, solo en el `video-worker`).
 
 ## Estructura del monorepo
 
 ```
 apps/web            Next.js: panel, gestión de marcas, editor, calendario, /render (interno), auth
 apps/worker         Jobs de pg-boss: generación, render, publicación, métricas
+apps/video-worker   RAdev Studio: una cola de pg-boss por oficina del video (corre en la notebook)
 packages/core       Dominio puro: tipos, máquina de estados, reglas. Sin dependencias de infra
 packages/db         Schema Drizzle, migraciones, queries, seed
 packages/slides     SlideFrame, presets de estilo, plantillas, schemas Zod del contenido y de los temas
 packages/ai         Proveedores de IA (claude-code, openrouter), ruteo por tarea, límites de uso
 packages/publishers Adaptadores de publicación (manual, tiktok)
+packages/video      RAdev Studio: documentos de cada oficina (Zod), controles, prompts, Commons, descripciones. Sin I/O
 seeds/brands/       Datos iniciales de cada marca (voz, precios, casos, assets). Se cargan a la base con el seed
 docs/               Documentación del proyecto
 ```
@@ -95,7 +100,11 @@ pnpm capture --check "/render/preview/lumus/flow?variant=extreme" -
                     # control del render (desbordes, zonas seguras); falla si hay problemas.
                     # "-" como salida no guarda captura
 
-# Video (spike, `cd spikes/video-v0`)
+# Video: RAdev Studio V1 (rama feat/video-v1)
+pnpm --filter @radev/video-worker dev   # worker del video: una cola por oficina, usa la base local (`pnpm dev` también lo levanta)
+npx vitest run packages/video packages/core apps/video-worker   # tests del módulo
+
+# Video: spike V0 (histórico, `cd spikes/video-v0`; el formato de monigotes y el Estudio se descartaron)
 pnpm research dossier <1-5> --effort low --long   # investigación con fuentes (claude -p)
 pnpm research guion <dossier.json> --effort low --long  # guion + correcciones + Dirección
 python3 tts/whole.py texts/<archivo>.json --tag <nombre>  # voz (ElevenLabs, Alberto por defecto)

@@ -1,5 +1,7 @@
 # RAdev Studio — Canales, formatos y videos largos (análisis, 2026-11-24)
 
+> **⚠ Documento histórico (2026-11-25).** Es el análisis del 2026-11-24, cuando el formato era el de monigotes animados. Siguen vigentes los videos largos de **3 a 5 min**, la monetización en YouTube y los canales como evolución de las marcas; el formato visual, las pruebas V0-10 (biblioteca de dibujos) y la animación guionada con personajes quedaron **descartados** (el operador los rechazó: «son muy malos»). Para V1 el video sale en dos formatos (Short y normal) del mismo guion. Lo vigente de V1 está en `docs/RADEV-STUDIO-REVISION.md` §7, `docs/decisions/0029-video-documental-y-oficinas.md` y `docs/ARCHITECTURE.md` §14.
+
 Análisis pedido por el operador (a partir de una conversación con ChatGPT) **antes de implementar nada**: elegir formato y duración, ideas para videos largos, varios canales de YouTube y si la notebook puede producir videos largos. No cambia código, base, migraciones ni Docker. Contexto: el estilo de video aprobado es el **animado y guionado** de V0-6 (`docs/V0-RESULTS.md`).
 
 **Decisiones del operador en esta charla:**

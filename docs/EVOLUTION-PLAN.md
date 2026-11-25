@@ -1,5 +1,7 @@
 # Plan de evolución — de RAdev Social a RAdev Studio
 
+> **⚠ Documento histórico (2026-11-25).** Es el plan de evolución propuesto el 2026-11-20 (nunca aprobado tal cual). Quedó reemplazado en lo central por V0, `RADEV-STUDIO-REVISION.md` y ADR 0029: formato documental, oficinas, dos formatos por video, un `video-worker` aparte que corre en la notebook y descarga del paquete (`short/` y `normal/`). Lo vigente de V1 está en `docs/RADEV-STUDIO-REVISION.md` §7, `docs/decisions/0029-video-documental-y-oficinas.md` y `docs/ARCHITECTURE.md` §14.
+
 **Estado:** propuesta para revisar (2026-11-20). Nada de esto está implementado ni aprobado. Se apoya en el diagnóstico de `docs/AUDIT.md`.
 
 **Objetivo.** Sumar un módulo **Video Studio** que produce YouTube Shorts y videos largos con IA (guion → voz → escenas → render → revisión → publicación → métricas), en español y en inglés, sin romper **Social Studio** (lo que hoy es RAdev Social). Los dos módulos son independientes y comparten infraestructura y servicios.

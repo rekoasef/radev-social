@@ -1,5 +1,7 @@
 # Auditoría técnica — RAdev Social (2026-11-20)
 
+> **⚠ Documento histórico (2026-11-25).** Es el diagnóstico del repositorio del 2026-11-20 (`main` en `7d114e8`); sigue valiendo como descripción de RAdev Social, no del módulo de video. Lo vigente de V1 está en `docs/RADEV-STUDIO-REVISION.md` §7, `docs/decisions/0029-video-documental-y-oficinas.md` y `docs/ARCHITECTURE.md` §14.
+
 Diagnóstico del repositorio tal como está en `main` (`7d114e8`), como base para evolucionar hacia **RAdev Studio** con un módulo nuevo, **Video Studio**. Este documento describe; las propuestas están en `docs/EVOLUTION-PLAN.md`.
 
 **Alcance y método.** Se leyeron `CLAUDE.md`, `docs/ARCHITECTURE.md`, `docs/PRD.md`, `docs/ROADMAP.md`, `docs/PROGRESS.md`, los ADR de infraestructura y media, `compose.yaml`, `compose.prod.yaml`, `Dockerfile`, `infra/caddy/Caddyfile`, el schema de Drizzle, el arranque del worker, los tipos de `packages/ai` y `packages/publishers`, y la estructura de todos los paquetes. No se ejecutó código ni se tocó la base: las medidas de recursos salen de la documentación y del código, no de un perfilado.

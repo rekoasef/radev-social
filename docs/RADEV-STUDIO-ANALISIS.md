@@ -1,5 +1,7 @@
 # RAdev Studio — Análisis de arquitectura y roadmap actualizado
 
+> **⚠ Documento histórico (2026-11-25).** Es el análisis del 2026-11-20, previo a V0. Las decisiones que tomó V0 (formato documental, voz de ElevenLabs, render entero) lo reemplazan en esos puntos. Lo vigente de V1 está en `docs/RADEV-STUDIO-REVISION.md` §7, `docs/decisions/0029-video-documental-y-oficinas.md` y `docs/ARCHITECTURE.md` §14.
+
 **Fecha:** 2026-11-20 · **Estado:** propuesta para revisar juntos. No autoriza implementar.
 **Entradas:** `docs/RADEV-STUDIO-SPEC.md` v0.1, `docs/AUDIT.md`, `docs/EVOLUTION-PLAN.md` y el estado real del repo (`main` en `7d114e8`, sin otras ramas, con `AUDIT.md` y `EVOLUTION-PLAN.md` sin commitear).
 **Verificado en la notebook hoy:** Ryzen 7 7735HS (16 hilos), RTX 4050 Laptop 6 GB **visible desde WSL** (`nvidia-smi` responde), 15 GB de RAM en Windows y **7 GB visibles para WSL** (sin `.wslconfig`: WSL toma la mitad por defecto).
