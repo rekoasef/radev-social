@@ -1,0 +1,226 @@
+{
+ "status": "pendiente",
+ "piece": {
+  "kind": "ovni",
+  "what": "platillo volador clásico: disco metálico con cúpula de vidrio arriba, luces de colores alrededor del borde que titilan y un haz de luz que sale de abajo; flota en el aire",
+  "where": "techo",
+  "w": 520,
+  "h": 520,
+  "shapes": [
+   {
+    "type": "ellipse",
+    "cx": 0,
+    "cy": -390,
+    "rx": 230,
+    "ry": 58,
+    "fill": "pizarra"
+   },
+   {
+    "type": "path",
+    "d": "M -30 -350 L 30 -350 L 140 0 L -140 0 Z",
+    "fill": "amarillo",
+    "opacity": 0.22,
+    "group": "haz"
+   },
+   {
+    "type": "path",
+    "d": "M -12 -350 L 12 -350 L 55 0 L -55 0 Z",
+    "fill": "crema",
+    "opacity": 0.3,
+    "group": "haz"
+   },
+   {
+    "type": "ellipse",
+    "cx": 0,
+    "cy": -397,
+    "rx": 222,
+    "ry": 48,
+    "fill": "gris",
+    "group": "flote"
+   },
+   {
+    "type": "ellipse",
+    "cx": -50,
+    "cy": -410,
+    "rx": 130,
+    "ry": 18,
+    "fill": "gris-claro",
+    "opacity": 0.9,
+    "group": "flote"
+   },
+   {
+    "type": "ellipse",
+    "cx": 0,
+    "cy": -372,
+    "rx": 175,
+    "ry": 16,
+    "fill": "pizarra",
+    "group": "flote"
+   },
+   {
+    "type": "circle",
+    "cx": -150,
+    "cy": -380,
+    "r": 5,
+    "fill": "pizarra"
+   },
+   {
+    "type": "circle",
+    "cx": -50,
+    "cy": -380,
+    "r": 5,
+    "fill": "pizarra"
+   },
+   {
+    "type": "circle",
+    "cx": 50,
+    "cy": -380,
+    "r": 5,
+    "fill": "pizarra"
+   },
+   {
+    "type": "circle",
+    "cx": 150,
+    "cy": -380,
+    "r": 5,
+    "fill": "pizarra"
+   },
+   {
+    "type": "ellipse",
+    "cx": 0,
+    "cy": -445,
+    "rx": 90,
+    "ry": 62,
+    "fill": "celeste",
+    "opacity": 0.95,
+    "group": "flote"
+   },
+   {
+    "type": "ellipse",
+    "cx": 25,
+    "cy": -440,
+    "rx": 60,
+    "ry": 55,
+    "fill": "turquesa",
+    "opacity": 0.4,
+    "group": "flote"
+   },
+   {
+    "type": "ellipse",
+    "cx": -30,
+    "cy": -465,
+    "rx": 28,
+    "ry": 18,
+    "fill": "blanco",
+    "opacity": 0.5,
+    "group": "flote"
+   },
+   {
+    "type": "circle",
+    "cx": 0,
+    "cy": -507,
+    "r": 8,
+    "fill": "blanco",
+    "opacity": 0.8,
+    "group": "flote"
+   },
+   {
+    "type": "circle",
+    "cx": -180,
+    "cy": -365,
+    "r": 11,
+    "fill": "amarillo",
+    "group": "luces"
+   },
+   {
+    "type": "circle",
+    "cx": -120,
+    "cy": -365,
+    "r": 11,
+    "fill": "rojo",
+    "group": "luces"
+   },
+   {
+    "type": "circle",
+    "cx": -60,
+    "cy": -365,
+    "r": 11,
+    "fill": "verde",
+    "group": "luces"
+   },
+   {
+    "type": "circle",
+    "cx": 0,
+    "cy": -365,
+    "r": 11,
+    "fill": "azul",
+    "group": "luces"
+   },
+   {
+    "type": "circle",
+    "cx": 60,
+    "cy": -365,
+    "r": 11,
+    "fill": "naranja",
+    "group": "luces"
+   },
+   {
+    "type": "circle",
+    "cx": 120,
+    "cy": -365,
+    "r": 11,
+    "fill": "rosa",
+    "group": "luces"
+   },
+   {
+    "type": "circle",
+    "cx": 180,
+    "cy": -365,
+    "r": 11,
+    "fill": "celeste",
+    "group": "luces"
+   },
+   {
+    "type": "circle",
+    "cx": 0,
+    "cy": -350,
+    "r": 18,
+    "fill": "amarillo",
+    "opacity": 0.8,
+    "group": "haz"
+   }
+  ],
+  "groups": [
+   {
+    "id": "flote",
+    "motion": "flotar",
+    "speed": 0.15,
+    "amount": 10
+   },
+   {
+    "id": "luces",
+    "motion": "titilar",
+    "speed": 0.3,
+    "amount": 0.15
+   },
+   {
+    "id": "haz",
+    "motion": "titilar",
+    "speed": 0.25,
+    "amount": 0.3
+   }
+  ]
+ },
+ "createdAt": "2026-11-25T11:30:51.781Z",
+ "updatedAt": "2026-11-25T11:30:51.781Z",
+ "usage": {
+  "provider": "claude-code",
+  "model": "claude-sonnet-5",
+  "inputTokens": 5458,
+  "outputTokens": 9522,
+  "costUsd": 0.117048,
+  "durationMs": 97812,
+  "numTurns": 2,
+  "sessionId": "47239aee-7174-4d40-b5bd-2f5fba8e109e"
+ }
+}

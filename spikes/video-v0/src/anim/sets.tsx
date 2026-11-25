@@ -12,6 +12,7 @@ import {
   Tunnel,
   Vault,
 } from "./places";
+import type { StudioPiece } from "./studio-format";
 import { wave } from "./timing";
 
 // Escenarios en SVG (1080×1920). Siempre hay algo vivo: estrellas, ventanas, balizas, un reflector.
@@ -438,8 +439,18 @@ export function Shop({ t }: { t: number }) {
   );
 }
 
-export function SetView({ setting, set, t }: { setting: string; set?: SetSpec; t: number }) {
-  if (set) return <CustomSet spec={set} t={t} />;
+export function SetView({
+  setting,
+  set,
+  studio,
+  t,
+}: {
+  setting: string;
+  set?: SetSpec;
+  studio?: Record<string, StudioPiece>;
+  t: number;
+}) {
+  if (set) return <CustomSet spec={set} studio={studio} t={t} />;
   if (setting === "aeropuerto-noche") return <AirportNight t={t} />;
   if (setting === "plano") return <Blueprint t={t} />;
   if (setting === "tienda") return <Shop t={t} />;

@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import {
   AbsoluteFill,
   Easing,
-  Series,
   interpolate,
+  Series,
   spring,
   useCurrentFrame,
   useVideoConfig,
@@ -38,8 +38,7 @@ export const Short = ({ seconds }: ShortProps) => {
     <AbsoluteFill style={{ backgroundColor: C.bg, color: C.text, fontFamily: BODY }}>
       <Series>
         {SCENES.map((scene, i) => {
-          const frames =
-            i === SCENES.length - 1 ? total - used : Math.round(total * scene.weight);
+          const frames = i === SCENES.length - 1 ? total - used : Math.round(total * scene.weight);
           used += frames;
           return (
             <Series.Sequence key={i} durationInFrames={frames}>
@@ -116,7 +115,12 @@ const TitleScene = () => {
 const useEnterAt = (delay: number) => useEnter(delay);
 
 const ListScene = () => {
-  const items = ["La web toma el pedido", "Lo deja en la cola", "El worker lo procesa", "Guarda el resultado"];
+  const items = [
+    "La web toma el pedido",
+    "Lo deja en la cola",
+    "El worker lo procesa",
+    "Guarda el resultado",
+  ];
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 44 }}>
       <div style={{ fontFamily: DISPLAY, fontSize: 84, fontWeight: 700, marginBottom: 20 }}>
@@ -192,7 +196,9 @@ const BigNumberScene = () => {
 const QuoteScene = () => {
   const frame = useCurrentFrame();
   const text = "Si tarda, puede fallar o tiene hora: va al worker.";
-  const chars = Math.floor(interpolate(frame, [0, 70], [0, text.length], { extrapolateRight: "clamp" }));
+  const chars = Math.floor(
+    interpolate(frame, [0, 70], [0, text.length], { extrapolateRight: "clamp" }),
+  );
   return (
     <div>
       <div style={{ fontFamily: DISPLAY, fontSize: 260, color: C.accent, lineHeight: 0.6 }}>“</div>
@@ -209,8 +215,18 @@ const ClosingScene = () => {
   const p = useEnter(0);
   const pulse = 1 + Math.sin(frame / 6) * 0.03;
   return (
-    <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 60, alignItems: "center" }}>
-      <div style={{ fontFamily: DISPLAY, fontSize: 120, fontWeight: 700, opacity: p }}>Seguí aprendiendo</div>
+    <div
+      style={{
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        gap: 60,
+        alignItems: "center",
+      }}
+    >
+      <div style={{ fontFamily: DISPLAY, fontSize: 120, fontWeight: 700, opacity: p }}>
+        Seguí aprendiendo
+      </div>
       <div
         style={{
           background: C.accent,

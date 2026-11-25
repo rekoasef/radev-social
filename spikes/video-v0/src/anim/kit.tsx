@@ -4,12 +4,15 @@
 import type { ReactNode } from "react";
 import {
   FLOOR_Y,
+  type PieceKind,
   type PlacedPiece,
   placePieces,
   type SetSpec,
   TONES,
   type Tone,
 } from "./kit-catalog";
+import { StudioShape } from "./studio-draw";
+import type { StudioPiece } from "./studio-format";
 import { wave } from "./timing";
 
 type Light = SetSpec["light"];
@@ -1397,7 +1400,7 @@ function Rain({ t }: P) {
 
 // --- Escenario -------------------------------------------------------------------------------------
 
-const DRAW: Record<PlacedPiece["kind"], (props: P) => ReactNode> = {
+const DRAW: Record<PieceKind, (props: P) => ReactNode> = {
   "luz-techo": CeilingLight,
   lampara: PendantLamp,
   ventanal: BigWindow,
@@ -1443,7 +1446,16 @@ const DRAW: Record<PlacedPiece["kind"], (props: P) => ReactNode> = {
 const FULL = new Set(["polvo", "niebla", "lluvia"]);
 
 /** Un escenario armado: fondo, piso y las piezas en orden de capa. */
-export function CustomSet({ spec, t }: { spec: SetSpec; t: number }) {
+export function CustomSet({
+  spec,
+  t,
+  studio = {},
+}: {
+  spec: SetSpec;
+  t: number;
+  /** Las piezas del Estudio que usa este escenario. */
+  studio?: Record<string, StudioPiece>;
+}) {
   return (
     <g>
       <defs>
@@ -1466,8 +1478,20 @@ export function CustomSet({ spec, t }: { spec: SetSpec; t: number }) {
       </defs>
       <Backdrop spec={spec} t={t} />
       <FloorView spec={spec} t={t} />
-      {placePieces(spec).map((p) => {
-        const Draw = DRAW[p.kind];
+      {placePieces(spec, studio).map((p) => {
+        const Draw = (DRAW as Record<string, ((props: P) => ReactNode) | undefined>)[p.kind];
+        if (!Draw) {
+          const piece = studio[p.kind];
+          if (!piece) return null;
+          return (
+            <g
+              key={p.index}
+              transform={`translate(${p.x} ${p.y}) scale(${p.flip ? -p.scale : p.scale} ${p.scale})`}
+            >
+              <StudioShape piece={piece} t={t} />
+            </g>
+          );
+        }
         const body = <Draw p={p} t={t} light={spec.light} />;
         if (FULL.has(p.kind)) return <g key={p.index}>{body}</g>;
         const y = p.kind === "haz-luz" ? FLOOR_Y : p.y;

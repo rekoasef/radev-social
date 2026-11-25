@@ -1,6 +1,7 @@
 import { exampleSlides, FORMAT } from "@radev/slides";
 import { Composition } from "remotion";
 import { AnimVideo, type AnimVideoProps, animFrames } from "./anim/AnimVideo";
+import { StudioSheet, type StudioSheetProps, sheetHeight } from "./anim/studio-draw";
 import { Captions, type CaptionsProps, Scene, type SceneProps } from "./Captions";
 import { clipSlides } from "./looks/clip-slides";
 import {
@@ -124,6 +125,17 @@ export const Root = () => (
       durationInFrames={1}
       defaultProps={{ voices: [] } satisfies AnimVideoProps}
       calculateMetadata={({ props }) => ({ durationInFrames: Math.max(1, animFrames(props)) })}
+    />
+    {/* Estudio (ADR 0028): hoja con las piezas dibujadas por la IA, para aprobarlas. */}
+    <Composition
+      id="studio-sheet"
+      component={StudioSheet}
+      width={WIDTH}
+      height={HEIGHT}
+      fps={FPS}
+      durationInFrames={60}
+      defaultProps={{ items: [] } satisfies StudioSheetProps}
+      calculateMetadata={({ props }) => ({ height: sheetHeight(props.items.length) })}
     />
   </>
 );

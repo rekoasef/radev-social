@@ -90,7 +90,7 @@ function Scene({ scene, voice }: { scene: GuionScene; voice: SceneVoice }) {
           role="img"
           aria-label={scene.narration}
         >
-          <SetView setting={scene.setting} set={scene.set} t={t} />
+          <SetView setting={scene.setting} set={scene.set} studio={scene.studio} t={t} />
           {scene.props.map((prop, n) => (
             <PropView key={`${prop.kind}-${n}`} prop={prop} t={t} words={words} fps={fps} />
           ))}

@@ -13,6 +13,13 @@
 - La regla de variedad del operador sigue igual (máximo 3 escenas por escenario, nunca el mismo con el mismo encuadre en dos escenas seguidas): con escenarios a medida, ya no obliga a rellenar.
 - Controles en código (`checkSet`): piso acorde a interior o exterior, `on` apuntando a un mueble anterior con superficie, lo que va sobre un mueble sin `on`, piezas fuera del cuadro, ids repetidos o iguales a una plantilla.
 
+**El Estudio: el kit crece solo (pedido del operador, 2026-11-25: "la IA tiene que ser capaz de decir que no están hechos los escenarios y hacerlos y guardarlos en el kit").**
+- Si la historia necesita algo que no está (un ovni, la vitrina de una carnicería), el guion lo declara en `newPieces` (nombre, cómo es, dónde va, tamaño) y ya lo usa en sus `sets`. El catálogo le prohíbe reemplazarlo por algo que no es.
+- `pnpm studio draw <guion>` le pide a Claude cada pieza nueva **como datos, no como código**: formas simples (`rect`, `circle`, `ellipse`, `path` con comandos absolutos), colores con nombre de una paleta fija y movimientos predefinidos (mecer, flotar, titilar, girar, latir, deslizar). Se valida con Zod (regla 4) y con controles en código: límites de la pieza, grupos, algo que se mueva, ni texto ni colores sueltos. Hasta 3 intentos con los errores.
+- **El operador aprueba cada pieza al principio** (decisión del 2026-11-25): queda `pendiente` con su vista previa (`pnpm studio sheet`), y `approve` la suma al kit o `reject <pieza> "<motivo>"` la manda a redibujar con el motivo. El render no arranca si un escenario usa una pieza sin aprobar. Más adelante, cuando la calidad sea pareja, se puede pasar a automático.
+- La biblioteca vive en `spikes/video-v0/studio/pieces/<pieza>.json` (en git: es parte del kit). Las aprobadas y pendientes aparecen en la lista de piezas que lee la IA, así ningún video vuelve a pedir la misma.
+- Costo medido (Sonnet): ~5,5k tokens de entrada y ~10k de salida por pieza (~USD 0,11 de lista), una sola vez por pieza.
+
 **Alternativas.**
 - **La IA dibuja el SVG de cada fondo:** totalmente a medida, pero ~40k tokens de salida más por video y calidad despareja (habría que revisar cada fondo). Descartada.
 - **Lugares fijos con variantes** (objetos extra, colores): lo más rápido, pero una oficina sigue siendo una oficina y cada historia nueva pide dibujar un lugar entero. Descartada.

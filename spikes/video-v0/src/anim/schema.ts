@@ -9,8 +9,9 @@
 // comprueba que lo que valida el schema se puede renderizar.
 import { z } from "zod";
 import type { GuionScene } from "./guion";
-import { checkSet, setSchema } from "./kit-catalog";
+import { checkSet, type ExtraPieces, PIECES, setSchema } from "./kit-catalog";
 import { qualityErrors, sameShot } from "./quality";
+import { newPieceSchema, type StudioPiece } from "./studio-format";
 
 const W = 1080;
 const H = 1920;
@@ -233,6 +234,8 @@ export const guionSchema = z
     title: short(80),
     /** ADR 0028: los escenarios de este video, armados con piezas del kit. */
     sets: z.array(setSchema).max(8).optional(),
+    /** Piezas que no están en el kit y este video necesita: las dibuja el Estudio antes del render. */
+    newPieces: z.array(newPieceSchema).max(8).optional(),
     cast: z.array(castSchema).max(8).optional(),
     /** Lugares que la historia pedía y no están en el catálogo: la lista de qué dibujar después. */
     missingPlaces: z
@@ -374,7 +377,8 @@ export function checkScene(scene: SceneDraft, where = ""): string[] {
 /** Máximo de escenas por lugar en un video (decisión del operador, 2026-11-24). */
 export const MAX_PER_SETTING = 3;
 
-export function checkGuion(guion: GuionDraft): string[] {
+/** `library`: las piezas del Estudio (aprobadas o pendientes) que ya existen. */
+export function checkGuion(guion: GuionDraft, library: ExtraPieces = {}): string[] {
   const errors = guion.scenes.flatMap((s, i) => checkScene(s, `scenes.${i}.`));
   errors.push(...qualityErrors(guion));
   // Continuidad: cada personaje con nombre se declara una vez en el elenco.
@@ -392,6 +396,13 @@ export function checkGuion(guion: GuionDraft): string[] {
     });
   });
   // Escenarios: cada escena usa uno de `sets` o una plantilla; los `sets` se validan aparte.
+  const extra: ExtraPieces = { ...library };
+  (guion.newPieces ?? []).forEach((n, i) => {
+    if (n.kind in PIECES || n.kind in library) {
+      errors.push(`newPieces.${i}.kind › "${n.kind}" ya existe en el kit: usala directamente`);
+    }
+    extra[n.kind] = n;
+  });
   const setIds = new Set<string>();
   (guion.sets ?? []).forEach((spec, i) => {
     if (setIds.has(spec.id)) errors.push(`sets.${i}.id › "${spec.id}" repetido`);
@@ -399,7 +410,7 @@ export function checkGuion(guion: GuionDraft): string[] {
       errors.push(`sets.${i}.id › "${spec.id}" es el nombre de una plantilla: usá otro`);
     }
     setIds.add(spec.id);
-    errors.push(...checkSet(spec, `sets.${i}.`));
+    errors.push(...checkSet(spec, `sets.${i}.`, extra));
   });
   guion.scenes.forEach((s, i) => {
     if (!setIds.has(s.setting) && !(SETTINGS as readonly string[]).includes(s.setting)) {
@@ -434,13 +445,23 @@ export function checkGuion(guion: GuionDraft): string[] {
 }
 
 /** El guion validado, en el formato del render (`voice` = índice de la escena). */
-export function toRenderGuion(guion: GuionDraft): GuionScene[] {
+/** `studio`: las piezas aprobadas del Estudio (cada escena lleva las que usa su escenario). */
+export function toRenderGuion(
+  guion: GuionDraft,
+  studio: Record<string, StudioPiece> = {},
+): GuionScene[] {
   const cast = new Map((guion.cast ?? []).map((c) => [c.id, c]));
   const sets = new Map((guion.sets ?? []).map((s) => [s.id, s]));
   return guion.scenes.map((scene, voice) => ({
     voice,
     ...scene,
     set: sets.get(scene.setting),
+    studio: Object.fromEntries(
+      (sets.get(scene.setting)?.pieces ?? []).flatMap((p) => {
+        const piece = studio[p.kind];
+        return piece ? [[p.kind, piece]] : [];
+      }),
+    ),
     actors: scene.actors.map((a) => {
       const c = a.who ? cast.get(a.who) : undefined;
       return { ...a, outfit: a.outfit ?? c?.outfit ?? "civil", ...(c && { look: c.look }) };

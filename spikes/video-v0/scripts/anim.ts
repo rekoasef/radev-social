@@ -8,8 +8,10 @@ import path from "node:path";
 import { bundle } from "@remotion/bundler";
 import { openBrowser, renderMedia, renderStill, selectComposition } from "@remotion/renderer";
 import { guion as handWritten, sceneFrames } from "../src/anim/guion";
+import { PIECES } from "../src/anim/kit-catalog";
 import { normalizeGuion } from "../src/anim/quality";
 import { guionLargoSchema, toRenderGuion } from "../src/anim/schema";
+import { approvedPieces } from "./studio-lib";
 
 const root = path.resolve(import.meta.dirname, "..");
 // --voices: otra carpeta con manifest.json y audio/ (por ejemplo out/v0-3/x1.3, de tts/tempo.py).
@@ -45,7 +47,18 @@ if (draft?.missingPlaces?.length && !process.argv.includes("--allow-missing")) {
     `Faltan lugares por dibujar: ${draft.missingPlaces.map((m) => `${m.place} (escenas ${m.scenes.map((n) => n + 1).join(", ")})`).join("; ")}. Dibujalos o usá --allow-missing.`,
   );
 }
-const guion = draft ? toRenderGuion(normalizeGuion(draft).guion) : handWritten;
+// Estudio (ADR 0028): cada pieza que no es del kit tiene que estar aprobada por el operador.
+const studio = approvedPieces();
+if (draft) {
+  const used = new Set((draft.sets ?? []).flatMap((s) => s.pieces.map((p) => p.kind)));
+  const missing = [...used].filter((k) => !(k in PIECES) && !(k in studio));
+  if (missing.length > 0) {
+    throw new Error(
+      `Piezas del Estudio sin aprobar o sin dibujar: ${missing.join(", ")}. Corré \`pnpm studio draw ${guionFile}\`, mirá la hoja y aprobalas con \`pnpm studio approve\`.`,
+    );
+  }
+}
+const guion = draft ? toRenderGuion(normalizeGuion(draft).guion, studio) : handWritten;
 if (guion.length !== voices.length) {
   throw new Error(`El guion tiene ${guion.length} escenas y la voz ${voices.length}`);
 }

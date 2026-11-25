@@ -94,6 +94,15 @@ pnpm capture "/render/preview/radev/frame?overlay=tiktok" /tmp/x.png
 pnpm capture --check "/render/preview/lumus/flow?variant=extreme" -
                     # control del render (desbordes, zonas seguras); falla si hay problemas.
                     # "-" como salida no guarda captura
+
+# Video (spike, `cd spikes/video-v0`)
+pnpm research dossier <1-5> --effort low --long   # investigación con fuentes (claude -p)
+pnpm research guion <dossier.json> --effort low --long  # guion + correcciones + Dirección
+python3 tts/whole.py texts/<archivo>.json --tag <nombre>  # voz (ElevenLabs, Alberto por defecto)
+pnpm anim --guion <guion.json> --voices out/v0-12/<nombre> --name <video>  # render
+pnpm studio draw <guion.json>      # el Estudio dibuja las piezas nuevas que pide el guion
+pnpm studio sheet [--all]          # hoja con las piezas pendientes (o todas) → out/studio
+pnpm studio approve <pieza...>     # entran al kit · reject <pieza> "<motivo>" las redibuja
 ```
 
 ```

@@ -1,0 +1,344 @@
+{
+ "status": "pendiente",
+ "piece": {
+  "kind": "vitrina-carniceria",
+  "what": "heladera mostrador de carnicería: vidrio curvo adelante, cortes de carne roja y chorizos en bandejas adentro, luz fría que titila un poco, base de metal",
+  "where": "piso",
+  "w": 700,
+  "h": 330,
+  "surface": 330,
+  "shapes": [
+   {
+    "type": "rect",
+    "x": -340,
+    "y": -330,
+    "w": 680,
+    "h": 330,
+    "r": 24,
+    "fill": "pizarra"
+   },
+   {
+    "type": "rect",
+    "x": -345,
+    "y": -20,
+    "w": 690,
+    "h": 20,
+    "r": 6,
+    "fill": "noche"
+   },
+   {
+    "type": "rect",
+    "x": -330,
+    "y": -150,
+    "w": 660,
+    "h": 130,
+    "r": 14,
+    "fill": "gris"
+   },
+   {
+    "type": "rect",
+    "x": -330,
+    "y": -150,
+    "w": 660,
+    "h": 16,
+    "r": 8,
+    "fill": "gris-claro"
+   },
+   {
+    "type": "rect",
+    "x": -330,
+    "y": -50,
+    "w": 660,
+    "h": 20,
+    "r": 8,
+    "fill": "tinta",
+    "opacity": 0.4
+   },
+   {
+    "type": "rect",
+    "x": -140,
+    "y": -100,
+    "w": 280,
+    "h": 14,
+    "r": 7,
+    "fill": "gris-claro"
+   },
+   {
+    "type": "rect",
+    "x": -320,
+    "y": -14,
+    "w": 40,
+    "h": 14,
+    "r": 6,
+    "fill": "noche"
+   },
+   {
+    "type": "rect",
+    "x": 280,
+    "y": -14,
+    "w": 40,
+    "h": 14,
+    "r": 6,
+    "fill": "noche"
+   },
+   {
+    "type": "rect",
+    "x": -320,
+    "y": -320,
+    "w": 640,
+    "h": 170,
+    "r": 16,
+    "fill": "piedra"
+   },
+   {
+    "type": "rect",
+    "x": -320,
+    "y": -320,
+    "w": 640,
+    "h": 24,
+    "r": 10,
+    "fill": "gris",
+    "opacity": 0.3
+   },
+   {
+    "type": "rect",
+    "x": -300,
+    "y": -308,
+    "w": 600,
+    "h": 12,
+    "r": 6,
+    "fill": "gris-claro"
+   },
+   {
+    "type": "rect",
+    "x": -300,
+    "y": -195,
+    "w": 600,
+    "h": 16,
+    "r": 8,
+    "fill": "gris-claro"
+   },
+   {
+    "type": "rect",
+    "x": -300,
+    "y": -200,
+    "w": 600,
+    "h": 10,
+    "r": 5,
+    "fill": "tinta",
+    "opacity": 0.25
+   },
+   {
+    "type": "ellipse",
+    "cx": -220,
+    "cy": -215,
+    "rx": 60,
+    "ry": 30,
+    "fill": "rojo"
+   },
+   {
+    "type": "ellipse",
+    "cx": -235,
+    "cy": -225,
+    "rx": 22,
+    "ry": 10,
+    "fill": "rosa",
+    "opacity": 0.7
+   },
+   {
+    "type": "ellipse",
+    "cx": -75,
+    "cy": -215,
+    "rx": 55,
+    "ry": 28,
+    "fill": "bordo"
+   },
+   {
+    "type": "ellipse",
+    "cx": -90,
+    "cy": -224,
+    "rx": 18,
+    "ry": 8,
+    "fill": "rojo",
+    "opacity": 0.6
+   },
+   {
+    "type": "ellipse",
+    "cx": 75,
+    "cy": -215,
+    "rx": 58,
+    "ry": 29,
+    "fill": "rojo"
+   },
+   {
+    "type": "ellipse",
+    "cx": 60,
+    "cy": -224,
+    "rx": 20,
+    "ry": 9,
+    "fill": "rosa",
+    "opacity": 0.7
+   },
+   {
+    "type": "ellipse",
+    "cx": 220,
+    "cy": -215,
+    "rx": 52,
+    "ry": 26,
+    "fill": "bordo"
+   },
+   {
+    "type": "ellipse",
+    "cx": 205,
+    "cy": -223,
+    "rx": 16,
+    "ry": 7,
+    "fill": "rojo",
+    "opacity": 0.6
+   },
+   {
+    "type": "rect",
+    "x": -44,
+    "y": -308,
+    "w": 8,
+    "h": 14,
+    "fill": "marron",
+    "group": "chorizo"
+   },
+   {
+    "type": "ellipse",
+    "cx": -40,
+    "cy": -295,
+    "rx": 18,
+    "ry": 22,
+    "fill": "bordo",
+    "group": "chorizo"
+   },
+   {
+    "type": "ellipse",
+    "cx": -30,
+    "cy": -270,
+    "rx": 18,
+    "ry": 22,
+    "fill": "marron-oscuro",
+    "group": "chorizo"
+   },
+   {
+    "type": "ellipse",
+    "cx": -40,
+    "cy": -245,
+    "rx": 18,
+    "ry": 22,
+    "fill": "bordo",
+    "group": "chorizo"
+   },
+   {
+    "type": "ellipse",
+    "cx": -46,
+    "cy": -300,
+    "rx": 6,
+    "ry": 8,
+    "fill": "naranja",
+    "opacity": 0.5,
+    "group": "chorizo"
+   },
+   {
+    "type": "rect",
+    "x": 36,
+    "y": -308,
+    "w": 8,
+    "h": 12,
+    "fill": "marron",
+    "group": "chorizo"
+   },
+   {
+    "type": "ellipse",
+    "cx": 40,
+    "cy": -292,
+    "rx": 18,
+    "ry": 22,
+    "fill": "marron-oscuro",
+    "group": "chorizo"
+   },
+   {
+    "type": "ellipse",
+    "cx": 50,
+    "cy": -267,
+    "rx": 18,
+    "ry": 22,
+    "fill": "bordo",
+    "group": "chorizo"
+   },
+   {
+    "type": "ellipse",
+    "cx": 0,
+    "cy": -312,
+    "rx": 260,
+    "ry": 14,
+    "fill": "celeste",
+    "opacity": 0.5,
+    "group": "luz"
+   },
+   {
+    "type": "rect",
+    "x": -260,
+    "y": -318,
+    "w": 520,
+    "h": 8,
+    "r": 4,
+    "fill": "blanco",
+    "group": "luz"
+   },
+   {
+    "type": "rect",
+    "x": -330,
+    "y": -325,
+    "w": 660,
+    "h": 185,
+    "r": 20,
+    "fill": "celeste",
+    "opacity": 0.18
+   },
+   {
+    "type": "path",
+    "d": "M -300,-320 L -260,-320 L -200,-150 L -240,-150 Z",
+    "fill": "blanco",
+    "opacity": 0.12
+   },
+   {
+    "type": "path",
+    "d": "M -150,-320 L -130,-320 L -90,-150 L -110,-150 Z",
+    "fill": "blanco",
+    "opacity": 0.08
+   }
+  ],
+  "groups": [
+   {
+    "id": "luz",
+    "motion": "titilar",
+    "speed": 0.4,
+    "amount": 0.5
+   },
+   {
+    "id": "chorizo",
+    "motion": "mecer",
+    "speed": 0.22,
+    "amount": 4,
+    "pivotX": 0,
+    "pivotY": -308
+   }
+  ]
+ },
+ "createdAt": "2026-11-25T11:33:05.630Z",
+ "updatedAt": "2026-11-25T11:33:05.630Z",
+ "usage": {
+  "provider": "claude-code",
+  "model": "claude-sonnet-5",
+  "inputTokens": 5461,
+  "outputTokens": 10442,
+  "costUsd": 0.11063819999999999,
+  "durationMs": 105071,
+  "numTurns": 2,
+  "sessionId": "f0925c19-cab6-42b6-9f22-e1d80e383d27"
+ }
+}

@@ -30,6 +30,7 @@ import { kitDoc } from "../src/anim/kit-catalog";
 import { applyPatch, patchSchema } from "../src/anim/patch";
 import { normalizeGuion } from "../src/anim/quality";
 import { checkGuion, type GuionDraft, guionLargoSchema, guionSchema } from "../src/anim/schema";
+import { knownPieces } from "./studio-lib";
 import { TOPICS } from "./topics";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -363,7 +364,8 @@ const LONG_RULES = `- **Esta vez NO es un Short: es un video de 1,5 a 2 minutos.
 - **Estructura**, como un buen video de historias: (1) **gancho** en las primeras 2 escenas: el dato más fuerte o una pregunta, antes de explicar nada; (2) **contexto**: quiénes eran y por qué importa; (3) **el hecho paso a paso**, con tensión; (4) **el giro**: cómo se descubrió, qué salió mal o lo que nadie esperaba; (5) **qué pasó después**; (6) **cierre** con una pregunta a la audiencia. Cada 4–5 escenas, una frase que tire hacia adelante ("pero eso no fue lo más raro").
 - Variá escenarios, cámara y cajas a lo largo del video: que no se repita el mismo plano dos escenas seguidas.`;
 
-const catalog = `${readFileSync(path.join(root, "src", "anim", "catalog.md"), "utf8")}\n\n${kitDoc()}\n`;
+const library = knownPieces();
+const catalog = `${readFileSync(path.join(root, "src", "anim", "catalog.md"), "utf8")}\n\n${kitDoc(Object.values(library))}\n`;
 const example = JSON.stringify(
   { title: "El robo del siglo", scenes: ejemplo.map(({ voice: _, ...s }) => s), facts: [] },
   null,
@@ -393,7 +395,7 @@ function numberPairs(s: string): NumberPair[] {
 
 /** Además de checkGuion: cada dato apunta al dossier y ningún número sale de la nada (regla 9). */
 function checkAgainstDossier(g: GuionDraft, d: Dossier): string[] {
-  const errors = checkGuion(g);
+  const errors = checkGuion(g, library);
   // Datos en disputa: por cada unidad ("millones", "cajas"), los valores de las versiones.
   const disputed = new Map<string, { point: string; values: number[] }>();
   for (const x of d.disputed) {

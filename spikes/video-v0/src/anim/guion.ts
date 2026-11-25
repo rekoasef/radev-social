@@ -5,6 +5,7 @@
 // operador) y se validaría con Zod antes de renderizar.
 
 import type { SetSpec } from "./kit-catalog";
+import type { StudioPiece } from "./studio-format";
 
 /** Cuándo pasa algo: segundos desde el inicio de la escena, o una palabra de la voz. */
 export type Cue =
@@ -146,6 +147,8 @@ export type GuionScene = {
   /** Una plantilla (`Setting`) o el id de un escenario armado (`set`, ADR 0028). */
   setting: Setting | (string & {});
   set?: SetSpec;
+  /** Las piezas del Estudio que usa `set`. */
+  studio?: Record<string, StudioPiece>;
   /**
    * Cámara: puntos clave (zoom y centro del cuadro en el escenario) enganchados a la voz. Entre
    * dos puntos se mueve suave; antes del primero y después del último, se queda (con un leve

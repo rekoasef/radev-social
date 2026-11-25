@@ -2,6 +2,7 @@
 // piezas dibujadas a mano (kit.tsx). Acá vive lo que no dibuja: la lista de piezas con su tamaño,
 // el formato de un escenario (Zod), los controles y el texto que lee la IA. Sin React.
 import { z } from "zod";
+import type { NewPiece } from "./studio-format";
 
 /** Colores con nombre: la IA elige un tono, el dibujo pone los tres matices. */
 export const TONES = {
@@ -296,11 +297,13 @@ export const PIECES = {
   },
 } as const satisfies Record<string, PieceInfo>;
 export type PieceKind = keyof typeof PIECES;
-const pieceKinds = Object.keys(PIECES) as [PieceKind, ...PieceKind[]];
 
 export const pieceSchema = z
   .object({
-    kind: z.enum(pieceKinds),
+    kind: z
+      .string()
+      .regex(/^[a-z0-9-]{3,30}$/)
+      .describe("Una pieza del kit (lista al final) o una nueva declarada en `newPieces`."),
     x: z.number().min(-200).max(1280).describe("Centro de la base de la pieza."),
     y: z
       .number()
@@ -367,15 +370,48 @@ const DEFAULT_Y: Partial<Record<PieceKind, number>> = {
   auto: 1440,
 };
 
+/** Piezas que no están dibujadas a mano: las del Estudio y las que pide el guion (`newPieces`). */
+export type ExtraPieces = Record<string, NewPiece>;
+const LAYER_OF: Record<NewPiece["where"], PieceInfo["layer"]> = {
+  piso: "mueble",
+  pared: "fondo",
+  techo: "techo",
+  sobre: "sobre",
+};
+const EXTRA_Y: Record<NewPiece["where"], number> = {
+  piso: FLOOR_Y,
+  pared: 960,
+  techo: 60,
+  sobre: FLOOR_Y,
+};
+
+/** Tamaño, capa y superficie de una pieza del kit o del Estudio (undefined si no existe). */
+export function pieceInfo(kind: string, extra: ExtraPieces = {}): PieceInfo | undefined {
+  if (kind in PIECES) return PIECES[kind as PieceKind];
+  const n = extra[kind];
+  if (!n) return undefined;
+  return {
+    w: n.w,
+    h: n.h,
+    layer: LAYER_OF[n.where],
+    surface: n.surface,
+    where: n.where,
+    what: n.what,
+  };
+}
+
 /** Resuelve la `y` de cada pieza y las ordena para dibujar (por capa y, dentro, como vinieron). */
-export function placePieces(spec: SetSpec): PlacedPiece[] {
+export function placePieces(spec: SetSpec, extra: ExtraPieces = {}): PlacedPiece[] {
   const placed: PlacedPiece[] = [];
   spec.pieces.forEach((p, index) => {
     const scale = p.scale ?? 1;
-    let y = p.y ?? DEFAULT_Y[p.kind] ?? FLOOR_Y;
+    const n = extra[p.kind];
+    // Una pieza nueva de techo cuelga desde arriba: su base queda a su alto del techo.
+    const extraY = n ? (n.where === "techo" ? 40 + n.h * scale : EXTRA_Y[n.where]) : FLOOR_Y;
+    let y = p.y ?? DEFAULT_Y[p.kind as PieceKind] ?? extraY;
     const base = p.on !== undefined ? placed[p.on] : undefined;
     if (base) {
-      const surface: number | undefined = (PIECES[base.kind] as PieceInfo).surface;
+      const surface = pieceInfo(base.kind, extra)?.surface;
       if (surface !== undefined) y = base.y - surface * base.scale;
     }
     placed.push({ ...p, y, scale, index });
@@ -383,26 +419,32 @@ export function placePieces(spec: SetSpec): PlacedPiece[] {
   const order = ["techo", "fondo", "mueble", "sobre", "ambiente"];
   return [...placed].sort(
     (a, b) =>
-      order.indexOf(PIECES[a.kind].layer) - order.indexOf(PIECES[b.kind].layer) ||
-      a.index - b.index,
+      order.indexOf(pieceInfo(a.kind, extra)?.layer ?? "mueble") -
+        order.indexOf(pieceInfo(b.kind, extra)?.layer ?? "mueble") || a.index - b.index,
   );
 }
 
 /** Errores de sentido de un escenario (vacío = bien). */
-export function checkSet(spec: SetSpec, where: string): string[] {
+export function checkSet(spec: SetSpec, where: string, extra: ExtraPieces = {}): string[] {
   const errors: string[] = [];
   const outdoor = spec.kind === "exterior";
   if ((FLOORS[spec.floor] === "exterior") !== outdoor) {
     errors.push(`${where}floor › "${spec.floor}" no va en un escenario ${spec.kind}`);
   }
   spec.pieces.forEach((p, i) => {
-    const info: PieceInfo = PIECES[p.kind];
     const at = `${where}pieces.${i}`;
+    const info = pieceInfo(p.kind, extra);
+    if (!info) {
+      errors.push(
+        `${at}.kind › "${p.kind}" no está en el kit: usá una pieza de la lista o declarala en \`newPieces\` para que la dibuje el Estudio`,
+      );
+      return;
+    }
     if (p.on !== undefined) {
       const base = spec.pieces[p.on];
       if (p.on >= i || !base) {
         errors.push(`${at}.on › tiene que apuntar a una pieza ANTERIOR de la lista`);
-      } else if ((PIECES[base.kind] as PieceInfo).surface === undefined) {
+      } else if (pieceInfo(base.kind, extra)?.surface === undefined) {
         errors.push(`${at}.on › "${base.kind}" no tiene superficie para apoyar cosas`);
       }
       if (p.y !== undefined) errors.push(`${at} › con \`on\` no va \`y\``);
@@ -419,9 +461,13 @@ export function checkSet(spec: SetSpec, where: string): string[] {
 }
 
 /** La parte del prompt que explica el kit; sale de PIECES, así nunca queda desactualizada. */
-export function kitDoc(): string {
+export function kitDoc(studio: NewPiece[] = []): string {
   const rows = Object.entries(PIECES).map(
     ([k, v]) => `- \`${k}\` (${v.w}×${v.h}): ${v.what}. ${v.where}.`,
+  );
+  const extra = studio.map(
+    (n) =>
+      `- \`${n.kind}\` (${n.w}×${n.h}): ${n.what}. ${n.where === "sobre" ? "sobre un mueble (`on`)" : n.where}. (del Estudio)`,
   );
   return [
     "## Piezas del kit (para `sets`)",
@@ -437,5 +483,6 @@ export function kitDoc(): string {
       .join(", ")}.`,
     "",
     ...rows,
+    ...extra,
   ].join("\n");
 }

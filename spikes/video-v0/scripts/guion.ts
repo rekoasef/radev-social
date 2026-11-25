@@ -37,6 +37,7 @@ import {
   SETTINGS,
   sceneSchema,
 } from "../src/anim/schema";
+import { knownPieces } from "./studio-lib";
 import { TOPICS } from "./topics";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -58,7 +59,7 @@ const repair = flag("repair") !== undefined;
 const effort = flag("effort");
 const [mode, ...rest] = args;
 
-const catalog = `${readFileSync(path.join(root, "src", "anim", "catalog.md"), "utf8")}\n\n${kitDoc()}\n`;
+const catalog = `${readFileSync(path.join(root, "src", "anim", "catalog.md"), "utf8")}\n\n${kitDoc(Object.values(knownPieces()))}\n`;
 const example = JSON.stringify(
   { title: "El robo del siglo", scenes: ejemplo.map(({ voice: _, ...s }) => s), facts: [] },
   null,
