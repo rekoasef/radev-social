@@ -50,6 +50,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > 3. Probar de a una oficina si algo falla (los documentos quedan versionados en `video_documents`; `Reintentar` = `retryVideoById` + encolar la misma etapa). Lo más probable que falle: el esquema que devuelve la IA, Commons con 429, la memoria del render en 2 pestañas, ffmpeg.
 > 4. Mirar el resultado con el operador (video 9:16 y 16:9, miniaturas, descripciones, créditos) y anotar mediciones (tokens por oficina desde `generation_runs`, créditos, tiempos) en `docs/V0-RESULTS.md` o acá.
 > 5. Al cerrar: marcar T9 en `docs/ROADMAP.md` y empezar B (diseño del estudio con Opus).
+> 6. **Anotado para mañana (pedido del operador):** hablar de cómo evitar el «contenido no auténtico» de YouTube: el campo «tu aporte», las «formas de contar» y la voz propia (detalle en «Anotado para más adelante» → «Monetización de YouTube»). Decidir si entran antes de B o después.
 >
 > Después **T9**: un comando `pnpm --filter @radev/video-worker video "<tema>"` que crea el video, lo encola, espera el guion, lo aprueba y deja el paquete; **es la primera prueba con Claude, Commons y ElevenLabs de verdad** (~USD 1,2 de lista de Claude y ~1.900 créditos de voz). Avisar al operador antes de gastar. **Cierra A.** Luego B (diseño del estudio con Opus, capturas aprobadas; panel con descarga del paquete; Docker).
 >
@@ -908,6 +909,19 @@ Plan aprobado el 2026-09-23. Terminada.
 - **Modelos:** Sonnet por defecto, Opus para diseño; el asistente le avisa al operador cuál conviene antes de cada etapa (regla del operador).
 
 ## Anotado para más adelante
+
+**Monetización de YouTube y la política de contenido «no auténtico» (charla del 2026-11-25; para trabajar después de T9):**
+- **Requisitos del programa de socios** (a verificar en YouTube Studio → Ingresos, cambian): nivel inicial con 500 suscriptores + 3 videos en 90 días + 3.000 horas en 12 meses o 3 millones de vistas de Shorts en 90 días (sin anuncios: membresías, Super Chat); nivel completo con 1.000 suscriptores + 4.000 horas o 10 millones de vistas de Shorts en 90 días (anuncios). Los Shorts pagan muy poco por vista: sirven para llegar a gente y sumar suscriptores; las horas salen del video normal (16:9).
+- **El riesgo:** YouTube no monetiza contenido producido en masa o repetitivo sin aporte propio, y una presentación de imágenes con voz sintética es lo que más se marca. La revisión es de una persona, mira el canal entero; si rechaza, se puede volver a pedir a los 30 días con cambios. Nada garantiza la aprobación.
+- **Ya a favor:** investigación con fuentes, verificación de hechos con datos en disputa, gráficos y montaje propios, aprobación humana, créditos y fuentes en la descripción.
+- **A sumar (ideas acordadas con el operador, "anotalo para mañana"):**
+  1. **Campo «tu aporte»** en el escritorio de aprobación del guion: una nota del operador (opinión, dato extra, ángulo) que entra al guion como punto de vista propio.
+  2. **Distintas «formas de contar»** (cronología, misterio, comparación, «qué pasó después») elegidas por video, con ritmo y tipos de gráfico distintos, para que ningún video sea una copia de otro. Es parte de la oficina de Guion (`SCRIPT_RULES`).
+  3. **Voz propia:** apertura o cierre grabados por el operador, o videos enteros narrados por él (con Whisper ya probado en V0-12, `tts/whisper_words.py`).
+  4. **Control de parecido** entre videos (avisar si dos salen demasiado iguales).
+  5. **Ritmo moderado al principio:** 3 o 4 videos por semana de calidad, subiendo de a poco; no 20 por mes desde el día uno.
+  6. **Identidad de canal** (nombre, descripción con quién lo hace, listas por tema, banner y trailer) y títulos, descripciones y miniaturas distintos entre videos.
+  7. Revisar antes de monetizar: licencias CC BY-SA de Commons (V0-7), impuestos y retención al cobrar desde Argentina (consultar a un contador), y la casilla de contenido sintético (la descripción ya aclara la voz de IA). Al subir: marcar «No, no es contenido para niños».
 
 **Pendiente de la Fase 2 (criterio de terminado):**
 - Nunca se publicó un post real de punta a punta: armar un carrusel → Guardar y renderizar → Aprobar → Descargar ZIP → publicar a mano en TikTok → Marcar como publicado. El operador lo pospuso el 2026-09-24 ("alta paja hacerlo a mano"); hacerlo con el primer post real y confirmar en la base que pasó por `approved → publishing → published`. Requiere `pnpm dev` con web **y** worker arriba.
