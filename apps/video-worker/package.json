@@ -1,0 +1,25 @@
+{
+  "name": "@radev/video-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "RAdev Studio: un job de pg-boss por oficina del video (ADR 0029, docs/ARCHITECTURE.md §14.1). Corre en la notebook.",
+  "scripts": {
+    "dev": "node ../../scripts/with-root-env.mjs tsx watch src/index.ts",
+    "start": "node ../../scripts/with-root-env.mjs tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@radev/ai": "workspace:*",
+    "@radev/core": "workspace:*",
+    "@radev/db": "workspace:*",
+    "@radev/video": "workspace:*",
+    "image-size": "2.0.2",
+    "pg-boss": "^12.33.5",
+    "tsx": "4.23.15",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.6"
+  }
+}

@@ -25,6 +25,11 @@ export type GenerationTask<T> = {
   images?: readonly TaskImage[];
   /** Extra tools (claude-code only), e.g. WebSearch for ideas.research. None by default. */
   tools?: readonly string[];
+  /**
+   * How much the model thinks (claude-code only: `--effort`). `low` makes a script take 30–90 s
+   * instead of ~3 min (V0-8); a fact check wants `medium`. Default: the CLI's.
+   */
+  effort?: "low" | "medium" | "high";
   maxTurns?: number;
   timeoutMs?: number;
   signal?: AbortSignal;

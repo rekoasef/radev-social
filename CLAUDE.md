@@ -105,6 +105,7 @@ pnpm docu guion <dossier.json> --name <video>    # la IA mira las imágenes y es
 pnpm docu review|pin|meta --name <video>          # verificación de hechos · sumar imagen · miniatura y descripción
 pnpm docu texts|render --name <video> [--voices <carpeta>]  # texto para la voz · render (+ miniatura y descripción)
 pnpm docu render --name <video> --voices <carpeta> --format 16x9  # versión horizontal (video normal): out/anim/<video>-16x9.mp4
+pnpm --filter @radev/video-worker dev   # RAdev Studio V1: worker del video (una cola por oficina; usa la base local). `pnpm dev` también lo levanta
 pnpm studio draw <guion.json>      # el Estudio dibuja las piezas nuevas que pide el guion
 pnpm studio sheet [--all]          # hoja con las piezas pendientes (o todas) → out/studio
 pnpm studio approve <pieza...>     # entran al kit · reject <pieza> "<motivo>" las redibuja

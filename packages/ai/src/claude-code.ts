@@ -128,6 +128,7 @@ export function buildClaudeArgs(task: GenerationTask<unknown>): string[] {
     ...(tools.length > 0 ? ["--allowedTools", tools.join(",")] : []),
     "--model",
     task.model,
+    ...(task.effort ? ["--effort", task.effort] : []),
     "--no-session-persistence",
     "--setting-sources",
     "project",

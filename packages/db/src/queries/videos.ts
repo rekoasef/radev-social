@@ -16,6 +16,7 @@ import {
   type VideoEvent,
   type VideoFailure,
   type VideoStage,
+  WORKING_STAGES,
   type WorkingStage,
 } from "@radev/core";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
@@ -158,6 +159,48 @@ async function applyTransition(
 
   await db.update(videos).set(changes).where(eq(videos.id, videoId));
   return { ok: true, from: video.stage, to: result.to };
+}
+
+export type OfficeDocumentOut = Omit<AddVideoDocumentInput, "videoId">;
+
+/**
+ * An office finished: its documents are saved, the title (if the script set one) too, and the video
+ * moves on, all in one transaction. If anything fails nothing stays half done: no document without
+ * the advance and no advance without its document.
+ */
+export function completeVideoOffice(
+  db: Executor,
+  videoId: string,
+  documents: readonly OfficeDocumentOut[],
+  options: { title?: string; now?: Date } = {},
+): Promise<VideoTransitionOutcome> {
+  return atomic(db, async (tx) => {
+    for (const doc of documents) await addVideoDocument(tx, { ...doc, videoId });
+    if (options.title) await setVideoTitle(tx, videoId, options.title);
+    const outcome = await transitionVideo(tx, videoId, "officeDone", { now: options.now });
+    // A refused advance (the video was archived or paused meanwhile) undoes the documents too.
+    if (!outcome.ok) throw new OfficeNotCompleted(outcome.reason);
+    return outcome;
+  }).catch((error) => {
+    if (error instanceof OfficeNotCompleted) return { ok: false as const, reason: error.message };
+    throw error;
+  });
+}
+
+class OfficeNotCompleted extends Error {}
+
+/**
+ * Videos at a working stage that nobody has touched for a while, to queue them again (the sweep).
+ * A paused or failed video is not stuck: it waits for its own reason.
+ */
+export async function listStuckVideos(db: Executor, olderThan: Date): Promise<Video[]> {
+  const rows = await db
+    .select()
+    .from(videos)
+    .where(
+      and(inArray(videos.stage, [...WORKING_STAGES]), sql`${videos.updatedAt} < ${olderThan}`),
+    );
+  return rows.filter((v) => v.failure === null && v.pausedAt === null);
 }
 
 // ───────────── condition: pause, failure (they never change the stage) ─────────────

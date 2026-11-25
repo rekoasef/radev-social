@@ -1,0 +1,54 @@
+import type { AIError } from "@radev/ai";
+import type { VideoDocumentKind, WorkingStage } from "@radev/core";
+import type { OfficeDocumentOut, Video } from "@radev/db";
+import type { VideoAi } from "./ai";
+import type { Logger } from "./logger";
+
+// What an office is: a function from the video (and what its documents hold) to the documents it
+// leaves. It knows nothing about queues, stages or retries: the runner does (runner.ts).
+
+/** What an office gets besides the video. Everything with I/O is here, so tests can fake it. */
+export type OfficeContext = {
+  video: Video;
+  log: Logger;
+  ai: VideoAi;
+  /** The current (highest) version of a document of this video, or null. */
+  document(kind: VideoDocumentKind): Promise<unknown | null>;
+  /** The video's media folder (`media/videos/<id>/`): paths are relative to it. */
+  files: {
+    write(path: string, bytes: Uint8Array): Promise<void>;
+    read(path: string): Promise<Uint8Array | undefined>;
+  };
+};
+
+export type OfficeResult =
+  | { kind: "done"; documents: OfficeDocumentOut[]; title?: string }
+  /** The AI's usage limit: the runner pauses the video and tries again later. */
+  | { kind: "rate_limited"; retryAfterMs: number | null };
+
+export type Office = (ctx: OfficeContext) => Promise<OfficeResult>;
+
+/**
+ * The office could not do its job. `retryable`: trying again can work (a bad answer, a network
+ * error); otherwise the operator has to step in (a missing route or credential).
+ */
+export class OfficeFailure extends Error {
+  constructor(
+    message: string,
+    readonly retryable = true,
+  ) {
+    super(message);
+    this.name = "OfficeFailure";
+  }
+}
+
+/** The failure of an AI call as an office result: the limit pauses, anything else fails. */
+export function failedAi(error: AIError, what: string): OfficeResult {
+  if (error.kind === "rate_limited") {
+    return { kind: "rate_limited", retryAfterMs: error.retryAfterMs };
+  }
+  const retryable = error.kind === "validation" ? true : error.retryable;
+  throw new OfficeFailure(`${what}: ${error.message}`, retryable);
+}
+
+export type OfficeMap = Partial<Record<WorkingStage, Office>>;

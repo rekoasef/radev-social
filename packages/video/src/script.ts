@@ -213,3 +213,23 @@ export function checkScript(
     );
   return errors;
 }
+
+/**
+ * `highlight` son palabras sueltas: la IA a veces manda frases. Se parten en palabras (de más de 2
+ * letras, sin repetir, máximo 4). No modifica el guion que recibe.
+ */
+export function normalizeHighlights(script: Script): Script {
+  return {
+    ...script,
+    scenes: script.scenes.map((s) =>
+      s.highlight
+        ? {
+            ...s,
+            highlight: [
+              ...new Set(s.highlight.flatMap((h) => h.split(/\s+/)).filter((w) => w.length > 2)),
+            ].slice(0, 4),
+          }
+        : s,
+    ),
+  };
+}

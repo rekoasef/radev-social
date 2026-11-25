@@ -131,6 +131,11 @@ describe("buildClaudeArgs", () => {
     expect(args).toContain("--strict-mcp-config");
   });
 
+  it("passes --effort only when the task asks for it", () => {
+    expect(buildClaudeArgs(task("hola"))).not.toContain("--effort");
+    expect(flagOf(buildClaudeArgs(task("hola", { effort: "low" })))("--effort")).toBe("low");
+  });
+
   it("allows only the tools the task asks for", () => {
     const flag = flagOf(buildClaudeArgs(task("hola", { tools: ["WebSearch", "WebFetch"] })));
     expect(flag("--tools")).toBe("WebSearch,WebFetch");

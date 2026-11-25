@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkScript, compactDossier, scriptSchema } from "../src";
+import { checkScript, compactDossier, normalizeHighlights, scriptSchema } from "../src";
 import { monaCandidates, monaDossier, monaScript } from "./fixtures";
 
 const candidates = monaCandidates();
@@ -79,5 +79,15 @@ describe("checkScript detecta errores conocidos", () => {
     const s = monaScript();
     for (const i of [0, 3, 6, 9]) s.scenes[i]!.image = "i01";
     expect(errorsOf(s).join("\n")).toMatch(/se usa \d+ veces/);
+  });
+});
+
+describe("normalizeHighlights", () => {
+  it("splits phrases into single words and drops short and repeated ones", () => {
+    const s = monaScript();
+    s.scenes[0]!.highlight = ["el Louvre", "Louvre", "de", "agosto 1911 amanece cerrado"];
+    const out = normalizeHighlights(s);
+    expect(out.scenes[0]!.highlight).toEqual(["Louvre", "agosto", "1911", "amanece"]);
+    expect(s.scenes[0]!.highlight).toHaveLength(4); // the original is untouched
   });
 });

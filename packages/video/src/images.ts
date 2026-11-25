@@ -82,3 +82,27 @@ export function curatedHits(pool: readonly CommonsHit[], keep: readonly number[]
     return hit ? [hit] : [];
   });
 }
+
+/** El documento `images`: las candidatas con su archivo (relativo a la carpeta del video). */
+export const imagesDocSchema = z.object({
+  candidates: z
+    .array(
+      z.object({
+        id: z.string().regex(/^i\d{2,3}$/),
+        title: z.string(),
+        description: z.string(),
+        date: z.string(),
+        author: z.string(),
+        license: z.string(),
+        page: z.string(),
+        file: z.string(),
+        width: z.number(),
+        height: z.number(),
+      }),
+    )
+    .min(1),
+});
+export type ImagesDoc = z.infer<typeof imagesDocSchema>;
+
+/** La copia chica (640 px) de una candidata, para que la IA la mire sin gastar de más. */
+export const smallImagePath = (id: string) => `images/${id}.small.jpg`;

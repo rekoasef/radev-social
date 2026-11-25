@@ -67,7 +67,7 @@
       }
     },
     {
-      "includes": ["packages/video/test/**"],
+      "includes": ["packages/video/test/**", "apps/video-worker/src/**/*.test.ts"],
       "linter": {
         "rules": {
           "style": {

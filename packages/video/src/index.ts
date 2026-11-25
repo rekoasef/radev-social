@@ -5,4 +5,5 @@ export * from "./prompts";
 export * from "./publication";
 export * from "./review";
 export * from "./script";
+export * from "./sources";
 export * from "./text";
