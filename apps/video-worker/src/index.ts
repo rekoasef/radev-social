@@ -35,6 +35,7 @@ import { decodeToPcm, fetchPage, shrinkImage, sizeOf } from "./io";
 import { createLogger } from "./logger";
 import type { Office, OfficeContext } from "./office";
 import { createImagesOffice } from "./offices/images";
+import { createPackageOffice } from "./offices/package";
 import { createRenderOffice } from "./offices/render";
 import { research } from "./offices/research";
 import { review } from "./offices/review";
@@ -103,14 +104,14 @@ async function main() {
     },
   });
 
-  // The offices that exist. The render and the package arrive next (T8): until then a video that
-  // reaches them waits there (the runner says so in the log).
+  // All eight offices of the line (the operator's two desks are not offices).
   const offices: Partial<Record<WorkingStage, Office>> = {
     researching: research,
     checking_sources: createSourcesOffice({ fetchPage }),
     finding_images: createImagesOffice({ commons, shrink: shrinkImage, sizeOf }),
     scripting: script,
     checking_facts: review,
+    packaging: createPackageOffice({ renderer: remotionRenderer }),
     rendering: createRenderOffice({ renderer: remotionRenderer, probe: probeVideo }),
     voicing: createVoiceOffice({ tts: createElevenLabsProvider(), decode: decodeToPcm }),
   };

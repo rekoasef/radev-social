@@ -45,6 +45,7 @@ function deps(
   return {
     jobs,
     renderer: {
+      renderStills: vi.fn(async () => {}),
       renderAll: vi.fn(async (j: readonly RenderJob[]) => {
         jobs.push(...j);
         return j.map(() => 1000);

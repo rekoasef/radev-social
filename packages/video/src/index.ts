@@ -1,6 +1,7 @@
 export * from "./commons";
 export * from "./dossier";
 export * from "./images";
+export * from "./package-doc";
 export * from "./prompts";
 export * from "./publication";
 export * from "./render-doc";

@@ -3,9 +3,9 @@ import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { VideoProbe } from "@radev/video";
-import type { PhotoVideoProps } from "@radev/video/render";
+import type { PhotoVideoProps, ThumbProps } from "@radev/video/render";
 import { bundle } from "@remotion/bundler";
-import { openBrowser, renderMedia, selectComposition } from "@remotion/renderer";
+import { openBrowser, renderMedia, renderStill, selectComposition } from "@remotion/renderer";
 
 // The real render (Remotion + Chrome) and the probe (ffprobe), apart from the office so the office
 // is tested with fakes. Lessons of V0: Chrome without `font-render-hinting` (the text measures like
@@ -19,12 +19,48 @@ export type RenderJob = {
   outFile: string;
 };
 
+export type StillJob = { props: ThumbProps; publicDir: string; outFile: string };
+
 export type VideoRenderer = {
+  /** The thumbnails (PNG), one still each. */
+  renderStills(jobs: readonly StillJob[]): Promise<void>;
   /** Renders every job with one bundle and one Chrome. Returns the milliseconds each took. */
   renderAll(jobs: readonly RenderJob[]): Promise<number[]>;
 };
 
 export const remotionRenderer: VideoRenderer = {
+  async renderStills(jobs) {
+    const first = jobs[0];
+    if (!first) return;
+    const entryPoint = fileURLToPath(import.meta.resolve("@radev/video/render/entry"));
+    const serveUrl = await bundle({ entryPoint, publicDir: first.publicDir });
+    const browser = await openBrowser("chrome", {
+      chromiumOptions: { flags: { "font-render-hinting": false } },
+    });
+    try {
+      for (const job of jobs) {
+        const inputProps = job.props as unknown as Record<string, unknown>;
+        const composition = await selectComposition({
+          serveUrl,
+          id: "thumb",
+          inputProps,
+          puppeteerInstance: browser,
+        });
+        await mkdir(dirname(job.outFile), { recursive: true });
+        await renderStill({
+          composition,
+          serveUrl,
+          inputProps,
+          frame: 0,
+          output: job.outFile,
+          puppeteerInstance: browser,
+        });
+      }
+    } finally {
+      await browser.close({ silent: true });
+    }
+  },
+
   async renderAll(jobs) {
     const first = jobs[0];
     if (!first) return [];
