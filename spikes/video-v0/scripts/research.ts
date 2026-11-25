@@ -357,7 +357,7 @@ async function verify(file: string) {
 // --- guion: solo con el dossier ---
 
 /** Reemplaza la línea de duración del catálogo cuando el video es largo (V0-13). */
-const LONG_RULES = `- **Esta vez NO es un Short: es un video de 1,5 a 2 minutos.** **15 a 22 escenas**, unos 1.500–1.800 caracteres de narración en total (Fran dice ~15 caracteres por segundo). Cada escena, 60–110 caracteres: una idea por escena, para que siempre esté pasando algo en pantalla.
+const LONG_RULES = `- **Esta vez NO es un Short: es un video de 1,5 a 2 minutos.** **15 a 22 escenas**, unos 1.500–1.800 caracteres de narración en total (la voz dice ~15 caracteres por segundo). Cada escena, 60–110 caracteres: una idea por escena, para que siempre esté pasando algo en pantalla.
 - **Estructura**, como un buen video de historias: (1) **gancho** en las primeras 2 escenas: el dato más fuerte o una pregunta, antes de explicar nada; (2) **contexto**: quiénes eran y por qué importa; (3) **el hecho paso a paso**, con tensión; (4) **el giro**: cómo se descubrió, qué salió mal o lo que nadie esperaba; (5) **qué pasó después**; (6) **cierre** con una pregunta a la audiencia. Cada 4–5 escenas, una frase que tire hacia adelante ("pero eso no fue lo más raro").
 - Variá escenarios, cámara y cajas a lo largo del video: que no se repita el mismo plano dos escenas seguidas.`;
 
@@ -482,7 +482,7 @@ async function guionFromDossier(file: string) {
     "ejemplo.json": example,
     "dossier.json": JSON.stringify(saved.dossier, null, 1),
     "task.json": JSON.stringify(
-      { tema: saved.topic, voz: "Fran", duracion: long ? "90–120 s" : "35–45 s" },
+      { tema: saved.topic, voz: "Alberto", duracion: long ? "90–120 s" : "35–45 s" },
       null,
       1,
     ),

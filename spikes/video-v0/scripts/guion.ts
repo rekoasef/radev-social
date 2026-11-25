@@ -178,7 +178,7 @@ async function short(i: number) {
   const files = {
     "CLAUDE.md": catalog,
     "ejemplo.json": example,
-    "task.json": JSON.stringify({ tema: topic, voz: "Fran", duracion: "35–45 s" }, null, 1),
+    "task.json": JSON.stringify({ tema: topic, voz: "Alberto", duracion: "35–45 s" }, null, 1),
   };
   const prompt =
     "Escribí el guion del Short sobre el tema de `task.json`, siguiendo las instrucciones y usando " +
@@ -272,7 +272,7 @@ async function chapters(topic: string) {
         "catálogo sirven y qué dibujos harían falta que no existen. Devolvé el objeto del schema.",
       files: {
         "CLAUDE.md": catalog,
-        "task.json": JSON.stringify({ tema: topic, voz: "Fran", duracion: "4 min" }, null, 1),
+        "task.json": JSON.stringify({ tema: topic, voz: "Alberto", duracion: "4 min" }, null, 1),
       },
       schema: chapterSchema,
     },

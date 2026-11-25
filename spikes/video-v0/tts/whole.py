@@ -2,8 +2,8 @@
 las palabras. Sin atempo. Para comparar con scenes.py (un pedido por escena + atempo), que sonó
 robótico y lento.
 
-Uso: python3 tts/whole.py texts/v0-11-mona.json --tag fran-v2 \
-        [--voice 0bu1GUsOfNJYyXbmSTxD] [--model eleven_multilingual_v2] [--speed 1.15]
+Uso: python3 tts/whole.py texts/v0-11-mona.json --tag alberto-v2 \
+        [--voice l1zE9xgNpUTaQCZzpNJa] [--model eleven_multilingual_v2] [--speed 1.1]
 Escribe out/v0-12/<tag>/manifest.json y audio/<clave>.wav + .words.json, el mismo formato que
 scenes.py, así que sirve directo para `pnpm anim --guion ... --voices out/v0-12/<tag>`.
 También deja full.mp3 (la toma entera, para escucharla sola).
@@ -39,11 +39,13 @@ def arg(args: list[str], name: str, default: str | None) -> str | None:
 def main() -> None:
     args = sys.argv[1:]
     tag = arg(args, "--tag", None) or sys.exit("falta --tag")
-    voice = arg(args, "--voice", "0bu1GUsOfNJYyXbmSTxD")
+    # Alberto Rodríguez (narrativa por defecto, elegida por el operador el 2026-11-24). Fran:
+    # 0bu1GUsOfNJYyXbmSTxD (con --speed 1.15, porque trae guardado 0,92).
+    voice = arg(args, "--voice", "l1zE9xgNpUTaQCZzpNJa")
     model = arg(args, "--model", "eleven_multilingual_v2")
-    # 1,15: el operador pidió "un poquito menos rápida" que 1,2 (2026-11-24). "--speed none" usa la
-    # velocidad guardada en la voz.
-    speed = arg(args, "--speed", "1.15")
+    # Sin --speed (o "none"): la velocidad guardada en la voz (Alberto: 1,0, la que el operador
+    # escuchó al elegirla). Fran necesitaba 1,15 porque trae guardado 0,92.
+    speed = arg(args, "--speed", "none")
     if speed == "none":
         speed = None
     texts: list[str] = json.loads((HERE / args[0]).read_text())
