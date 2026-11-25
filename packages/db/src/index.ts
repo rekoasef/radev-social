@@ -249,6 +249,7 @@ export {
   listStuckVideos,
   listUsageEvents,
   listVideoDocumentVersions,
+  listVideoRuns,
   listVideos,
   listVoices,
   type OfficeDocumentOut,

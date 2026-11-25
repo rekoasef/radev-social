@@ -147,7 +147,7 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 - [x] T6 Cliente de Wikimedia Commons con filtro de licencias (probado con respuestas guardadas; falta una búsqueda real cuando se arme la oficina de Imágenes)
 - [x] T7 `apps/video-worker` + oficinas 1 a 5 (hasta el guion) — corredor probado contra la base real con oficinas falsas; las oficinas con Claude y Commons de verdad se prueban en T9
 - [x] T8 Oficinas 6 a 8 (voz, render 9:16 y 16:9, publicación) — probadas con fakes; el render probado de verdad con 3 escenas de la Mona Lisa; la voz, la publicación y las imágenes con servicios reales se prueban en T9
-- [ ] T9 Comando de punta a punta: un video completo sin pantallas
+- [ ] T9 Comando de punta a punta: un video completo sin pantallas — comando hecho (`pnpm --filter @radev/video-worker video`); tramo 1 probado con Claude, Commons y fuentes reales (Betty y Barney Hill, 15,5 min); falta aprobar el guion, la voz real, el render real y el escritorio del video
 
 **B. Tu escritorio en la web**
 - [ ] T10 Diseño visual del estudio y del escritorio (capturas aprobadas)

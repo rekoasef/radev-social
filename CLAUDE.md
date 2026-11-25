@@ -102,6 +102,8 @@ pnpm capture --check "/render/preview/lumus/flow?variant=extreme" -
 
 # Video: RAdev Studio V1 (rama feat/video-v1)
 pnpm --filter @radev/video-worker dev   # worker del video: una cola por oficina, usa la base local (`pnpm dev` también lo levanta)
+pnpm --filter @radev/video-worker video "<tema>" [--out <carpeta>]   # un video de punta a punta desde la terminal (T9)
+        # se frena en el guion y en el video; --resume <id> [--approve | --reject "<nota>" --to script|voice|render] [--no-prompt]
 npx vitest run packages/video packages/core apps/video-worker   # tests del módulo
 
 # Video: spike V0 (histórico, `cd spikes/video-v0`; el formato de monigotes y el Estudio se descartaron)

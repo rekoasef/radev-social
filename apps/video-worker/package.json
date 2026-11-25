@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node ../../scripts/with-root-env.mjs tsx watch src/index.ts",
     "start": "node ../../scripts/with-root-env.mjs tsx src/index.ts",
+    "video": "node ../../scripts/with-root-env.mjs tsx src/cli.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

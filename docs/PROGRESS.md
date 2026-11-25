@@ -8,7 +8,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-> ### ▶ Retomar acá (última sesión: 2026-11-25, PC de la fábrica)
+> ### ▶ Retomar acá (última sesión: 2026-11-25 a la noche, PC de casa)
 >
 > **En qué estamos: V1 del video (RAdev Studio), rama `feat/video-v1`** (sale de `spike/video-v0`; `main` no cambió desde que empezó la spike). **V0 está cerrada.** El formato es el **documental**: imágenes de archivo + gráficos animados + voz de Alberto, en **dos formatos** (Short 9:16 y normal 16:9). Los monigotes y el kit quedaron descartados. Decisión: **ADR 0029**. Alcance, etapas, datos, tareas y criterio de aceptación: **`docs/RADEV-STUDIO-REVISION.md` §7**. Lista para tildar: `docs/ROADMAP.md` → "Video — V1".
 >
@@ -28,9 +28,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > | T2 | Schemas y controles de dossier, guion, verificación y publicación; descripciones (normal con capítulos, Short con #Shorts); licencias y créditos; prompts versionados. 100+ tests con la Mona Lisa real como fixture | `packages/video` |
 > | T3 | Etapas y eventos (`nextStage`: el guion aprobado es el único camino a la voz; 3 rechazos del video: a Guion, a Voz o solo a Render), pausa y falla como condición aparte, `voiceFingerprint` (no se paga la voz dos veces), `canDownload` y `packageFiles` (`short/` y `normal/`) | `packages/core/src/videos` |
 > | T4 | Tablas `voices`, `videos`, `video_documents`, `usage_events`; `generation_runs.video_id` (CASCADE) y `brand_id` opcional; migraciones `0028` y `0029` (aplicadas); `transitionVideo` es lo único que escribe la etapa (test de la regla 2); seed de voces (Alberto por defecto) y rutas `video.*` | `packages/db` |
-> | T5 | ElevenLabs en UNA toma con tiempos por palabra, errores tipados (`no_credits`), corte por escena con los mismos cuadros que `whole.py`. **Sin llamada real todavía** (~400 créditos) | `packages/ai/src/tts` |
-> | T6 | Cliente de Commons (pausas, reintentos, miniatura 1280, sin NC/ND), `buildPool`, curaduría. **Sin búsqueda real todavía** | `packages/video/src/commons.ts` |
-> | T7 | Una cola por oficina, corredor (regla 8, pausa por el límite de Claude 15 min → 4 h, falla registrada), candado de IA (un `claude -p` a la vez), barrido cada 10 min, oficinas 1 a 5. Probado con la base real y oficinas falsas; **sin Claude real todavía** | `apps/video-worker` |
+> | T5 | ElevenLabs en UNA toma con tiempos por palabra, errores tipados (`no_credits`), corte por escena con los mismos cuadros que `whole.py`. **Sin llamada real todavía** (~400 créditos; la primera será al aprobar el guion de T9) | `packages/ai/src/tts` |
+> | T6 | Cliente de Commons (pausas, reintentos, miniatura 1280, sin NC/ND), `buildPool`, curaduría. Probado con Commons real en T9 (34 candidatas, sin 429) | `packages/video/src/commons.ts` |
+> | T7 | Una cola por oficina, corredor (regla 8, pausa por el límite de Claude 15 min → 4 h, falla registrada), candado de IA (un `claude -p` a la vez), barrido cada 10 min, oficinas 1 a 5. Probado con la base real y oficinas falsas; probado con Claude real en T9 (oficinas 1 a 5 hasta el guion, sin fallas) | `apps/video-worker` |
 >
 > **Lecciones de la sesión (no repetir):**
 > - **Zod:** el catálogo de `pnpm-workspace.yaml` fija `zod: 4.6.5` exacta, sin `^`. Con rango, un paquete nuevo resolvía la 4.6.7 y `tsc` se quedaba sin memoria (dos copias). Al sumar un paquete, verificar con `readlink -f node_modules/zod`.
@@ -44,17 +44,35 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > 3. ~~**Publicación:** `PUBLICATION_RULES` + `publicationSchema` + `checkPublication` (IA), `buildDescription`/`buildShortDescription`/`buildCredits` (código) y las dos miniaturas (`Thumb`).
 > 4. Sumar sus oficinas a `offices` en `apps/video-worker/src/index.ts` y probar con fakes como T7.
 >
-> **▶ PARA MAÑANA (acordado con el operador el 2026-11-25): T9 con el caso de Betty y Barney Hill (1961)**, la primera prueba con Claude, Commons y ElevenLabs reales. Es el tema 6 de `spikes/video-v0/scripts/topics.ts` (su dossier no existe todavía: la oficina de Investigación lo arma). **Antes de gastar, avisarle al operador** (~USD 1,2 de lista de Claude y ~1.900 créditos de voz). Plan:
-> 1. Abrir Docker Desktop (integración con Debian activa) → `docker compose up -d postgres`; `nvm use`; verificar `.env` con `CLAUDE_CODE_OAUTH_TOKEN` y `ELEVENLABS_API_KEY`, y `ffmpeg`/`ffprobe` (están en esta PC).
-> 2. Escribir el comando `apps/video-worker/src/cli.ts` (`pnpm --filter @radev/video-worker video "<tema>"`): crea el video con la voz por defecto (`createVideo` + `getDefaultVoice`), encola la primera oficina (`boss.send(OFFICE_JOB.researching, …)`), corre el mismo código del worker en el proceso (o con el worker aparte), muestra el avance (etapa y documentos) y se frena en `script_review`; ahí imprime el guion (escenas, imágenes, verificación) y pide confirmar para `transitionVideo(approveScript)` y encolar `voicing`; al llegar a `in_review` copia el paquete a una carpeta `short/` + `normal/` (usar `packageFiles` de `core`) y hace `approveVideo`.
-> 3. Probar de a una oficina si algo falla (los documentos quedan versionados en `video_documents`; `Reintentar` = `retryVideoById` + encolar la misma etapa). Lo más probable que falle: el esquema que devuelve la IA, Commons con 429, la memoria del render en 2 pestañas, ffmpeg.
-> 4. Mirar el resultado con el operador (video 9:16 y 16:9, miniaturas, descripciones, créditos) y anotar mediciones (tokens por oficina desde `generation_runs`, créditos, tiempos) en `docs/V0-RESULTS.md` o acá.
-> 5. Al cerrar: marcar T9 en `docs/ROADMAP.md` y empezar B (diseño del estudio con Opus).
-> 6. **Anotado para mañana (pedido del operador):** hablar de cómo evitar el «contenido no auténtico» de YouTube: el campo «tu aporte», las «formas de contar» y la voz propia (detalle en «Anotado para más adelante» → «Monetización de YouTube»). Decidir si entran antes de B o después.
+> **▶ T9 A MEDIAS (2026-11-25, PC de casa): el tramo 1 funcionó con servicios reales; falta aprobar el guion y el tramo 2.**
 >
-> Después **T9**: un comando `pnpm --filter @radev/video-worker video "<tema>"` que crea el video, lo encola, espera el guion, lo aprueba y deja el paquete; **es la primera prueba con Claude, Commons y ElevenLabs de verdad** (~USD 1,2 de lista de Claude y ~1.900 créditos de voz). Avisar al operador antes de gastar. **Cierra A.** Luego B (diseño del estudio con Opus, capturas aprobadas; panel con descarga del paquete; Docker).
+> **Qué se hizo:** `apps/video-worker/src/cli.ts` (`pnpm --filter @radev/video-worker video "<tema>"`) y `start.ts` (el arranque del worker, sacado de `index.ts` sin cambiar su comportamiento; el comando corre el mismo código dentro de su proceso). Más `listVideoRuns` en `packages/db` (para el informe). Opciones: `--out <carpeta>` (por defecto `~/radev-videos`), `--resume <id>`, `--approve`, `--reject "<nota>" [--to script|voice|render]`, `--no-prompt`. En cada escritorio (guion y video) muestra lo que hay que mirar; con terminal pregunta, sin terminal o con `--no-prompt` imprime cómo contestar y sale, y la respuesta vuelve con `--resume <id> --approve` o `--reject`. La respuesta de un escritorio no vale para el otro. Probado: con `--no-prompt` muestra el guion y sale sin aprobar ni gastar.
 >
-> **Primer video publicado:** la Mona Lisa (`Descargas\mona-v2\short` y `\normal`), que el operador está subiendo a mano a YouTube (2026-11-25). La voz "safa, pero no es del todo fluida": ya sale de una sola toma; para mejorarla, probar `eleven_v3`, los ajustes de la voz y la puntuación del guion (anotado para después).
+> **Corrida real: Betty y Barney Hill (1961), video `8a0cbfa5-e3f1-4ee3-81b2-52776b2eb28b`, voz Alberto.** Terminó en `script_review` en **15,5 min** (21:22 → 21:38; investigación 4 min, fuentes 6 s, imágenes ~8 min, guion y verificación ~4 min). **Claude:** 6 corridas con `claude-sonnet-5`, **292.000 tokens de entrada y 55.700 de salida** (más salida que la estimación de ADR 0029: 250k/40k).
+>
+> | Oficina | Corridas | Entrada / salida | Tiempo |
+> |---|---|---|---|
+> | Investigación | 1 | 73.090 / 26.539 | 235 s |
+> | Imágenes (consultas y curaduría) | 2 | 32.381 / 3.593 | 5 s + 38 s |
+> | Guion | 2 (la 1ª rechazada por los controles: 3 problemas) | 94.900 / 16.504 | 74 s + 52 s |
+> | Verificación de hechos | 1 | 91.671 / 9.068 | 94 s |
+>
+> **El guion** ("El mapa que no debía existir"): 21 escenas, 1.897 caracteres (~136 s de voz), 17 de 34 imágenes, 21 hechos citados, 5 correcciones de verificación aplicadas y 0 rechazadas. **Fuentes: 4 textuales, 25 «no están», 1 sin página.** Es lo que ya se sabía de V0-11 (WebFetch le pasa a la IA un resumen, no la página): en V1 la oficina es informativa; después de 5 videos se decide si los hechos no verificados dejan de pasar al guion. **A mirar al aprobar:** algunas imágenes son flojas (escena 10, el Munsey Building para «zapatos y relojes»; escena 18, una carta aérea de 1928 para el libro de Fuller; escenas 12 y 17, fotos de actores con un pie aclaratorio); la escena 2 es una pregunta suelta.
+>
+> **Estado: sin gastar ElevenLabs.** El video está en `script_review`, sin pausa ni falla, con 6 documentos (dossier, fuentes, imágenes, guion v1 y v2, verificación). **Falta:** (1) que el operador mire el guion y lo apruebe o lo rechace con nota; (2) el tramo 2: Locución (~1.900 créditos, primera llamada real a ElevenLabs), Render de los dos formatos (~8 min), Publicación, y el escritorio del video; (3) el informe final y marcar T9 en `ROADMAP.md`.
+>
+> **Para seguir (importante, son dos PCs):** el video, sus documentos y sus imágenes viven en la base y en `media/videos/8a0cbfa5…/` **de la PC de casa**; no viajan con git. Si mañana se trabaja en la fábrica (Debian):
+> - **Opción 1 (la más barata):** terminar T9 desde casa: `pnpm --filter @radev/video-worker video --resume 8a0cbfa5-e3f1-4ee3-81b2-52776b2eb28b --approve --no-prompt` (o `--reject "<nota>"`).
+> - **Opción 2:** en la fábrica correr un tema nuevo de cero. Gasta otra vez ~290k tokens de Claude. Antes: `git fetch && git switch feat/video-v1 && git pull`, `nvm use && pnpm install`, abrir Docker Desktop con la integración con Debian, `docker compose up -d postgres`, `pnpm db:migrate`, `pnpm db:seed` y, en el `.env` de esa máquina, `CLAUDE_CODE_OAUTH_TOKEN` (con `claude setup-token`) y `ELEVENLABS_API_KEY`. Render con memoria justa (WSL ve 7,8 GiB): `concurrency 2`.
+> - **Opción 3 (no implementada):** llevar el video a la fábrica con un volcado de sus filas de `videos` y `video_documents` más la carpeta `media/videos/<id>/`. Habría que escribir el exportador; solo vale la pena si se repite.
+>
+> **Lecciones de esta sesión (no repetir):**
+> - **`!` en Claude Code (Windows) corre en Git Bash, no en WSL:** `! cd ~/proyectos/...` falla. Usar `wsl.exe -d Ubuntu-24.04 -- bash -lc "…"` o abrir la terminal de WSL.
+> - **El comando es interactivo y un proceso en segundo plano no puede contestar:** por eso `--no-prompt` y `--approve`/`--reject`. Un primer reemplazo del código no se aplicó (el primer escritorio seguía preguntando por teclado) y se vio en la corrida real; el segundo intento lo probó con `--resume … --no-prompt` contra la base real.
+> - **Claude Code mata los comandos en segundo plano si el sistema se queda sin memoria** (pasó con la corrida, ya en el escritorio del guion; sin daño porque no había nada a medias). No reiniciar solo: confirmar con el operador. WSL tiene 9,7 GiB en esta PC; con Docker, Chrome y el render a la vez, queda justo.
+> - **`claude setup-token` es interactivo:** correrlo con `!` en una terminal de WSL, sin `| tail`, y pegar el token en el `.env` entre comillas simples (nunca en el chat).
+>
+> **Después de T9:** B (T10: diseño del estudio con Opus, capturas aprobadas). Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >

@@ -21,6 +21,8 @@ import {
 } from "@radev/core";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import {
+  type GenerationRun,
+  generationRuns,
   type UsageEvent,
   usageEvents,
   type Video,
@@ -397,4 +399,13 @@ export async function getDefaultVoice(
       ),
     );
   return voice ?? null;
+}
+
+/** Every attempt of the AI for a video (`generation_runs`), oldest first: the report of its offices. */
+export function listVideoRuns(db: Executor, videoId: string): Promise<GenerationRun[]> {
+  return db
+    .select()
+    .from(generationRuns)
+    .where(eq(generationRuns.videoId, videoId))
+    .orderBy(asc(generationRuns.createdAt));
 }
