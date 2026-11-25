@@ -910,6 +910,14 @@ Plan aprobado el 2026-09-23. Terminada.
 
 ## Anotado para más adelante
 
+**Videos comerciales de Lumus y RAdev, y meta ads (decisión del operador, 2026-11-25; se hace ÚLTIMO, después del canal de historias):**
+- **Son canales separados del de historias**, en **modo comercial**: anuncios propios de cada marca. **Lumus:** publicidad, cómo funciona, qué hace y varios tipos de anuncio. **RAdev:** qué servicios ofrecemos. Más adelante, **meta ads** para pautarlos.
+- **Ritmo previsto por semana:** 1 video de Lumus + 1 de RAdev + el resto de la producción en historias.
+- **Orden:** primero cerrar el canal de historias (T9 y B); recién después el formato comercial. Lumus iba a TikTok e Instagram (`docs/RADEV-STUDIO-CANALES-Y-FORMATOS.md` §6 bis).
+- **Cómo encaja con lo que hay:** el formato comercial es un tipo de video distinto sobre la misma línea de oficinas (otras reglas en la oficina de Guion; las imágenes salen de los assets y capturas de la marca, no de Commons; voz, colores, documentos, pilares y llamada a la acción vienen de la marca; voz comercial, p. ej. Carlos Pro para Lumus). Los horarios por marca (`schedule_slots`) sirven para fijar «un video por semana». Los videos podrían llevar código de seguimiento como los carruseles (sistema de leads).
+- **Para meta ads, más adelante:** formatos 1:1 y 4:5 además del 9:16, variantes para probar cuál rinde mejor, seguimiento de resultados y presupuesto. No cambia nada de lo que se hace ahora.
+- **Sin decidir:** qué tipos de anuncio hacer primero (explicar el servicio, casos, tips cortos, demos del producto) y si una misma idea genera el carrusel y su video.
+
 **Monetización de YouTube y la política de contenido «no auténtico» (charla del 2026-11-25; para trabajar después de T9):**
 - **Requisitos del programa de socios** (a verificar en YouTube Studio → Ingresos, cambian): nivel inicial con 500 suscriptores + 3 videos en 90 días + 3.000 horas en 12 meses o 3 millones de vistas de Shorts en 90 días (sin anuncios: membresías, Super Chat); nivel completo con 1.000 suscriptores + 4.000 horas o 10 millones de vistas de Shorts en 90 días (anuncios). Los Shorts pagan muy poco por vista: sirven para llegar a gente y sumar suscriptores; las horas salen del video normal (16:9).
 - **El riesgo:** YouTube no monetiza contenido producido en masa o repetitivo sin aporte propio, y una presentación de imágenes con voz sintética es lo que más se marca. La revisión es de una persona, mira el canal entero; si rechaza, se puede volver a pedir a los 30 días con cambios. Nada garantiza la aprobación.
