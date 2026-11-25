@@ -197,6 +197,9 @@ export const SETTINGS = [
   "campo-sierras",
   "juzgado",
   "cine",
+  // Tecnología (V0-14, video del apagón de S3).
+  "oficina",
+  "sala-servidores",
 ] as const;
 
 export const sceneSchema = z

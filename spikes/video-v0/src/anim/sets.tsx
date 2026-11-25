@@ -1,5 +1,15 @@
 import type { Setting } from "./guion";
-import { BankFacade, BankHall, Cinema, Courtroom, Hills, Tunnel, Vault } from "./places";
+import {
+  BankFacade,
+  BankHall,
+  Cinema,
+  Courtroom,
+  Hills,
+  Office,
+  ServerRoom,
+  Tunnel,
+  Vault,
+} from "./places";
 import { wave } from "./timing";
 
 // Escenarios en SVG (1080×1920). Siempre hay algo vivo: estrellas, ventanas, balizas, un reflector.
@@ -437,5 +447,7 @@ export function SetView({ setting, t }: { setting: Setting; t: number }) {
   if (setting === "campo-sierras") return <Hills t={t} />;
   if (setting === "juzgado") return <Courtroom t={t} />;
   if (setting === "cine") return <Cinema t={t} />;
+  if (setting === "oficina") return <Office t={t} />;
+  if (setting === "sala-servidores") return <ServerRoom t={t} />;
   return <AlarmRoom t={t} />;
 }

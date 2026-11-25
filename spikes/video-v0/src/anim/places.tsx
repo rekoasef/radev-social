@@ -897,3 +897,365 @@ export function BookShape({ title }: { title: string }) {
     </g>
   );
 }
+
+// --- oficina ---------------------------------------------------------------------------------
+
+const ro = random(91);
+/** Líneas de "código" de los monitores: sangría, ancho y color fijos (sin texto real). */
+const CODE = Array.from({ length: 24 }, () => ({
+  indent: Math.floor(ro() * 4) * 22,
+  w: 50 + ro() * 160,
+  c: ["#7FD1B9", "#8EC7FF", "#F2C14E", "#C3B8F0"][Math.floor(ro() * 4)] ?? "#8EC7FF",
+}));
+const OFFICE_CITY = Array.from({ length: 9 }, (_, i) => ({
+  x: 80 + i * 72 + ro() * 12,
+  w: 50 + ro() * 40,
+  h: 110 + ro() * 220,
+  lit: Array.from({ length: 8 }, () => ({ on: ro() > 0.45, hz: 0.04 + ro() * 0.12, phase: ro() })),
+}));
+const LINE = 26;
+
+/** Monitor sobre el escritorio, con código que sube. (x, 850) es la esquina de arriba a la izquierda. */
+function Monitor({ x, t, seed }: { x: number; t: number; seed: number }) {
+  const pos = t * 16 + seed * 140;
+  const first = Math.floor(pos / LINE);
+  const shift = pos % LINE;
+  const clip = `of-screen-${seed}`;
+  return (
+    <g>
+      <defs>
+        <clipPath id={clip}>
+          <rect x={x + 14} y={864} width={292} height={162} rx={4} />
+        </clipPath>
+      </defs>
+      <ellipse cx={x + 160} cy={950} rx={260} ry={170} fill="url(#of-glow)" />
+      <rect x={x + 148} y={1036} width={24} height={34} fill="#2B3550" />
+      <rect x={x + 100} y={1064} width={120} height={10} rx={4} fill="#2B3550" />
+      <rect x={x} y={850} width={320} height={190} rx={12} fill="#141A2C" />
+      <rect x={x + 14} y={864} width={292} height={162} rx={4} fill="#0F2233" />
+      <g clipPath={`url(#${clip})`}>
+        {Array.from({ length: 8 }, (_, k) => {
+          const line = CODE[(first + k) % CODE.length];
+          if (!line) return null;
+          return (
+            <rect
+              // biome-ignore lint/suspicious/noArrayIndexKey: renglones que se reciclan al subir
+              key={k}
+              x={x + 30 + line.indent}
+              y={876 + k * LINE - shift}
+              width={line.w}
+              height={10}
+              rx={5}
+              fill={line.c}
+              opacity={0.75}
+            />
+          );
+        })}
+      </g>
+      {/* Cursor que titila. */}
+      <rect
+        x={x + 30}
+        y={1004}
+        width={14}
+        height={12}
+        fill="#E9EEF7"
+        opacity={wave(t, 1.1, seed) > 0 ? 0.9 : 0}
+      />
+    </g>
+  );
+}
+
+/** Oficina de noche: ventanal a la ciudad, escritorio con dos monitores, taza con vapor, planta. */
+export function Office({ t }: { t: number }) {
+  const hum = 0.9 + 0.1 * (wave(t, 0.21) > 0.85 ? wave(t, 9) : 1);
+  return (
+    <g>
+      <defs>
+        <linearGradient id="of-wall" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1C2540" />
+          <stop offset="1" stopColor="#2A3556" />
+        </linearGradient>
+        <linearGradient id="of-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#0D1838" />
+          <stop offset="1" stopColor="#2C3F72" />
+        </linearGradient>
+        <radialGradient id="of-glow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#8EC7FF" stopOpacity={0.22} />
+          <stop offset="1" stopColor="#8EC7FF" stopOpacity={0} />
+        </radialGradient>
+        <radialGradient id="of-panel" cx="0.5" cy="0" r="0.8">
+          <stop offset="0" stopColor="#E9EEF7" stopOpacity={0.16} />
+          <stop offset="1" stopColor="#E9EEF7" stopOpacity={0} />
+        </radialGradient>
+        <clipPath id="of-window">
+          <rect x={70} y={560} width={650} height={440} />
+        </clipPath>
+      </defs>
+      <rect width={1080} height={1920} fill="url(#of-wall)" />
+      {/* Paneles de luz del techo (uno con el tubo que tiembla). */}
+      {[270, 810].map((x, i) => (
+        <g key={x} opacity={i === 1 ? hum : 1}>
+          <rect x={x - 150} y={30} width={300} height={22} rx={6} fill="#E9EEF7" opacity={0.8} />
+          <ellipse cx={x} cy={40} rx={420} ry={700} fill="url(#of-panel)" />
+        </g>
+      ))}
+      {/* Ventanal con la ciudad de noche. */}
+      <g clipPath="url(#of-window)">
+        <rect x={70} y={560} width={650} height={440} fill="url(#of-sky)" />
+        <circle cx={600} cy={650} r={34} fill="#EDE8FA" opacity={0.85} />
+        {OFFICE_CITY.map((b) => (
+          <g key={b.x}>
+            <rect x={b.x} y={1000 - b.h} width={b.w} height={b.h} fill="#18224A" />
+            {b.lit.map((w, j) => (
+              <rect
+                // biome-ignore lint/suspicious/noArrayIndexKey: posiciones fijas
+                key={j}
+                x={b.x + 10 + (j % 2) * 20}
+                y={1014 - b.h + Math.floor(j / 2) * 34}
+                width={10}
+                height={14}
+                fill="#F6D98A"
+                opacity={w.on ? 0.25 + 0.5 * (0.5 + 0.5 * wave(t, w.hz, w.phase)) : 0.06}
+              />
+            ))}
+          </g>
+        ))}
+      </g>
+      {[70, 286, 502, 706].map((x) => (
+        <rect key={x} x={x} y={556} width={14} height={448} fill="#121A30" />
+      ))}
+      <rect x={62} y={550} width={666} height={14} fill="#121A30" />
+      <rect x={56} y={1000} width={678} height={18} fill="#3A4670" />
+      {/* Pizarra con notas de colores y flechas (sin texto). */}
+      <rect x={770} y={600} width={250} height={330} rx={10} fill="#E3E7F2" />
+      <rect
+        x={770}
+        y={600}
+        width={250}
+        height={330}
+        rx={10}
+        fill="none"
+        stroke="#9AA3BF"
+        strokeWidth={8}
+      />
+      {[
+        { x: 800, y: 640, c: "#F2C14E", r: -4 },
+        { x: 900, y: 650, c: "#7FD1B9", r: 3 },
+        { x: 820, y: 760, c: "#F4978E", r: 2 },
+        { x: 930, y: 790, c: "#8EC7FF", r: -3 },
+      ].map((n, i) => (
+        <rect
+          key={`${n.x}-${n.y}`}
+          x={n.x}
+          y={n.y}
+          width={64}
+          height={64}
+          fill={n.c}
+          transform={`rotate(${n.r + 1.5 * wave(t, 0.12, i * 0.25)} ${n.x + 32} ${n.y})`}
+        />
+      ))}
+      <path
+        d="M 870 690 Q 900 740 880 770 M 868 760 L 880 772 L 892 758 M 880 830 Q 905 870 945 860"
+        stroke="#5B6B8C"
+        strokeWidth={5}
+        fill="none"
+        strokeLinecap="round"
+      />
+      {/* Planta. */}
+      <g transform={`rotate(${1.5 * wave(t, 0.18)} 110 1000)`}>
+        {[-40, -15, 10, 35].map((a) => (
+          <ellipse
+            key={a}
+            cx={110}
+            cy={950}
+            rx={16}
+            ry={56}
+            fill="#4E9F6E"
+            transform={`rotate(${a} 110 1000)`}
+          />
+        ))}
+      </g>
+      <path d="M 75 1000 L 145 1000 L 135 1070 L 85 1070 Z" fill="#B0627A" />
+      {/* Escritorio y monitores. */}
+      <Monitor x={190} t={t} seed={1} />
+      <Monitor x={600} t={t} seed={2} />
+      <rect x={30} y={1070} width={1020} height={28} rx={6} fill="#9B7B58" />
+      <rect x={50} y={1098} width={980} height={242} fill="#3D4A6B" />
+      {[90, 790].map((x) => (
+        <g key={x}>
+          <rect
+            x={x}
+            y={1130}
+            width={200}
+            height={90}
+            rx={8}
+            fill="none"
+            stroke="#2B3550"
+            strokeWidth={6}
+          />
+          <rect x={x + 80} y={1170} width={40} height={10} rx={5} fill="#2B3550" />
+        </g>
+      ))}
+      {/* Teclados y la taza con vapor. */}
+      <rect x={260} y={1058} width={180} height={14} rx={4} fill="#202943" />
+      <rect x={670} y={1058} width={180} height={14} rx={4} fill="#202943" />
+      <rect x={500} y={1030} width={44} height={42} rx={6} fill="#E3E7F2" />
+      <path d="M 544 1040 Q 566 1048 544 1062" stroke="#E3E7F2" strokeWidth={6} fill="none" />
+      {[0, 1].map((i) => {
+        const k = (t * 0.5 + i * 0.5) % 1;
+        return (
+          <path
+            key={i}
+            d={`M ${514 + i * 16} ${1024 - k * 90} q 10 -16 0 -32 q -10 -16 0 -32`}
+            stroke="#E9EEF7"
+            strokeWidth={4}
+            fill="none"
+            strokeLinecap="round"
+            opacity={0.35 * (1 - k)}
+          />
+        );
+      })}
+      {/* Piso alfombrado. */}
+      <rect y={1340} width={1080} height={580} fill="#1A2136" />
+      <rect y={1340} width={1080} height={6} fill="#FFFFFF" opacity={0.06} />
+    </g>
+  );
+}
+
+// --- sala-servidores -------------------------------------------------------------------------
+
+const rsv = random(53);
+const LED_COLORS = ["#4ADE80", "#4ADE80", "#4ADE80", "#8EC7FF", "#F2C14E"];
+/** Seis racks de 12 unidades; cada unidad con 3 luces que titilan a su ritmo. */
+const RACKS = Array.from({ length: 6 }, (_, i) => ({
+  x: 24 + i * 174,
+  units: Array.from({ length: 12 }, () => ({
+    empty: rsv() < 0.08,
+    leds: Array.from({ length: 3 }, () => ({
+      hz: 0.4 + rsv() * 2.6,
+      phase: rsv(),
+      c: LED_COLORS[Math.floor(rsv() * LED_COLORS.length)] ?? "#4ADE80",
+    })),
+  })),
+}));
+const MIST = Array.from({ length: 7 }, () => ({
+  y: 1290 + rsv() * 110,
+  speed: 18 + rsv() * 22,
+  x: rsv(),
+}));
+
+/** Centro de datos: fila de racks con luces que titilan, bandeja de cables, piso técnico y aire frío. */
+export function ServerRoom({ t }: { t: number }) {
+  return (
+    <g>
+      <defs>
+        <linearGradient id="sv-wall" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#070C1A" />
+          <stop offset="1" stopColor="#13203A" />
+        </linearGradient>
+        <radialGradient id="sv-glow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#4FC3F7" stopOpacity={0.18} />
+          <stop offset="1" stopColor="#4FC3F7" stopOpacity={0} />
+        </radialGradient>
+        <pattern id="sv-floor" width={135} height={90} patternUnits="userSpaceOnUse">
+          <rect width={135} height={90} fill="#1A2540" />
+          <rect width={135} height={90} fill="none" stroke="#2A3658" strokeWidth={4} />
+          {[30, 52, 74, 96].map((x) =>
+            [28, 46, 64].map((y) => (
+              <circle key={`${x}-${y}`} cx={x} cy={y} r={3} fill="#121A30" />
+            )),
+          )}
+        </pattern>
+      </defs>
+      <rect width={1080} height={1920} fill="url(#sv-wall)" />
+      <ellipse cx={540} cy={940} rx={760} ry={620} fill="url(#sv-glow)" />
+      {/* Tiras de luz del techo. */}
+      {[180, 540, 900].map((x) => (
+        <rect
+          key={x}
+          x={x - 130}
+          y={36}
+          width={260}
+          height={14}
+          rx={7}
+          fill="#BFE6FF"
+          opacity={0.55}
+        />
+      ))}
+      {/* Bandeja de cables, con cables de colores que cuelgan. */}
+      <rect x={0} y={480} width={1080} height={26} fill="#2E3A5A" />
+      {[
+        { x: 110, c: "#F2C14E" },
+        { x: 300, c: "#8EC7FF" },
+        { x: 470, c: "#F4978E" },
+        { x: 650, c: "#7FD1B9" },
+        { x: 820, c: "#C3B8F0" },
+        { x: 990, c: "#F2C14E" },
+      ].map((w, i) => (
+        <path
+          key={w.x}
+          d={`M ${w.x - 40} 506 Q ${w.x} ${560 + 6 * wave(t, 0.2, i * 0.3)} ${w.x + 40} 506`}
+          stroke={w.c}
+          strokeWidth={6}
+          fill="none"
+        />
+      ))}
+      {/* Racks. */}
+      {RACKS.map((rack) => (
+        <g key={rack.x}>
+          <rect x={rack.x} y={560} width={164} height={780} rx={6} fill="#1E2840" />
+          <rect x={rack.x} y={560} width={164} height={30} rx={6} fill="#2B3550" />
+          {rack.units.map((u, j) => {
+            const y = 600 + j * 60;
+            return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: unidades fijas del rack
+              <g key={j}>
+                <rect
+                  x={rack.x + 10}
+                  y={y}
+                  width={144}
+                  height={52}
+                  rx={4}
+                  fill={u.empty ? "#121A2E" : "#26324F"}
+                />
+                {!u.empty && (
+                  <>
+                    {[0, 1, 2].map((g) => (
+                      <rect
+                        key={g}
+                        x={rack.x + 20}
+                        y={y + 12 + g * 12}
+                        width={70}
+                        height={4}
+                        rx={2}
+                        fill="#121A2E"
+                      />
+                    ))}
+                    {u.leds.map((led, k) => (
+                      <circle
+                        // biome-ignore lint/suspicious/noArrayIndexKey: luces fijas de la unidad
+                        key={k}
+                        cx={rack.x + 108 + k * 16}
+                        cy={y + 26}
+                        r={5}
+                        fill={led.c}
+                        opacity={wave(t, led.hz, led.phase) > -0.2 ? 0.95 : 0.15}
+                      />
+                    ))}
+                  </>
+                )}
+              </g>
+            );
+          })}
+        </g>
+      ))}
+      {/* Piso técnico y aire frío que corre abajo. */}
+      <rect y={1340} width={1080} height={580} fill="url(#sv-floor)" />
+      <rect y={1340} width={1080} height={6} fill="#BFE6FF" opacity={0.12} />
+      {MIST.map((m) => {
+        const x = ((t * m.speed + m.x * 1500) % 1500) - 250;
+        return <ellipse key={m.x} cx={x} cy={m.y} rx={240} ry={26} fill="#9FD8FF" opacity={0.07} />;
+      })}
+    </g>
+  );
+}

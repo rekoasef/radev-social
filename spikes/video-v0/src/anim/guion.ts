@@ -133,7 +133,9 @@ export type Setting =
   | "tunel"
   | "campo-sierras"
   | "juzgado"
-  | "cine";
+  | "cine"
+  | "oficina"
+  | "sala-servidores";
 
 export type GuionScene = {
   /** Índice de la escena en la voz de V0-3 (out/v0-3/manifest.json). */
