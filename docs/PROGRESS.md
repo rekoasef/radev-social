@@ -937,3 +937,25 @@ Plan aprobado el 2026-09-23. Terminada.
 Seguir "Cómo levantarlo" del `README.md`. Lo que no viaja con el repo: el `.env` (copiarlo por un canal privado), los datos de la base y los archivos de `media/` (cada máquina tiene los suyos; el seed recrea las marcas y los assets de Lumus). `RENDER_TOKEN` puede ser distinto en cada máquina.
 
 Git: `git fetch` trae todas las ramas de GitHub; `git pull` solo actualiza la rama en la que estás. Si el trabajo en curso está en otra rama (ver "Estado actual"), hacer `git switch <rama>` antes de seguir. Antes de tocar el sistema, identificar la máquina con `docs/ENVIRONMENTS.md`.
+
+### Video (RAdev Studio) en otra máquina, p. ej. la PC de casa (2026-11-25)
+
+```
+git fetch && git switch feat/video-v1 && git pull     # la rama del video; main no la tiene
+nvm use && pnpm install                                # Node 24; Remotion baja su Chrome solo en el primer render (~100 MB)
+cp <el .env de la otra máquina> .env                   # por un canal privado; nunca por git
+docker compose up -d postgres                          # Postgres del proyecto en 127.0.0.1:5433
+pnpm db:migrate && pnpm db:seed                        # tablas (incluidas las de video: 0028 y 0029) y datos iniciales
+pnpm --filter @radev/video-worker dev                  # el worker del video
+npx vitest run packages/video packages/core packages/ai apps/video-worker   # tests (no necesitan la base)
+```
+
+- **Base de datos: no hay nada que migrar.** La base local de esta PC solo tiene lo que crea el seed (2 marcas, 4 voces, 0 videos, 0 posts): en la otra máquina `db:migrate` y `db:seed` la dejan igual. Las migraciones `0028` y `0029` solo agregan tablas y relajan dos restricciones, así que son seguras sobre una base con datos de carruseles. Si hubiera datos de video para mover: `docker compose exec postgres pg_dump -U radev radev_social > video.sql` y restaurar con `psql` (cada máquina tiene los suyos; hoy no hace falta).
+- **Producción (servidor) no se toca:** el `video-worker` no está en Docker ni en el servidor, y la rama `feat/video-v1` no está en `main`. **No hacer merge a `main` ni `deploy.sh` hasta cerrar B**: el deploy correría las migraciones `0028` y `0029` en producción (inofensivas, pero sin pantalla que las use).
+- **Lo que NO viaja con git** (cada máquina lo arma o lo copia):
+  - `.env`: `DATABASE_URL`, `CLAUDE_CODE_OAUTH_TOKEN` (o `ANTHROPIC_API_KEY`, nunca las dos) y **`ELEVENLABS_API_KEY`** (también está en el gestor de contraseñas del operador).
+  - `media/` (imágenes bajadas, voz y videos de cada video: se regeneran; un video terminado se baja como paquete y se guarda en Drive).
+  - `spikes/video-v0/out/` (la spike: la Mona Lisa original, voces y render; los datos de prueba que importan ya están en `packages/video/test/fixtures/`).
+  - El primer video publicado (la Mona Lisa, `short/` y `normal/`) vive en `C:\Users\rasef\Downloads\mona-v2` y en el YouTube del operador.
+- **Requisitos del sistema:** `ffmpeg` y `ffprobe` (ya están en las dos PCs), Docker Desktop abierto con la integración WSL de la distro activada, y memoria: el render usa ~2,7 GB (WSL con 8 GB). Antes de tocar el sistema, ver `docs/ENVIRONMENTS.md` y `docs/ARCHITECTURE.md` §14.1 para entender el worker.
+- **Dónde está cada cosa:** decisiones en `docs/decisions/0029-video-documental-y-oficinas.md`; alcance, etapas y tareas en `docs/RADEV-STUDIO-REVISION.md` §7; diseño del worker en `docs/ARCHITECTURE.md` §14; qué sigue en "Estado actual" de este archivo (T9, el plan de mañana).
