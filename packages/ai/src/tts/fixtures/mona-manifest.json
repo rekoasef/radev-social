@@ -1,0 +1,130 @@
+{
+  "source": "texts/mona-v2.json",
+  "voice": "l1zE9xgNpUTaQCZzpNJa",
+  "model": "eleven_multilingual_v2",
+  "speed": null,
+  "fps": 30,
+  "rate": 48000,
+  "scenes": [
+    {
+      "index": 0,
+      "key": "mona-v2-0",
+      "frames": 248,
+      "text": "21 de agosto de 1911. El Louvre amanece cerrado y, en el Salón Carré, la Mona Lisa ya no está."
+    },
+    {
+      "index": 1,
+      "key": "mona-v2-1",
+      "frames": 119,
+      "text": "¿Cómo pudo desaparecer el cuadro sin que nadie viera nada?"
+    },
+    {
+      "index": 2,
+      "key": "mona-v2-2",
+      "frames": 201,
+      "text": "El ladrón era Vincenzo Peruggia, un inmigrante italiano de 29 años que había trabajado en el museo."
+    },
+    {
+      "index": 3,
+      "key": "mona-v2-3",
+      "frames": 197,
+      "text": "La obra colgaba entre un Correggio y un Tiziano, sostenida apenas por cuatro clavijas de hierro."
+    },
+    {
+      "index": 4,
+      "key": "mona-v2-4",
+      "frames": 236,
+      "text": "Peruggia se escondió, descolgó el cuadro, le sacó el marco y la caja, y los ocultó en una escalera de servicio."
+    },
+    {
+      "index": 5,
+      "key": "mona-v2-5",
+      "frames": 209,
+      "text": "Al salir, un plomero del museo le abrió una puerta de servicio, creyendo que era un colega."
+    },
+    {
+      "index": 6,
+      "key": "mona-v2-6",
+      "frames": 195,
+      "text": "Nadie notó la falta hasta el día siguiente, cuando un pintor llegó a copiarlo y encontró la pared vacía."
+    },
+    {
+      "index": 7,
+      "key": "mona-v2-7",
+      "frames": 148,
+      "text": "Un oficial de policía estaba seguro de resolver el caso en pocos días."
+    },
+    {
+      "index": 8,
+      "key": "mona-v2-8",
+      "frames": 202,
+      "text": "El director del Louvre, Théophile Homolle, terminó renunciando ante la indignación pública."
+    },
+    {
+      "index": 9,
+      "key": "mona-v2-9",
+      "frames": 189,
+      "text": "La policía desplegó al menos sesenta agentes y repartió carteles de búsqueda por todo París."
+    },
+    {
+      "index": 10,
+      "key": "mona-v2-10",
+      "frames": 179,
+      "text": "Entre los detenidos estuvo el poeta Apollinaire, amigo del pintor Picasso."
+    },
+    {
+      "index": 11,
+      "key": "mona-v2-11",
+      "frames": 236,
+      "text": "Peruggia había dejado una huella en el cristal protector, pero un error policial dejó su nombre afuera de la lista."
+    },
+    {
+      "index": 12,
+      "key": "mona-v2-12",
+      "frames": 262,
+      "text": "Lo interrogaron dos veces, pero nadie lo tomó como sospechoso principal. El cuadro quedó guardado en un baúl de su casa."
+    },
+    {
+      "index": 13,
+      "key": "mona-v2-13",
+      "frames": 164,
+      "text": "Más de dos años después, confesó que a veces pensaba en quemar la pintura."
+    },
+    {
+      "index": 14,
+      "key": "mona-v2-14",
+      "frames": 223,
+      "text": "En diciembre de 1913 fue a Florencia y contactó al anticuario Alfredo Geri con un seudónimo."
+    },
+    {
+      "index": 15,
+      "key": "mona-v2-15",
+      "frames": 220,
+      "text": "Geri avisó a Giovanni Poggi, director de los Uffizi, que autenticó la obra y llamó a la policía de inmediato."
+    },
+    {
+      "index": 16,
+      "key": "mona-v2-16",
+      "frames": 246,
+      "text": "Peruggia fue arrestado en su hotel el 12 de diciembre de 1913, poco más de dos años después del robo."
+    },
+    {
+      "index": 17,
+      "key": "mona-v2-17",
+      "frames": 312,
+      "text": "Fue condenado a un año y 15 días de cárcel gracias a un test psiquiátrico que jugó a su favor, pero terminó cumpliendo solo siete meses."
+    },
+    {
+      "index": 18,
+      "key": "mona-v2-18",
+      "frames": 156,
+      "text": "El cuadro volvió al Louvre, ya convertido en la pintura más famosa del mundo."
+    },
+    {
+      "index": 19,
+      "key": "mona-v2-19",
+      "frames": 185,
+      "text": "¿Peruggia fue un ladrón patriota o solo un hombre que vio una fortuna en una pared mal custodiada?"
+    }
+  ]
+}

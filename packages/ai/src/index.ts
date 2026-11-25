@@ -49,6 +49,7 @@ export {
   shouldFallback,
 } from "./router";
 export { formatIssues, parseJsonText, parseOutput, toJsonSchema } from "./schema";
+export * from "./tts";
 export type { AIProvider, GenerationResult, GenerationTask, TaskImage, Usage } from "./types";
 export {
   assertOutsideProjects,
