@@ -70,7 +70,7 @@ export function applyPatch(base: GuionDraft, patch: GuionPatch): PatchResult {
   const guion: GuionDraft = {
     ...base,
     title: patch.title ?? base.title,
-    sets: patch.sets ?? base.sets,
+    ...((patch.sets ?? base.sets) && { sets: patch.sets ?? base.sets }),
     cast: patch.cast ?? base.cast,
     missingPlaces: patch.missingPlaces ?? base.missingPlaces,
     facts: patch.facts ?? base.facts,
