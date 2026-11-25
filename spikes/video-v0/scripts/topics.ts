@@ -6,4 +6,5 @@ export const TOPICS = [
   "Qué pasa con las valijas perdidas en los aeropuertos que nadie reclama.",
   "El robo de la Mona Lisa del Louvre en 1911.",
   "El error del año 2000 (Y2K): por qué el mundo creyó que las computadoras se iban a romper.",
+  "El caso de Betty y Barney Hill (1961): la primera abducción ovni famosa, con un mapa estelar y una pareja que no recordaba dos horas de viaje.",
 ];
