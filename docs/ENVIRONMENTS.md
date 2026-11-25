@@ -63,7 +63,7 @@ Relevada el 2026-11-24 (solo lectura, sin cambios).
 | CPU / GPU | AMD Ryzen 5 4600H (6 núcleos / 12 hilos) · AMD Radeon RX 5600M + Radeon integrada. Sin GPU NVIDIA: nada de `nvidia-smi` en WSL |
 | RAM total / RAM que ve WSL | 11,4 GB en Windows; WSL ve **7,8 GiB + 4 GiB de swap** desde el `.wslconfig` (antes, por defecto, ~5,5 GiB + 2 GiB) |
 | `.wslconfig` | `C:\Users\rasef\.wslconfig` (2026-11-24): 8 GB de RAM, 4 GB de swap, `autoMemoryReclaim=dropCache`. Aplicado y verificado con `free -h` el mismo día |
-| Docker | Docker Desktop instalado, pero el 2026-11-24 estaba **detenido** (distro `docker-desktop` en `Stopped`): `docker` no existe en Debian hasta abrirlo. Falta confirmar que la integración WSL con Debian esté activada |
+| Docker | Docker Desktop instalado. **No arranca solo**: hay que abrirlo, y la integración WSL con **Debian** tiene que estar activada (Settings → Resources → WSL integration); sin eso `docker` existe pero no llega al servicio. Confirmado el 2026-11-25: con la integración activa, `docker compose up -d postgres` levanta el Postgres del proyecto en 5433 |
 | Node / nvm | nvm en `~/.nvm` con Node 18.20.8, 20.19.6 y 24.21.0. **El de por defecto es el 20**: hace falta `nvm use` (`.nvmrc` pide 24). pnpm 12.5.1 en el Node 24 |
 | Postgres nativo en 5432 | Sí, escucha en `127.0.0.1:5432` (otros proyectos: no tocarlo) |
 | `ffmpeg` | **7.1.3-0+deb13u1** (apt; ya estaba instalado). La de casa es 6.1.1 |
