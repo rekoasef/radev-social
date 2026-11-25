@@ -245,6 +245,7 @@ export {
   getCurrentVideoDocument,
   getDefaultVoice,
   getVideo,
+  getVoiceById,
   listStuckVideos,
   listUsageEvents,
   listVideoDocumentVersions,

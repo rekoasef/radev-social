@@ -39,6 +39,7 @@ function setup(
     queued: [] as { job: VideoOfficeJob; delay: number }[],
     failed: [] as VideoFailure[],
     paused: [] as Date[],
+    budget: 0,
     resumed: 0,
     completed: 0,
   };
@@ -49,6 +50,9 @@ function setup(
       resume: async () => {
         calls.resumed++;
         if (current) current = { ...current, pausedAt: null, pauseReason: null, resumeAt: null };
+      },
+      pauseForBudget: async () => {
+        calls.budget++;
       },
       pauseForLimit: async (_id, at) => {
         calls.paused.push(at);
@@ -66,6 +70,7 @@ function setup(
     },
     offices: opts.office ? { researching: opts.office } : {},
     makeContext: (v) => ({
+      voice: async () => null,
       video: v,
       log: quiet,
       ai: { run: vi.fn() },
@@ -187,6 +192,18 @@ describe("runOffice: Claude's limit", () => {
     });
     expect(await runOffice(setup({ video: paused, office }).deps, job)).toBe("skipped");
     expect(office).not.toHaveBeenCalled();
+  });
+});
+
+describe("runOffice: no credits left", () => {
+  it("pauses the video for the operator, queues nothing and does not fail", async () => {
+    const { deps, calls } = setup({
+      office: async () => ({ kind: "pause", reason: "budget", message: "sin créditos" }),
+    });
+    expect(await runOffice(deps, job)).toBe("paused");
+    expect(calls.budget).toBe(1);
+    expect(calls.queued).toEqual([]);
+    expect(calls.failed).toEqual([]);
   });
 });
 

@@ -1,9 +1,10 @@
-import type { VideoFailure } from "@radev/core";
+import type { VideoFailure, WorkingStage } from "@radev/core";
 import {
   completeVideoOffice,
   type Database,
   getVideo,
   pauseVideoById,
+  recordUsageEvent,
   recordVideoFailure,
   resumeVideoById,
 } from "@radev/db";
@@ -19,8 +20,27 @@ export function dbStore(db: Database): RunnerStore {
     pauseForLimit: async (id, resumeAt) => {
       await pauseVideoById(db, id, "provider_limit", resumeAt);
     },
-    complete: (videoId, result) =>
-      completeVideoOffice(db, videoId, result.documents, { title: result.title }),
+    pauseForBudget: async (id) => {
+      await pauseVideoById(db, id, "budget");
+    },
+    complete: async (videoId, result) => {
+      const outcome = await completeVideoOffice(db, videoId, result.documents, {
+        title: result.title,
+      });
+      if (outcome.ok) {
+        for (const u of result.usage ?? []) {
+          await recordUsageEvent(db, {
+            videoId,
+            kind: u.kind,
+            office: outcome.from as WorkingStage,
+            quantity: u.quantity,
+            unit: u.unit,
+            durationMs: u.durationMs ?? null,
+          });
+        }
+      }
+      return outcome;
+    },
     fail: async (id, failure: VideoFailure) => {
       await recordVideoFailure(db, id, failure);
     },

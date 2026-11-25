@@ -34,6 +34,7 @@ export function makeCtx(opts: {
   docs?: Partial<Record<VideoDocumentKind, unknown>>;
   answers?: AiAnswer<unknown>[];
   files?: Record<string, Uint8Array>;
+  voice?: { externalId: string; name: string; speed: number | null } | null;
 }) {
   const asked: Asked[] = [];
   const answers = [...(opts.answers ?? [])];
@@ -49,6 +50,8 @@ export function makeCtx(opts: {
         return next;
       }) as unknown as OfficeContext["ai"]["run"],
     },
+    voice: async () =>
+      opts.voice === undefined ? { externalId: "voz-1", name: "Alberto", speed: null } : opts.voice,
     document: async (kind) => opts.docs?.[kind] ?? null,
     files: {
       write: async (path, bytes) => {

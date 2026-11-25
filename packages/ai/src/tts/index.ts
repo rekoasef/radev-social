@@ -15,4 +15,5 @@ export {
   type TtsResult,
   type TtsWord,
 } from "./types";
+export { wavFromPcm } from "./wav";
 export { type CharAlignment, countWords, wordsFromChars } from "./words";

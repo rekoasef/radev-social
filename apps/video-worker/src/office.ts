@@ -14,6 +14,8 @@ export type OfficeContext = {
   ai: VideoAi;
   /** The current (highest) version of a document of this video, or null. */
   document(kind: VideoDocumentKind): Promise<unknown | null>;
+  /** The voice of the video (its own, or the default narrator); null when there is none. */
+  voice(): Promise<{ externalId: string; name: string; speed: number | null } | null>;
   /** The video's media folder (`media/videos/<id>/`): paths are relative to it. */
   files: {
     write(path: string, bytes: Uint8Array): Promise<void>;
@@ -21,8 +23,18 @@ export type OfficeContext = {
   };
 };
 
+/** What an office spent, for the report of its desk (`usage_events`; cost is always 0 here). */
+export type OfficeUsage = {
+  kind: "tts" | "render";
+  quantity: number;
+  unit: string;
+  durationMs?: number;
+};
+
 export type OfficeResult =
-  | { kind: "done"; documents: OfficeDocumentOut[]; title?: string }
+  | { kind: "done"; documents: OfficeDocumentOut[]; title?: string; usage?: OfficeUsage[] }
+  /** Nothing can go on until the operator steps in (out of voice credits): the video is paused. */
+  | { kind: "pause"; reason: "budget"; message: string }
   /** The AI's usage limit: the runner pauses the video and tries again later. */
   | { kind: "rate_limited"; retryAfterMs: number | null };
 

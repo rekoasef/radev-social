@@ -374,6 +374,11 @@ export function listVoices(db: Executor): Promise<Voice[]> {
   return db.select().from(voices).where(eq(voices.active, true)).orderBy(asc(voices.name));
 }
 
+export async function getVoiceById(db: Executor, id: string): Promise<Voice | null> {
+  const [voice] = await db.select().from(voices).where(eq(voices.id, id));
+  return voice ?? null;
+}
+
 /** The voice a new video gets for its use and language, if one is marked as the default. */
 export async function getDefaultVoice(
   db: Executor,

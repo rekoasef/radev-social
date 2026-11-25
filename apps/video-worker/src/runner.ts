@@ -23,6 +23,8 @@ export type RunnerStore = {
   getVideo(id: string): Promise<Video | null>;
   resume(id: string): Promise<void>;
   pauseForLimit(id: string, resumeAt: Date): Promise<void>;
+  /** A pause that only the operator lifts (no credits left). */
+  pauseForBudget(id: string): Promise<void>;
   /** Saves the documents and moves the video to the next stage, all or nothing. */
   complete(
     videoId: string,
@@ -101,6 +103,15 @@ export async function runOffice(deps: RunnerDeps, job: VideoOfficeJob): Promise<
       await store.fail(video.id, { stage: job.stage, message, retryable: true, at: deps.now() });
     }
     throw error;
+  }
+
+  if (result.kind === "pause") {
+    await store.pauseForBudget(video.id);
+    log.warn("the video is paused until the operator steps in", {
+      reason: result.reason,
+      message: result.message,
+    });
+    return "paused";
   }
 
   if (result.kind === "rate_limited") {

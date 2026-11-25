@@ -1,6 +1,11 @@
 // pg-boss worker of RAdev Studio: one queue per office of the video (ADR 0029,
 // docs/ARCHITECTURE.md §14.1). Runs on the operator's notebook, apart from the social worker.
-import { createClaudeCodeProvider, createOpenRouterProvider, createRouter } from "@radev/ai";
+import {
+  createClaudeCodeProvider,
+  createElevenLabsProvider,
+  createOpenRouterProvider,
+  createRouter,
+} from "@radev/ai";
 import {
   OFFICE_JOB,
   VIDEO_JOBS,
@@ -14,6 +19,8 @@ import {
 import {
   createDb,
   getCurrentVideoDocument,
+  getDefaultVoice,
+  getVoiceById,
   listStuckVideos,
   readMediaFile,
   type Video,
@@ -23,7 +30,7 @@ import { createCommonsClient } from "@radev/video";
 import { type JobWithMetadata, PgBoss } from "pg-boss";
 import { createVideoAi } from "./ai";
 import { createAiLock } from "./ai-lock";
-import { fetchPage, shrinkImage, sizeOf } from "./io";
+import { decodeToPcm, fetchPage, shrinkImage, sizeOf } from "./io";
 import { createLogger } from "./logger";
 import type { Office, OfficeContext } from "./office";
 import { createImagesOffice } from "./offices/images";
@@ -31,6 +38,7 @@ import { research } from "./offices/research";
 import { review } from "./offices/review";
 import { script } from "./offices/script";
 import { createSourcesOffice } from "./offices/sources";
+import { createVoiceOffice } from "./offices/voice";
 import { runOffice } from "./runner";
 import { dbStore } from "./store";
 
@@ -78,6 +86,12 @@ async function main() {
     video,
     log: log.child({ videoId: video.id, stage: video.stage }),
     ai,
+    voice: async () => {
+      const voice =
+        (video.voiceId ? await getVoiceById(db, video.voiceId) : null) ??
+        (await getDefaultVoice(db, "narrative", video.language));
+      return voice ? { externalId: voice.externalId, name: voice.name, speed: voice.speed } : null;
+    },
     document: async (kind) => (await getCurrentVideoDocument(db, video.id, kind))?.data ?? null,
     files: {
       write: (path, bytes) => writeMediaFile(`videos/${video.id}/${path}`, bytes),
@@ -85,14 +99,15 @@ async function main() {
     },
   });
 
-  // The offices that exist. The voice, the render and the package arrive in T8: until then a video
-  // that reaches them waits there (the runner says so in the log).
+  // The offices that exist. The render and the package arrive next (T8): until then a video that
+  // reaches them waits there (the runner says so in the log).
   const offices: Partial<Record<WorkingStage, Office>> = {
     researching: research,
     checking_sources: createSourcesOffice({ fetchPage }),
     finding_images: createImagesOffice({ commons, shrink: shrinkImage, sizeOf }),
     scripting: script,
     checking_facts: review,
+    voicing: createVoiceOffice({ tts: createElevenLabsProvider(), decode: decodeToPcm }),
   };
 
   for (const stage of WORKING_STAGES) {

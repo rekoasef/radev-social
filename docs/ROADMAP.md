@@ -146,7 +146,7 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 - [x] T5 Voz de ElevenLabs en una toma (`packages/ai/src/tts`) — probada con `fetch` falso y con la toma real de la Mona Lisa; falta una llamada real (≈400 créditos) cuando se arme la oficina de Locución
 - [x] T6 Cliente de Wikimedia Commons con filtro de licencias (probado con respuestas guardadas; falta una búsqueda real cuando se arme la oficina de Imágenes)
 - [x] T7 `apps/video-worker` + oficinas 1 a 5 (hasta el guion) — corredor probado contra la base real con oficinas falsas; las oficinas con Claude y Commons de verdad se prueban en T9
-- [ ] T8 Oficinas 6 a 8 (voz, render 9:16 y 16:9, publicación)
+- [ ] T8 Oficinas 6 a 8 (voz, render 9:16 y 16:9, publicación) — **8a Locución hecha** (probada con ElevenLabs falso; sin llamada real); faltan 8b Render y 8c Publicación
 - [ ] T9 Comando de punta a punta: un video completo sin pantallas
 
 **B. Tu escritorio en la web**

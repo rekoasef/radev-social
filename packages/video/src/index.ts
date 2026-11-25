@@ -7,3 +7,4 @@ export * from "./review";
 export * from "./script";
 export * from "./sources";
 export * from "./text";
+export * from "./voice";
