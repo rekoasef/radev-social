@@ -2,7 +2,7 @@ import { exampleSlides, FORMAT } from "@radev/slides";
 import { Composition } from "remotion";
 import { AnimVideo, type AnimVideoProps, animFrames } from "./anim/AnimVideo";
 import { THUMB_SIZE, Thumb, type ThumbProps } from "./photo/Thumb";
-import { PhotoVideo, type PhotoVideoProps, photoFrames } from "./photo/PhotoVideo";
+import { PHOTO_SIZE, PhotoVideo, type PhotoVideoProps, photoFrames } from "./photo/PhotoVideo";
 import { StudioSheet, type StudioSheetProps, sheetHeight } from "./anim/studio-draw";
 import { Captions, type CaptionsProps, Scene, type SceneProps } from "./Captions";
 import { clipSlides } from "./looks/clip-slides";
@@ -147,8 +147,8 @@ export const Root = () => (
       height={HEIGHT}
       fps={FPS}
       durationInFrames={30 * FPS}
-      defaultProps={{ voices: [], shots: [] } satisfies PhotoVideoProps}
-      calculateMetadata={({ props }) => ({ durationInFrames: Math.max(1, photoFrames(props)) })}
+      defaultProps={{ voices: [], shots: [], format: "9x16" } satisfies PhotoVideoProps}
+      calculateMetadata={({ props }) => ({ durationInFrames: Math.max(1, photoFrames(props)), ...PHOTO_SIZE[props.format ?? "9x16"] })}
     />
     {/* Miniatura del video documental (16:9 para YouTube y 9:16). */}
     <Composition

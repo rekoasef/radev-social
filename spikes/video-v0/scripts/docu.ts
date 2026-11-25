@@ -32,6 +32,7 @@ const dry = flag("dry") !== undefined;
 const reuse = flag("reuse") !== undefined;
 const noReview = flag("no-review") !== undefined;
 const flagNoMeta = flag("no-meta") !== undefined;
+const videoFormat = flag("format") === "16x9" ? "16x9" : "9x16"; // render: vertical (Short) u horizontal (normal)
 const fileArg = flag("file");
 const pins = (flag("pin") ?? "").split(",").map((t) => t.trim()).filter(Boolean);
 const [mode, ...rest] = args;
@@ -604,6 +605,22 @@ async function meta(g: DocuGuion, candidates: Candidate[], voiceDir: string) {
     "",
   ].join("\n");
   writeFileSync(path.join(dir, "descripcion.txt"), description);
+  // Short: sin capítulos (YouTube no los muestra en Shorts), más corta, con #Shorts
+  const shortDescription = [
+    result.title,
+    "",
+    result.hook,
+    "",
+    "Fuentes",
+    ...sources,
+    "",
+    "Imágenes de archivo: Wikimedia Commons (detalle de cada una en el video completo).",
+    "Narración con voz generada por IA. Relato basado en las fuentes citadas.",
+    "",
+    [...result.hashtags, "#Shorts"].join(" "),
+    "",
+  ].join("\n");
+  writeFileSync(path.join(dir, "descripcion-short.txt"), shortDescription);
 
   // miniaturas 16:9 y 9:16
   const pub = path.join(dir, ".public");
@@ -697,15 +714,15 @@ async function render() {
   );
   const serveUrl = await bundle({ entryPoint: path.join(ROOT, "src", "index.ts"), publicDir: pub });
   const browser = await openBrowser("chrome", { chromiumOptions: { flags: { "font-render-hinting": false } } });
-  const inputProps = { voices, shots };
+  const inputProps = { voices, shots, format: videoFormat };
   const composition = await selectComposition({ serveUrl, id: "photos", inputProps, puppeteerInstance: browser });
-  const file = path.join(ROOT, "out", "anim", `${name}.mp4`);
+  const file = path.join(ROOT, "out", "anim", `${name}${videoFormat === "16x9" ? "-16x9" : ""}.mp4`);
   mkdirSync(path.dirname(file), { recursive: true });
   const t0 = performance.now();
   await renderMedia({ composition, serveUrl, codec: "h264", crf: 23, outputLocation: file, inputProps, concurrency: 2, puppeteerInstance: browser });
   console.log(`video: ${(composition.durationInFrames / composition.fps).toFixed(1)} s en ${((performance.now() - t0) / 1000).toFixed(1)} s → ${file}`);
   await browser.close({ silent: true });
-  if (!flagNoMeta) await meta(g, candidates, voiceDir);
+  if (!flagNoMeta && videoFormat === "9x16") await meta(g, candidates, voiceDir);
 }
 
 if (mode === "search" && rest[0]) await search(rest[0]);

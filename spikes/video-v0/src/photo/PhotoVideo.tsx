@@ -21,13 +21,33 @@ export type Shot = {
   /** Cola después de la voz, en segundos. */
   tail?: number;
 };
-export type PhotoVideoProps = { voices: SceneVoice[]; shots: Shot[] };
+export type PhotoFormat = "9x16" | "16x9";
+export type PhotoVideoProps = { voices: SceneVoice[]; shots: Shot[]; format?: PhotoFormat };
 
-const W = 1080;
-const H = 1920;
+export const PHOTO_SIZE = { "9x16": { width: 1080, height: 1920 }, "16x9": { width: 1920, height: 1080 } } as const;
+// Karaoke y crédito según el formato: en 16:9 los subtítulos van arriba y más chicos.
+const LAYOUT = {
+  "9x16": { karaoke: { top: 286, maxWidth: 940, fontSize: 60 }, creditBottom: 150, creditSize: 30, creditSide: 48 },
+  "16x9": { karaoke: { top: 56, maxWidth: 1500, fontSize: 52 }, creditBottom: 36, creditSize: 24, creditSide: 60 },
+} as const;
+
+/**
+ * Las vistas se piensan en vertical. En 16:9 se conserva cuánto se ve de ALTO de la imagen (para que
+ * el sujeto no quede cortado) y se abre el ancho; si la imagen no alcanza, se muestra entera de ancho.
+ */
+function adaptView(v: View, aspect: number, format: PhotoFormat): View {
+  if (format === "9x16") return v;
+  const V = PHOTO_SIZE["9x16"];
+  const Wd = PHOTO_SIZE["16x9"];
+  const dwV = Math.max(V.width / v.vw, V.height / aspect);
+  const heightFraction = Math.min(1, V.height / (dwV * aspect));
+  const dwWide = Math.max(Wd.width, Wd.height / (heightFraction * aspect));
+  return { cx: v.cx, cy: v.cy, vw: Math.min(1, Wd.width / dwWide) };
+}
 
 /** Dónde queda la imagen en el cuadro para una vista (centro y fracción de ancho visible). */
-function place(v: View, aspect: number) {
+function place(v: View, aspect: number, format: PhotoFormat) {
+  const { width: W, height: H } = PHOTO_SIZE[format];
   const dw = Math.max(W / v.vw, H / aspect); // que la imagen siempre cubra el cuadro
   const dh = dw * aspect;
   const cx = Math.min(1 - W / 2 / dw, Math.max(W / 2 / dw, v.cx));
@@ -37,15 +57,16 @@ function place(v: View, aspect: number) {
 
 const framesOf = (shot: Shot, voice: SceneVoice) => voice.frames + Math.round((shot.tail ?? 0) * 30);
 
-function PhotoScene({ shot, voice }: { shot: Shot; voice: SceneVoice }) {
+function PhotoScene({ shot, voice, format }: { shot: Shot; voice: SceneVoice; format: PhotoFormat }) {
+  const lay = LAYOUT[format];
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const k = interpolate(frame, [0, framesOf(shot, voice)], [0, 1], {
     extrapolateRight: "clamp",
     easing: (x) => x * x * (3 - 2 * x),
   });
-  const a = place(shot.from, shot.aspect);
-  const b = place(shot.to, shot.aspect);
+  const a = place(adaptView(shot.from, shot.aspect, format), shot.aspect, format);
+  const b = place(adaptView(shot.to, shot.aspect, format), shot.aspect, format);
   const mix = (p: number, q: number) => p + (q - p) * k;
   const fade = interpolate(frame, [0, 8], [0, 1], { extrapolateRight: "clamp" });
   return (
@@ -70,17 +91,17 @@ function PhotoScene({ shot, voice }: { shot: Shot; voice: SceneVoice }) {
       />
       {(shot.graphics ?? []).map((g, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: el orden de los gráficos es fijo
-        <GraphicView key={i} g={g} t={frame / fps} words={voice.words} />
+        <GraphicView key={i} g={g} t={frame / fps} words={voice.words} format={format} />
       ))}
-      <Karaoke words={voice.words} highlight={shot.highlight ?? []} t={frame / fps} />
+      <Karaoke words={voice.words} highlight={shot.highlight ?? []} t={frame / fps} {...lay.karaoke} />
       <div
         style={{
           position: "absolute",
-          left: 48,
-          right: 48,
-          bottom: 150,
+          left: lay.creditSide,
+          right: lay.creditSide,
+          bottom: lay.creditBottom,
           fontFamily: "'Inter Tight Variable', sans-serif",
-          fontSize: 30,
+          fontSize: lay.creditSize,
           fontWeight: 600,
           color: "rgba(255,255,255,0.78)",
           textShadow: "0 2px 8px rgba(0,0,0,0.9)",
@@ -96,7 +117,7 @@ function PhotoScene({ shot, voice }: { shot: Shot; voice: SceneVoice }) {
 export const photoFrames = ({ voices, shots }: PhotoVideoProps) =>
   shots.reduce((sum, s) => sum + (voices[s.voice] ? framesOf(s, voices[s.voice] as SceneVoice) : 0), 0);
 
-export const PhotoVideo = ({ voices, shots }: PhotoVideoProps) => {
+export const PhotoVideo = ({ voices, shots, format = "9x16" }: PhotoVideoProps) => {
   let from = 0;
   return (
     <AbsoluteFill style={{ background: "#000" }}>
@@ -109,7 +130,7 @@ export const PhotoVideo = ({ voices, shots }: PhotoVideoProps) => {
         return (
           // biome-ignore lint/suspicious/noArrayIndexKey: el orden de los planos es fijo
           <Sequence key={i} from={start} durationInFrames={frames}>
-            <PhotoScene shot={shot} voice={voice} />
+            <PhotoScene shot={shot} voice={voice} format={format} />
           </Sequence>
         );
       })}

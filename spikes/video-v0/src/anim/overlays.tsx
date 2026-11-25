@@ -32,10 +32,16 @@ export function Karaoke({
   words,
   highlight,
   t,
+  top = 286,
+  maxWidth = 940,
+  fontSize = 60,
 }: {
   words: Word[];
   highlight: string[];
   t: number;
+  top?: number;
+  maxWidth?: number;
+  fontSize?: number;
 }) {
   const keys = new Set(highlight.map(norm));
   const lines = toLines(words);
@@ -44,11 +50,11 @@ export function Karaoke({
     <div
       style={{
         position: "absolute",
-        top: 286,
+        top,
         left: "50%",
         transform: "translateX(-50%)",
         width: "max-content",
-        maxWidth: 940,
+        maxWidth,
         display: "flex",
         flexWrap: "wrap",
         justifyContent: "center",
@@ -59,7 +65,7 @@ export function Karaoke({
         borderRadius: 26,
         padding: "14px 22px",
         fontFamily: FONT,
-        fontSize: 60,
+        fontSize,
         fontWeight: 800,
         lineHeight: 1.15,
         textShadow: "0 4px 14px rgba(0,0,0,0.6)",
