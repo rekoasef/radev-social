@@ -142,9 +142,9 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 - [x] T1 Docs (ADR 0029, REVISION §7, ARCHITECTURE §14, PRD, PROGRESS)
 - [x] T2 `packages/video`: schemas, controles, prompts, descripciones
 - [x] T3 `core/videos`: etapas y eventos con tests de invariantes
-- [ ] T4 `db`: tablas de video, `transitionVideo`, seed de voces — **escrito y con tests; falta aplicar la migración `0028` en Postgres local y probarla con la base real**
+- [x] T4 `db`: tablas de video, `transitionVideo`, seed de voces (migraciones `0028` y `0029`, aplicadas y probadas contra Postgres local)
 - [x] T5 Voz de ElevenLabs en una toma (`packages/ai/src/tts`) — probada con `fetch` falso y con la toma real de la Mona Lisa; falta una llamada real (≈400 créditos) cuando se arme la oficina de Locución
-- [ ] T6 Cliente de Wikimedia Commons con filtro de licencias
+- [x] T6 Cliente de Wikimedia Commons con filtro de licencias (probado con respuestas guardadas; falta una búsqueda real cuando se arme la oficina de Imágenes)
 - [ ] T7 `apps/video-worker` + oficinas 1 a 5 (hasta el guion)
 - [ ] T8 Oficinas 6 a 8 (voz, render 9:16 y 16:9, publicación)
 - [ ] T9 Comando de punta a punta: un video completo sin pantallas

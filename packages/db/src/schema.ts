@@ -720,7 +720,8 @@ export const generationRuns = pgTable(
     // Null for a video without a brand (ADR 0029, D-B): then `videoId` says whose run it is.
     brandId: uuid("brand_id").references(() => brands.id, { onDelete: "cascade" }),
     postId: uuid("post_id").references(() => posts.id, { onDelete: "set null" }),
-    videoId: uuid("video_id").references((): AnyPgColumn => videos.id, { onDelete: "set null" }),
+    // Cascade: a video's AI runs die with it (set null would leave a brandless run without an owner).
+    videoId: uuid("video_id").references((): AnyPgColumn => videos.id, { onDelete: "cascade" }),
     task: text("task", { enum: AI_TASKS }).notNull(),
     role: text("role", { enum: ROUTE_ROLES }).notNull(),
     provider: text("provider", { enum: AI_PROVIDERS }).notNull(),

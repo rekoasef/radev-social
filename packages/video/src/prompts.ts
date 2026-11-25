@@ -72,3 +72,18 @@ Para un video documental corto de historias reales (voz en off, imágenes de arc
 - **hashtags**: 3 a 5, sin espacios ni tildes problemáticas (#MonaLisa #Historia).
 - **chapters**: 4 a 8 capítulos con el número de la escena donde empiezan (el primero es la escena 1; separados por unas 3 o más escenas) y un título corto y claro (no spoilers).
 - **thumbnail**: elegí **entre las imágenes usadas** la más fuerte para una miniatura: un rostro o un objeto claro, gran contraste, que se entienda de lejos. \`cx\`, \`cy\` es el centro del encuadre sobre la imagen (0 a 1) y \`vw\` el ancho visible (0,4 a 0,8 suele andar: tiene que llenar el cuadro con lo principal, nada de zonas vacías). El texto: **2 o 3 líneas de hasta 14 caracteres, 6 palabras como máximo en total**, que despierten curiosidad sin mentir (por ejemplo «EL ROBO / DEL SIGLO»); \`accent\` es la palabra más importante, copiada igual que en las líneas; \`kicker\` una etiqueta corta (hasta 18 caracteres, p. ej. «CASO REAL» o el año).`;
+
+/** Oficina de Imágenes, paso 1: las consultas de búsqueda para Commons. */
+export const IMAGE_QUERY_RULES = `# Buscador de imágenes de archivo
+
+Para un video documental sobre el tema de \`dossier.json\`, proponé de 24 a 30 consultas de búsqueda para Wikimedia Commons, **de 1 a 3 palabras cada una** (Commons exige que estén todas: con 4 o más casi nunca encuentra nada) que encuentren imágenes reales y libres: fotos de época, retratos de los protagonistas, el lugar, el objeto, portadas de diarios y documentos del momento, mapas. **Las primeras 8 consultas son las del hecho central** (el robo, el accidente, el caso en sí, en inglés y en el idioma local: «Mona Lisa theft», «Mona Lisa stolen», «Joconde vol 1911», «Peruggia») y después los protagonistas, lugares, documentos y prensa. Ejemplos buenos: «Vincenzo Peruggia», «Mona Lisa 1911», «Salon Carré», «Joconde volée», «Uffizi 1913». Mezclá idiomas según dónde pasó (inglés, francés, italiano, español…), usá nombres propios y años, y variá: personas, lugares, objetos, documentos y diarios de la época, mapas. **Solo cosas que el dossier menciona**: nada de temas laterales (ciudades de paso, ejércitos, etc.) salvo que sean parte de la historia.`;
+
+/** Oficina de Imágenes, paso 2: la curaduría por texto sobre ~240 resultados. */
+export const IMAGE_CURATOR_RULES = `# Curador de imágenes
+
+Del archivo \`resultados.json\` (imágenes libres de Wikimedia Commons: n, título, descripción, fecha) elegí **de 32 a 40** para un video documental sobre el tema de \`dossier.json\`. Criterios:
+- Priorizá lo que **muestra la historia**: fotos y documentos de época del hecho, retratos de los protagonistas, el lugar tal como era, portadas de diarios y carteles del momento, objetos clave, mapas.
+- Hace falta **variedad**: personas, lugares, documentos, prensa, objetos. Si hay muchas versiones de la misma imagen (restauraciones, recortes, colores), elegí **una sola**.
+- **No descartes nunca una imagen que muestra el hecho o a sus protagonistas** (robo, ladrón, detención, policía, el lugar del hecho, el cuadro vacío, la prensa del momento): es mejor tener de más. Los títulos con palabras como robo, stolen, theft, vol, Joconde, el nombre del ladrón o del investigador son oro.
+- Descartá lo que no tiene que ver con la historia: otros temas u obras, poemas o portadas de libros, lápidas y mojones, monumentos, fotos actuales sin relación, cartas o trámites sin imagen que mostrar.
+- Una imagen actual del lugar sirve solo si no hay una de época.`;

@@ -37,6 +37,14 @@ import type { Executor } from "./brand-assets";
 // transaction. Documents must be validated with their Zod schema (packages/video) before they get
 // here (rule 4): this package stores them as given.
 
+/**
+ * Runs `work` in a transaction. A `for update` lock lasts only as long as its transaction: called
+ * with the pool (not a transaction) it would be released at once and two jobs would race. Given a
+ * transaction, this is a nested one (a savepoint) and the caller's lock holds.
+ */
+const atomic = <T>(db: Executor, work: (tx: Executor) => Promise<T>): Promise<T> =>
+  db.transaction(work);
+
 /** The pause and failure of a row, as the `VideoCondition` of packages/core. */
 export function rowCondition(
   row: Pick<Video, "pausedAt" | "pauseReason" | "resumeAt" | "failure">,
@@ -111,6 +119,15 @@ export async function transitionVideo(
   event: VideoEvent,
   options: TransitionVideoOptions = {},
 ): Promise<VideoTransitionOutcome> {
+  return atomic(db, (tx) => applyTransition(tx, videoId, event, options));
+}
+
+async function applyTransition(
+  db: Executor,
+  videoId: string,
+  event: VideoEvent,
+  options: TransitionVideoOptions,
+): Promise<VideoTransitionOutcome> {
   const now = options.now ?? new Date();
   const [video] = await db.select().from(videos).where(eq(videos.id, videoId)).for("update");
   if (!video) return { ok: false, reason: "Ese video no existe." };
@@ -150,20 +167,22 @@ async function updateCondition(
   videoId: string,
   change: (condition: VideoCondition) => VideoCondition,
 ): Promise<Video | null> {
-  const [video] = await db.select().from(videos).where(eq(videos.id, videoId)).for("update");
-  if (!video) return null;
-  const next = change(rowCondition(video));
-  const [updated] = await db
-    .update(videos)
-    .set({
-      pausedAt: next.pausedAt,
-      pauseReason: next.pauseReason,
-      resumeAt: next.resumeAt,
-      failure: next.failure ? failureRecord(next.failure) : null,
-    })
-    .where(eq(videos.id, videoId))
-    .returning();
-  return updated ?? null;
+  return atomic(db, async (tx) => {
+    const [video] = await tx.select().from(videos).where(eq(videos.id, videoId)).for("update");
+    if (!video) return null;
+    const next = change(rowCondition(video));
+    const [updated] = await tx
+      .update(videos)
+      .set({
+        pausedAt: next.pausedAt,
+        pauseReason: next.pauseReason,
+        resumeAt: next.resumeAt,
+        failure: next.failure ? failureRecord(next.failure) : null,
+      })
+      .where(eq(videos.id, videoId))
+      .returning();
+    return updated ?? null;
+  });
 }
 
 export const pauseVideoById = (
@@ -209,34 +228,36 @@ export type AddVideoDocumentInput = {
  * Saves a new version of a document (the highest is the current one). Locks the video row so two
  * jobs never take the same number; never overwrites an older version.
  */
-export async function addVideoDocument(
+export function addVideoDocument(
   db: Executor,
   input: AddVideoDocumentInput,
 ): Promise<VideoDocument> {
-  const [locked] = await db
-    .select({ id: videos.id })
-    .from(videos)
-    .where(eq(videos.id, input.videoId))
-    .for("update");
-  if (!locked) throw new Error("Ese video no existe.");
-  const [last] = await db
-    .select({ version: sql<number>`max(${videoDocuments.version})` })
-    .from(videoDocuments)
-    .where(and(eq(videoDocuments.videoId, input.videoId), eq(videoDocuments.kind, input.kind)));
-  const [doc] = await db
-    .insert(videoDocuments)
-    .values({
-      videoId: input.videoId,
-      kind: input.kind,
-      version: Number(last?.version ?? 0) + 1,
-      data: input.data,
-      schemaVersion: input.schemaVersion ?? 1,
-      origin: input.origin,
-      generationRunId: input.generationRunId ?? null,
-    })
-    .returning();
-  if (!doc) throw new Error("No se pudo guardar el documento.");
-  return doc;
+  return atomic(db, async (tx) => {
+    const [locked] = await tx
+      .select({ id: videos.id })
+      .from(videos)
+      .where(eq(videos.id, input.videoId))
+      .for("update");
+    if (!locked) throw new Error("Ese video no existe.");
+    const [last] = await tx
+      .select({ version: sql<number>`max(${videoDocuments.version})` })
+      .from(videoDocuments)
+      .where(and(eq(videoDocuments.videoId, input.videoId), eq(videoDocuments.kind, input.kind)));
+    const [doc] = await tx
+      .insert(videoDocuments)
+      .values({
+        videoId: input.videoId,
+        kind: input.kind,
+        version: Number(last?.version ?? 0) + 1,
+        data: input.data,
+        schemaVersion: input.schemaVersion ?? 1,
+        origin: input.origin,
+        generationRunId: input.generationRunId ?? null,
+      })
+      .returning();
+    if (!doc) throw new Error("No se pudo guardar el documento.");
+    return doc;
+  });
 }
 
 /** The current (highest) version of a document, or null if its office has not left one. */

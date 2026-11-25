@@ -51,3 +51,34 @@ export const shortCredit = (c: ImageCandidate, caption?: string) => {
 /** La línea de crédito completa de la descripción y de `creditos.txt`. */
 export const creditLine = (c: ImageCandidate) =>
   `- ${c.title} — ${cleanAuthor(c.author) || "autor desconocido"} — ${c.license} — ${c.page}`;
+
+// ───────────── oficina de Imágenes: lo que pide y devuelve la IA ─────────────
+import { z } from "zod";
+import type { CommonsHit } from "./commons";
+
+/** Las consultas de búsqueda (de 1 a 3 palabras; ver IMAGE_QUERY_RULES). */
+export const imageQueriesSchema = z.object({
+  queries: z.array(z.string().min(3).max(60)).min(10).max(34),
+});
+
+/** Los números (`n`) de los resultados que elige la curaduría. */
+export const imageCurationSchema = z.object({
+  keep: z.array(z.number().int().min(0)).min(24).max(46),
+});
+
+/** Lo que la IA curadora ve de cada resultado: barato, solo texto. */
+export const curationView = (pool: readonly CommonsHit[]) =>
+  pool.map((h, n) => ({
+    n,
+    title: h.title,
+    description: h.description.slice(0, 100),
+    date: h.date,
+  }));
+
+/** Los resultados elegidos, sin repetir y sin números que no existen, en el orden de la IA. */
+export function curatedHits(pool: readonly CommonsHit[], keep: readonly number[]): CommonsHit[] {
+  return [...new Set(keep)].flatMap((n) => {
+    const hit = pool[n];
+    return hit ? [hit] : [];
+  });
+}
