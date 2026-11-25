@@ -699,6 +699,14 @@ Plan aprobado el 2026-09-24. 👁 = termina con capturas para que el operador ap
 
 Decisiones aprobadas con el plan: (1) sin estado `draft`: el editor guarda el avance en el navegador y el post nace al guardar un carrusel válido; (2) publicación manual sin calendario: `approved → publishing → published` con "Marcar como publicado" (el calendario es de la Fase 4); (3) `chart` fuera del editor hasta que haya datos (Fases 3 y 5); `bigNumber` sí, la cifra la carga el operador con fuente obligatoria; (4) rechazar con feedback queda para la Fase 3 (sirve para regenerar); (5) la web encola jobs con pg-boss; nombres y payloads de jobs en `packages/core`; (6) imagen del worker con Chromium (~400 MB más); (7) ZIP con `fflate`.
 
+### Spike de video: formato documental (imágenes reales + motion graphics) — 2026-11-25
+
+El video de ovnis con monigotes y kit de piezas no gustó ("muy malos"). Se probó otro formato con la Mona Lisa y gustó: **imágenes reales de archivo (Wikimedia Commons) con zoom lento + gráficos animados + voz de Alberto**. El kit de piezas y el Estudio (ADR 0028) quedan sin usar en este formato.
+- Pipeline (`cd spikes/video-v0`): `pnpm research dossier <n> --effort low --long` → `pnpm docu search <dossier> --name <video>` (la IA propone consultas, el código busca en Commons y filtra licencias, la IA elige por texto, se bajan ~30) → `pnpm docu guion <dossier> --name <video>` (la IA MIRA las imágenes y escribe el guion; el código valida números, palabras de enganche, variedad) → `pnpm docu texts --name <video>` + `python3 tts/whole.py texts/<video>.json --tag <video>` → `pnpm docu render --name <video> --voices out/v0-12/<video>`.
+- Gráficos: fecha, cifra (cuenta), nombre, cronología, cita (`src/photo/graphics.tsx`). Créditos automáticos en pantalla y `creditos.txt` para la descripción.
+- Medido (Mona Lisa, 139 s): ~175k entrada / 27k salida de `claude -p`, ~USD 0,8 de lista (ovnis con kit: 445k / 93k, USD 2,02). ElevenLabs ~1.900 créditos. Render ~4 min.
+- Lecciones: Commons da 429 con tamaños de miniatura no estándar (usar 1280); consultas de 1–3 palabras; hizo falta una curaduría por texto antes de bajar. Pendiente: pasada de revisión de hechos contra el dossier (la IA parafraseó una cita y usó "casi dos años y medio", un dato en disputa; se corrigió a mano), confirmar que `cita` sea fiel, fuentes extra (Library of Congress, Europeana), gráficos de mapa.
+
 ## Fase 1 — tareas
 
 Plan aprobado el 2026-09-23. Terminada el 2026-09-24. 👁 = termina con capturas para que el operador apruebe el diseño.

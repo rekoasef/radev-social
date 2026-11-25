@@ -100,6 +100,9 @@ pnpm research dossier <1-5> --effort low --long   # investigación con fuentes (
 pnpm research guion <dossier.json> --effort low --long  # guion + correcciones + Dirección
 python3 tts/whole.py texts/<archivo>.json --tag <nombre>  # voz (ElevenLabs, Alberto por defecto)
 pnpm anim --guion <guion.json> --voices out/v0-12/<nombre> --name <video>  # render
+pnpm docu search <dossier.json> --name <video>   # formato documental: imágenes reales de Commons
+pnpm docu guion <dossier.json> --name <video>    # la IA mira las imágenes y escribe el guion
+pnpm docu texts|render --name <video> [--voices <carpeta>]  # texto para la voz · render
 pnpm studio draw <guion.json>      # el Estudio dibuja las piezas nuevas que pide el guion
 pnpm studio sheet [--all]          # hoja con las piezas pendientes (o todas) → out/studio
 pnpm studio approve <pieza...>     # entran al kit · reject <pieza> "<motivo>" las redibuja

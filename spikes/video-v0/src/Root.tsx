@@ -1,6 +1,7 @@
 import { exampleSlides, FORMAT } from "@radev/slides";
 import { Composition } from "remotion";
 import { AnimVideo, type AnimVideoProps, animFrames } from "./anim/AnimVideo";
+import { PhotoVideo, type PhotoVideoProps, photoFrames } from "./photo/PhotoVideo";
 import { StudioSheet, type StudioSheetProps, sheetHeight } from "./anim/studio-draw";
 import { Captions, type CaptionsProps, Scene, type SceneProps } from "./Captions";
 import { clipSlides } from "./looks/clip-slides";
@@ -136,6 +137,17 @@ export const Root = () => (
       durationInFrames={60}
       defaultProps={{ items: [] } satisfies StudioSheetProps}
       calculateMetadata={({ props }) => ({ height: sheetHeight(props.items.length) })}
+    />
+    {/* Prototipo "imágenes reales": fotos de archivo con zoom lento + voz + subtítulos. */}
+    <Composition
+      id="photos"
+      component={PhotoVideo}
+      width={WIDTH}
+      height={HEIGHT}
+      fps={FPS}
+      durationInFrames={30 * FPS}
+      defaultProps={{ voices: [], shots: [] } satisfies PhotoVideoProps}
+      calculateMetadata={({ props }) => ({ durationInFrames: Math.max(1, photoFrames(props)) })}
     />
   </>
 );

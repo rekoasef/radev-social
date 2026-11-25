@@ -6,7 +6,7 @@
   "description": "Pruebas descartables de V0 (RAdev Studio). No es código de producción.",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "studio": "remotion studio src/index.ts",
+    "studio": "tsx scripts/studio.ts",
     "bench": "tsx scripts/bench.ts",
     "captions": "tsx scripts/captions.ts",
     "scenes": "tsx scripts/scenes.ts",
@@ -16,7 +16,7 @@
     "guion:check": "tsx scripts/guion-check.ts",
     "research": "tsx scripts/research.ts",
     "patch:check": "tsx scripts/patch-check.ts",
-    "studio": "tsx scripts/studio.ts"
+    "docu": "tsx scripts/docu.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter-tight": "5.3.0",
