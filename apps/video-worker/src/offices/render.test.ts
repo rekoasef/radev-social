@@ -71,7 +71,7 @@ describe("render office", () => {
     });
     expect(d.jobs[0]?.props.shots).toHaveLength(script().scenes.length);
     expect(d.jobs[0]?.props.shots[0]).toMatchObject({
-      image: expect.stringMatching(/^images\/i\d+\./),
+      image: candidatesFixture.find((c) => c.id === script().scenes[0]?.image)?.file,
       voice: 0,
     });
     if (r.kind !== "done") throw new Error("debía terminar");
