@@ -16,6 +16,8 @@ export type OfficeContext = {
   document(kind: VideoDocumentKind): Promise<unknown | null>;
   /** The voice of the video (its own, or the default narrator); null when there is none. */
   voice(): Promise<{ externalId: string; name: string; speed: number | null } | null>;
+  /** Absolute path of the video's media folder (Remotion reads the images and audio from it). */
+  mediaDir: string;
   /** The video's media folder (`media/videos/<id>/`): paths are relative to it. */
   files: {
     write(path: string, bytes: Uint8Array): Promise<void>;

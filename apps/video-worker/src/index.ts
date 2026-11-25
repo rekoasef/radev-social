@@ -23,6 +23,7 @@ import {
   getVoiceById,
   listStuckVideos,
   readMediaFile,
+  resolveMediaPath,
   type Video,
   writeMediaFile,
 } from "@radev/db";
@@ -34,11 +35,13 @@ import { decodeToPcm, fetchPage, shrinkImage, sizeOf } from "./io";
 import { createLogger } from "./logger";
 import type { Office, OfficeContext } from "./office";
 import { createImagesOffice } from "./offices/images";
+import { createRenderOffice } from "./offices/render";
 import { research } from "./offices/research";
 import { review } from "./offices/review";
 import { script } from "./offices/script";
 import { createSourcesOffice } from "./offices/sources";
 import { createVoiceOffice } from "./offices/voice";
+import { probeVideo, remotionRenderer } from "./remotion";
 import { runOffice } from "./runner";
 import { dbStore } from "./store";
 
@@ -86,6 +89,7 @@ async function main() {
     video,
     log: log.child({ videoId: video.id, stage: video.stage }),
     ai,
+    mediaDir: resolveMediaPath(`videos/${video.id}`) ?? `videos/${video.id}`,
     voice: async () => {
       const voice =
         (video.voiceId ? await getVoiceById(db, video.voiceId) : null) ??
@@ -107,6 +111,7 @@ async function main() {
     finding_images: createImagesOffice({ commons, shrink: shrinkImage, sizeOf }),
     scripting: script,
     checking_facts: review,
+    rendering: createRenderOffice({ renderer: remotionRenderer, probe: probeVideo }),
     voicing: createVoiceOffice({ tts: createElevenLabsProvider(), decode: decodeToPcm }),
   };
 

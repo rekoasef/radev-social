@@ -71,6 +71,7 @@ function setup(
     offices: opts.office ? { researching: opts.office } : {},
     makeContext: (v) => ({
       voice: async () => null,
+      mediaDir: "/media/videos/v1",
       video: v,
       log: quiet,
       ai: { run: vi.fn() },

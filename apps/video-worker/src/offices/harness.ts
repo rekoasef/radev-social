@@ -41,6 +41,7 @@ export function makeCtx(opts: {
   const files = new Map(Object.entries(opts.files ?? {}));
   const ctx: OfficeContext = {
     video: opts.video ?? video(),
+    mediaDir: "/media/videos/v1",
     log: createLogger({}, "error"),
     ai: {
       run: vi.fn(async (_video: unknown, request: Asked) => {

@@ -1,6 +1,6 @@
 // Drizzle schema, migrations, queries and seed.
 export { createDb, type Database } from "./client";
-export { readMediaFile, removeMediaFile, writeMediaFile } from "./media";
+export { readMediaFile, removeMediaFile, resolveMediaPath, writeMediaFile } from "./media";
 export {
   type BrandAiUsage,
   checkBrandAiQuota,

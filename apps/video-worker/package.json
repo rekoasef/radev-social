@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "RAdev Studio: un job de pg-boss por oficina del video (ADR 0029, docs/ARCHITECTURE.md §14.1). Corre en la notebook.",
+  "description": "RAdev Studio: un job de pg-boss por oficina del video (ADR 0029, docs/ARCHITECTURE.md \u00a714.1). Corre en la notebook.",
   "scripts": {
     "dev": "node ../../scripts/with-root-env.mjs tsx watch src/index.ts",
     "start": "node ../../scripts/with-root-env.mjs tsx src/index.ts",
@@ -14,12 +14,18 @@
     "@radev/core": "workspace:*",
     "@radev/db": "workspace:*",
     "@radev/video": "workspace:*",
+    "@remotion/bundler": "4.0.545",
+    "@remotion/renderer": "4.0.545",
     "image-size": "2.0.2",
     "pg-boss": "^12.33.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.545",
     "tsx": "4.23.15",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "24.13.6"
+    "@types/node": "24.13.6",
+    "@types/react": "19.2.18"
   }
 }

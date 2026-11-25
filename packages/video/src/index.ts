@@ -3,6 +3,7 @@ export * from "./dossier";
 export * from "./images";
 export * from "./prompts";
 export * from "./publication";
+export * from "./render-doc";
 export * from "./review";
 export * from "./script";
 export * from "./sources";

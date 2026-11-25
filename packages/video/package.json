@@ -3,14 +3,23 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Video documental de RAdev Studio: documentos de cada oficina (Zod), controles, prompts y armado de la publicación. Sin I/O.",
+  "description": "Video documental de RAdev Studio: documentos de cada oficina (Zod), controles, prompts y armado de la publicaci\u00f3n. Sin I/O.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./render": "./src/render/index.ts",
+    "./render/entry": "./src/render/entry.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@fontsource-variable/inter-tight": "5.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.545"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18"
   }
 }
