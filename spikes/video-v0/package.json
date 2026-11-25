@@ -14,7 +14,8 @@
     "anim": "tsx scripts/anim.ts",
     "guion": "tsx scripts/guion.ts",
     "guion:check": "tsx scripts/guion-check.ts",
-    "research": "tsx scripts/research.ts"
+    "research": "tsx scripts/research.ts",
+    "patch:check": "tsx scripts/patch-check.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter-tight": "5.3.0",

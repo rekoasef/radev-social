@@ -26,6 +26,7 @@ import {
 } from "@radev/ai";
 import { z } from "zod";
 import { guion as ejemplo } from "../src/anim/guion";
+import { applyPatch, patchSchema } from "../src/anim/patch";
 import { normalizeGuion } from "../src/anim/quality";
 import { checkGuion, type GuionDraft, guionLargoSchema, guionSchema } from "../src/anim/schema";
 import { TOPICS } from "./topics";
@@ -480,7 +481,7 @@ async function guionFromDossier(file: string) {
   const files = {
     "CLAUDE.md": system,
     "ejemplo.json": example,
-    "dossier.json": JSON.stringify(saved.dossier, null, 1),
+    "dossier.json": JSON.stringify(saved.dossier),
     "task.json": JSON.stringify(
       { tema: saved.topic, voz: "Alberto", duracion: long ? "90–120 s" : "35–45 s" },
       null,
@@ -542,24 +543,39 @@ async function guionFromDossier(file: string) {
     save(r, path.join(out, `${n}.json`), { source: file, topic: saved.topic, guion: d });
   };
   if (!from) finish(run, data, name);
-  // Una corrección: el guion anterior y la lista de problemas (del código o de Dirección).
+  // Una corrección por parches: la IA devuelve solo las escenas que cambian (~2–4k tokens de
+  // salida en vez de ~19k) y el código las pega en el guion anterior. El resultado pasa por los
+  // mismos controles que un guion entero.
   const repair = async (issues: string[], label: string, header: string) => {
     if (!data) return;
-    ({ run, data } = await ask(
+    const base = data;
+    const merged: { guion: GuionDraft | null } = { guion: null };
+    const patchCheck = (patch: z.infer<typeof patchSchema>) => {
+      const applied = applyPatch(base, patch);
+      if (!applied.ok) return applied.errors;
+      merged.guion = applied.guion;
+      return check(applied.guion);
+    };
+    const res = await ask(
       `${name}-${label}`,
       "guion",
       {
         prompt:
           `${prompt}\n\nEl intento anterior (\`anterior.json\`) ${header} Corregilo ` +
-          "cambiando lo mínimo y devolvé el guion completo. Antes de devolverlo, revisá TODAS " +
-          "las reglas de variedad juntas (ningún lugar en más de 3 escenas, nunca el mismo lugar " +
-          "con el mismo encuadre en dos escenas seguidas): al mover una escena no rompas otra.\n" +
+          "devolviendo SOLO las escenas que cambian, completas (campo `n` = su posición en `scenes` " +
+          "de anterior.json, desde 1). Si cambiás un dato de la narración, devolvé también `facts` " +
+          "completo. Antes de devolverlo, revisá TODAS las reglas de variedad juntas (ningún lugar " +
+          "en más de 3 escenas, nunca el mismo lugar con el mismo encuadre en dos escenas seguidas): " +
+          "al mover una escena no rompas otra.\n" +
           issues.map((e) => `- ${e}`).join("\n"),
-        files: { ...files, "anterior.json": JSON.stringify(data, null, 1) },
+        files: { ...files, "anterior.json": JSON.stringify(base) },
         ...settings,
+        schema: patchSchema,
       },
-      check,
-    ));
+      patchCheck,
+    );
+    run = res.run;
+    data = res.data ? (merged.guion ?? base) : null;
     finish(run, data, `${name}-${label}`);
   };
   // Hasta dos correcciones (como en V0-8) con los errores del código.
