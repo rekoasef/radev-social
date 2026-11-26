@@ -82,7 +82,7 @@ export function Karaoke({
               padding: "0 10px",
             }}
           >
-            {w.word}
+            {w.word.replace(/\.{3}/g, "…")}
           </span>
         );
       })}

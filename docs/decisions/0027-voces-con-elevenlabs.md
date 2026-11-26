@@ -28,3 +28,5 @@
 - Sin créditos, el worker tiene que avisar (Telegram) y ofrecer Kokoro, en vez de fallar en silencio.
 - Las voces de la biblioteca son de terceros: si su autor la retira de la biblioteca, puede dejar de estar disponible. El catálogo tiene que tolerar una voz que ya no existe (marcarla y pedir otra).
 - Lo generado con el plan gratis (antes del 2026-11-23) no se publica.
+
+**Cambio de modelo (2026-11-26).** Después del primer video desde el panel, el operador comparó de oído cuatro tomas del mismo texto (`docs/VIDEO-CALIDAD.md`, etapa 6) y eligió **`eleven_v3`** con estabilidad 0,5 («natural»; v3 solo acepta 0, 0,5 o 1, así que se manda siempre, aunque la voz tenga guardado otro valor). Cuesta lo mismo por carácter, trae los tiempos de cada letra que necesitan los subtítulos y lee el mismo texto más rápido (17,7 s contra 20,8 s). La versión con «...» para marcar pausas le sonó lenta: el guion no las agrega.

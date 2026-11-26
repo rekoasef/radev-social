@@ -52,14 +52,33 @@ describe("createElevenLabsProvider", () => {
       url: "https://api.elevenlabs.io/v1/text-to-speech/v1/with-timestamps",
       method: "POST",
       headers: { "xi-api-key": "k" },
-      body: { text, model_id: "eleven_multilingual_v2" },
+      body: { text, model_id: "eleven_v3", voice_settings: { stability: 0.5 } },
     });
-    expect(calls[0]?.body).not.toHaveProperty("voice_settings");
     expect(r).toMatchObject({ ok: true, characters: text.length, mime: "audio/mpeg" });
     if (r.ok) {
       expect(r.audio.toString()).toBe("MP3");
       expect(r.words.map((w) => w.word)).toEqual(["Hola", "mundo.", "¿Cómo", "estás?"]);
     }
+  });
+
+  it("with multilingual_v2, sends no settings: the voice's saved ones apply", async () => {
+    const { provider, calls } = make(ok());
+    await provider.synthesize({
+      texts: ["Hola mundo.", "¿Cómo estás?"],
+      voiceId: "v1",
+      model: "eleven_multilingual_v2",
+    });
+    expect(calls[0]?.body).not.toHaveProperty("voice_settings");
+  });
+
+  it("with v3 and a speed, keeps the saved settings but the stability v3 accepts", async () => {
+    const stored = { stability: 0.3, similarity_boost: 0.85, style: 0.3 };
+    const { provider, calls } = make(new Response(JSON.stringify(stored)), ok());
+    await provider.synthesize({ texts: [text], voiceId: "v1", speed: 1.1 });
+    expect(calls[1]?.body).toMatchObject({
+      model_id: "eleven_v3",
+      voice_settings: { stability: 0.5, similarity_boost: 0.85, speed: 1.1 },
+    });
   });
 
   it("with a speed, reads the saved settings first and sends them along (ADR 0027)", async () => {

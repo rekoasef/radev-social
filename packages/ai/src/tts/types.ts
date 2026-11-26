@@ -52,7 +52,15 @@ export interface TtsProvider {
   previewUrl?(voiceId: string): Promise<string | null>;
 }
 
-export const DEFAULT_TTS_MODEL = "eleven_multilingual_v2";
+/** Elegido de oído por el operador el 2026-11-26 (ADR 0027, nota): más natural que multilingual_v2. */
+export const DEFAULT_TTS_MODEL = "eleven_v3";
+
+/**
+ * `eleven_v3` solo acepta estabilidad 0 (creativa), 0,5 (natural) o 1 (robusta); los ajustes
+ * guardados de una voz (0,3 en Alberto) no le sirven. La toma elegida fue con 0,5.
+ */
+export const V3_STABILITY = 0.5;
+export const isV3Model = (model: string) => model.startsWith("eleven_v3");
 
 /** ElevenLabs only accepts a speed between these. */
 export const TTS_SPEED_MIN = 0.7;

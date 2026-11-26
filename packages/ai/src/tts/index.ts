@@ -7,6 +7,7 @@ export {
 export { SAMPLE_RATE, type SceneAudio, splitScenes, VIDEO_FPS } from "./split";
 export {
   DEFAULT_TTS_MODEL,
+  isV3Model,
   TTS_SPEED_MAX,
   TTS_SPEED_MIN,
   type TtsError,
@@ -15,6 +16,7 @@ export {
   type TtsRequest,
   type TtsResult,
   type TtsWord,
+  V3_STABILITY,
 } from "./types";
 export { wavFromPcm } from "./wav";
 export { type CharAlignment, countWords, wordsFromChars } from "./words";

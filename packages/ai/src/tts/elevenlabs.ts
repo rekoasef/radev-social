@@ -2,6 +2,7 @@ import { providerError, rateLimited } from "../errors";
 import {
   alignmentError,
   DEFAULT_TTS_MODEL,
+  isV3Model,
   noCredits,
   TTS_SPEED_MAX,
   TTS_SPEED_MIN,
@@ -10,6 +11,7 @@ import {
   type TtsQuota,
   type TtsRequest,
   type TtsResult,
+  V3_STABILITY,
 } from "./types";
 import { type CharAlignment, countWords, wordsFromChars } from "./words";
 
@@ -169,6 +171,13 @@ export function createElevenLabsProvider(options: ElevenLabsOptions = {}): TtsPr
             error: providerError("ElevenLabs devolvió ajustes ilegibles.", true),
           };
         }
+      }
+
+      if (isV3Model(model)) {
+        body.voice_settings = {
+          ...((body.voice_settings as object | undefined) ?? {}),
+          stability: V3_STABILITY,
+        };
       }
 
       const made = await call(
