@@ -9,7 +9,7 @@ colors:
   bezel-strong: "#343a47"
   ink: "#e8eaed"
   ink-dim: "#a3a9b4"
-  ink-faint: "#7d8491"
+  ink-faint: "#818895"
   tally-red: "#f2555a"
   tally-amber: "#f2b53a"
   tally-green: "#3dd68c"
@@ -144,7 +144,7 @@ Una paleta de grafito casi monocroma, con tres lámparas de estado como único c
 - **Bisel fuerte** (#343a47): bordes de controles (botones, selector, avatar).
 - **Tinta** (#e8eaed): texto principal y la sección actual de la navegación.
 - **Tinta tenue** (#a3a9b4): texto secundario y navegación en reposo.
-- **Tinta apagada** (#7d8491): etiquetas, metadatos y secciones fuera del aire.
+- **Tinta apagada** (#818895): etiquetas, metadatos y secciones fuera del aire.
 
 ### Tally (estado)
 - **Rojo al aire** (#f2555a): publicado o en emisión; errores destructivos. Lámpara circular con brillo.

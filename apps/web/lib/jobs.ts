@@ -11,6 +11,7 @@ import {
   JOBS,
   METRICS_SYNC_KEY,
   type NotifySendJob,
+  OFFICE_JOB,
   type PostArt,
   type PostEffect,
   type PostPublishJob,
@@ -19,6 +20,11 @@ import {
   slideRewriteKey,
   type TiktokPublishJob,
   tiktokPublishKey,
+  VIDEO_QUEUE_OPTIONS,
+  type VideoOfficeJob,
+  videoOfficeKey,
+  WORKING_STAGES,
+  type WorkingStage,
 } from "@radev/core";
 import { versionTakesArt } from "@radev/slides";
 import { PgBoss } from "pg-boss";
@@ -52,6 +58,10 @@ function boss(): Promise<PgBoss> {
     await client.createQueue(JOBS.tiktokPublish, QUEUE_OPTIONS[JOBS.tiktokPublish]);
     await client.createQueue(JOBS.notifySend, QUEUE_OPTIONS[JOBS.notifySend]);
     await client.createQueue(JOBS.metricsSync, QUEUE_OPTIONS[JOBS.metricsSync]);
+    for (const stage of WORKING_STAGES) {
+      const name = OFFICE_JOB[stage];
+      await client.createQueue(name, VIDEO_QUEUE_OPTIONS[name]);
+    }
     return client;
   })();
   return globalForBoss.radevBoss;
@@ -182,4 +192,10 @@ export async function queueNotification(notificationId: string): Promise<void> {
  */
 export async function retryJob(name: string, id: string): Promise<void> {
   await (await boss()).retry(name, id);
+}
+
+/** Sends a video to the office of its stage (the video-worker runs it). */
+export async function queueVideoOffice(videoId: string, stage: WorkingStage): Promise<void> {
+  const data: VideoOfficeJob = { videoId, stage, limitAttempt: 0 };
+  await (await boss()).send(OFFICE_JOB[stage], data, { singletonKey: videoOfficeKey(data) });
 }

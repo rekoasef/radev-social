@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   ChartColumn,
+  Clapperboard,
   ClipboardCheck,
   House,
   Layers,
@@ -30,6 +31,7 @@ export const panelSections: readonly PanelSection[] = [
   { label: "Ideas", short: "Ideas", icon: Lightbulb, href: "/ideas" },
   { label: "Calendario", short: "Agenda", icon: CalendarDays, href: "/calendar" },
   { label: "Métricas", short: "Métricas", icon: ChartColumn, href: "/metrics" },
+  { label: "Videos", short: "Videos", icon: Clapperboard, href: "/videos" },
   { label: "Marcas", short: "Marcas", icon: Palette, href: "/brands" },
   { label: "Ajustes", short: "Ajustes", icon: Settings, href: "/settings" },
 ];

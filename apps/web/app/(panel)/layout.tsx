@@ -1,4 +1,4 @@
-import { countPostsInReview } from "@radev/db";
+import { countPostsInReview, countVideosWaiting } from "@radev/db";
 import Image from "next/image";
 import Link from "next/link";
 import { ConsoleClock } from "@/components/console/console-clock";
@@ -13,12 +13,13 @@ import { requireOperator } from "@/lib/session";
 
 // One gate for every panel page: pages below can assume a valid operator session.
 export default async function PanelLayout({ children }: LayoutProps<"/">) {
-  const [{ user }, { brands, activeBrand }, inReview] = await Promise.all([
+  const [{ user }, { brands, activeBrand }, inReview, videosWaiting] = await Promise.all([
     requireOperator(),
     getBrandContext(),
     countPostsInReview(db),
+    countVideosWaiting(db),
   ]);
-  const badges = { "/review": inReview };
+  const badges = { "/review": inReview, "/videos": videosWaiting };
   const switchable = brands
     .filter((brand) => brand.archivedAt === null)
     .map(({ slug, name, codePrefix }) => ({ slug, name, codePrefix }));

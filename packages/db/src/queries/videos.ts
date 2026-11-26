@@ -8,6 +8,7 @@ import {
   nextStage,
   type PauseReason,
   pauseVideo,
+  REVIEW_STAGES,
   resumeVideo,
   retryVideo,
   type UsageKind,
@@ -20,7 +21,7 @@ import {
   WORKING_STAGES,
   type WorkingStage,
 } from "@radev/core";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import {
   type GenerationRun,
   generationRuns,
@@ -440,4 +441,70 @@ export function listVideoRuns(db: Executor, videoId: string): Promise<Generation
     .from(generationRuns)
     .where(eq(generationRuns.videoId, videoId))
     .orderBy(asc(generationRuns.createdAt));
+}
+
+// ───────────── the studio ─────────────
+
+/** Videos waiting at one of the operator's two desks (the badge of the navigation). */
+export async function countVideosWaiting(db: Executor): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(videos)
+    .where(
+      and(
+        inArray(videos.stage, [...REVIEW_STAGES]),
+        isNull(videos.pausedAt),
+        isNull(videos.failure),
+      ),
+    );
+  return row?.n ?? 0;
+}
+
+export type StudioUsage = {
+  /** Claude's tokens for videos since `dayStart`. */
+  inputTokens: number;
+  outputTokens: number;
+  renderSeconds: number;
+  /** Characters sent to the voice since `monthStart`. */
+  voiceCharacters: number;
+  /** ElevenLabs' own count, as of the last take that could read it. */
+  quota: { used: number; limit: number } | null;
+};
+
+export async function studioUsage(
+  db: Executor,
+  dayStart: Date,
+  monthStart: Date,
+): Promise<StudioUsage> {
+  const [tokens] = await db
+    .select({
+      input: sql<number>`coalesce(sum(${generationRuns.inputTokens}), 0)::int`,
+      output: sql<number>`coalesce(sum(${generationRuns.outputTokens}), 0)::int`,
+    })
+    .from(generationRuns)
+    .where(and(isNotNull(generationRuns.videoId), gte(generationRuns.createdAt, dayStart)));
+  const sumOf = async (kind: UsageKind, since: Date) => {
+    const [row] = await db
+      .select({ total: sql<number>`coalesce(sum(${usageEvents.quantity}), 0)::int` })
+      .from(usageEvents)
+      .where(and(eq(usageEvents.kind, kind), gte(usageEvents.createdAt, since)));
+    return row?.total ?? 0;
+  };
+  const [last] = await db
+    .select({ data: usageEvents.data })
+    .from(usageEvents)
+    .where(and(eq(usageEvents.kind, "tts"), sql`${usageEvents.data} ? 'quota'`))
+    .orderBy(desc(usageEvents.createdAt))
+    .limit(1);
+  const quota = last?.data?.quota as { used?: unknown; limit?: unknown } | undefined;
+  return {
+    inputTokens: tokens?.input ?? 0,
+    outputTokens: tokens?.output ?? 0,
+    renderSeconds: await sumOf("render", dayStart),
+    voiceCharacters: await sumOf("tts", monthStart),
+    quota:
+      typeof quota?.used === "number" && typeof quota.limit === "number"
+        ? { used: quota.used, limit: quota.limit }
+        : null,
+  };
 }

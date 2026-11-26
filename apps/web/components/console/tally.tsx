@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
 
-export type TallyState = "live" | "cued" | "ready" | "timed" | "standby" | "off";
+export type TallyState = "live" | "cued" | "ready" | "timed" | "standby" | "off" | "fail";
 
 const tallies: Record<
   TallyState,
-  { tone: string; shape: "dot" | "triangle" | "square" | "diamond" | "ring" | "dash" }
+  { tone: string; shape: "dot" | "triangle" | "square" | "diamond" | "ring" | "dash" | "cross" }
 > = {
   live: { tone: "text-tally-red", shape: "dot" },
   cued: { tone: "text-tally-amber", shape: "triangle" },
@@ -13,6 +13,7 @@ const tallies: Record<
   timed: { tone: "text-tally-blue", shape: "diamond" },
   standby: { tone: "text-ink-dim", shape: "ring" },
   off: { tone: "text-ink-faint", shape: "dash" },
+  fail: { tone: "text-tally-red", shape: "cross" },
 };
 
 function Lamp({ shape }: { shape: (typeof tallies)[TallyState]["shape"] }) {
@@ -26,6 +27,14 @@ function Lamp({ shape }: { shape: (typeof tallies)[TallyState]["shape"] }) {
         <circle cx="5" cy="5" r="3.4" fill="none" stroke="currentColor" strokeWidth="1.4" />
       )}
       {shape === "dash" && <rect x="1" y="4.2" width="8" height="1.6" fill="currentColor" />}
+      {shape === "cross" && (
+        <path
+          d="M1.6 1.6 8.4 8.4M8.4 1.6 1.6 8.4"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+      )}
     </svg>
   );
 }

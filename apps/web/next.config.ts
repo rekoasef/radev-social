@@ -9,7 +9,13 @@ const nextConfig: NextConfig = {
   // Trace from the monorepo root so workspace packages end up in the standalone output.
   outputFileTracingRoot: fileURLToPath(new URL("../../", import.meta.url)),
   // Workspace packages export TypeScript source; Next compiles them.
-  transpilePackages: ["@radev/core", "@radev/db", "@radev/publishers", "@radev/slides"],
+  transpilePackages: [
+    "@radev/core",
+    "@radev/db",
+    "@radev/publishers",
+    "@radev/slides",
+    "@radev/video",
+  ],
   // Loaded from node_modules at runtime rather than bundled (it talks to Postgres through pg).
   serverExternalPackages: ["pg-boss"],
   experimental: {

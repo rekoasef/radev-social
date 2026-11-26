@@ -80,6 +80,7 @@ pnpm db:generate    # generar migración Drizzle tras cambiar el schema
 pnpm db:migrate     # aplicar migraciones
 pnpm db:seed        # cargar marcas iniciales (solo agrega las que faltan)
 pnpm db:studio      # ver y editar la base
+pnpm --filter @radev/db video:examples [--clean]   # videos de ejemplo para mirar el estudio (solo base local)
 
 # IA
 pnpm --filter @radev/ai smoke [claude-code|openrouter] [modelo]

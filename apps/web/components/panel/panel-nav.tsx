@@ -76,7 +76,7 @@ export function PanelDock({ badges = {} }: { badges?: NavBadges }) {
 
   return (
     <nav aria-label="Secciones" className="dock md:hidden">
-      <ul className="grid grid-cols-8">
+      <ul className="grid grid-cols-9">
         {panelSections.map((section) => {
           const Icon = section.icon;
           const content = (

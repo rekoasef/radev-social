@@ -113,7 +113,11 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - **Los datos que la maqueta muestra y no se guardaban, se guardan ya** (hecho, primera parte de la etapa 1; migración `0030` aplicada y probada en la base local de la fábrica; detalle en ARCHITECTURE §14). La base de casa necesita `pnpm db:migrate`.
 > - Anotado: `pnpm lint` ya daba 37 errores antes de T12 (no son de estos cambios).
 >
-> **▶ Próximo paso: la UI de la etapa 1 de T12** (panel `/videos`, portando la maqueta). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **Etapa 1, la UI (hecha; falta que el operador la mire):** "Videos" en la navegación con contador; `/videos` (cartel "Te espera", gastos, planilla; se actualiza sola mientras algo se mueve), `/videos/new` (tema, marca, voz con muestra) y `/videos/<id>` (estado, Reintentar/Retomar, Descartar, descarga). El contraste del texto tenue quedó en 4,68:1. La zona horaria del estudio es la del operador (`apps/web/lib/video-time.ts`), no la de una marca.
+> - **Datos de ejemplo:** `pnpm --filter @radev/db video:examples` (y `--clean`). Solo en base local; el barrido del worker no los toca. **No apretar "Reintentar" sobre un ejemplo con el `video-worker` corriendo:** encola un trabajo real.
+> - **Ojo al probar:** `pnpm dev` levanta también el `video-worker`: un video nuevo creado desde el panel gasta Claude de verdad. Para mirar las pantallas sin eso: `pnpm --filter @radev/web dev`.
+>
+> **▶ Próximo paso: etapa 2 de T12** (aprobar guion, con edición, cambio de imagen y el job para sumar imágenes de Commons). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >
