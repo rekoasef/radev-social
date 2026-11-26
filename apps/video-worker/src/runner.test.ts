@@ -1,9 +1,9 @@
-import type { VideoFailure, VideoOfficeJob } from "@radev/core";
+import type { VideoFailure, VideoOfficeJob, VideoProgress } from "@radev/core";
 import type { Video } from "@radev/db";
 import { describe, expect, it, vi } from "vitest";
 import { createLogger } from "./logger";
 import { type Office, OfficeFailure, type OfficeResult } from "./office";
-import { MAX_LIMIT_ATTEMPTS, type RunnerDeps, runOffice } from "./runner";
+import { MAX_LIMIT_ATTEMPTS, type OfficeRun, type RunnerDeps, runOffice } from "./runner";
 
 const now = new Date("2026-11-25T12:00:00Z");
 const quiet = createLogger({}, "error");
@@ -16,6 +16,7 @@ const video = (over: Partial<Video> = {}): Video => ({
   language: "es",
   voiceId: null,
   stage: "researching",
+  progress: null,
   pausedAt: null,
   pauseReason: null,
   resumeAt: null,
@@ -42,6 +43,8 @@ function setup(
     budget: 0,
     resumed: 0,
     completed: 0,
+    progress: [] as VideoProgress[],
+    runs: [] as OfficeRun[],
   };
   let current = opts.video === undefined ? video() : opts.video;
   const deps: RunnerDeps = {
@@ -61,6 +64,12 @@ function setup(
         calls.completed++;
         return { ok: true, from: "researching", to: (opts.next ?? "checking_sources") as never };
       },
+      progress: async (_id, p) => {
+        calls.progress.push(p);
+      },
+      officeRun: async (_id, run) => {
+        calls.runs.push(run);
+      },
       fail: async (_id, f) => {
         calls.failed.push(f);
       },
@@ -74,7 +83,7 @@ function setup(
       mediaDir: "/media/videos/v1",
       video: v,
       log: quiet,
-      ai: { run: vi.fn() },
+      ai: { run: vi.fn(), reject: vi.fn() },
       document: async () => null,
       files: { write: async () => {}, read: async () => undefined },
     }),
@@ -240,5 +249,41 @@ describe("runOffice: failures", () => {
     });
     expect(await runOffice(deps, job)).toBe("failed");
     expect(calls.failed[0]).toMatchObject({ retryable: false, message: "no hay ruta de IA" });
+  });
+});
+
+describe("runOffice: what the studio sees", () => {
+  it("saves when the office started, what it reports, and its run", async () => {
+    const { deps, calls } = setup({
+      office: async (ctx) => {
+        await ctx.progress({ attempt: 2, attempts: 3 });
+        return done;
+      },
+    });
+    await runOffice(deps, job);
+    expect(calls.progress).toEqual([
+      { stage: "researching", startedAt: now.toISOString() },
+      { stage: "researching", startedAt: now.toISOString(), attempt: 2, attempts: 3 },
+    ]);
+    expect(calls.runs).toEqual([{ stage: "researching", durationMs: 0, outcome: "done" }]);
+  });
+
+  it("records a failed run too", async () => {
+    const { deps, calls } = setup({
+      office: async () => {
+        throw new Error("sin red");
+      },
+    });
+    await expect(runOffice(deps, job)).rejects.toThrow("sin red");
+    expect(calls.runs).toEqual([{ stage: "researching", durationMs: 0, outcome: "failed" }]);
+  });
+
+  it("a progress that cannot be saved does not stop the office", async () => {
+    const { deps, calls } = setup({ office: async () => done });
+    deps.store.progress = async () => {
+      throw new Error("base caída");
+    };
+    expect(await runOffice(deps, job)).toBe("completed");
+    expect(calls.completed).toBe(1);
   });
 });

@@ -5,6 +5,7 @@ import {
   listAiRoutes,
   type NewGenerationRun,
   recordGenerationRun,
+  setRunCheckProblems,
   type Video,
 } from "@radev/db";
 import type { z } from "zod";
@@ -30,10 +31,13 @@ export type AiAnswer<T> = { ok: true; data: T; runId: string } | { ok: false; er
 
 export type VideoAi = {
   run<T>(video: Pick<Video, "id" | "brandId">, request: AiRequest<T>): Promise<AiAnswer<T>>;
+  /** The answer of this run did not pass the office's checks (kept for its history). */
+  reject(runId: string, problems: string[]): Promise<void>;
 };
 
 export function createVideoAi(deps: { db: Database; router: Router; lock: AiLock }): VideoAi {
   return {
+    reject: (runId, problems) => setRunCheckProblems(deps.db, runId, problems),
     async run<T>(video: Pick<Video, "id" | "brandId">, request: AiRequest<T>) {
       return deps.lock.run(async (): Promise<AiAnswer<T>> => {
         const routes = await listAiRoutes(deps.db);

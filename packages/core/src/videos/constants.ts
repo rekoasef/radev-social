@@ -98,6 +98,9 @@ export type VoiceProvider = (typeof VOICE_PROVIDERS)[number];
 export const VOICE_USES = ["narrative", "commercial"] as const;
 export type VoiceUse = (typeof VOICE_USES)[number];
 
-/** What `usage_events` counts: voice credits, render time and downloads (cost is always 0 here). */
-export const USAGE_KINDS = ["tts", "render", "download"] as const;
+/**
+ * What `usage_events` counts: voice credits, render time, downloads and how long each run of an
+ * office took (`office`). Cost is always 0 here.
+ */
+export const USAGE_KINDS = ["tts", "render", "download", "office"] as const;
 export type UsageKind = (typeof USAGE_KINDS)[number];

@@ -11,6 +11,7 @@ export {
   TTS_SPEED_MIN,
   type TtsError,
   type TtsProvider,
+  type TtsQuota,
   type TtsRequest,
   type TtsResult,
   type TtsWord,

@@ -15,6 +15,7 @@ import {
   type VideoDocumentKind,
   type VideoEvent,
   type VideoFailure,
+  type VideoProgress,
   type VideoStage,
   WORKING_STAGES,
   type WorkingStage,
@@ -151,7 +152,7 @@ async function applyTransition(
 
   const changes: Partial<typeof videos.$inferInsert> = { rejectionNote };
   if (result.to !== video.stage) {
-    Object.assign(changes, { stage: result.to, failure: null });
+    Object.assign(changes, { stage: result.to, failure: null, progress: null });
   }
   if (event === "approveVideo") changes.approvedAt = now;
   if (event === "reopen") changes.approvedAt = null;
@@ -255,6 +256,33 @@ export const clearVideoCondition = (db: Executor, videoId: string) =>
 /** Sets the title once the script exists (the downloaded folder is a slug of it). */
 export async function setVideoTitle(db: Executor, videoId: string, title: string): Promise<void> {
   await db.update(videos).set({ title: title.trim() }).where(eq(videos.id, videoId));
+}
+
+/**
+ * What the office is doing now. Written only while the video is still at that stage, so a late
+ * write never lands on the next office. It never touches the stage.
+ */
+export async function setVideoProgress(
+  db: Executor,
+  videoId: string,
+  progress: VideoProgress,
+): Promise<void> {
+  await db
+    .update(videos)
+    .set({ progress })
+    .where(and(eq(videos.id, videoId), eq(videos.stage, progress.stage)));
+}
+
+/** Marks an AI attempt as not passing the office's checks. */
+export async function setRunCheckProblems(
+  db: Executor,
+  runId: string,
+  problems: string[],
+): Promise<void> {
+  await db
+    .update(generationRuns)
+    .set({ checkProblems: problems.slice(0, 20).map((p) => p.slice(0, 500)) })
+    .where(eq(generationRuns.id, runId));
 }
 
 // ───────────── documents ─────────────
@@ -374,6 +402,10 @@ export function listUsageEvents(db: Executor, videoId: string): Promise<UsageEve
 
 export function listVoices(db: Executor): Promise<Voice[]> {
   return db.select().from(voices).where(eq(voices.active, true)).orderBy(asc(voices.name));
+}
+
+export async function setVoicePreview(db: Executor, voiceId: string, url: string): Promise<void> {
+  await db.update(voices).set({ previewUrl: url }).where(eq(voices.id, voiceId));
 }
 
 export async function getVoiceById(db: Executor, id: string): Promise<Voice | null> {

@@ -477,6 +477,12 @@ Alcance, tareas y criterio de aceptación: `docs/RADEV-STUDIO-REVISION.md` §7. 
   <slug>/normal/video.mp4 · miniatura.png · descripcion.txt
   ```
 - **Tablas nuevas**: `videos`, `video_documents`, `voices` y `usage_events`. Además, `generation_runs.video_id`. Detalle en REVISION §7.3.
+- **Lo que el estudio muestra además de la etapa** (T12, migración `0030`). Es solo información: nada decide a partir de esto y un error al guardarlo no frena la oficina.
+  - `videos.progress`: lo que hace la oficina ahora (inicio, intento, porcentaje del render, problemas del intento anterior). Se limpia al cambiar de etapa.
+  - `generation_runs.check_problems`: por qué una respuesta bien formada no pasó los controles.
+  - `usage_events` con `kind = office`: cuánto tardó cada corrida de una oficina y cómo terminó.
+  - `usage_events.data.quota` en cada locución: los créditos de ElevenLabs que quedan a ese momento (la web no tiene la credencial).
+  - `voices.preview_url`: la muestra de cada voz, que el worker guarda al arrancar (no gasta créditos).
 
 ### 14.1 `video-worker` por dentro (T7, diseño del 2026-11-25)
 

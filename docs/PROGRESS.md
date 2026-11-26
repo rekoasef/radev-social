@@ -108,7 +108,12 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - **Medido:** MP4 de 53 MB en Chromium, saltos al segundo 50, 10 y 55 en 0,2–0,4 s; ZIP de 200 MB a un cliente lento, la memoria subió 46 MB; servir el MP4 desde `next start` casi no la movió (222 → 223 MiB). El ZIP se abre en Windows (`Expand-Archive`).
 > - **Falta ver con T12:** la descarga por la ruta real, con sesión y un video aprobado de la base (se probó la función que arma la respuesta, no la ruta entera).
 >
-> **▶ Próximo paso: T12** (panel `/videos`, portando la maqueta). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **T12 EN CURSO (2026-11-26, PC de la fábrica, con Sonnet).** Plan aprobado en 6 etapas: (1) base, planilla y nuevo video; (2) aprobar guion; (3) aprobar video y descarga; (4) plano del piso; (5) oficina por dentro; (6) cierre. Decisiones del operador:
+> - **Sumar una imagen de Commons por nombre** se hace con un job nuevo del `video-worker` (etapa 2; documentarlo en ARCHITECTURE §14.1).
+> - **Los datos que la maqueta muestra y no se guardaban, se guardan ya** (hecho, primera parte de la etapa 1; migración `0030` aplicada y probada en la base local de la fábrica; detalle en ARCHITECTURE §14). La base de casa necesita `pnpm db:migrate`.
+> - Anotado: `pnpm lint` ya daba 37 errores antes de T12 (no son de estos cambios).
+>
+> **▶ Próximo paso: la UI de la etapa 1 de T12** (panel `/videos`, portando la maqueta). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >

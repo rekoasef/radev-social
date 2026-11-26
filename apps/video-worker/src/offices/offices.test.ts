@@ -190,12 +190,16 @@ describe("script office", () => {
   it("asks for a fix with the errors, without sending the images again", async () => {
     const bad = goodScript();
     bad.scenes[3]!.narration += " Eran 7777 personas.";
-    const { ctx, asked } = makeCtx({
+    const { ctx, asked, rejected, progressed } = makeCtx({
       docs,
       answers: [answer(bad), answer(goodScript(), "run-2")],
       files: smallFiles(),
     });
     const r = await script(ctx);
+    // The studio sees the second try and why; the history keeps the problems of the first run.
+    expect(rejected).toEqual([{ runId: "run-1", problems: expect.any(Array) }]);
+    expect(progressed.map((p) => p.attempt)).toEqual([1, 2]);
+    expect(progressed[1]?.problems?.join(" ")).toContain("7777");
     expect(r).toMatchObject({ kind: "done", documents: [{ generationRunId: "run-2" }] });
     expect(asked[1]?.prompt).toContain("7777");
     expect(asked[1]?.images).toBeUndefined();

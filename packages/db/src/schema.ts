@@ -34,6 +34,7 @@ import {
   VERSION_ORIGINS,
   VIDEO_DOCUMENT_KINDS,
   VIDEO_STAGES,
+  type VideoProgress,
   VOICE_PROVIDERS,
   VOICE_USES,
   WORKING_STAGES,
@@ -738,6 +739,8 @@ export const generationRuns = pgTable(
     durationMs: integer("duration_ms"),
     numTurns: integer("num_turns"),
     sessionId: text("session_id"),
+    /** The answer was well formed but did not pass the office's checks: why (video). */
+    checkProblems: jsonb("check_problems").$type<string[]>(),
     createdAt: createdAt(),
   },
   (t) => [
@@ -768,6 +771,8 @@ export const voices = pgTable(
     speed: real("speed"),
     /** The voice a new video gets for its use and language. One per use and language. */
     isDefault: boolean("is_default").notNull().default(false),
+    /** A sample to listen to before choosing (the provider's public link). */
+    previewUrl: text("preview_url"),
     /** A voice the library no longer offers is marked inactive, never deleted. */
     active: boolean("active").notNull().default(true),
     createdAt: createdAt(),
@@ -809,6 +814,8 @@ export const videos = pgTable(
     /** When a `provider_limit` pause ends by itself. */
     resumeAt: timestamp("resume_at", { withTimezone: true }),
     failure: jsonb("failure").$type<VideoFailureRecord>(),
+    /** What the office working on it is doing (try, percent). Cleared on every stage change. */
+    progress: jsonb("progress").$type<VideoProgress>(),
     /** The operator's last rejection: the Script office reads it when it writes again. */
     rejectionNote: text("rejection_note"),
     approvedAt: timestamp("approved_at", { withTimezone: true }),

@@ -40,9 +40,16 @@ export type TtsError =
   /** The times do not match the text: the words cannot be cut by scene. */
   | { kind: "alignment"; message: string };
 
+/** The credits of the account's current month. */
+export type TtsQuota = { used: number; limit: number; resetsAt: string | null };
+
 export interface TtsProvider {
   readonly id: "elevenlabs";
   synthesize(request: TtsRequest): Promise<TtsResult>;
+  /** Null when the provider does not say (e.g. a key without permission). Never throws. */
+  quota?(): Promise<TtsQuota | null>;
+  /** Public link to a sample of the voice, or null. Never throws. */
+  previewUrl?(voiceId: string): Promise<string | null>;
 }
 
 export const DEFAULT_TTS_MODEL = "eleven_multilingual_v2";

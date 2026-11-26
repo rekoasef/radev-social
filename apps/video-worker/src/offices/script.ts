@@ -57,6 +57,7 @@ export const script: Office = async (ctx) => {
   let problems: string[] = [];
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const first = attempt === 1;
+    await ctx.progress({ attempt, attempts: MAX_ATTEMPTS, problems });
     const answer = await ctx.ai.run(ctx.video, {
       task: "video.script",
       prompt: first
@@ -98,6 +99,7 @@ export const script: Office = async (ctx) => {
       };
     }
     previous = draft;
+    await ctx.ai.reject(answer.runId, problems);
     ctx.log.warn("script rejected by the checks", { attempt, problems: problems.length });
   }
   throw new OfficeFailure(

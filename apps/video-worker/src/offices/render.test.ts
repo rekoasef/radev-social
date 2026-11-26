@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import candidatesFixture from "../../../../packages/video/test/fixtures/mona-candidates.json";
 import scriptFixture from "../../../../packages/video/test/fixtures/mona-script.json";
 import manifest from "../../../../packages/video/test/fixtures/mona-voice-manifest.json";
-import type { RenderJob } from "../remotion";
+import type { RenderJob, VideoRenderer } from "../remotion";
 import { makeCtx } from "./harness";
 import { createRenderOffice } from "./render";
 
@@ -46,7 +46,7 @@ function deps(
     jobs,
     renderer: {
       renderStills: vi.fn(async () => {}),
-      renderAll: vi.fn(async (j: readonly RenderJob[]) => {
+      renderAll: vi.fn<VideoRenderer["renderAll"]>(async (j) => {
         jobs.push(...j);
         return j.map(() => 1000);
       }),
@@ -86,6 +86,22 @@ describe("render office", () => {
       "render/video-16x9.mp4",
     ]);
     expect(r.usage).toEqual([{ kind: "render", quantity: 2, unit: "seconds" }]);
+  });
+
+  it("reports the percent of the format being rendered, every 2 %", async () => {
+    const d = deps(good);
+    d.renderer.renderAll = vi.fn(async (j: readonly RenderJob[], onProgress) => {
+      onProgress?.(0, 0.411);
+      onProgress?.(0, 0.418);
+      onProgress?.(1, 0.5);
+      return j.map(() => 1000);
+    });
+    const { ctx, progressed } = makeCtx({ docs: docs(), files: wordFiles() });
+    await createRenderOffice(d)(ctx);
+    expect(progressed).toEqual([
+      { percent: 40, detail: "9:16" },
+      { percent: 50, detail: "16:9" },
+    ]);
   });
 
   it("fails the quality check when a video comes out short or with the wrong size", async () => {

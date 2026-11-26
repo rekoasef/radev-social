@@ -111,11 +111,19 @@ export const createVoiceOffice =
       characters: made.characters,
       seconds: Math.round(doc.totalFrames / VIDEO_FPS),
     });
+    // What is left this month, as of this take (the web has no key to ask).
+    const quota = (await deps.tts.quota?.()) ?? null;
     return {
       kind: "done",
       documents: [{ kind: "voice", data: doc, origin: "office" }],
       usage: [
-        { kind: "tts", quantity: made.characters, unit: "characters", durationMs: made.durationMs },
+        {
+          kind: "tts",
+          quantity: made.characters,
+          unit: "characters",
+          durationMs: made.durationMs,
+          ...(quota ? { data: { quota } } : {}),
+        },
       ],
     };
   };

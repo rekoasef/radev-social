@@ -1,5 +1,5 @@
 import type { AIError } from "@radev/ai";
-import type { VideoDocumentKind, WorkingStage } from "@radev/core";
+import type { ProgressPatch, VideoDocumentKind, WorkingStage } from "@radev/core";
 import type { OfficeDocumentOut, Video } from "@radev/db";
 import type { VideoAi } from "./ai";
 import type { Logger } from "./logger";
@@ -12,6 +12,8 @@ export type OfficeContext = {
   video: Video;
   log: Logger;
   ai: VideoAi;
+  /** Tells the studio what the office is doing. Only information: it never fails the office. */
+  progress(patch: ProgressPatch): Promise<void>;
   /** The current (highest) version of a document of this video, or null. */
   document(kind: VideoDocumentKind): Promise<unknown | null>;
   /** The voice of the video (its own, or the default narrator); null when there is none. */
@@ -31,6 +33,7 @@ export type OfficeUsage = {
   quantity: number;
   unit: string;
   durationMs?: number;
+  data?: Record<string, unknown>;
 };
 
 export type OfficeResult =

@@ -26,6 +26,7 @@ COPY packages/db/package.json packages/db/
 COPY packages/slides/package.json packages/slides/
 COPY packages/ai/package.json packages/ai/
 COPY packages/publishers/package.json packages/publishers/
+COPY packages/video/package.json packages/video/
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm config set store-dir /pnpm/store && \
     pnpm install --frozen-lockfile

@@ -1,9 +1,11 @@
 import {
   OFFICE_JOB,
+  type ProgressPatch,
   pauseEnded,
   rateLimitDelayMs,
   type VideoFailure,
   type VideoOfficeJob,
+  type VideoProgress,
   WORKING_STAGES,
   type WorkingStage,
 } from "@radev/core";
@@ -19,6 +21,13 @@ import { type Office, type OfficeContext, OfficeFailure, type OfficeResult } fro
 /** Reschedules after Claude's limit before giving up (15 min … 4 h: about 17 h, like the posts). */
 export const MAX_LIMIT_ATTEMPTS = 8;
 
+/** One run of an office, for its history. */
+export type OfficeRun = {
+  stage: WorkingStage;
+  durationMs: number;
+  outcome: "done" | "pause" | "rate_limited" | "failed";
+};
+
 export type RunnerStore = {
   getVideo(id: string): Promise<Video | null>;
   resume(id: string): Promise<void>;
@@ -31,6 +40,8 @@ export type RunnerStore = {
     result: Extract<OfficeResult, { kind: "done" }>,
   ): Promise<VideoTransitionOutcome>;
   fail(id: string, failure: VideoFailure): Promise<void>;
+  progress(id: string, progress: VideoProgress): Promise<void>;
+  officeRun(id: string, run: OfficeRun): Promise<void>;
 };
 
 export type RunnerDeps = {
@@ -39,7 +50,7 @@ export type RunnerDeps = {
   queue(job: VideoOfficeJob, delaySeconds: number): Promise<void>;
   /** The offices that exist: a stage without one waits (the later offices arrive in T8). */
   offices: Partial<Record<WorkingStage, Office>>;
-  makeContext(video: Video): OfficeContext;
+  makeContext(video: Video): Omit<OfficeContext, "progress">;
   now(): Date;
   log: Logger;
   /** The last try pg-boss will give this job: a failure is recorded on the video. */
@@ -88,10 +99,31 @@ export async function runOffice(deps: RunnerDeps, job: VideoOfficeJob): Promise<
     return "no-office";
   }
 
+  // What the studio shows while it works, and the history of the office afterwards. Neither one
+  // may break the work: their errors are only logged.
+  const videoId = video.id;
+  let progress: VideoProgress = { stage: job.stage, startedAt: now.toISOString() };
+  const report = async (patch: ProgressPatch = {}) => {
+    progress = { ...progress, ...patch };
+    await store
+      .progress(videoId, progress)
+      .catch((error) => log.warn("progress not saved", { error }));
+  };
+  const record = (outcome: OfficeRun["outcome"]) =>
+    store
+      .officeRun(videoId, {
+        stage: job.stage,
+        durationMs: Math.max(0, deps.now().getTime() - now.getTime()),
+        outcome,
+      })
+      .catch((error) => log.warn("office run not recorded", { error }));
+
+  await report();
   let result: OfficeResult;
   try {
-    result = await office(deps.makeContext(video));
+    result = await office({ ...deps.makeContext(video), progress: report });
   } catch (error) {
+    await record("failed");
     const message = error instanceof Error ? error.message : String(error);
     // The operator has to step in (a missing route, a credential): trying again would not help.
     if (error instanceof OfficeFailure && !error.retryable) {
@@ -104,6 +136,8 @@ export async function runOffice(deps: RunnerDeps, job: VideoOfficeJob): Promise<
     }
     throw error;
   }
+
+  await record(result.kind);
 
   if (result.kind === "pause") {
     await store.pauseForBudget(video.id);

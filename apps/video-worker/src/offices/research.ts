@@ -22,6 +22,7 @@ const TASK = (topic: string, language: string) =>
 export const research: Office = async (ctx) => {
   let problems: string[] = [];
   for (let attempt = 1; attempt <= 2; attempt++) {
+    await ctx.progress({ attempt, attempts: 2, problems });
     const answer = await ctx.ai.run(ctx.video, {
       task: "video.research",
       prompt:
@@ -54,6 +55,7 @@ export const research: Office = async (ctx) => {
         ],
       };
     }
+    await ctx.ai.reject(answer.runId, problems);
     ctx.log.warn("dossier rejected by the checks", { attempt, problems });
   }
   throw new OfficeFailure(`El dossier no pasó los controles: ${problems.join(" | ")}`);

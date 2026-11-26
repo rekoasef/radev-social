@@ -7,6 +7,7 @@ import {
   TTS_SPEED_MIN,
   type TtsError,
   type TtsProvider,
+  type TtsQuota,
   type TtsRequest,
   type TtsResult,
 } from "./types";
@@ -100,8 +101,36 @@ export function createElevenLabsProvider(options: ElevenLabsOptions = {}): TtsPr
     return { ok: true, text };
   }
 
+  /** A GET that only informs: any failure is "no data". */
+  async function read(path: string): Promise<Record<string, unknown> | null> {
+    const answer = await call(path, { method: "GET" }, undefined);
+    if (!answer.ok) return null;
+    try {
+      return JSON.parse(answer.text) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+
   return {
     id: "elevenlabs",
+    async quota(): Promise<TtsQuota | null> {
+      const data = await read("/v1/user/subscription");
+      const used = data?.character_count;
+      const limit = data?.character_limit;
+      if (typeof used !== "number" || typeof limit !== "number") return null;
+      const reset = data?.next_character_count_reset_unix;
+      return {
+        used,
+        limit,
+        resetsAt: typeof reset === "number" ? new Date(reset * 1000).toISOString() : null,
+      };
+    },
+    async previewUrl(voiceId: string): Promise<string | null> {
+      const data = await read(`/v1/voices/${encodeURIComponent(voiceId)}`);
+      const url = data?.preview_url;
+      return typeof url === "string" && url.startsWith("https://") ? url : null;
+    },
     async synthesize(request: TtsRequest): Promise<TtsResult> {
       const started = Date.now();
       const model = request.model ?? DEFAULT_TTS_MODEL;

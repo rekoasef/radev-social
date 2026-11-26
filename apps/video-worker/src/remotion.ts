@@ -25,7 +25,10 @@ export type VideoRenderer = {
   /** The thumbnails (PNG), one still each. */
   renderStills(jobs: readonly StillJob[]): Promise<void>;
   /** Renders every job with one bundle and one Chrome. Returns the milliseconds each took. */
-  renderAll(jobs: readonly RenderJob[]): Promise<number[]>;
+  renderAll(
+    jobs: readonly RenderJob[],
+    onProgress?: (job: number, fraction: number) => void,
+  ): Promise<number[]>;
 };
 
 export const remotionRenderer: VideoRenderer = {
@@ -61,7 +64,7 @@ export const remotionRenderer: VideoRenderer = {
     }
   },
 
-  async renderAll(jobs) {
+  async renderAll(jobs, onProgress) {
     const first = jobs[0];
     if (!first) return [];
     const entryPoint = fileURLToPath(import.meta.resolve("@radev/video/render/entry"));
@@ -71,7 +74,7 @@ export const remotionRenderer: VideoRenderer = {
     });
     try {
       const times: number[] = [];
-      for (const job of jobs) {
+      for (const [index, job] of jobs.entries()) {
         const inputProps = job.props as unknown as Record<string, unknown>;
         const composition = await selectComposition({
           serveUrl,
@@ -89,6 +92,7 @@ export const remotionRenderer: VideoRenderer = {
           outputLocation: job.outFile,
           inputProps,
           concurrency: 2,
+          onProgress: ({ progress }) => onProgress?.(index, progress),
           puppeteerInstance: browser,
         });
         times.push(Date.now() - started);

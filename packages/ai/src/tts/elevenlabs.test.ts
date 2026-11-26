@@ -150,3 +150,34 @@ describe("classifyElevenLabsError", () => {
     });
   });
 });
+
+describe("quota and sample (information only, they never fail)", () => {
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
+
+  it("reads the month's credits", async () => {
+    const { provider, calls } = make(
+      json({
+        character_count: 3834,
+        character_limit: 38439,
+        next_character_count_reset_unix: 1796000000,
+      }),
+    );
+    expect(await provider.quota?.()).toEqual({
+      used: 3834,
+      limit: 38439,
+      resetsAt: new Date(1796000000 * 1000).toISOString(),
+    });
+    expect(calls[0]?.url).toBe("https://api.elevenlabs.io/v1/user/subscription");
+  });
+
+  it("is null when the key cannot read it", async () => {
+    const { provider } = make(json({ detail: "missing_permissions" }, 401));
+    expect(await provider.quota?.()).toBeNull();
+  });
+
+  it("gives the voice's sample, only an https link", async () => {
+    const { provider } = make(json({ preview_url: "https://cdn.example/v.mp3" }), json({}));
+    expect(await provider.previewUrl?.("v1")).toBe("https://cdn.example/v.mp3");
+    expect(await provider.previewUrl?.("v1")).toBeNull();
+  });
+});

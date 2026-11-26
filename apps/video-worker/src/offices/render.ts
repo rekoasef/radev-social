@@ -77,7 +77,17 @@ export const createRenderOffice =
       outFile: `${ctx.mediaDir}/render/video-${format}.mp4`,
     }));
     ctx.log.info("rendering both formats", { frames: expectedFrames });
-    const times = await deps.renderer.renderAll(jobs);
+    // Remotion reports every frame: saved every 2 % of the format being rendered.
+    let last = "";
+    const times = await deps.renderer.renderAll(jobs, (index, fraction) => {
+      const format = jobs[index]?.props.format;
+      if (!format) return;
+      const percent = Math.floor((fraction * 100) / 2) * 2;
+      const key = `${format}:${percent}`;
+      if (key === last) return;
+      last = key;
+      void ctx.progress({ percent, detail: format.replace("x", ":") });
+    });
 
     const doc: RenderDoc = { fps: 30, totalFrames: expectedFrames, formats: [] };
     const problems: string[] = [];

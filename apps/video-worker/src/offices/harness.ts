@@ -1,4 +1,4 @@
-import type { VideoDocumentKind } from "@radev/core";
+import type { ProgressPatch, VideoDocumentKind } from "@radev/core";
 import type { Video } from "@radev/db";
 import { vi } from "vitest";
 import type { AiAnswer, AiRequest } from "../ai";
@@ -16,6 +16,7 @@ export const video = (over: Partial<Video> = {}): Video => ({
   language: "es",
   voiceId: null,
   stage: "researching",
+  progress: null,
   pausedAt: null,
   pauseReason: null,
   resumeAt: null,
@@ -37,6 +38,8 @@ export function makeCtx(opts: {
   voice?: { externalId: string; name: string; speed: number | null } | null;
 }) {
   const asked: Asked[] = [];
+  const rejected: { runId: string; problems: string[] }[] = [];
+  const progressed: ProgressPatch[] = [];
   const answers = [...(opts.answers ?? [])];
   const files = new Map(Object.entries(opts.files ?? {}));
   const ctx: OfficeContext = {
@@ -50,6 +53,12 @@ export function makeCtx(opts: {
         if (!next) throw new Error("la IA fue llamada de más");
         return next;
       }) as unknown as OfficeContext["ai"]["run"],
+      reject: async (runId, problems) => {
+        rejected.push({ runId, problems });
+      },
+    },
+    progress: async (patch) => {
+      progressed.push(patch);
     },
     voice: async () =>
       opts.voice === undefined ? { externalId: "voz-1", name: "Alberto", speed: null } : opts.voice,
@@ -61,7 +70,7 @@ export function makeCtx(opts: {
       read: async (path) => files.get(path),
     },
   };
-  return { ctx, asked, files };
+  return { ctx, asked, files, rejected, progressed };
 }
 
 export const answer = <T>(data: T, runId = "run-1"): AiAnswer<T> => ({ ok: true, data, runId });

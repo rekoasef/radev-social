@@ -417,6 +417,7 @@ cualquiera (salvo archived) → archived      [scheduled → publishing → publ
 | `video_documents` | id, video_id, kind (`dossier` \| `sources` \| `images` \| `script` \| `review` \| `voice` \| `render` \| `package`), version, data (jsonb, validado con Zod antes de guardarse), schema_version, origin (`office` \| `operator`), generation_run_id, created_at. Única por video, tipo y versión; vale la versión más alta |
 | `voices` | id, provider (`elevenlabs`), external_id, name, use (`narrative` \| `commercial`), language, speed, active. El seed carga Alberto (por defecto), Fran, Juan y Carlos Pro (ADR 0027) |
 | `usage_events` | id, video_id, office, kind (`tts` \| `render` \| `download`), quantity, unit (créditos, segundos, MB), duration_ms, data (jsonb), created_at |
+| T12 (migración `0030`) | `videos.progress`, `generation_runs.check_problems`, `voices.preview_url` y el tipo `office` en `usage_events` (ARCHITECTURE §14) |
 | `generation_runs` | + `video_id` (nullable) y las tareas `video.research`, `video.images`, `video.script`, `video.review` y `video.package` en el CHECK |
 
 **Archivos** en `media/videos/<id>/`:

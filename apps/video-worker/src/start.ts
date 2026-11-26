@@ -46,6 +46,7 @@ import { createVoiceOffice } from "./offices/voice";
 import { probeVideo, remotionRenderer } from "./remotion";
 import { runOffice } from "./runner";
 import { dbStore } from "./store";
+import { fillVoicePreviews } from "./voices";
 
 const log = createLogger({ service: "video-worker" });
 
@@ -95,7 +96,9 @@ export async function startVideoWorker(): Promise<VideoWorker> {
     });
   };
 
-  const makeContext = (video: Video): OfficeContext => ({
+  const tts = createElevenLabsProvider();
+
+  const makeContext = (video: Video): Omit<OfficeContext, "progress"> => ({
     video,
     log: log.child({ videoId: video.id, stage: video.stage }),
     ai,
@@ -122,7 +125,7 @@ export async function startVideoWorker(): Promise<VideoWorker> {
     checking_facts: review,
     packaging: createPackageOffice({ renderer: remotionRenderer }),
     rendering: createRenderOffice({ renderer: remotionRenderer, probe: probeVideo }),
-    voicing: createVoiceOffice({ tts: createElevenLabsProvider(), decode: decodeToPcm }),
+    voicing: createVoiceOffice({ tts, decode: decodeToPcm }),
   };
 
   for (const stage of WORKING_STAGES) {
@@ -166,6 +169,10 @@ export async function startVideoWorker(): Promise<VideoWorker> {
     }
     if (stuck.length > 0) log.info("sweep queued videos again", { count: stuck.length });
   });
+
+  void fillVoicePreviews(db, tts, log).catch((error) =>
+    log.warn("voice samples not saved", { error }),
+  );
 
   log.info("video-worker started", { offices: Object.keys(offices) });
 

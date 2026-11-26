@@ -7,6 +7,7 @@ import {
   recordUsageEvent,
   recordVideoFailure,
   resumeVideoById,
+  setVideoProgress,
 } from "@radev/db";
 import type { RunnerStore } from "./runner";
 
@@ -36,10 +37,23 @@ export function dbStore(db: Database): RunnerStore {
             quantity: u.quantity,
             unit: u.unit,
             durationMs: u.durationMs ?? null,
+            data: u.data ?? null,
           });
         }
       }
       return outcome;
+    },
+    progress: (id, progress) => setVideoProgress(db, id, progress),
+    officeRun: async (videoId, run) => {
+      await recordUsageEvent(db, {
+        videoId,
+        kind: "office",
+        office: run.stage,
+        quantity: Math.round(run.durationMs / 1000),
+        unit: "seconds",
+        durationMs: run.durationMs,
+        data: { outcome: run.outcome },
+      });
     },
     fail: async (id, failure: VideoFailure) => {
       await recordVideoFailure(db, id, failure);
