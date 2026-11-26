@@ -27,6 +27,13 @@ Primer video hecho entero desde el panel: 39 min desde el tema hasta aprobarlo, 
 
 **2. Fotos apaisadas en el Short.** Una escena puede ir con la foto **entera** sobre una copia desenfocada (`whole`), en vez de llenar la pantalla. La pide el guionista o la revisión de cuadros (un grupo de personas, un documento); el código la fuerza solo si cubrir mostraría menos de la mitad de lo pedido (una panorámica). Por defecto la foto llena la pantalla, como antes: probar «entera» para todas las apaisadas dejaba casi todo el video en una franja.
 
+## Etapa 3: imágenes del caso real (2026-11-26)
+
+En D.B. Cooper, de 32 candidatas solo ~5 eran del caso; el resto, relleno. Ahora la oficina de Imágenes **primero** trae las imágenes libres de los artículos de Wikipedia que más cita el dossier (hasta 2 artículos y 16 imágenes, desde 400 px), y **entran siempre**, antes de lo que elige la curaduría. Las que solo están en Wikipedia (uso legítimo) no están en Commons y quedan afuera solas; los íconos de la plantilla, también.
+- Probado con el artículo real de D.B. Cooper: 16 imágenes libres que la búsqueda no había encontrado, entre ellas **los retratos robot del FBI**, la escalerilla del 727, el mapa de la zona del salto, el dispositivo «Cooper vane» y fotos de sospechosos. No todas son del hecho (un 727 de Piedmont, una estatua actual): el guionista las ve marcadas como `delCaso` y siguen valiendo `exact` y la revisión de cuadros.
+- Varias son chicas (430–500 px): en pantalla se ven más blandas. El guion las usa enteras o sin acercar mucho.
+- Un artículo que no existe o no responde no frena la oficina.
+
 ## Lo que todavía no se controla
 
 - **Homónimos:** el código compara nombres, no personas (en el ejemplo de la Mona Lisa, un Giovanni Poggi de 1770). Queda como regla para la IA.

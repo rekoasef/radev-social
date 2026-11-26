@@ -5,6 +5,7 @@ import {
   compactDossier,
   curatedHits,
   curationView,
+  dossierArticles,
   dossierSchema,
   IMAGE_CURATOR_RULES,
   IMAGE_QUERY_RULES,
@@ -17,13 +18,20 @@ import {
 import { failedAi, type Office } from "../office";
 import { readDocument } from "./util";
 
-// Oficina 3, Imágenes: la IA propone consultas, el código busca en Wikimedia Commons (licencias
+// Oficina 3, Imágenes: primero las imágenes libres de los artículos de Wikipedia que cita el dossier
+// (son del caso mismo, entran siempre); después la IA propone consultas, el código busca en Wikimedia Commons (licencias
 // libres, con pausas), la IA elige por texto entre ~240 resultados y se bajan las elegidas, cada una
 // con una copia chica para que la IA las mire sin gastar de más. Bajar es idempotente: lo que ya
 // está en disco no se vuelve a pedir (un reintento no repite el trabajo).
 
+/** The script AI looks at every candidate: more costs tokens without helping. */
+const MAX_CANDIDATES = 46;
+
 export type ImagesDeps = {
-  commons: Pick<CommonsClient, "searchFiles" | "searchCategoryFiles" | "fileByTitle" | "download">;
+  commons: Pick<
+    CommonsClient,
+    "searchFiles" | "searchCategoryFiles" | "fileByTitle" | "articleFiles" | "download"
+  >;
   /** A 640 px JPEG copy (ffmpeg). */
   shrink(bytes: Uint8Array): Promise<Uint8Array>;
   sizeOf(bytes: Uint8Array): { width: number; height: number } | undefined;
@@ -47,7 +55,8 @@ export const createImagesOffice =
     });
     if (!queries.ok) return failedAi(queries.error, "Las consultas de imágenes");
 
-    const pool = await buildPool(deps.commons, { queries: queries.data.queries }, (m) =>
+    const articles = dossierArticles(dossier.facts.map((f) => f.url));
+    const pool = await buildPool(deps.commons, { queries: queries.data.queries, articles }, (m) =>
       ctx.log.info(m),
     );
     ctx.log.info("pool built", { results: pool.length });
@@ -68,7 +77,12 @@ export const createImagesOffice =
     });
     if (!curation.ok) return failedAi(curation.error, "La curaduría de imágenes");
 
-    const chosen = curatedHits(pool, curation.data.keep);
+    // The article's images are of the case: always in, first. The rest is what the curator chose.
+    const fromArticle = pool.filter((h) => h.article);
+    const chosen = [
+      ...fromArticle,
+      ...curatedHits(pool, curation.data.keep).filter((h) => !h.article),
+    ].slice(0, MAX_CANDIDATES);
     const candidates = [];
     for (const [i, hit] of chosen.entries()) {
       const id = imageId(i + 1);

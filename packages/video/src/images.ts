@@ -14,6 +14,8 @@ export type ImageCandidate = {
   file: string;
   width: number;
   height: number;
+  /** The Wikipedia article it comes from: an image of the case itself (stage 3, VIDEO-CALIDAD). */
+  article?: string;
 };
 
 // Licencias que se pueden usar: dominio público, CC0, CC BY y CC BY-SA (con crédito).
@@ -73,6 +75,7 @@ export const curationView = (pool: readonly CommonsHit[]) =>
     title: h.title,
     description: h.description.slice(0, 100),
     date: h.date,
+    ...(h.article ? { caso: true } : {}),
   }));
 
 /** Los resultados elegidos, sin repetir y sin números que no existen, en el orden de la IA. */
@@ -98,6 +101,7 @@ export const imagesDocSchema = z.object({
         file: z.string(),
         width: z.number(),
         height: z.number(),
+        article: z.string().optional(),
       }),
     )
     .min(1),

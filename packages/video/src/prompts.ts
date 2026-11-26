@@ -21,6 +21,7 @@ Tu salida es el guion escena por escena en JSON. El código lo valida, pone la v
 
 ## Imágenes: elegí con criterio
 
+- **Las candidatas con \`delCaso: true\` salen del artículo de Wikipedia del caso**: muchas son el hecho mismo (retratos robot, documentos, objetos, protagonistas, mapas): usalas primero, antes que cualquier imagen parecida. No todas: leé su descripción (puede ser un avión del mismo modelo o una estatua actual), y las reglas de \`exact\` valen igual. Algunas son chicas (ver \`size\`): con \`vw\` de 0,7 o más, o \`whole: true\`.
 - **Nunca uses el retrato o la foto de una persona para hablar de otra** (ni el de Apollinaire mientras se habla del ladrón). Mirá bien qué muestra cada imagen.
 - Cada escena usa **una imagen candidata** (\`image\`: su id). **Que la imagen tenga que ver con lo que se dice** en ese momento: la persona, el lugar, el objeto o el documento. Si no hay una imagen exacta, usá una relacionada (el edificio, la época, un detalle) pero **nunca insinúes que muestra lo que no muestra**: una reconstrucción de 1913 no es el hecho real; un retrato posterior no es la escena. Si la imagen es una reconstrucción, un cuadro o un montaje, aclaralo en \`caption\` («Reconstrucción publicada en 1913»).
 - Usá **al menos 6 imágenes distintas**; ninguna más de 3 veces. Si repetís una imagen en escenas seguidas, mostrá otra zona (de un detalle a otro).
@@ -107,7 +108,7 @@ Para un video documental sobre el tema de \`dossier.json\`, proponé de 24 a 30 
 /** Oficina de Imágenes, paso 2: la curaduría por texto sobre ~240 resultados. */
 export const IMAGE_CURATOR_RULES = `# Curador de imágenes
 
-Del archivo \`resultados.json\` (imágenes libres de Wikimedia Commons: n, título, descripción, fecha) elegí **de 32 a 40** para un video documental sobre el tema de \`dossier.json\`. Criterios:
+Del archivo \`resultados.json\` (imágenes libres de Wikimedia Commons: n, título, descripción, fecha) elegí **de 24 a 34** para un video documental sobre el tema de \`dossier.json\`. Las que tienen \`caso: true\` salen del artículo de Wikipedia del caso y **ya están elegidas**: no hace falta ponerlas en \`keep\`, sumá las que las completen. Criterios:
 - Priorizá lo que **muestra la historia**: fotos y documentos de época del hecho, retratos de los protagonistas, el lugar tal como era, portadas de diarios y carteles del momento, objetos clave, mapas.
 - Hace falta **variedad**: personas, lugares, documentos, prensa, objetos. Si hay muchas versiones de la misma imagen (restauraciones, recortes, colores), elegí **una sola**.
 - **No descartes nunca una imagen que muestra el hecho o a sus protagonistas** (robo, ladrón, detención, policía, el lugar del hecho, el cuadro vacío, la prensa del momento): es mejor tener de más. Los títulos con palabras como robo, stolen, theft, vol, Joconde, el nombre del ladrón o del investigador son oro.

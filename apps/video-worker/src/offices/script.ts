@@ -33,6 +33,7 @@ export const script: Office = async (ctx) => {
       author: c.author,
       license: c.license,
       size: `${c.width}x${c.height}`,
+      ...(c.article ? { delCaso: true } : {}),
     })),
   );
   const images: TaskImage[] = [];

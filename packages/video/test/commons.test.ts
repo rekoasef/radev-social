@@ -12,6 +12,7 @@ import {
   createCommonsClient,
   curatedHits,
   curationView,
+  dossierArticles,
   imageCurationSchema,
   imageId,
   imageQueriesSchema,
@@ -19,6 +20,7 @@ import {
   rankHits,
   stripHtml,
   thumbExtension,
+  wikipediaArticle,
 } from "../src";
 
 const page = (
@@ -250,6 +252,9 @@ describe("buildPool", () => {
           log.push(`pin:${t}`);
           return t === "missing.jpg" ? null : hit(`https://c/pin-${t}`, 100);
         },
+        async articleFiles() {
+          return [];
+        },
       },
     };
   };
@@ -330,5 +335,77 @@ describe("candidates", () => {
     expect(thumbExtension("https://x/a.webp?x=1")).toBe("webp");
     expect(thumbExtension("https://x/a.jpeg")).toBe("jpg");
     expect(thumbExtension("https://x/a")).toBe("jpg");
+  });
+});
+
+describe("the case's Wikipedia article (stage 3)", () => {
+  it("reads the language and title of an article, and nothing else", () => {
+    expect(wikipediaArticle("https://en.wikipedia.org/wiki/D._B._Cooper")).toEqual({
+      lang: "en",
+      title: "D. B. Cooper",
+    });
+    expect(wikipediaArticle("https://es.m.wikipedia.org/wiki/Robo_de_la_Gioconda")?.lang).toBe(
+      "es",
+    );
+    expect(wikipediaArticle("https://en.wikipedia.org/wiki/File:X.jpg")).toBeNull();
+    expect(wikipediaArticle("https://cnn.com/wiki/x")).toBeNull();
+  });
+
+  it("takes the most cited articles of the dossier", () => {
+    const cooper = "https://en.wikipedia.org/wiki/D._B._Cooper";
+    const urls = [cooper, cooper, "https://es.wikipedia.org/wiki/Northwest", "https://cnn.com/x"];
+    expect(dossierArticles(urls)).toEqual([
+      "https://en.wikipedia.org/wiki/D._B._Cooper",
+      "https://es.wikipedia.org/wiki/Northwest",
+    ]);
+    expect(dossierArticles(urls, 1)).toHaveLength(1);
+  });
+
+  it("keeps the article's free images, small ones too, without the template's icons", async () => {
+    const article = {
+      query: {
+        pages: {
+          "1": {
+            images: [
+              { title: "File:Cooper Composite A.jpg" },
+              { title: "File:Commons-logo.svg" },
+              { title: "File:Flag of Oregon.svg" },
+            ],
+          },
+        },
+      },
+    };
+    const sketch = page({ title: "File:Cooper Composite A.jpg", width: 429 });
+    const tiny = page({ title: "File:Dbc.jpg", width: 260 });
+    const { c, calls } = client([{ body: article }, { body: pages(sketch, tiny) }]);
+    const hits = await c.articleFiles("https://en.wikipedia.org/wiki/D._B._Cooper");
+    expect(hits.map((h) => h.title)).toEqual(["Cooper Composite A"]);
+    expect(hits[0]?.article).toBe("https://en.wikipedia.org/wiki/D._B._Cooper");
+    expect(new URL(calls[0]?.url ?? "").hostname).toBe("en.wikipedia.org");
+    expect(new URL(calls[1]?.url ?? "").searchParams.get("titles")).toBe(
+      "File:Cooper Composite A.jpg",
+    );
+  });
+
+  it("puts the article's images first in the pool, and goes on if it cannot read it", async () => {
+    const fromArticle = { ...hit("case", 200), article: "a" };
+    const pool = await buildPool(
+      {
+        searchFiles: async () => [hit("search", 20)],
+        searchCategoryFiles: async () => [],
+        fileByTitle: async () => null,
+        articleFiles: async (url) => {
+          if (url === "broken") throw new Error("429");
+          return [fromArticle];
+        },
+      },
+      { queries: ["x"], articles: ["broken", "a"] },
+    );
+    expect(pool.map((h) => h.page)).toEqual(["case", "search"]);
+  });
+
+  it("marks the article's images for the curator", () => {
+    expect(curationView([{ ...hit("case"), article: "a" }])[0]).toMatchObject({ caso: true });
+    expect(curationView([hit("other")])[0]).not.toHaveProperty("caso");
   });
 });

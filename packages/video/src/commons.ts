@@ -15,6 +15,50 @@ export const MIN_WIDTH = 700;
 /** Una imagen que el operador pide sí o sí se acepta más chica. */
 export const PINNED_MIN_WIDTH = 500;
 export const POOL_SIZE = 240;
+/** Las imágenes del artículo del caso valen aunque sean chicas (un retrato robot, un cartel). */
+export const ARTICLE_MIN_WIDTH = 400;
+/** Cuántas imágenes del artículo entran como máximo. */
+export const ARTICLE_MAX = 16;
+
+/** Idioma y título de un artículo de Wikipedia, o null si la dirección no es de uno. */
+export function wikipediaArticle(url: string): { lang: string; title: string } | null {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return null;
+  }
+  const lang = u.hostname.match(/^([a-z-]{2,12})\.(?:m\.)?wikipedia\.org$/)?.[1];
+  const title = u.pathname.match(/^\/wiki\/(.+)$/)?.[1];
+  if (!lang || !title) return null;
+  try {
+    const decoded = decodeURIComponent(title).replace(/_/g, " ");
+    return /^(Special|Especial|File|Archivo|Category|Categoría):/i.test(decoded)
+      ? null
+      : { lang, title: decoded };
+  } catch {
+    return null;
+  }
+}
+
+/** Las páginas de Wikipedia más citadas por el dossier (como mucho `max`). */
+export function dossierArticles(urls: readonly string[], max = 2): string[] {
+  const count = new Map<string, number>();
+  for (const url of urls) {
+    const article = wikipediaArticle(url);
+    if (!article) continue;
+    const key = `https://${article.lang}.wikipedia.org/wiki/${encodeURIComponent(article.title.replace(/ /g, "_"))}`;
+    count.set(key, (count.get(key) ?? 0) + 1);
+  }
+  return [...count.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, max)
+    .map(([key]) => key);
+}
+
+/** Íconos y banderas de la plantilla de Wikipedia: nunca son del caso. */
+const ARTICLE_NOISE =
+  /\.(svg|gif)$|commons-logo|wiki(pedia|media)|icon|flag of|semi-protection|edit-clear/i;
 
 const FILE_MIME = /^image\/(jpeg|png|webp)$/;
 
@@ -45,6 +89,17 @@ export type CommonsPage = z.infer<typeof pageSchema>;
 
 const responseSchema = z.object({
   query: z.object({ pages: z.record(z.string(), z.unknown()) }).optional(),
+});
+
+const articleSchema = z.object({
+  query: z
+    .object({
+      pages: z.record(
+        z.string(),
+        z.object({ images: z.array(z.object({ title: z.string() })).optional() }),
+      ),
+    })
+    .optional(),
 });
 
 /** Texto plano de un campo de Commons (que viene con HTML y entidades). */
@@ -148,25 +203,28 @@ export function createCommonsClient(options: CommonsOptions = {}) {
     iiurlwidth: String(THUMB_WIDTH),
   };
 
-  /** Un pedido a la API, con pausa antes y reintentos con espera creciente. */
-  async function query(params: Record<string, string>): Promise<CommonsPage[]> {
-    const url = `${COMMONS_API}?${new URLSearchParams({ format: "json", ...params })}`;
+  /** Un pedido a una API de Wikimedia, con pausa antes y reintentos con espera creciente. */
+  async function call(api: string, params: Record<string, string>): Promise<unknown> {
+    const url = `${api}?${new URLSearchParams({ format: "json", ...params })}`;
     await sleep(apiPause);
     let last = 0;
     for (let i = 0; i < apiAttempts; i++) {
       const response = await doFetch(url, { headers });
-      if (response.ok) {
-        const parsed = responseSchema.safeParse(await response.json());
-        if (!parsed.success) throw new CommonsError("Commons respondió con un formato inesperado.");
-        return Object.values(parsed.data.query?.pages ?? {}).flatMap((p) => {
-          const page = pageSchema.safeParse(p);
-          return page.success ? [page.data] : [];
-        });
-      }
+      if (response.ok) return response.json();
       last = response.status;
       if (i < apiAttempts - 1) await sleep(retryBase * (i + 1));
     }
-    throw new CommonsError(`Commons no responde (último estado ${last}).`, last);
+    throw new CommonsError(`Wikimedia no responde (último estado ${last}).`, last);
+  }
+
+  /** Un pedido a la API de Commons. */
+  async function query(params: Record<string, string>): Promise<CommonsPage[]> {
+    const parsed = responseSchema.safeParse(await call(COMMONS_API, params));
+    if (!parsed.success) throw new CommonsError("Commons respondió con un formato inesperado.");
+    return Object.values(parsed.data.query?.pages ?? {}).flatMap((p) => {
+      const page = pageSchema.safeParse(p);
+      return page.success ? [page.data] : [];
+    });
   }
 
   return {
@@ -220,6 +278,42 @@ export function createCommonsClient(options: CommonsOptions = {}) {
       return page ? parseHit(page, { minWidth: PINNED_MIN_WIDTH, bonus }) : null;
     },
 
+    /**
+     * Las imágenes de un artículo de Wikipedia que están en Commons con licencia libre: casi siempre
+     * del caso mismo (retratos, documentos, objetos). Las que solo están en Wikipedia (uso legítimo)
+     * no aparecen en Commons y quedan afuera solas.
+     */
+    async articleFiles(url: string, bonus = 200): Promise<CommonsHit[]> {
+      const article = wikipediaArticle(url);
+      if (!article) return [];
+      const parsed = articleSchema.safeParse(
+        await call(`https://${article.lang}.wikipedia.org/w/api.php`, {
+          action: "query",
+          titles: article.title,
+          prop: "images",
+          imlimit: "max",
+          redirects: "1",
+        }),
+      );
+      const titles = Object.values(parsed.success ? (parsed.data.query?.pages ?? {}) : {})
+        .flatMap((p) => p.images ?? [])
+        .map((i) => i.title)
+        .filter((t) => !ARTICLE_NOISE.test(t));
+      const hits: CommonsHit[] = [];
+      for (let i = 0; i < titles.length && hits.length < ARTICLE_MAX; i += 50) {
+        const pages = await query({
+          action: "query",
+          titles: titles.slice(i, i + 50).join("|"),
+          ...info,
+        });
+        for (const page of pages) {
+          const hit = parseHit(page, { minWidth: ARTICLE_MIN_WIDTH, bonus });
+          if (hit) hits.push({ ...hit, article: url });
+        }
+      }
+      return hits.slice(0, ARTICLE_MAX);
+    },
+
     /** Baja una imagen con pausa antes y reintentos con espera creciente. */
     async download(url: string): Promise<Buffer> {
       await sleep(downloadPause);
@@ -241,15 +335,35 @@ export const CATEGORY_QUERIES = 10;
 export type PoolProgress = (message: string) => void;
 
 /**
- * El conjunto de resultados para curar: cada consulta suma archivos (y, las primeras 10, también los
+ * El conjunto de resultados para curar: primero las imágenes de los artículos de Wikipedia del caso,
+ * después cada consulta suma archivos (y, las primeras 10, también los
  * de sus categorías), las imágenes fijadas entran con bonus 100. Devuelve los 240 mejores.
  */
 export async function buildPool(
-  client: Pick<CommonsClient, "searchFiles" | "searchCategoryFiles" | "fileByTitle">,
-  input: { queries: readonly string[]; pins?: readonly string[] },
+  client: Pick<
+    CommonsClient,
+    "searchFiles" | "searchCategoryFiles" | "fileByTitle" | "articleFiles"
+  >,
+  input: {
+    queries: readonly string[];
+    pins?: readonly string[];
+    /** Wikipedia articles of the case: their images go first. */
+    articles?: readonly string[];
+  },
   progress: PoolProgress = () => {},
 ): Promise<CommonsHit[]> {
   const hits = new Map<string, CommonsHit>();
+  for (const url of input.articles ?? []) {
+    let found = 0;
+    try {
+      for (const hit of await client.articleFiles(url)) if (addHit(hits, hit)) found++;
+    } catch (error) {
+      // Without the article the office still has the searches.
+      progress(`artículo ${url}: no se pudo leer (${String(error).slice(0, 80)})`);
+      continue;
+    }
+    progress(`artículo ${url}: ${found} imágenes libres`);
+  }
   for (const [n, q] of input.queries.entries()) {
     let found = 0;
     for (const hit of await client.searchFiles(q)) if (addHit(hits, hit)) found++;

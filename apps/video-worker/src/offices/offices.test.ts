@@ -112,6 +112,7 @@ describe("images office", () => {
       searchFiles: async () => hits,
       searchCategoryFiles: async () => [],
       fileByTitle: async () => null,
+      articleFiles: async () => [],
       download: async (url: string) => {
         downloads.push(url);
         return new Uint8Array([9, 9]) as unknown as Buffer;
@@ -140,6 +141,44 @@ describe("images office", () => {
     expect(downloads).toHaveLength(30);
     expect(asked.map((a) => a.task)).toEqual(["video.images", "video.images"]);
     expect(r.documents[0]?.generationRunId).toBe("run-cur");
+  });
+
+  it("puts the images of the dossier's Wikipedia article first, even if the curator skips them", async () => {
+    const asked: string[] = [];
+    const caseHits = [0, 1].map((i) => ({
+      ...hits[0]!,
+      title: `Retrato robot ${i}`,
+      page: `https://commons/case${i}`,
+      score: 300,
+      article: "https://en.wikipedia.org/wiki/Caso",
+    }));
+    const withArticle = {
+      ...deps,
+      commons: {
+        ...deps.commons,
+        articleFiles: async (url: string) => {
+          asked.push(url);
+          return caseHits;
+        },
+      },
+    };
+    const d = dossier();
+    for (const fact of d.facts) fact.url = "https://en.wikipedia.org/wiki/Caso";
+    const { ctx } = makeCtx({
+      docs: { dossier: d },
+      // the curator keeps only search results (the pool puts the article's first: n 0 and 1)
+      answers: [answer(queries), answer({ keep: Array.from({ length: 30 }, (_, i) => i + 2) })],
+    });
+    const r = await createImagesOffice(withArticle)(ctx);
+    if (r.kind !== "done") throw new Error("debía terminar");
+    const doc = r.documents[0]?.data as { candidates: { title: string; article?: string }[] };
+    expect(asked).toEqual(["https://en.wikipedia.org/wiki/Caso"]);
+    expect(doc.candidates.slice(0, 2).map((c) => c.title)).toEqual([
+      "Retrato robot 0",
+      "Retrato robot 1",
+    ]);
+    expect(doc.candidates[0]?.article).toBe("https://en.wikipedia.org/wiki/Caso");
+    expect(doc.candidates).toHaveLength(32);
   });
 
   it("does not download again what is already on disk (a retry is cheap)", async () => {
