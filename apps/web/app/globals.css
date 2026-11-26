@@ -1044,3 +1044,112 @@
     background: var(--color-panel-raised);
   }
 }
+
+@layer components {
+  /* Script desk: one row per scene. */
+  .scene {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 14px;
+  }
+  @media (min-width: 40rem) {
+    .scene {
+      grid-template-columns: 52px 13rem minmax(0, 1fr);
+      gap: 18px;
+      padding: 18px;
+    }
+  }
+  .video-thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 4px;
+    background: #000;
+    object-fit: cover;
+  }
+  .thumb-license,
+  .thumb-swap {
+    position: absolute;
+    border-radius: 3px;
+    background: color-mix(in oklab, var(--color-console) 85%, transparent);
+  }
+  .thumb-license {
+    @apply timecode;
+    top: 6px;
+    left: 6px;
+    padding: 2px 5px;
+    font-size: 9.5px;
+    color: var(--color-ink-dim);
+  }
+  .thumb-swap {
+    right: 4px;
+    bottom: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 5px 10px;
+    border: 1px solid var(--color-bezel-strong);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--color-ink);
+  }
+  /* The narration reads as text and opens its editor when tapped. */
+  .scene-text {
+    display: block;
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: var(--color-console);
+    text-align: left;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--color-ink);
+    cursor: text;
+  }
+  .scene-text:hover,
+  .scene-text:focus-visible {
+    border-color: var(--color-bezel-strong);
+  }
+  .scene-fix {
+    margin-top: 10px;
+    padding: 9px 11px;
+    border: 1px solid color-mix(in oklab, var(--color-tally-green) 30%, var(--color-bezel));
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--color-ink-dim);
+  }
+  .scene-fix del {
+    color: var(--color-ink-faint);
+    text-decoration-color: var(--color-tally-red);
+  }
+  .scene-fix ins {
+    padding: 0 2px;
+    border-radius: 2px;
+    background: color-mix(in oklab, var(--color-tally-green) 14%, transparent);
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+  .scene-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 3px;
+    font-size: 11px;
+    color: var(--color-ink-dim);
+  }
+  .scene-filter[aria-pressed="true"] {
+    background: var(--color-panel-raised);
+    border-color: var(--color-ink-faint);
+    color: var(--color-ink);
+  }
+  .desk-panel {
+    padding: 16px;
+    border: 1px solid var(--color-bezel);
+    border-radius: 8px;
+    background: var(--color-panel);
+  }
+}

@@ -20,8 +20,11 @@ import {
   slideRewriteKey,
   type TiktokPublishJob,
   tiktokPublishKey,
+  VIDEO_JOBS,
   VIDEO_QUEUE_OPTIONS,
   type VideoOfficeJob,
+  type VideoPinJob,
+  type VideoPinResult,
   videoOfficeKey,
   WORKING_STAGES,
   type WorkingStage,
@@ -62,6 +65,7 @@ function boss(): Promise<PgBoss> {
       const name = OFFICE_JOB[stage];
       await client.createQueue(name, VIDEO_QUEUE_OPTIONS[name]);
     }
+    await client.createQueue(VIDEO_JOBS.pin, VIDEO_QUEUE_OPTIONS[VIDEO_JOBS.pin]);
     return client;
   })();
   return globalForBoss.radevBoss;
@@ -198,4 +202,29 @@ export async function retryJob(name: string, id: string): Promise<void> {
 export async function queueVideoOffice(videoId: string, stage: WorkingStage): Promise<void> {
   const data: VideoOfficeJob = { videoId, stage, limitAttempt: 0 };
   await (await boss()).send(OFFICE_JOB[stage], data, { singletonKey: videoOfficeKey(data) });
+}
+
+/** Asks the video-worker to add a Commons image to a video's sheet. Returns the job's id. */
+export async function queuePinImage(videoId: string, title: string): Promise<string | null> {
+  const data: VideoPinJob = { videoId, title };
+  return (await boss()).send(VIDEO_JOBS.pin, data);
+}
+
+export type PinStatus = { state: "waiting" } | { state: "done"; result: VideoPinResult };
+
+/** How a pin request went, from pg-boss (the job's output). */
+export async function pinStatus(videoId: string, jobId: string): Promise<PinStatus> {
+  const [job] = await (await boss()).findJobs<VideoPinJob>(VIDEO_JOBS.pin, { id: jobId });
+  const failed = (message: string): PinStatus => ({
+    state: "done",
+    result: { ok: false, message },
+  });
+  if (!job || job.data.videoId !== videoId) return failed("No encuentro ese pedido.");
+  if (job.state === "completed") {
+    return { state: "done", result: job.output as unknown as VideoPinResult };
+  }
+  if (job.state === "failed" || job.state === "cancelled") {
+    return failed("No se pudo bajar la imagen. Probá de nuevo.");
+  }
+  return { state: "waiting" };
 }

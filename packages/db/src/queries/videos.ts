@@ -362,6 +362,57 @@ export function listVideoDocumentVersions(
     .orderBy(asc(videoDocuments.version));
 }
 
+// ───────────── the script desk ─────────────
+
+export type DeskOutcome = { ok: true } | { ok: false; reason: string };
+
+const STALE = "El guion cambió desde que abriste la pantalla. Recargala y mirá la versión nueva.";
+
+/** Locks the video and checks the operator is looking at the current script. */
+async function lockScript(tx: Executor, videoId: string, version: number): Promise<DeskOutcome> {
+  await tx.select({ id: videos.id }).from(videos).where(eq(videos.id, videoId)).for("update");
+  const current = await getCurrentVideoDocument(tx, videoId, "script");
+  return current?.version === version ? { ok: true } : { ok: false, reason: STALE };
+}
+
+/**
+ * Saves the operator's edit of the script as a new version (the older ones stay). Only at
+ * `script_review` and only over the version he was looking at. `data` is already validated.
+ */
+export function saveOperatorScript(
+  db: Executor,
+  videoId: string,
+  baseVersion: number,
+  data: Record<string, unknown>,
+  title?: string,
+): Promise<DeskOutcome> {
+  return atomic(db, async (tx) => {
+    const seen = await lockScript(tx, videoId, baseVersion);
+    if (!seen.ok) return seen;
+    const allowed = await transitionVideo(tx, videoId, "editScript");
+    if (!allowed.ok) return allowed;
+    await addVideoDocument(tx, { videoId, kind: "script", data, origin: "operator" });
+    if (title) await setVideoTitle(tx, videoId, title);
+    return { ok: true };
+  });
+}
+
+/** Approves or returns the script the operator saw (never another version of it). */
+export function decideScript(
+  db: Executor,
+  videoId: string,
+  version: number,
+  event: "approveScript" | "rejectScript",
+  note?: string,
+): Promise<DeskOutcome> {
+  return atomic(db, async (tx) => {
+    const seen = await lockScript(tx, videoId, version);
+    if (!seen.ok) return seen;
+    const outcome = await transitionVideo(tx, videoId, event, { note });
+    return outcome.ok ? { ok: true } : outcome;
+  });
+}
+
 // ───────────── usage ─────────────
 
 export type RecordUsageInput = {

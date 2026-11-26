@@ -10,6 +10,7 @@ const CONTENT_TYPES: Record<string, string> = {
   mp4: "video/mp4",
   jpg: "image/jpeg",
   png: "image/png",
+  webp: "image/webp",
 };
 
 export async function videoMediaResponse(

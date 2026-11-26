@@ -5,12 +5,18 @@
 //
 // The video-worker queues again any video left at a working stage (its sweep), which would spend
 // real Claude and voice credits. These are never swept: their `updated_at` is in the future. Do not
-// press "Reintentar" on one with the worker running: that does queue a real job.
+// press "Reintentar", "Aprobar guion" or "Devolver" on one with the worker running: those queue
+// real jobs (voice credits, Claude).
+import { existsSync } from "node:fs";
+import { readFile, rm } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { eq, like } from "drizzle-orm";
 import { createDb } from "../client";
 import { requireDatabaseUrl } from "../env";
 import { loadRootEnv } from "../load-root-env";
+import { resolveMediaPath, writeMediaFile } from "../media";
 import {
+  addVideoDocument,
   createVideo,
   getDefaultVoice,
   recordUsageEvent,
@@ -30,7 +36,14 @@ async function main() {
     throw new Error("Los ejemplos solo se cargan en una base local.");
   }
   const { db, pool } = createDb(url);
-  await db.delete(videos).where(like(videos.topic, `${PREFIX}%`));
+  const old = await db
+    .delete(videos)
+    .where(like(videos.topic, `${PREFIX}%`))
+    .returning();
+  for (const { id } of old) {
+    const folder = resolveMediaPath(`videos/${id}`);
+    if (folder) await rm(folder, { recursive: true, force: true });
+  }
   if (process.argv.includes("--clean")) {
     process.stdout.write("Ejemplos borrados.\n");
     await pool.end();
@@ -45,6 +58,7 @@ async function main() {
     ["Louvre, 1911", "in_review", "El día que robaron la Mona Lisa"],
     ["El ballenero Essex, 1820", "rendering", "El barco que hundió una ballena"],
     ["Tunguska, 1908", "scripting", null],
+    ["El robo de la Mona Lisa", "script_review", "El día que robaron la Mona Lisa (guion)"],
     ["Apagón de Nueva York, 1977", "finding_images", null],
   ] as const;
 
@@ -82,8 +96,54 @@ async function main() {
         unit: "seconds",
       });
     }
+    if (stage === "script_review") await scriptDocuments(id);
     // Last, because the writes above touch the row: keep it away from the sweep.
     await db.update(videos).set({ updatedAt: NEVER_SWEPT }).where(eq(videos.id, id));
+  }
+
+  // The script desk needs real documents: the Mona Lisa fixtures of the tests.
+  async function scriptDocuments(id: string) {
+    const root = (path: string) => fileURLToPath(new URL(`../../../../${path}`, import.meta.url));
+    const fixture = async (name: string) =>
+      JSON.parse(await readFile(root(`packages/video/test/fixtures/mona-${name}.json`), "utf8"));
+    const script = await fixture("script");
+    const dossier = await fixture("dossier");
+    const candidates = (await fixture("candidates")) as { id: string; file: string }[];
+    // Pictures: the mockup's downloads if they are there (docs/references/studio), else none.
+    for (const c of candidates) {
+      c.file = `images/${c.id}.jpg`;
+      const source = root(`docs/references/studio/maqueta/img/${c.id}.jpg`);
+      if (!existsSync(source)) continue;
+      const bytes = await readFile(source);
+      await writeMediaFile(`videos/${id}/images/${c.id}.jpg`, bytes);
+      await writeMediaFile(`videos/${id}/images/${c.id}.small.jpg`, bytes);
+    }
+    const results = ["textual", "casi", "no-esta"] as const;
+    const facts = (dossier.facts as { id: string; url: string }[]).map((f, i) => ({
+      id: f.id,
+      url: f.url,
+      result: results[i % 3],
+      overlap: 0,
+      missingNumbers: [],
+    }));
+    const save = (kind: "dossier" | "images" | "script" | "sources" | "review", data: object) =>
+      addVideoDocument(db, {
+        videoId: id,
+        kind,
+        data: data as Record<string, unknown>,
+        origin: "office",
+      });
+    await save("dossier", dossier);
+    await save("images", { candidates });
+    await save("script", script);
+    await save("sources", {
+      facts,
+      summary: { textual: 0, casi: 0, noEsta: 0, sinPagina: 0 },
+    });
+    await save("review", {
+      applied: [{ scene: 4, kind: "no-respaldado", problem: "Corrección de ejemplo." }],
+      rejected: [],
+    });
   }
 
   process.stdout.write(`${made.length} videos de ejemplo creados.\n`);

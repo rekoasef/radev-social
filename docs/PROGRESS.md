@@ -117,7 +117,14 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - **Datos de ejemplo:** `pnpm --filter @radev/db video:examples` (y `--clean`). Solo en base local; el barrido del worker no los toca. **No apretar "Reintentar" sobre un ejemplo con el `video-worker` corriendo:** encola un trabajo real.
 > - **Ojo al probar:** `pnpm dev` levanta también el `video-worker`: un video nuevo creado desde el panel gasta Claude de verdad. Para mirar las pantallas sin eso: `pnpm --filter @radev/web dev`.
 >
-> **▶ Próximo paso: etapa 2 de T12** (aprobar guion, con edición, cambio de imagen y el job para sumar imágenes de Commons). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **Etapa 2, aprobar guion (hecha; falta que el operador la mire):** en `/videos/<id>` cuando está en `script_review`: escenas con imagen, tiempo estimado, narración y pie editables, cambiar imagen (o sumar una de Commons: job `video.pin`), correcciones de la verificación, hechos con su estado, filtros, aprobar o devolver con nota. En el celular, la decisión queda en una barra abajo.
+> - Verificado en la base local: una pestaña vieja no guarda ni aprueba; el job `video.pin` bajó una imagen real de Commons. **Sin ver en un navegador** (pide el login del operador).
+> - El guion no guarda a qué escena pertenece cada hecho: la pantalla lo ubica por palabras (`sceneOfFact`) y abajo lista todos, así ninguno se esconde.
+> - Cambios respecto de la maqueta: se muestran todas las escenas (sin "Mostrar todas") y la licencia de cada imagen también en la hoja.
+> - El `.dockerignore` ahora deja fuera `media` y `spikes/*/out` (4,9 GB que se copiaban en cada build).
+> - **Ojo con los ejemplos:** "Aprobar guion", "Devolver" y "Reintentar" encolan trabajos reales (voz, Claude) si el `video-worker` está corriendo.
+>
+> **▶ Próximo paso: etapa 3 de T12** (aprobar video: reproductores con capítulos, miniaturas, descripciones, devolver, informe y la descarga por la ruta real). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >

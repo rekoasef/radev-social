@@ -519,6 +519,10 @@ Para eso, `GenerationTask` suma `effort?: "low" | "medium" | "high"`, que `claud
 - **Guion:** el dossier compacto, las candidatas (texto e imágenes chicas) y, si hubo un rechazo, la nota del operador (`rejection_note`) con el guion anterior. Pasa por `scriptSchema` y `checkScript`, con hasta 3 intentos. Las palabras de `highlight` se normalizan. Queda el documento `script` y se pone el `title` del video.
 - **Verificación de hechos:** `reviewSchema` y `applyFixes`. Deja el documento `review` (lo aplicado y lo rechazado) y una versión nueva de `script` si algo cambió.
 
+**Sumar una imagen de Commons (T12).** Desde el escritorio del guion, el operador pega la dirección o el nombre de un archivo. La web lo valida (`commonsTitle`) y encola `video.pin` `{ videoId, title }`; el worker (`pin.ts`) lo busca, controla licencia y tamaño, lo baja, hace la copia chica y guarda una versión nueva de `images` (`origin: operator`). No es una oficina: no toca la etapa, y solo corre si el video está en `script_review`. Repetido, no duplica (regla 8). El resultado queda como salida del job, que la pantalla consulta cada 2 s.
+
+**Escritorio del guion (T12).** Cada cambio viaja con la versión del guion que el operador estaba mirando (`saveOperatorScript` y `decideScript` bloquean el video y la comparan): una pestaña vieja no pisa ni aprueba nada. Una edición pasa por `editScene` (`packages/video`), que la acepta solo si no suma errores de `checkScript`. La voz se encola únicamente después de que la etapa cambió.
+
 **Lo que no está en el proceso:**
 - Avisos por Telegram: fuera de V1.
 - El candado entre procesos: el worker social corre en el servidor y este en la notebook; comparten la suscripción, pero no la base. Si `pnpm dev` levanta los dos en local, pueden coincidir dos `claude -p`, y está aceptado.

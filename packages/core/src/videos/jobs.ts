@@ -12,6 +12,8 @@ export const VIDEO_JOBS = {
   voice: "video.voice",
   render: "video.render",
   package: "video.package",
+  /** Adds a Commons image the operator asked for (script desk). Not an office. */
+  pin: "video.pin",
   /** Cron: queues again the videos at a working stage that have no job (a lost send). */
   sweep: "video.sweep",
 } as const;
@@ -40,6 +42,12 @@ export type VideoOfficeJob = { videoId: string; stage: WorkingStage; limitAttemp
 /** One job per video, stage and attempt: sending it twice queues it once. */
 export const videoOfficeKey = (job: VideoOfficeJob) =>
   `video:${job.videoId}:${job.stage}:${job.limitAttempt}`;
+
+export type VideoPinJob = { videoId: string; title: string };
+/** What the job leaves as its output, for the desk that asked. */
+export type VideoPinResult =
+  | { ok: true; imageId: string; message: string }
+  | { ok: false; message: string };
 
 /** Every 10 minutes. */
 export const VIDEO_SWEEP_CRON = "*/10 * * * *";
@@ -99,6 +107,8 @@ export const VIDEO_QUEUE_OPTIONS = {
     retryBackoff: true,
     expireInSeconds: 20 * 60,
   },
+  // One search and one download, with Commons' pauses and retries.
+  [VIDEO_JOBS.pin]: { retryLimit: 1, retryDelay: 30, expireInSeconds: 10 * 60 },
   [VIDEO_JOBS.sweep]: { retryLimit: 0 },
 } as const satisfies Record<
   VideoJobName,

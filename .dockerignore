@@ -9,3 +9,6 @@
 .env.*
 !.env.example
 docs
+# Archivos locales pesados (media y salidas de la spike): no van a las imágenes.
+media
+spikes/*/out

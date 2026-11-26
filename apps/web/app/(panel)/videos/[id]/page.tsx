@@ -1,5 +1,5 @@
 import { stageLabel } from "@radev/core";
-import { getVideo, listVideos } from "@radev/db";
+import { getVideo, listVideos, studioUsage } from "@radev/db";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,15 +8,18 @@ import { Plate } from "@/components/console/plate";
 import { Tally } from "@/components/console/tally";
 import { AutoRefresh } from "@/components/videos/auto-refresh";
 import { FolderTab } from "@/components/videos/folder-tab";
+import { ScriptDesk } from "@/components/videos/script-desk";
 import { DiscardVideoButton, RetryVideoForm } from "@/components/videos/video-controls";
 import { db } from "@/lib/db";
 import { describeVideo, folders } from "@/lib/video-display";
-import { STUDIO_TIME_ZONE } from "@/lib/video-time";
+import { loadScriptDocuments } from "@/lib/video-documents";
+import { scriptDesk } from "@/lib/video-script";
+import { STUDIO_TIME_ZONE, startOfDay, startOfMonth } from "@/lib/video-time";
 
 export const metadata: Metadata = { title: "Video · RAdev Social" };
 
-// A video's page: where it is and what can be done when it stopped. The two desks (approve the
-// script, approve the video) are built on top of this one.
+// A video's page: where it is, the script desk when it waits there, and what can be done when it
+// stopped.
 export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
   const id = z.uuid().safeParse((await params).id);
   const video = id.success ? await getVideo(db, id.data) : null;
@@ -24,6 +27,17 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
   const view = describeVideo(video, new Date(), STUDIO_TIME_ZONE);
   const tab = folders(await listVideos(db)).get(video.id);
   const stopped = video.failure !== null || video.pausedAt !== null;
+  const documents = video.stage === "script_review" ? await loadScriptDocuments(video.id) : null;
+  const now = new Date();
+  const quota = documents
+    ? (
+        await studioUsage(
+          db,
+          startOfDay(now, STUDIO_TIME_ZONE),
+          startOfMonth(now, STUDIO_TIME_ZONE),
+        )
+      ).quota
+    : null;
 
   return (
     <section aria-labelledby="video-heading" className="flex flex-col gap-6">
@@ -31,7 +45,7 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
       <Link href="/videos" className="plate-text w-fit text-ink-faint hover:text-ink">
         ← Estudio
       </Link>
-      <Plate aside={view.time}>{view.office}</Plate>
+      <Plate aside={view.time}>{documents ? "Aprobar guion" : view.office}</Plate>
       <div className="flex items-start gap-4">
         {tab && <FolderTab {...tab} />}
         <div className="min-w-0">
@@ -42,10 +56,24 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
         </div>
       </div>
       <Tally state={view.tally}>{view.status}</Tally>
-      {view.waiting && (
+      {documents && (
+        <ScriptDesk
+          videoId={video.id}
+          version={documents.version}
+          desk={scriptDesk({ videoId: video.id, ...documents })}
+          paused={video.pausedAt !== null}
+          voiceLeft={quota ? Math.max(0, quota.limit - quota.used) : null}
+        />
+      )}
+      {video.stage === "script_review" && !documents && (
+        <p role="alert" className="text-sm text-ink">
+          Faltan documentos de este video o no se pueden leer: no se puede mostrar el guion.
+        </p>
+      )}
+      {video.stage === "in_review" && (
         <p className="max-w-[60ch] text-sm text-ink-dim">
-          Esta pantalla para aprobar todavía no está hecha. Mientras tanto se contesta desde la
-          terminal con <code className="timecode">--resume {video.id}</code>.
+          La pantalla para aprobar el video llega en la próxima etapa. Mientras tanto se contesta
+          desde la terminal con <code className="timecode">--resume {video.id}</code>.
         </p>
       )}
       {video.stage === "approved" && (

@@ -12,15 +12,18 @@ import {
   VIDEO_QUEUE_OPTIONS,
   VIDEO_SWEEP_CRON,
   type VideoOfficeJob,
+  type VideoPinJob,
   videoOfficeKey,
   WORKING_STAGES,
   type WorkingStage,
 } from "@radev/core";
 import {
+  addVideoDocument,
   createDb,
   type Database,
   getCurrentVideoDocument,
   getDefaultVoice,
+  getVideo,
   getVoiceById,
   listStuckVideos,
   readMediaFile,
@@ -43,6 +46,7 @@ import { review } from "./offices/review";
 import { script } from "./offices/script";
 import { createSourcesOffice } from "./offices/sources";
 import { createVoiceOffice } from "./offices/voice";
+import { pinImage } from "./pin";
 import { probeVideo, remotionRenderer } from "./remotion";
 import { runOffice } from "./runner";
 import { dbStore } from "./store";
@@ -155,6 +159,34 @@ export async function startVideoWorker(): Promise<VideoWorker> {
       },
     );
   }
+
+  // The script desk's "add an image from Commons". Its result is the job's output.
+  await boss.createQueue(VIDEO_JOBS.pin, VIDEO_QUEUE_OPTIONS[VIDEO_JOBS.pin]);
+  await boss.work(VIDEO_JOBS.pin, { batchSize: 1 }, async ([job]) => {
+    if (!job) return;
+    const data = job.data as VideoPinJob;
+    const result = await pinImage(
+      {
+        getVideo: (id) => getVideo(db, id),
+        images: async (id) => (await getCurrentVideoDocument(db, id, "images"))?.data ?? null,
+        saveImages: async (id, doc) => {
+          await addVideoDocument(db, {
+            videoId: id,
+            kind: "images",
+            data: doc,
+            origin: "operator",
+          });
+        },
+        commons,
+        shrink: shrinkImage,
+        sizeOf,
+        write: (id, path, bytes) => writeMediaFile(`videos/${id}/${path}`, bytes),
+      },
+      data,
+    );
+    log.info("pinned image", { videoId: data.videoId, ok: result.ok });
+    return result;
+  });
 
   // The sweep: a video at a working stage with no activity for a while lost its job (the send after
   // the commit failed, or the process was killed): queue it again. Doing it twice is harmless.
