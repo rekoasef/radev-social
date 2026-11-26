@@ -2,6 +2,7 @@
 #   docker build --target web     → panel Next.js (servidor standalone)
 #   docker build --target worker  → worker de pg-boss
 #   docker build --target migrate → aplica migraciones y seed, y termina
+#   docker build --target video-worker → RAdev Studio: las oficinas del video (perfil `video`)
 # La base es node:24 slim (Debian), publicada para amd64 y arm64: el mismo Dockerfile sirve
 # para la compu local y para un servidor ARM (CLAUDE.md, regla 12).
 
@@ -21,6 +22,7 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/
 COPY apps/worker/package.json apps/worker/
+COPY apps/video-worker/package.json apps/video-worker/
 COPY packages/core/package.json packages/core/
 COPY packages/db/package.json packages/db/
 COPY packages/slides/package.json packages/slides/
@@ -92,6 +94,30 @@ RUN node node_modules/playwright/cli.js install --with-deps --only-shell chromiu
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /data/media && chown node:node /data/media
 USER node
+# node directo (no pnpm/npm) para que las señales de apagado lleguen al proceso.
+CMD ["node", "--import", "tsx", "src/index.ts"]
+
+# --- video-worker-deploy: las oficinas del video con solo sus dependencias de producción -------
+FROM source AS video-worker-deploy
+RUN pnpm --filter @radev/video-worker deploy --prod /out
+
+# --- video-worker (T13) --------------------------------------------------------------------
+# RAdev Studio (ADR 0029): Claude Code (viene con las dependencias, como en el worker), ffmpeg (la
+# voz, las copias chicas de las imágenes, ffprobe) y el Chrome de Remotion para el render, bajado
+# al construir la imagen (no en el primer video). Las librerías de apt son las que Remotion pide
+# para Chrome en Debian. Sin Playwright: Remotion trae su propio navegador.
+FROM node:${NODE_VERSION}-bookworm-slim AS video-worker
+ENV NODE_ENV=production
+WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg ca-certificates fonts-liberation \
+       libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 libasound2 libxrandr2 \
+       libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 libpango-1.0-0 libcairo2 libcups2 \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /data/media && chown node:node /data/media /app
+COPY --from=video-worker-deploy --chown=node:node /out ./
+USER node
+RUN node -e "import('@remotion/renderer').then((r) => r.ensureBrowser())"
 # node directo (no pnpm/npm) para que las señales de apagado lleguen al proceso.
 CMD ["node", "--import", "tsx", "src/index.ts"]
 

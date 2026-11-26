@@ -152,7 +152,7 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 **B. Tu escritorio en la web**
 - [x] T10 Diseño visual del estudio y del escritorio (capturas aprobadas el 2026-11-26: el plano del piso, `docs/references/studio/`)
 - [x] T11 `/media` con `Range` y ZIP del paquete por streaming
-- [ ] T12 Panel `/videos`: estudio, nuevo video, aprobar guion y video, descarga del paquete, informes — **programado**; falta que el operador haga un video real desde el panel y baje el paquete
+- [x] T12 Panel `/videos`: estudio, nuevo video, aprobar guion y video, descarga del paquete, informes — usado de punta a punta por el operador con el video de D.B. Cooper (2026-11-26)
 - [x] Sumado (2026-11-26, pedido del operador): la IA propone temas en "Nuevo video", sin búsqueda web o investigando en la web
 - [ ] T13 Docker: destino `video-worker` y perfil `video`
 - [ ] T14 Punta a punta

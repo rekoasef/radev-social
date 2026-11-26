@@ -1,6 +1,9 @@
 # Stack local (fases 0 a 3). Ver docs/ARCHITECTURE.md §2.
 #   docker compose up -d postgres   → solo la base, para desarrollar con `pnpm dev`
 #   docker compose up -d --build    → todo: base, migraciones + seed, web y worker
+#   docker compose --profile video up -d --build web video-worker
+#                                   → el estudio de video: la web y las oficinas (sin el worker
+#                                     de redes, que en local no hace falta)
 name: radev-social
 
 # Conexión desde adentro de la red de Docker: host `postgres`, puerto interno 5432.
@@ -85,6 +88,31 @@ services:
       web:
         condition: service_started
     # Tiempo para terminar jobs en curso al apagar (el worker espera hasta 30 s).
+    stop_grace_period: 40s
+    restart: unless-stopped
+
+  # RAdev Studio (T13): las oficinas del video. Solo con el perfil `video`, así `up -d` sigue igual.
+  # Gasta Claude y créditos de voz en cuanto toma un video: no arranca solo la primera vez.
+  video-worker:
+    build:
+      context: .
+      target: video-worker
+    profiles: ["video"]
+    # CLAUDE_CODE_OAUTH_TOKEN y ELEVENLABS_API_KEY.
+    env_file: .env
+    environment:
+      DATABASE_URL: *database-url
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      MEDIA_DIR: /data/media
+    volumes:
+      # Las imágenes, la voz y los videos, en la misma carpeta que sirve la web.
+      - ./media:/data/media
+    # Chrome (Remotion) usa memoria compartida; los 64 MB de Docker no alcanzan para el render.
+    shm_size: 1gb
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    # Termina el trabajo corto en curso; un render cortado se retoma solo después.
     stop_grace_period: 40s
     restart: unless-stopped
 

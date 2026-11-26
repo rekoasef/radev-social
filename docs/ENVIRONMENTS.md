@@ -72,6 +72,8 @@ Relevada el 2026-11-24 (solo lectura, sin cambios).
 
 **Para el video (2026-11-26):** el `.env` tiene `CLAUDE_CODE_OAUTH_TOKEN` y `ELEVENLABS_API_KEY`, Remotion ya bajó su Chrome (en `apps/video-worker/node_modules/.remotion`) y las ideas de la IA se probaron con el `video-worker`. **Falta medir el render de un video entero en esta PC.**
 
+**Disco `C:` lleno (2026-11-26):** construyendo la imagen del `video-worker` quedaron 11 MB libres en `C:` (el 24/11 había 35 GB). Docker se cayó con «Input/output error» y «bus error», porque sus datos y el disco de WSL viven en `C:`. El operador vació la Papelera (quedó 1,5 GB). **Antes de volver a usar Docker en esta PC:** liberar 20 GB o más en Windows, comprobar que la base esté sana y borrar la caché de construcción (`docker builder prune`, se puede rehacer). Nunca «Clean / Purge data» de Docker Desktop: borra la base.
+
 Sin `.wslconfig`, WSL veía 5,5 GiB (casi la mitad que la de casa) y el 2026-11-24 hubo un corte por falta de memoria (ver `docs/PROGRESS.md`). Por eso se creó uno con **8 GB** (Windows se queda con ~3,4 GB) y **4 GB de swap** (no 8: el disco `C:` está al 93 %, 35 GB libres). **El operador no tiene permisos de administrador en esta PC:** nada que se haga acá puede pedirlos (`.wslconfig` y `wsl --shutdown` no los piden).
 
 Comandos para relevarla (solo leen, no cambian nada):
