@@ -22,6 +22,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 >
 > **Al seguir en la PC de casa:** `git switch feat/video-v1 && git pull`, `nvm use && pnpm install`, `pnpm db:migrate` (`0030`–`0032`) y `pnpm db:seed` (dos rutas de IA nuevas).
 >
+> **Primer video real hecho y publicado (2026-11-26): D.B. Cooper.** Tenía errores de imágenes y carteles y una miniatura floja: están en `docs/VIDEO-CALIDAD.md` con sus arreglos (controles más estrictos, miniatura nueva, volumen), ya programados y **sin probar con un video real**. El `video-worker` hay que reiniciarlo para tomarlos. Falta que el operador corrija el video publicado y decida si tilda T12.
+> - **Propuesto, pendiente:** recorrer oficina por oficina (con un modelo más potente) y sumar el control visual de cuadros.
+>
 > **Después de V1:** decidir el «tu aporte» por la política de YouTube, la fluidez de la voz y los videos comerciales (ver «Anotado para más adelante»); revisión final de diseño con Impeccable, si el operador la quiere.
 >
 > ---

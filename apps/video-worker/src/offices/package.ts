@@ -58,6 +58,7 @@ export const createPackageOffice =
       scenes: script.scenes.map((s, i) => ({
         scene: i + 1,
         image: s.image,
+        exact: s.exact,
         narration: s.narration,
       })),
     };

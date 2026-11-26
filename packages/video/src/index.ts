@@ -3,6 +3,7 @@ export * from "./dossier";
 export * from "./edit";
 export * from "./ideas";
 export * from "./images";
+export * from "./name-cards";
 export * from "./package-doc";
 export * from "./prompts";
 export * from "./publication";

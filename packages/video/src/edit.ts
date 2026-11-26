@@ -1,6 +1,7 @@
 // Lo que el operador puede cambiar de una escena en su escritorio (narración, pie, imagen), con los
 // mismos controles que pasa la oficina de Guion. Sin I/O: guardar es de packages/db.
 import type { ImageCandidate } from "./images";
+import { dropSceneNameCards } from "./name-cards";
 import { checkScript, type Script, scriptSchema } from "./script";
 import { narrationWords, normWord } from "./text";
 
@@ -55,6 +56,8 @@ export function editScene(
     // Otra imagen: el encuadre anterior no sirve. Un acercamiento suave al centro.
     scene.from = { cx: 0.5, cy: 0.5, vw: 1 };
     scene.to = { cx: 0.5, cy: 0.45, vw: 0.6 };
+    // What the AI declared was about the other image.
+    delete scene.exact;
   }
 
   const shape = scriptSchema.safeParse(next);
@@ -66,9 +69,12 @@ export function editScene(
   }
   const before = new Set(checkScript(script, candidates, dossierText));
   const errors = checkScript(next, candidates, dossierText).filter((e) => !before.has(e));
-  return errors.length
-    ? { ok: false, errors: errors.map(operatorError) }
-    : { ok: true, script: next };
+  if (errors.length) return { ok: false, errors: errors.map(operatorError) };
+  // After the checks: losing a card must not make the change fail.
+  if (edit.image !== undefined) {
+    next.scenes[edit.scene - 1] = dropSceneNameCards(scene, candidates).scene;
+  }
+  return { ok: true, script: next };
 }
 
 /**

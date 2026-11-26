@@ -68,6 +68,7 @@ export function reviewView(g: Script, candidates: ImageCandidate[]) {
       narration: s.narration,
       image: candidates.find((c) => c.id === s.image)?.title,
       caption: s.caption,
+      exact: s.exact,
       graphics: s.graphics,
     })),
     facts: g.facts,
@@ -103,6 +104,7 @@ export function applyFixes(
       sc.image = fix.image;
       sc.from = fix.from ?? { cx: 0.5, cy: 0.5, vw: 1 };
       sc.to = fix.to ?? { cx: 0.5, cy: 0.45, vw: 0.6 };
+      delete sc.exact;
     }
     if (fix.cita) {
       const cita = sc.graphics.find((x) => x.kind === "cita");

@@ -1,23 +1,24 @@
 import type { TaskImage } from "@radev/ai";
 import {
+  aiScriptSchema,
   checkScript,
   compactDossier,
   dossierSchema,
+  dropNameCards,
   imagesDocSchema,
   normalizeHighlights,
   SCRIPT_RULES,
   type Script,
-  scriptSchema,
   smallImagePath,
 } from "@radev/video";
 import { failedAi, type Office, OfficeFailure } from "../office";
 import { readDocument } from "./util";
 
 // Oficina 4, Guion: la IA mira las imágenes y escribe el guion solo con el dossier. El código lo
-// controla (números del dossier, palabras de enganche, variedad…) y le pide hasta 3 veces que
+// controla (números del dossier, palabras de enganche, variedad…) y le pide hasta 4 veces que
 // corrija. Después de un rechazo del operador recibe su nota y el guion anterior.
 
-const MAX_ATTEMPTS = 3;
+const MAX_ATTEMPTS = 4;
 
 export const script: Office = async (ctx) => {
   const dossier = await readDocument(ctx, "dossier", dossierSchema);
@@ -75,7 +76,7 @@ export const script: Office = async (ctx) => {
       },
       // the images go only the first time: the corrections are text
       ...(first ? { images } : {}),
-      schema: scriptSchema,
+      schema: aiScriptSchema,
       effort: "low",
       maxTurns: 3,
       timeoutMs: 10 * 60_000,
@@ -90,11 +91,13 @@ export const script: Office = async (ctx) => {
     const draft = normalizeHighlights(answer.data);
     problems = checkScript(draft, candidates, text);
     if (problems.length === 0) {
+      const { script: clean, dropped } = dropNameCards(draft, candidates);
+      if (dropped.length) ctx.log.warn("name cards the image does not back", { dropped });
       return {
         kind: "done",
-        title: draft.title,
+        title: clean.title,
         documents: [
-          { kind: "script", data: draft, origin: "office", generationRunId: answer.runId },
+          { kind: "script", data: clean, origin: "office", generationRunId: answer.runId },
         ],
       };
     }

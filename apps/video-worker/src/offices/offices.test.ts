@@ -206,15 +206,15 @@ describe("script office", () => {
     expect(asked[1]?.files["anterior.json"]).toContain("7777");
   });
 
-  it("fails after 3 bad scripts", async () => {
+  it("fails after 4 bad scripts", async () => {
     const bad = goodScript();
     bad.scenes[3]!.narration += " Eran 7777 personas.";
     const { ctx } = makeCtx({
       docs,
-      answers: [answer(bad), answer(bad), answer(bad)],
+      answers: [answer(bad), answer(bad), answer(bad), answer(bad)],
       files: smallFiles(),
     });
-    await expect(script(ctx)).rejects.toThrow(/3 intentos/);
+    await expect(script(ctx)).rejects.toThrow(/4 intentos/);
   });
 
   it("after a rejection, hands the AI the operator's note and the rejected script", async () => {

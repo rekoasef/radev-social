@@ -53,6 +53,17 @@ export function checkPublication(m: Publication, script: Script, starts: number[
   const usedIds = new Set(script.scenes.map((s) => s.image));
   if (!usedIds.has(m.thumbnail.image))
     errs.push(`thumbnail.image › ${m.thumbnail.image} no se usa en el video`);
+  // The thumbnail promises what the video is about: not an image that stands in for something else.
+  const standIn = (id: string) =>
+    script.scenes.filter((s) => s.image === id).every((s) => s.exact === false);
+  if (usedIds.has(m.thumbnail.image) && standIn(m.thumbnail.image)) {
+    const real = [...usedIds].filter((id) => !standIn(id));
+    if (real.length > 0) {
+      errs.push(
+        `thumbnail.image › ${m.thumbnail.image} no es del hecho mismo; elegí una de: ${real.join(", ")}`,
+      );
+    }
+  }
   const words = m.thumbnail.lines.join(" ").split(/\s+/).filter(Boolean);
   if (words.length > 6) errs.push(`thumbnail.lines › ${words.length} palabras; máximo 6`);
   const norm = (t: string) => t.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");

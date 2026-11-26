@@ -15,6 +15,7 @@ En la rama `feat/video-v1` crece **RAdev Studio**: videos documentales para YouT
 | Qué incluye cada fase | `docs/ROADMAP.md` |
 | Por qué se tomó una decisión | `docs/decisions/` |
 | **Siempre, antes de instalar, configurar o medir algo en la máquina**: en cuál de las dos PCs estás y cómo está cada una | `docs/ENVIRONMENTS.md` |
+| Las instrucciones o controles de una oficina del video, o la calidad de un video | `docs/VIDEO-CALIDAD.md` |
 | El módulo de video (RAdev Studio): alcance, etapas, tablas, tareas | `docs/RADEV-STUDIO-REVISION.md` §7, `docs/decisions/0029-video-documental-y-oficinas.md`, `docs/ARCHITECTURE.md` §14 |
 
 Trabajamos **una fase del roadmap a la vez**. No implementes cosas de fases futuras salvo que se pida explícitamente.

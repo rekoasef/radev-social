@@ -70,7 +70,7 @@ export const OFFICE_INFO: Record<WorkingStage, OfficeInfo> = {
     task: "video.script",
     does: "Escribe el guion mirando las imágenes. Si no pasa los controles, lo intenta de nuevo con la lista de problemas.",
     effort: "low",
-    limits: "3 intentos · 10 min cada uno",
+    limits: "4 intentos · 10 min cada uno",
     reads: "dossier · imágenes · tu nota si lo devolviste",
     leaves: "guion → Verificación",
   },

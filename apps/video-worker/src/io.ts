@@ -67,7 +67,22 @@ export function decodeToPcm(audio: Uint8Array): Promise<Int16Array> {
   return new Promise((resolve, reject) => {
     const ffmpeg = spawn(
       "ffmpeg",
-      ["-v", "error", "-i", "pipe:0", "-ar", "48000", "-ac", "1", "-f", "s16le", "pipe:1"],
+      [
+        "-v",
+        "error",
+        "-i",
+        "pipe:0",
+        // YouTube plays at -14 LUFS and does not turn quiet videos up (the voice came at -17).
+        "-af",
+        "loudnorm=I=-14:TP=-1.5:LRA=11",
+        "-ar",
+        "48000",
+        "-ac",
+        "1",
+        "-f",
+        "s16le",
+        "pipe:1",
+      ],
       { stdio: ["pipe", "pipe", "pipe"] },
     );
     const out: Buffer[] = [];

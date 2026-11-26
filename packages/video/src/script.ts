@@ -89,6 +89,13 @@ export const scriptSceneSchema = z
     caption: short(70)
       .optional()
       .describe("Qué es la imagen, si no es obvio (p. ej. «Reconstrucción publicada en 1913»)."),
+    // Optional so that scripts written before it still parse; the AI must fill it (`aiScriptSchema`).
+    exact: z
+      .boolean()
+      .optional()
+      .describe(
+        "true SOLO si la imagen es la persona, el objeto, el documento o el lugar de esa época que se nombra. Si es otro avión, otro objeto, una foto actual, un dibujo o algo parecido: false, y `caption` dice qué es.",
+      ),
     highlight: z
       .array(z.string().min(1))
       .max(4)
@@ -111,6 +118,14 @@ export const scriptSchema = z
   })
   .strict();
 export type Script = z.infer<typeof scriptSchema>;
+
+/** What the Script office asks the AI for: the same script, declaring `exact` in every scene. */
+export const aiScriptSchema = scriptSchema.extend({
+  scenes: z
+    .array(scriptSceneSchema.extend({ exact: z.boolean().describe("Ver la regla de imágenes.") }))
+    .min(10)
+    .max(26),
+});
 
 /** Errores de sentido del guion (vacío = bien). */
 export function checkScript(
@@ -149,6 +164,11 @@ export function checkScript(
       0.08
     ) {
       errors.push(`${at} › from y to casi iguales: tiene que haber un zoom o paneo`);
+    }
+    if (s.exact === false && !s.caption) {
+      errors.push(
+        `${at}.caption › la imagen no es exactamente lo que se nombra: el pie tiene que decir qué es`,
+      );
     }
     const words = narrationWords(s.narration);
     const cue = (c: Cue | undefined, path: string) => {

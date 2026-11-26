@@ -3,6 +3,7 @@ import {
   applyFixes,
   compactDossier,
   dossierSchema,
+  dropNameCards,
   imagesDocSchema,
   REVIEW_RULES,
   reviewSchema,
@@ -42,7 +43,8 @@ export const review: Office = async (ctx) => {
         candidates.map((c) => ({
           id: c.id,
           title: c.title,
-          description: c.description.slice(0, 90),
+          // whole: who is who in a photo is often at the end
+          description: c.description,
           date: c.date,
         })),
       ),
@@ -56,6 +58,9 @@ export const review: Office = async (ctx) => {
   if (!answer.ok) return failedAi(answer.error, "La verificación de hechos");
 
   const result = applyFixes(script, answer.data.fixes, candidates, text);
+  // A correction can change an image: its name cards have to hold up too.
+  const { script: checked, dropped } = dropNameCards(result.script, candidates);
+  if (dropped.length) ctx.log.warn("name cards the image does not back", { dropped });
   ctx.log.info("facts checked", {
     proposed: answer.data.fixes.length,
     applied: result.applied.length,
@@ -69,13 +74,13 @@ export const review: Office = async (ctx) => {
       generationRunId: answer.runId,
     },
   ];
-  if (result.applied.length > 0) {
+  if (result.applied.length > 0 || dropped.length > 0) {
     documents.push({
       kind: "script",
-      data: result.script,
+      data: checked,
       origin: "office",
       generationRunId: answer.runId,
     });
   }
-  return { kind: "done", documents, title: result.script.title };
+  return { kind: "done", documents, title: checked.title };
 };
