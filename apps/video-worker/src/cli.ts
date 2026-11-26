@@ -13,8 +13,10 @@ import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import {
   isWorkingStage,
+  PACKAGE_CREDITS,
   packageFiles,
   packageSlug,
+  packageSource,
   stageLabel,
   type VideoEvent,
   type VideoStage,
@@ -184,20 +186,14 @@ async function exportPackage(video: Video, out: string): Promise<string> {
   const root = join(out, slug);
   const dir = resolveMediaPath(`videos/${video.id}`);
   if (!dir) fail("No encuentro la carpeta de medios del video (¿MEDIA_DIR?).");
-  const source = (format: "9x16" | "16x9", file: "video" | "thumbnail" | "description") => {
-    if (file === "video") return join(dir, `render/video-${format}.mp4`);
-    if (file === "thumbnail") return join(dir, `package/miniatura-${format}.png`);
-    return join(
-      dir,
-      format === "9x16" ? "package/descripcion-short.txt" : "package/descripcion.txt",
-    );
-  };
   for (const f of packageFiles(slug)) {
     const target = join(out, f.path);
     await mkdir(join(target, ".."), { recursive: true });
-    await copyFile(source(f.format, f.file), target);
+    await copyFile(join(dir, packageSource(f)), target);
   }
-  await copyFile(join(dir, "package/creditos.txt"), join(root, "creditos.txt")).catch(() => {});
+  await copyFile(join(dir, PACKAGE_CREDITS.source), join(root, PACKAGE_CREDITS.name)).catch(
+    () => {},
+  );
   return root;
 }
 

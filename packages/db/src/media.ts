@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 
 // Files under MEDIA_DIR (uploaded brand assets; rendered slides from phase 2). The database
@@ -68,6 +68,50 @@ export async function readMediaFile(relativePath: string): Promise<Buffer | unde
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
     throw error;
+  }
+}
+
+/** Size and date of a file, without reading it; undefined like `readMediaFile`. */
+export async function statMediaFile(
+  relativePath: string,
+): Promise<{ size: number; mtimeMs: number } | undefined> {
+  const absolute = resolveMediaPath(relativePath);
+  if (!absolute) return undefined;
+  try {
+    const info = await stat(/*turbopackIgnore: true*/ absolute);
+    return info.isFile() ? { size: info.size, mtimeMs: info.mtimeMs } : undefined;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw error;
+  }
+}
+
+const CHUNK_BYTES = 256 * 1024;
+
+/**
+ * A file (or the bytes `start`..`end`, both included) in chunks, so big files such as videos never
+ * sit whole in memory. The file is opened on the first read and closed when the loop ends or is
+ * abandoned. Fails if the file turns out shorter than asked.
+ */
+export async function* readMediaChunks(
+  relativePath: string,
+  range?: { start: number; end: number },
+): AsyncGenerator<Uint8Array<ArrayBuffer>, void, undefined> {
+  const file = await open(/*turbopackIgnore: true*/ mustResolve(relativePath), "r");
+  try {
+    const end = range?.end ?? (await file.stat()).size - 1;
+    let position = range?.start ?? 0;
+    while (position <= end) {
+      // A new buffer each time: whoever receives the chunk may keep it.
+      const buffer = new Uint8Array(Math.min(CHUNK_BYTES, end - position + 1));
+      const { bytesRead } = await file.read(buffer, 0, buffer.length, position);
+      if (bytesRead === 0)
+        throw new Error(`El archivo se acortó mientras se leía: ${relativePath}`);
+      position += bytesRead;
+      yield buffer.subarray(0, bytesRead);
+    }
+  } finally {
+    await file.close();
   }
 }
 

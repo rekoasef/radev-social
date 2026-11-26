@@ -425,7 +425,7 @@ cualquiera (salvo archived) → archived      [scheduled → publishing → publ
 - `render/video-9x16.mp4` y `render/video-16x9.mp4`
 - `package/miniatura-9x16.png`, `package/miniatura-16x9.png`, `package/descripcion-short.txt` y `package/descripcion.txt`
 
-Re-renderizar pisa el archivo, y la web lo pide con `?v=<checksum>`, como los PNG de los posts.
+Re-renderizar pisa el archivo: la web sirve `videos/` con `no-cache` y `ETag`, así el navegador pide la versión nueva solo (T11).
 
 ### 7.4 Dónde vive el código
 

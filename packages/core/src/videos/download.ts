@@ -40,3 +40,15 @@ export function packageFiles(
     ];
   });
 }
+
+type PackageFile = ReturnType<typeof packageFiles>[number];
+
+/** Where the offices left each file of the package, relative to `media/videos/<id>/`. */
+export function packageSource({ format, file }: Pick<PackageFile, "format" | "file">): string {
+  if (file === "video") return `render/video-${format}.mp4`;
+  if (file === "thumbnail") return `package/miniatura-${format}.png`;
+  return format === "9x16" ? "package/descripcion-short.txt" : "package/descripcion.txt";
+}
+
+/** The image credits go at the root of the folder, when the Publication office left them. */
+export const PACKAGE_CREDITS = { source: "package/creditos.txt", name: "creditos.txt" } as const;

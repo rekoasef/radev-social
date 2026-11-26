@@ -471,7 +471,7 @@ Alcance, tareas y criterio de aceptación: `docs/RADEV-STUDIO-REVISION.md` §7. 
   - Todo número que se ve o se dice tiene que estar en el dossier (regla 9, controlado en código).
   - Corre un solo `claude -p` a la vez dentro del `video-worker`.
 - **Render**: Remotion renderiza el video entero (sin clips por escena) con un Chrome propio, en las dos medidas. Lo usa solo el `video-worker`; la web nunca renderiza (regla 5).
-- **Archivos**: en `media/videos/<id>/`. La web sirve los MP4 con `Range` y arma el ZIP del paquete por streaming:
+- **Archivos**: en `media/videos/<id>/`. La web sirve los MP4 con `Range` (`/media/videos/…`, con `ETag` porque un re-render pisa el archivo) y arma el ZIP del paquete por streaming (`/videos/<id>/download`, solo aprobado), más `creditos.txt`:
   ```
   <slug>/short/video.mp4 · miniatura.png · descripcion.txt
   <slug>/normal/video.mp4 · miniatura.png · descripcion.txt

@@ -101,7 +101,14 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 >   - el movimiento previsto (carpetas que caminan, el que teclea, los LEDs, el globo que respira) se implementa ahí.
 > - **Herramienta:** Impeccable se actualizó a la v4.11.1 en esta PC y sumó su detector de diseño a `~/.claude/settings.json` (ver `docs/ENVIRONMENTS.md`).
 >
-> **▶ Próximo paso: T11** (con Sonnet): `/media` con `Range` y el ZIP del paquete por streaming. Después T12 (panel `/videos`, portando la maqueta), T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **T11 CERRADA (2026-11-26, PC de la fábrica): `/media` con `Range` y ZIP por streaming.**
+> - `/media/videos/…` va por una rama aparte (`apps/web/lib/video-media.ts`): MP4, JPG y PNG de a pedazos, con `Range` (206/416) e `If-Range`. Las imágenes de Social siguen igual (sus tests se escribieron antes de tocar la ruta).
+> - **Caché de los archivos de video:** `no-cache` + `ETag` (tamaño y fecha). Un re-render pisa el mismo archivo y el navegador se entera solo, sin el `?v=<checksum>` que preveía la spec.
+> - `GET /videos/<id>/download` (`lib/video-package.ts`): solo con el video aprobado; revisa que estén todos los archivos antes de empezar. Entrega la misma carpeta que copia el comando de T9, con `creditos.txt`. La lista de archivos quedó en `core` (`packageSource`).
+> - **Medido:** MP4 de 53 MB en Chromium, saltos al segundo 50, 10 y 55 en 0,2–0,4 s; ZIP de 200 MB a un cliente lento, la memoria subió 46 MB; servir el MP4 desde `next start` casi no la movió (222 → 223 MiB). El ZIP se abre en Windows (`Expand-Archive`).
+> - **Falta ver con T12:** la descarga por la ruta real, con sesión y un video aprobado de la base (se probó la función que arma la respuesta, no la ruta entera).
+>
+> **▶ Próximo paso: T12** (panel `/videos`, portando la maqueta). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >
