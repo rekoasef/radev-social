@@ -72,12 +72,18 @@ export function checkDossier(d: Dossier): string[] {
 }
 
 /**
- * El dossier para la IA que escribe (sin extractos ni urls: pesan y no hacen falta) y el texto
- * completo contra el que se controlan los números (regla 9).
+ * El dossier para la IA que escribe (sin urls; sin extractos salvo `excerpts`: Guion y Verificación
+ * reciben la frase real de cada página, ver `usableDossier`) y el texto completo contra el que se
+ * controlan los números (regla 9).
  */
-export function compactDossier(d: Dossier): { text: string; json: string } {
+export function compactDossier(
+  d: Dossier,
+  options: { excerpts?: boolean } = {},
+): { text: string; json: string } {
   return {
     text: JSON.stringify(d),
-    json: JSON.stringify(d, (k, v) => (k === "excerpt" || k === "url" ? undefined : v)),
+    json: JSON.stringify(d, (k, v) =>
+      (k === "excerpt" && !options.excerpts) || k === "url" ? undefined : v,
+    ),
   };
 }

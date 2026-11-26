@@ -14,7 +14,7 @@ export const FACT_DISPLAY: Record<
   { tally: TallyState; label: string }
 > = {
   textual: { tally: "ready", label: "en su página" },
-  casi: { tally: "cued", label: "casi igual" },
+  casi: { tally: "cued", label: "a medias" },
   "no-esta": { tally: "standby", label: "no está en la página" },
   "sin-pagina": { tally: "off", label: "sin página" },
 };

@@ -68,7 +68,7 @@ describe("research office", () => {
 });
 
 describe("sources office", () => {
-  it("downloads each URL once and leaves how much of each fact is in its page", async () => {
+  it("downloads each URL once and leaves how much of each fact and quote is in its page", async () => {
     const asked: string[] = [];
     const office = createSourcesOffice({
       fetchPage: async (url) => {
@@ -77,14 +77,63 @@ describe("sources office", () => {
         return "<p>nada</p>";
       },
     });
-    const { ctx } = makeCtx({ docs: { dossier: dossier() } });
+    const d = dossier();
+    const readable = new Set(
+      [...d.facts, ...d.quotes].map((f) => f.url).filter((u) => !u.includes("wikipedia")),
+    );
+    const { ctx } = makeCtx({
+      docs: { dossier: d },
+      answers: [...readable].map(() => answer({ items: [] })),
+    });
     const r = await office(ctx);
     expect(new Set(asked).size).toBe(asked.length);
     if (r.kind !== "done") throw new Error("debía terminar");
     const doc = r.documents[0]?.data as { facts: unknown[]; summary: { sinPagina: number } };
     expect(r.documents[0]?.kind).toBe("sources");
-    expect(doc.facts).toHaveLength(dossier().facts.length);
+    expect(doc.facts).toHaveLength(d.facts.length + d.quotes.length);
     expect(doc.summary.sinPagina).toBeGreaterThan(0);
+  });
+
+  it("asks an AI to find in the real page what is not there verbatim, and checks its sentence", async () => {
+    const d = dossier();
+    const first = d.facts[0];
+    if (!first) throw new Error("fixture");
+    d.facts = d.facts.map((f) => ({
+      ...f,
+      url: "https://a.org/1",
+      excerpt: "un resumen que no está",
+    }));
+    d.quotes = [];
+    const office = createSourcesOffice({
+      fetchPage: async () => "<p>Peruggia salió del Louvre con la Mona Lisa.</p>",
+    });
+    const { ctx, asked } = makeCtx({
+      docs: { dossier: d },
+      answers: [
+        answer({
+          items: [
+            { id: "F1", quotes: ["Peruggia salió del Louvre con la Mona Lisa."], differs: null },
+          ],
+        }),
+      ],
+    });
+    const r = await office(ctx);
+    if (r.kind !== "done") throw new Error("debía terminar");
+    expect(asked[0]).toMatchObject({ task: "video.sources" });
+    expect(asked[0]?.files["pagina.txt"]).toContain("Peruggia salió del Louvre");
+    expect(asked[0]?.tools).toBeUndefined();
+    const doc = r.documents[0]?.data as { facts: { result: string; checked?: boolean }[] };
+    expect(doc.facts[0]).toMatchObject({ result: "textual", checked: true });
+  });
+
+  it("returns Claude's limit", async () => {
+    const d = dossier();
+    const office = createSourcesOffice({ fetchPage: async () => "<p>nada</p>" });
+    const { ctx } = makeCtx({
+      docs: { dossier: d },
+      answers: [failure({ kind: "rate_limited", message: "l", retryAfterMs: null })],
+    });
+    expect(await office(ctx)).toEqual({ kind: "rate_limited", retryAfterMs: null });
   });
 
   it("fails without a dossier, and retrying would not help", async () => {

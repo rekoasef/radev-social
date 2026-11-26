@@ -43,6 +43,8 @@ const TASK_HINTS: Record<AiTask, string> = {
   "caption.variants": "Variantes de la descripción del post.",
   "metrics.extract": "Lee capturas de las analíticas de TikTok.",
   "video.research": "Video: investiga el tema en la web y arma el dossier con fuentes.",
+  "video.sources":
+    "Video: lee la página real de cada fuente y copia la frase que respalda cada hecho. Lo comprueba el código.",
   "video.images": "Video: elige entre las imágenes de archivo encontradas en Commons.",
   "video.script": "Video: escribe el guion mirando las imágenes. Conviene la mejor calidad.",
   "video.review": "Video: verifica los hechos del guion contra el dossier.",

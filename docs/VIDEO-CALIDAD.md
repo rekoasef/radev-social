@@ -34,11 +34,20 @@ En D.B. Cooper, de 32 candidatas solo ~5 eran del caso; el resto, relleno. Ahora
 - Varias son chicas (430–500 px): en pantalla se ven más blandas. El guion las usa enteras o sin acercar mucho.
 - Un artículo que no existe o no responde no frena la oficina.
 
+## Etapa 4: fuentes que sirven (2026-11-26)
+
+Antes, 24 de 25 hechos de D.B. Cooper daban «no está en la página»: la búsqueda de Investigación le pasa a la IA un resumen de cada página, así que sus «fragmentos textuales» no estaban en ningún lado y el control no distinguía un dato falso de uno bien citado.
+- **Cómo es ahora:** Fuentes baja cada página; lo que no aparece textual se lo pasa a una IA **sin búsqueda** (tarea `video.sources`) con el texto real, de a partes de 30.000 caracteres. La IA copia de 1 a 3 frases que lo respaldan y dice qué parte del hecho la página no dice (`differs`); **el código comprueba que cada frase esté en la página**. Se controlan también las citas.
+- **Qué reciben Guion y Verificación** (`usableDossier`): cada hecho con la frase real de su página en `excerpt`; los respaldados a medias, con «(la página NO dice: …)»; sin los que su página no dice (salvo que eso deje menos del 60 % o menos de 8: entonces van todos y el escritorio lo avisa).
+- **Probado con el dossier real de D.B. Cooper** (3 pruebas, ajustando): 23 de 31 hechos y citas textuales, 8 a medias, 0 descartados. Marcó «la página dice SR-71, no U-2», «un año después, no menos de cinco meses» y que la página citada no da la fecha del 8 de julio de 2016. 82 s y ~94.000 tokens de entrada.
+- Lo que se aprendió en las pruebas: con la página entera de Wikipedia (más de 120.000 caracteres) la IA no encontraba frases que estaban («el único secuestro sin resolver»): por eso va de a partes. Y un dato repartido en dos oraciones daba «a medias»: por eso hasta 3 frases.
+- El escritorio muestra la frase de cada hecho y lo que la página no dice, y tacha los que no llegaron al guion.
+
 ## Lo que todavía no se controla
 
 - **Homónimos:** el código compara nombres, no personas (en el ejemplo de la Mona Lisa, un Giovanni Poggi de 1770). Queda como regla para la IA.
 - **Un cartel con nombre sobre una foto de grupo** que sí lo nombra: depende del encuadre que elija la IA.
 - Las reglas nuevas **no se probaron todavía con un video real**.
-- Fuentes: 24 de 25 hechos «no están» en su página (WebFetch le pasa a la IA un resumen). Sigue siendo informativa.
+- Un dato que una parte de la página respalda a medias y otra parte completa queda «a medias» (no se juntan frases de partes distintas): el guion lo evita aunque sea cierto.
 - La revisión de cuadros mira el **medio** del zoom: lo que se ve al empezar o al terminar la escena puede ser distinto.
 - Las etapas 1 y 2 **no se probaron con un video nuevo de punta a punta**.

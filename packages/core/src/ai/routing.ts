@@ -12,6 +12,7 @@ export const AI_TASK_LABELS: Record<AiTask, string> = {
   "caption.variants": "Variantes de descripción",
   "metrics.extract": "Leer capturas de métricas",
   "video.research": "Video: investigar el tema",
+  "video.sources": "Video: buscar cada hecho en su página",
   "video.images": "Video: elegir imágenes de archivo",
   "video.script": "Video: escribir el guion",
   "video.review": "Video: verificar los hechos",

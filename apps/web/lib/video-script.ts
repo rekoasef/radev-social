@@ -10,6 +10,7 @@ import {
   type SourceResult,
   type SourcesDoc,
   smallImagePath,
+  usableDossier,
 } from "@radev/video";
 
 // What the script desk shows, from the video's documents. Pure.
@@ -26,8 +27,14 @@ export type FactView = {
   id: string;
   claim: string;
   url: string | null;
-  /** How much of it is on its page (the Sources office); null for a quote or without data. */
+  /** How much of it is on its page (the Sources office); null without data. */
   result: SourceResult | null;
+  /** The sentence of its page that backs it, when the Sources office found it. */
+  quote: string | null;
+  /** What the claim says and its page does not (backed only in part). */
+  differs: string | null;
+  /** Its page does not say it: Script and Verification did not get it. */
+  dropped: boolean;
 };
 
 export type ImageView = {
@@ -167,6 +174,9 @@ export function scriptDesk(input: {
   }));
   const imageById = new Map(images.map((i) => [i.id, i]));
   const results = new Map(input.sources?.facts.map((f) => [f.id, f.result]));
+  const quotes = new Map(input.sources?.facts.map((f) => [f.id, f.quote ?? null]));
+  const differs = new Map(input.sources?.facts.map((f) => [f.id, f.differs ?? null]));
+  const dropped = new Set(usableDossier(dossier, input.sources).dropped);
   const narrations = script.scenes.map((s) => s.narration);
 
   const facts = script.facts.map(({ claim, source }) => {
@@ -178,6 +188,9 @@ export function scriptDesk(input: {
       claim,
       url: origin?.url ?? null,
       result: results.get(id) ?? null,
+      quote: quotes.get(id) ?? null,
+      differs: differs.get(id) ?? null,
+      dropped: dropped.has(id),
       scene: sceneOfFact(claim, narrations),
     };
   });
@@ -221,13 +234,19 @@ export function scriptDesk(input: {
   });
 
   const characters = narrations.reduce((n, t) => n + t.length, 0);
-  const missing = facts.filter((f) => unverifiedResult(f.result)).length;
   const repeated = [...uses.values()].filter((v) => v.length > 1);
   const notes: ScriptDeskView["notes"] = [];
-  if (missing) {
+  if (dropped.size) {
     notes.push({
       tone: "cued",
-      text: `${missing} hechos no aparecen en su página. Fuentes es informativa: mirá los que importan.`,
+      text: `${dropped.size} hechos o citas no están en su página (la leyó una IA y el código lo comprobó): Guion y Verificación no los usaron.`,
+    });
+  }
+  const unread = facts.filter((f) => unverifiedResult(f.result) && !dropped.has(f.id)).length;
+  if (unread) {
+    notes.push({
+      tone: "cued",
+      text: `${unread} hechos sin comprobar en su página (no se pudo leer, o no se buscaron): mirá los que importan.`,
     });
   }
   if (repeated.length) {

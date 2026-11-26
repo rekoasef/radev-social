@@ -1,0 +1,4 @@
+ALTER TABLE "ai_routes" DROP CONSTRAINT "ai_routes_task_valid";--> statement-breakpoint
+ALTER TABLE "generation_runs" DROP CONSTRAINT "generation_runs_task_valid";--> statement-breakpoint
+ALTER TABLE "ai_routes" ADD CONSTRAINT "ai_routes_task_valid" CHECK ("ai_routes"."task" in ('carousel.generate', 'slide.rewrite', 'ideas.generate', 'ideas.research', 'caption.variants', 'metrics.extract', 'video.research', 'video.sources', 'video.images', 'video.script', 'video.review', 'video.package', 'video.ideas', 'video.ideas.research'));--> statement-breakpoint
+ALTER TABLE "generation_runs" ADD CONSTRAINT "generation_runs_task_valid" CHECK ("generation_runs"."task" in ('carousel.generate', 'slide.rewrite', 'ideas.generate', 'ideas.research', 'caption.variants', 'metrics.extract', 'video.research', 'video.sources', 'video.images', 'video.script', 'video.review', 'video.package', 'video.ideas', 'video.ideas.research'));

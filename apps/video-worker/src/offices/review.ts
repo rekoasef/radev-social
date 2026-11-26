@@ -15,6 +15,8 @@ import {
   type Script,
   scriptSchema,
   smallImagePath,
+  sourcesSchema,
+  usableDossier,
 } from "@radev/video";
 import { drawFrames } from "../frames";
 import { failedAi, type Office, type OfficeContext, type OfficeResult } from "../office";
@@ -42,7 +44,11 @@ export const createReviewOffice =
     const dossier = await readDocument(ctx, "dossier", dossierSchema);
     const script = await readDocument(ctx, "script", scriptSchema);
     const { candidates } = await readDocument(ctx, "images", imagesDocSchema);
-    const { text, json } = compactDossier(dossier);
+    const sources = sourcesSchema.safeParse(await ctx.document("sources"));
+    const { text, json } = compactDossier(
+      usableDossier(dossier, sources.success ? sources.data : null).dossier,
+      { excerpts: true },
+    );
 
     const images: TaskImage[] = [];
     for (const id of new Set(script.scenes.map((s) => s.image))) {

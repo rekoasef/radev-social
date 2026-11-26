@@ -16,6 +16,7 @@ Tu salida es el guion escena por escena en JSON. El código lo valida, pone la v
 - **Escena 2**: una pregunta corta que abre la intriga.
 - **Medio**: la historia en orden, un hecho por escena, frases concretas. Contá el *porqué* y el detalle que sorprende, no solo la secuencia.
 - **Última escena**: una pregunta al espectador que invite a comentar. Termina en «?» y lleva \`tail\` de 1,2 a 1,8.
+- Cada hecho trae en \`excerpt\` **la frase real de su página**: lo que no esté ahí (otro número, otro nombre, un detalle de más) no lo afirmes. Si el hecho dice «(la página NO dice: …)», eso no va.
 - Cada dato tiene que salir del dossier. **Solo usá hechos del dossier**; lo de \`unconfirmed\` no lo afirmes, y lo de \`disputed\` solo atribuido («según…»). **Los números no los inventás**: todo número de la narración (y todo \`value\` de una cifra) tiene que estar en el dossier. Si dudás, redondeá con «casi» o «más de» sin cambiar la cifra, o no lo uses.
 - Listá en \`facts\` cada dato de la narración con el \`id\` del dossier (F1, F2…).
 
@@ -65,7 +66,7 @@ export const REVIEW_RULES = `# Verificador de hechos
 
 Revisás el guion de un video documental (\`guion.json\`) contra la investigación (\`dossier.json\`: \`facts\` con id, \`quotes\`, \`disputed\`, \`unconfirmed\`). Tu trabajo es que **nada falso, exagerado ni dudoso llegue al aire**. Revisá una por una la narración, **las imágenes**, los gráficos (\`cifra\`, \`fecha\`, \`nombre\`, \`cita\`, \`cronologia\`) y los \`caption\` de cada escena. Buscá:
 
-- **no-respaldado**: una afirmación que ningún \`fact\` sostiene, o un adorno que suena a dato («pasillos vacíos», «con un plan simple», «el cuadro más vigilado de Francia») sin respaldo. Corregila a lo que el dossier sí dice, o quitala.
+- **no-respaldado**: una afirmación que ningún \`fact\` sostiene (mirá el \`excerpt\` de cada hecho: es la frase real de su página; si el hecho dice «la página NO dice…», eso no está respaldado), o un adorno que suena a dato («pasillos vacíos», «con un plan simple», «el cuadro más vigilado de Francia») sin respaldo. Corregila a lo que el dossier sí dice, o quitala.
 - **disputa**: algo que el dossier marca en \`disputed\` contado como cierto. Reescribilo para que valga con todas las versiones («más de dos años») o atribuilo («según…»).
 - **no-confirmado**: algo de \`unconfirmed\` afirmado como hecho.
 - **cita**: una \`cita\` que no es traducción fiel de una de \`quotes\` (parafraseada, resumida, de otra persona, o puesta donde no se habla de eso). Devolvé \`cita\` con el texto fiel.
@@ -152,3 +153,15 @@ Quien mira cree que lo que ve es lo que se dice. Buscá **solo problemas que se 
 Para cada problema devolvé la corrección mínima, **sin tocar la narración**: \`whole: true\` (la foto va entera en el Short, sobre un fondo desenfocado: lo mejor cuando el recorte vertical corta a un grupo o un documento), \`caption\` (qué es la imagen, hasta 70 caracteres), \`image\` (una candidata mejor), \`from\`/\`to\` (otro encuadre, pensado en vertical: \`cx\`, \`cy\` son el centro de lo que se ve, de 0 a 1, y \`vw\` el ancho visible) o \`graphics\` completos de la escena (sin el cartel que miente, o en otra posición). \`kind\`: \`imagen\`. \`problem\`: qué se ve mal, en una frase.
 
 Si un cuadro está bien, no lo menciones. Si todos están bien, devolvé \`fixes\` vacío.`;
+
+/** Oficina de Fuentes: una IA lee la página real y copia la frase de cada hecho. */
+export const SOURCES_RULES = `# Lector de fuentes
+
+\`pagina.txt\` es el texto real de una página web (a veces, una parte de ella). \`hechos.json\` son afirmaciones que alguien dijo haber sacado de esa página. Para cada una, buscá en la página la frase que la respalda.
+
+- \`quotes\`: **copiá las frases tal cual están en \`pagina.txt\`**, en su idioma, sin traducir, resumir ni cambiar una letra. Una frase, o hasta 3 si el dato está repartido en varias oraciones (cada una entera o un pedazo de una oración larga). El código busca cada una en la página: si una no está igual, cuenta como que no la encontraste.
+- La frase tiene que decir **lo mismo** que la afirmación: el mismo dato, la misma cifra, la misma fecha, la misma persona. Si la página dice algo parecido pero distinto (otra cifra, otro año, «unos» en vez de un número exacto), devolvé esa frase igual: quien lo revise ve la diferencia.
+- \`differs\`: si las frases respaldan solo una parte, qué dice la afirmación que **ninguna parte de este texto** dice («la página dice SR-71, no U-2», «no dice la hora»); null si dice lo mismo.
+- Si este texto no lo dice, \`quotes: []\`. No lo deduzcas.
+- Para una cita (id C…), buscá la frase original de esa persona: puede estar en otro idioma que la afirmación.
+- Devolvé un ítem por cada id de \`hechos.json\`.`;

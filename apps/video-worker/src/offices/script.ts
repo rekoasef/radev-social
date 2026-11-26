@@ -10,6 +10,8 @@ import {
   SCRIPT_RULES,
   type Script,
   smallImagePath,
+  sourcesSchema,
+  usableDossier,
 } from "@radev/video";
 import { failedAi, type Office, OfficeFailure } from "../office";
 import { readDocument } from "./util";
@@ -23,7 +25,12 @@ const MAX_ATTEMPTS = 4;
 export const script: Office = async (ctx) => {
   const dossier = await readDocument(ctx, "dossier", dossierSchema);
   const { candidates } = await readDocument(ctx, "images", imagesDocSchema);
-  const { text, json } = compactDossier(dossier);
+  // Without the facts their own page does not back (Fuentes, stage 4).
+  const sources = sourcesSchema.safeParse(await ctx.document("sources"));
+  const usable = usableDossier(dossier, sources.success ? sources.data : null);
+  if (usable.dropped.length)
+    ctx.log.info("facts left out: not on their page", { ids: usable.dropped });
+  const { text, json } = compactDossier(usable.dossier, { excerpts: true });
   const brief = JSON.stringify(
     candidates.map((c) => ({
       id: c.id,

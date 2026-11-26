@@ -10,6 +10,7 @@ export const AI_TASKS = [
   "metrics.extract",
   // RAdev Studio (ADR 0029): the offices of the video that use AI.
   "video.research",
+  "video.sources",
   "video.images",
   "video.script",
   "video.review",

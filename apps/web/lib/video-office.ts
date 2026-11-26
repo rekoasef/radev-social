@@ -25,6 +25,7 @@ export type OfficeInfo = {
   who: string;
   task:
     | "video.research"
+    | "video.sources"
     | "video.images"
     | "video.script"
     | "video.review"
@@ -48,11 +49,11 @@ export const OFFICE_INFO: Record<WorkingStage, OfficeInfo> = {
     leaves: "dossier → Fuentes",
   },
   checking_sources: {
-    who: "Código",
-    task: null,
-    does: "Baja cada página del dossier y mide si el fragmento citado y sus números están de verdad ahí. Es informativa: no frena nada.",
-    effort: null,
-    limits: "20 s por página",
+    who: "Código + Claude",
+    task: "video.sources",
+    does: "Baja cada página del dossier. Lo que no está textual lo busca una IA en el texto real y el código comprueba la frase. Lo que la página no dice no llega al guion.",
+    effort: "low",
+    limits: "20 s por página · de a 30.000 caracteres",
     reads: "dossier",
     leaves: "fuentes → Imágenes",
   },
@@ -77,10 +78,10 @@ export const OFFICE_INFO: Record<WorkingStage, OfficeInfo> = {
   checking_facts: {
     who: "Claude",
     task: "video.review",
-    does: "Una segunda lectura del guion contra el dossier. El código solo aplica las correcciones que no rompen ninguna regla.",
+    does: "Dos miradas: el guion contra el dossier, y el cuadro de cada escena como va a salir. El código solo aplica las correcciones que no rompen ninguna regla.",
     effort: "medium",
-    limits: "1 intento · 8 min",
-    reads: "dossier · guion · imágenes",
+    limits: "1 intento por mirada · 8 min cada una",
+    reads: "dossier · fuentes · guion · imágenes · cuadros",
     leaves: "correcciones → tu escritorio",
   },
   voicing: {

@@ -232,6 +232,13 @@
       "when": 1795700413433,
       "tag": "0032_numerous_the_twelve",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1795710727913,
+      "tag": "0033_light_centennial",
+      "breakpoints": true
     }
   ]
 }

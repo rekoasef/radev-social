@@ -119,7 +119,17 @@ export function ScriptDesk({
             <ul className="divide-y divide-bezel rounded-md border border-bezel bg-panel">
               {desk.facts.map((fact) => (
                 <li key={`${fact.id}-${fact.claim}`} className="flex flex-col gap-1.5 px-4 py-3">
-                  <span className="text-sm text-ink">{fact.claim}</span>
+                  <span
+                    className={`text-sm ${fact.dropped ? "text-ink-faint line-through" : "text-ink"}`}
+                  >
+                    {fact.claim}
+                  </span>
+                  {fact.quote && <q className="text-xs text-ink-dim italic">{fact.quote}</q>}
+                  {fact.differs && (
+                    <span className="text-xs text-tally-amber">
+                      La página no dice: {fact.differs}
+                    </span>
+                  )}
                   <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-faint">
                     {fact.result && (
                       <Tally state={FACT_DISPLAY[fact.result].tally}>
