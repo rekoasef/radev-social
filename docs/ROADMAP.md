@@ -143,8 +143,8 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 - [x] T2 `packages/video`: schemas, controles, prompts, descripciones
 - [x] T3 `core/videos`: etapas y eventos con tests de invariantes
 - [x] T4 `db`: tablas de video, `transitionVideo`, seed de voces (migraciones `0028` y `0029`, aplicadas y probadas contra Postgres local)
-- [x] T5 Voz de ElevenLabs en una toma (`packages/ai/src/tts`) — probada con `fetch` falso y con la toma real de la Mona Lisa; falta una llamada real (≈400 créditos) cuando se arme la oficina de Locución
-- [x] T6 Cliente de Wikimedia Commons con filtro de licencias (probado con respuestas guardadas; falta una búsqueda real cuando se arme la oficina de Imágenes)
+- [x] T5 Voz de ElevenLabs en una toma (`packages/ai/src/tts`) — probada con `fetch` falso y con la toma real de la Mona Lisa; la primera llamada real fue en T9, sin errores
+- [x] T6 Cliente de Wikimedia Commons con filtro de licencias (probado con respuestas guardadas; la búsqueda real se hizo en T9)
 - [x] T7 `apps/video-worker` + oficinas 1 a 5 (hasta el guion) — corredor probado contra la base real con oficinas falsas; las oficinas con Claude y Commons de verdad se prueban en T9
 - [x] T8 Oficinas 6 a 8 (voz, render 9:16 y 16:9, publicación) — probadas con fakes; el render probado de verdad con 3 escenas de la Mona Lisa; la voz, la publicación y las imágenes con servicios reales se prueban en T9
 - [ ] T9 Comando de punta a punta: un video completo sin pantallas — **hecho y probado con servicios reales** (Betty y Barney Hill: 7 corridas de Claude, 1.917 créditos de voz, los dos formatos de 149 s, paquete completo); falta que el operador lo mire y lo apruebe para tildarla
@@ -152,7 +152,8 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 **B. Tu escritorio en la web**
 - [x] T10 Diseño visual del estudio y del escritorio (capturas aprobadas el 2026-11-26: el plano del piso, `docs/references/studio/`)
 - [x] T11 `/media` con `Range` y ZIP del paquete por streaming
-- [ ] T12 Panel `/videos`: estudio, nuevo video, aprobar guion y video, descarga del paquete, informes
+- [ ] T12 Panel `/videos`: estudio, nuevo video, aprobar guion y video, descarga del paquete, informes — **programado**; falta que el operador haga un video real desde el panel y baje el paquete
+- [x] Sumado (2026-11-26, pedido del operador): la IA propone temas en "Nuevo video", sin búsqueda web o investigando en la web
 - [ ] T13 Docker: destino `video-worker` y perfil `video`
 - [ ] T14 Punta a punta
 

@@ -10,6 +10,24 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 > ### ▶ Retomar acá (última sesión: 2026-11-26, PC de la fábrica)
 >
+> **Dónde estamos (resumen):** V1 del video en la rama `feat/video-v1`, subida a GitHub. Las oficinas (T1–T8) y el panel `/videos` (T10–T12, con las ideas de la IA) están programados. Sin tildar: **T9** (falta que el operador apruebe el video de Hill, en la PC de casa) y **T12** (falta que lo use). Quedan **T13** (Docker) y **T14** (punta a punta).
+>
+> **▶ Próximo paso: el primer flujo real desde el panel**, en la PC de la fábrica. Los videos de ejemplo se borraron el 2026-11-26 y no hay trabajos en la cola.
+> 1. `docker compose up -d postgres` y `nvm use && pnpm --filter @radev/web dev`.
+> 2. En otra terminal: `pnpm --filter @radev/video-worker start` (`start` y no `dev`: un cambio de código no lo reinicia en medio de un render). No usar `pnpm dev`: levanta también el worker de Social.
+> 3. `localhost:3000/videos/new`: elegir una idea o escribir el tema; aprobar el guion (~16 min) y el video (~10 min después); bajar el ZIP.
+> - Gasta ~350.000 tokens de Claude y ~1.900 créditos de voz por video. El 2026-11-26 quedaban 29.889 créditos (se renuevan el 2026-12-23).
+> - A mirar: la memoria durante el render (WSL ve 7,8 GiB; cerrar lo pesado y no dejar que se suspenda) y la descarga con sesión. En esta PC nunca se renderizó un video entero desde el panel.
+> - Para el criterio de V1 (REVISION §7.7): dos videos de temas sin relación; en alguno, devolver el guion con una nota y corregir una imagen sin pagar la voz.
+>
+> **Al seguir en la PC de casa:** `git switch feat/video-v1 && git pull`, `nvm use && pnpm install`, `pnpm db:migrate` (`0030`–`0032`) y `pnpm db:seed` (dos rutas de IA nuevas).
+>
+> **Después de V1:** decidir el «tu aporte» por la política de YouTube, la fluidez de la voz y los videos comerciales (ver «Anotado para más adelante»); revisión final de diseño con Impeccable, si el operador la quiere.
+>
+> ---
+>
+> **Detalle e historia de V1** (de lo más viejo a lo más nuevo):
+>
 > **En qué estamos: V1 del video (RAdev Studio), rama `feat/video-v1`** (sale de `spike/video-v0`; `main` no cambió desde que empezó la spike). **V0 está cerrada.** El formato es el **documental**: imágenes de archivo + gráficos animados + voz de Alberto, en **dos formatos** (Short 9:16 y normal 16:9). Los monigotes y el kit quedaron descartados. Decisión: **ADR 0029**. Alcance, etapas, datos, tareas y criterio de aceptación: **`docs/RADEV-STUDIO-REVISION.md` §7**. Lista para tildar: `docs/ROADMAP.md` → "Video — V1".
 >
 > **Orden aprobado por el operador (2026-11-25):**
@@ -38,7 +56,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - **Probar contra la base real** (Postgres de Docker) las funciones que bloquean filas o dependen de CHECK y FK.
 > - **Docker (fábrica, Debian):** hay que abrir Docker Desktop y activar la integración con Debian (Settings → Resources → WSL integration); después `docker compose up -d postgres`, `pnpm db:migrate`, `pnpm db:seed`. El 5432 es el Postgres de otros proyectos: no tocarlo.
 >
-> **▶ Próximo paso: T8** (con Sonnet): oficinas 6 a 8 del `video-worker`. **8a Locución HECHA** (`apps/video-worker/src/offices/voice.ts`, 9 tests: una toma, corte por escena, WAV + `.words.json` por escena en `media/videos/<id>/voice/`, documento `voice` con huella, no se paga dos veces, sin créditos → pausa `budget`, uso en `usage_events`; el resultado `pause` del corredor es nuevo). **8b Render HECHA** (`packages/video/src/render/` = composición `photos` en 9:16 y 16:9, `Thumb`, karaoke y gráficos portados de la spike; `render-doc.ts` = documento y control de calidad (largo, medidas, peso); `apps/video-worker/src/offices/render.ts` + `remotion.ts` = Remotion con un solo bundle y un Chrome para los dos formatos, ffprobe). Probado de verdad: 3 escenas reales de la Mona Lisa → 18,9 s en los dos formatos, ~38 s de render cada uno, medidas correctas; se vio un cuadro de cada uno. Las composiciones se importan de `@radev/video/render` (no del índice: Remotion y React no se cargan donde solo se usan los schemas). **8c Publicación HECHA** (`offices/package.ts` + `packages/video/src/package-doc.ts`: la IA propone título, gancho, capítulos y miniatura con hasta 3 intentos y `checkPublication`; el código arma las dos descripciones, `creditos.txt` y las dos miniaturas con Remotion; todo en `media/videos/<id>/package/`; documento `package` con las descripciones y los caminos). **T8 CERRADA: las 8 oficinas existen.**
+> **T8, cómo se hizo** (cerrada): oficinas 6 a 8 del `video-worker`. **8a Locución HECHA** (`apps/video-worker/src/offices/voice.ts`, 9 tests: una toma, corte por escena, WAV + `.words.json` por escena en `media/videos/<id>/voice/`, documento `voice` con huella, no se paga dos veces, sin créditos → pausa `budget`, uso en `usage_events`; el resultado `pause` del corredor es nuevo). **8b Render HECHA** (`packages/video/src/render/` = composición `photos` en 9:16 y 16:9, `Thumb`, karaoke y gráficos portados de la spike; `render-doc.ts` = documento y control de calidad (largo, medidas, peso); `apps/video-worker/src/offices/render.ts` + `remotion.ts` = Remotion con un solo bundle y un Chrome para los dos formatos, ffprobe). Probado de verdad: 3 escenas reales de la Mona Lisa → 18,9 s en los dos formatos, ~38 s de render cada uno, medidas correctas; se vio un cuadro de cada uno. Las composiciones se importan de `@radev/video/render` (no del índice: Remotion y React no se cargan donde solo se usan los schemas). **8c Publicación HECHA** (`offices/package.ts` + `packages/video/src/package-doc.ts`: la IA propone título, gancho, capítulos y miniatura con hasta 3 intentos y `checkPublication`; el código arma las dos descripciones, `creditos.txt` y las dos miniaturas con Remotion; todo en `media/videos/<id>/package/`; documento `package` con las descripciones y los caminos). **T8 CERRADA: las 8 oficinas existen.**
 > 1. ~~**Locución:** `createElevenLabsProvider` con todas las narraciones, decodificar el MP3 a PCM con ffmpeg (48 kHz mono), `splitScenes`, escribir un WAV y un `.words.json` por escena en `media/videos/<id>/voice/`; documento `voice` con la huella (`voiceFingerprint`) para no pagar dos veces; registrar el uso en `usage_events` (caracteres). Sin créditos (`no_credits`) → pausa `budget` con aviso en el estudio.~~
 > 2. ~~**Render:** portar `spikes/video-v0/src/photo/{PhotoVideo,graphics,Thumb}.tsx` (+ `Karaoke` de `src/anim/overlays.tsx` y `timing.ts`) a `packages/video` como composiciones de Remotion, y el bundle/render a la oficina (Chrome de Remotion con `font-render-hinting: false`, `concurrency: 2`, `crf: 23`); salen los dos formatos (`format: "9x16" | "16x9"`); control de calidad (duración, cuadros negros). Tarda ~4 min por formato.~~
 > 3. ~~**Publicación:** `PUBLICATION_RULES` + `publicationSchema` + `checkPublication` (IA), `buildDescription`/`buildShortDescription`/`buildCredits` (código) y las dos miniaturas (`Thumb`).
@@ -152,7 +170,9 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - La prueba mostró un borrador colado en una idea y que investigar se iba a hallazgos de la semana sin imágenes: se ajustaron las instrucciones. Proponer se volvió a probar y salió bien; **investigar no se volvió a probar**.
 > - La base de casa necesita `pnpm db:migrate` (`0032`) y `pnpm db:seed` (dos rutas de IA nuevas).
 >
-> **▶ Próximo paso: que el operador cierre T12** (mirar las pantallas con su login, aprobar un ejemplo y bajar el ZIP desde el botón; recién ahí se tilda en `docs/ROADMAP.md`). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **Ejemplos borrados (2026-11-26)** a pedido del operador, para pasar al flujo real. Se recrean con `pnpm --filter @radev/db video:examples`.
+>
+> **Anotado por el operador:** la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >

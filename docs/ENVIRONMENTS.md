@@ -70,6 +70,8 @@ Relevada el 2026-11-24 (solo lectura, sin cambios).
 | SSH a producción (`radev-oracle`) | **Sí**: `Host radev-oracle` en `~/.ssh/config`, llave `id_ed25519_radev_oracle` |
 | `/etc/wsl.conf` / systemd | Bien formado: `[boot] systemd=true`, `[user] default=renzoasef`. PID 1 = `systemd` |
 
+**Para el video (2026-11-26):** el `.env` tiene `CLAUDE_CODE_OAUTH_TOKEN` y `ELEVENLABS_API_KEY`, Remotion ya bajó su Chrome (en `apps/video-worker/node_modules/.remotion`) y las ideas de la IA se probaron con el `video-worker`. **Falta medir el render de un video entero en esta PC.**
+
 Sin `.wslconfig`, WSL veía 5,5 GiB (casi la mitad que la de casa) y el 2026-11-24 hubo un corte por falta de memoria (ver `docs/PROGRESS.md`). Por eso se creó uno con **8 GB** (Windows se queda con ~3,4 GB) y **4 GB de swap** (no 8: el disco `C:` está al 93 %, 35 GB libres). **El operador no tiene permisos de administrador en esta PC:** nada que se haga acá puede pedirlos (`.wslconfig` y `wsl --shutdown` no los piden).
 
 Comandos para relevarla (solo leen, no cambian nada):

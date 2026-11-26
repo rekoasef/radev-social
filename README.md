@@ -2,6 +2,8 @@
 
 Gestor de redes sociales con IA para múltiples marcas (hoy RAdev y Lumus): genera, diseña, programa y publica carruseles en TikTok. Costo objetivo: USD 0 extra por mes.
 
+En la rama `feat/video-v1` crece **RAdev Studio**: videos documentales para YouTube (imágenes de archivo, gráficos y voz), en dos formatos. Única excepción al costo cero: la voz de ElevenLabs.
+
 - Guía para Claude Code: `CLAUDE.md`
 - En qué estamos y qué sigue: `docs/PROGRESS.md`
 - Producto y alcance: `docs/PRD.md`
@@ -72,6 +74,19 @@ docker compose down          # los datos quedan guardados en el volumen de Docke
 ```
 
 `docker compose down -v` **borra la base de datos**: no lo uses salvo que quieras empezar de cero.
+
+### Hacer un video (rama `feat/video-v1`)
+
+Necesita en el `.env` `CLAUDE_CODE_OAUTH_TOKEN` y `ELEVENLABS_API_KEY`, y `ffmpeg` instalado.
+
+```bash
+docker compose up -d postgres
+pnpm db:migrate && pnpm db:seed
+pnpm --filter @radev/web dev                 # terminal 1: el panel
+pnpm --filter @radev/video-worker start      # terminal 2: las oficinas (acá se gasta)
+```
+
+En http://localhost:3000/videos: **Nuevo video** → aprobar el guion → aprobar el video → **Descargar paquete**. En qué estamos: `docs/PROGRESS.md`.
 
 ### 6. Ver las slides
 
