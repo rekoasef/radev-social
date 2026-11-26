@@ -135,7 +135,13 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - Comparado con la maqueta con capturas de compu y celular (el componente renderizado con datos de ejemplo). **Falta verlo andando en la app** (login del operador).
 > - Diferencias: las carpetas van en línea recta, no por el pasillo; el globo de una falla dice "¡falló!" y no el código del error; Recepción no cuenta temas.
 >
-> **▶ Próximo paso: etapa 5 de T12** (una oficina por dentro: escena grande, qué hace, historial e informe; y que las salas del plano abran la oficina). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **Etapa 5, una oficina por dentro (hecha):** `/videos/offices/<research|sources|images|script|review|voice|render|package>`: la sala en grande, qué hace, modelo y límites, el video en su escritorio (intentos y problemas, Reintentar), historial de 7 días e informe. Las salas del plano ahora abren su oficina; los videos se abren desde la planilla o desde ahí.
+> - Las devoluciones ahora se registran (migración `0031`, solo cambia el CHECK de `usage_events`). Las anteriores a hoy no existen.
+> - Los límites de cada oficina que muestra la pantalla están escritos en `apps/web/lib/video-office.ts`: si cambian en el worker, cambiarlos ahí.
+> - Comparada con la maqueta con capturas de compu y celular (componente con datos de ejemplo). Falta verla en la app.
+> - La base de casa necesita `pnpm db:migrate` (migraciones `0030` y `0031`).
+>
+> **▶ Próximo paso: etapa 6 de T12, cierre** (repaso en celular de todas las pantallas, imagen de Docker, `DESIGN.md`, `ROADMAP.md`; el operador mira las pantallas con su login y baja el ZIP). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >

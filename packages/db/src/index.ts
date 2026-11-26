@@ -264,6 +264,8 @@ export {
   listVideos,
   listVoices,
   type OfficeDocumentOut,
+  type OfficeHistory,
+  officeHistory,
   pauseVideoById,
   type RecordUsageInput,
   recordUsageEvent,

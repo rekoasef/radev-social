@@ -218,6 +218,13 @@
       "when": 1795692343875,
       "tag": "0030_rich_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1795698198009,
+      "tag": "0031_clumsy_wolf_cub",
+      "breakpoints": true
     }
   ]
 }

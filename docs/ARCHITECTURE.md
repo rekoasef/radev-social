@@ -481,6 +481,7 @@ Alcance, tareas y criterio de aceptación: `docs/RADEV-STUDIO-REVISION.md` §7. 
   - `videos.progress`: lo que hace la oficina ahora (inicio, intento, porcentaje del render, problemas del intento anterior). Se limpia al cambiar de etapa.
   - `generation_runs.check_problems`: por qué una respuesta bien formada no pasó los controles.
   - `usage_events` con `kind = office`: cuánto tardó cada corrida de una oficina y cómo terminó.
+  - `usage_events` con `kind = return` (migración `0031`): cada rechazo del operador, en la oficina que tiene que rehacer, con su nota. Lo escribe `transitionVideo` en la misma transacción.
   - `usage_events.data.quota` en cada locución: los créditos de ElevenLabs que quedan a ese momento (la web no tiene la credencial).
   - `voices.preview_url`: la muestra de cada voz, que el worker guarda al arrancar (no gasta créditos).
 

@@ -162,6 +162,17 @@ async function applyTransition(
     Object.assign(changes, { pausedAt: null, pauseReason: null, resumeAt: null });
 
   await db.update(videos).set(changes).where(eq(videos.id, videoId));
+  // Every rejection is kept for the report of the office that has to redo the work.
+  if (needsNote(event)) {
+    await db.insert(usageEvents).values({
+      videoId,
+      kind: "return",
+      office: result.to as WorkingStage,
+      quantity: 1,
+      unit: "returns",
+      data: { event, note: rejectionNote },
+    });
+  }
   return { ok: true, from: video.stage, to: result.to };
 }
 
@@ -588,5 +599,41 @@ export async function studioUsage(
       typeof quota?.used === "number" && typeof quota.limit === "number"
         ? { used: quota.used, limit: quota.limit }
         : null,
+  };
+}
+
+// ───────────── an office from inside ─────────────
+
+export type OfficeHistory = {
+  /** AI attempts of the office's task (none for the offices of code). */
+  runs: (GenerationRun & { title: string | null; topic: string })[];
+  /** Runs of the office and the times work was sent back to it. */
+  events: (UsageEvent & { title: string | null; topic: string })[];
+};
+
+export async function officeHistory(
+  db: Executor,
+  office: WorkingStage,
+  task: GenerationRun["task"] | null,
+  since: Date,
+): Promise<OfficeHistory> {
+  const of = { title: videos.title, topic: videos.topic };
+  const runs = task
+    ? await db
+        .select({ run: generationRuns, ...of })
+        .from(generationRuns)
+        .innerJoin(videos, eq(videos.id, generationRuns.videoId))
+        .where(and(eq(generationRuns.task, task), gte(generationRuns.createdAt, since)))
+        .orderBy(desc(generationRuns.createdAt))
+    : [];
+  const events = await db
+    .select({ event: usageEvents, ...of })
+    .from(usageEvents)
+    .innerJoin(videos, eq(videos.id, usageEvents.videoId))
+    .where(and(eq(usageEvents.office, office), gte(usageEvents.createdAt, since)))
+    .orderBy(desc(usageEvents.createdAt));
+  return {
+    runs: runs.map(({ run, title, topic }) => ({ ...run, title, topic })),
+    events: events.map(({ event, title, topic }) => ({ ...event, title, topic })),
   };
 }

@@ -461,7 +461,11 @@ function Furniture({ stage, room, b, p, phone, k }: OfficeProps) {
   );
 }
 
-export function Office({ doors, ...props }: OfficeProps & { doors: Door[] }) {
+export function Office({
+  doors,
+  sign = true,
+  ...props
+}: OfficeProps & { doors: Door[]; sign?: boolean }) {
   const { stage, room, b, p, phone } = props;
   const { n, name } = OFFICE_NAME[stage];
   const lit = room.mode === "working" || room.mode === "fail";
@@ -470,14 +474,16 @@ export function Office({ doors, ...props }: OfficeProps & { doors: Door[] }) {
       <Shell b={b} p={p} floor={FLOOR_OF[stage]} lit={lit} doors={doors}>
         <Furniture {...props} />
       </Shell>
-      <DoorSign
-        x={b.x + 12}
-        y={b.y + 12}
-        n={n}
-        name={name}
-        state={SIGN_OF[room.mode]}
-        status={phone ? room.short : room.status}
-      />
+      {sign && (
+        <DoorSign
+          x={b.x + 12}
+          y={b.y + 12}
+          n={n}
+          name={name}
+          state={SIGN_OF[room.mode]}
+          status={phone ? room.short : room.status}
+        />
+      )}
     </>
   );
 }

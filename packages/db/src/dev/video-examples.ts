@@ -74,7 +74,11 @@ async function main() {
       await setVideoProgress(db, id, progress);
     }
     if (stage === "scripting") {
-      const progress = { stage, startedAt: ago(72_000), attempt: 2, attempts: 3 };
+      const problems = [
+        "scenes.6.narration › el número 26 no está en el dossier (regla 9)",
+        "scenes.11 › from y to casi iguales: tiene que haber un zoom o paneo",
+      ];
+      const progress = { stage, startedAt: ago(72_000), attempt: 2, attempts: 3, problems };
       await setVideoProgress(db, id, progress);
     }
     if (stage === "finding_images") {

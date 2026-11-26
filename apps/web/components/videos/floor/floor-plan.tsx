@@ -1,6 +1,7 @@
 import { WORKING_STAGES } from "@radev/core";
 import Link from "next/link";
 import type { Floor, RoomId } from "@/lib/video-floor";
+import { OFFICE_SLUG } from "@/lib/video-office";
 import { C, Defs, FolderShape } from "./props";
 import {
   Archive,
@@ -129,11 +130,7 @@ function Plan({ floor, phone, p }: { floor: Floor; phone: boolean; p: string }) 
           />
         );
         const label = `Oficina ${OFFICE_NAME[stage].name}: ${room.status}`;
-        return (
-          <g key={stage}>
-            {room.videoId ? open(`/videos/${room.videoId}`, label, office) : office}
-          </g>
-        );
+        return <g key={stage}>{open(`/videos/offices/${OFFICE_SLUG[stage]}`, label, office)}</g>;
       })}
 
       {(() => {
