@@ -1,6 +1,13 @@
 // The controls added after the first real video (docs/VIDEO-CALIDAD.md).
 import { describe, expect, it } from "vitest";
-import { aiScriptSchema, checkPublication, checkScript, compactDossier, editScene } from "../src";
+import {
+  aiScriptSchema,
+  checkPublication,
+  checkScript,
+  compactDossier,
+  editScene,
+  tidyScript,
+} from "../src";
 import { monaCandidates, monaDossier, monaPublication, monaScript } from "./fixtures";
 
 const candidates = monaCandidates();
@@ -53,5 +60,37 @@ describe("a new image at the desk", () => {
     const edited = result.script.scenes[index];
     expect(edited?.graphics.some((g) => g.kind === "nombre")).toBe(false);
     expect(edited?.exact).toBeUndefined();
+  });
+});
+
+describe("the script in fewer tries (stage 5)", () => {
+  it("says which scenes to shorten and by how much", () => {
+    const script = monaScript();
+    const first = script.scenes[0];
+    if (!first) throw new Error("sin escenas");
+    first.narration = `${first.narration} ${"palabra ".repeat(80)}`.trim();
+    const error = checkScript(script, candidates, dossierText).find((e) => e.includes("sobran"));
+    expect(error).toMatch(
+      /sobran \d+ para llegar a 1\.800: acortá las más largas \(escenas 1 \(\d+\)/,
+    );
+  });
+
+  it("fixes by code a label that repeats the unit", () => {
+    const script = monaScript();
+    const scene = script.scenes[0];
+    if (!scene) throw new Error("sin escenas");
+    scene.graphics = [
+      {
+        kind: "cifra",
+        value: 26,
+        unit: "horas",
+        label: "horas sin que nadie lo notara",
+        pos: "abajo",
+        at: 0,
+      },
+    ];
+    const tidy = tidyScript(script);
+    expect(tidy.scenes[0]?.graphics[0]).toMatchObject({ label: "sin que nadie lo notara" });
+    expect(script.scenes[0]?.graphics[0]).toMatchObject({ label: "horas sin que nadie lo notara" });
   });
 });

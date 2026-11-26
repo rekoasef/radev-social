@@ -6,11 +6,11 @@ import {
   dossierSchema,
   dropNameCards,
   imagesDocSchema,
-  normalizeHighlights,
   SCRIPT_RULES,
   type Script,
   smallImagePath,
   sourcesSchema,
+  tidyScript,
   usableDossier,
 } from "@radev/video";
 import { failedAi, type Office, OfficeFailure } from "../office";
@@ -96,7 +96,7 @@ export const script: Office = async (ctx) => {
       }
       return failedAi(answer.error, "El guion");
     }
-    const draft = normalizeHighlights(answer.data);
+    const draft = tidyScript(answer.data);
     problems = checkScript(draft, candidates, text);
     if (problems.length === 0) {
       const { script: clean, dropped } = dropNameCards(draft, candidates);

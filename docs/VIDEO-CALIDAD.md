@@ -14,7 +14,7 @@ Primer video hecho entero desde el panel: 39 min desde el tema hasta aprobarlo, 
 | 4 | Imágenes sin aclarar: Boeing de Lufthansa, foto actual de un volcán como «Noche del salto», correo actual | Guion | La regla del pie existía en las instrucciones, pero nada la hacía cumplir | `exact` + pie obligatorio |
 | 5 | Miniatura floja: otro avión, cielo blanco en media imagen, texto chico | Publicación, render | La foto apaisada se recortaba a 9:16; las instrucciones pedían poco | Miniatura nueva (en vertical la foto apaisada ocupa la parte de arriba, texto que llena el ancho, palabra clave en bloque amarillo, más contraste). Tiene que ser una imagen del hecho (control de código), preferir cara/objeto/documento, texto de 2 líneas cortas. Nunca la cara de un sospechoso |
 | 6 | Voz baja: −17 LUFS (YouTube usa −14 y no sube los videos bajos) | Locución | Sin normalizar | `loudnorm` al decodificar la toma (medido: −14,1 LUFS) |
-| 7 | El guion pasó en el último intento (3 de 3) | Guion | Largo y números | 4 intentos |
+| 7 | El guion pasó en el último intento (3 de 3) | Guion | Largo y números | 4 intentos; después, la etapa 5 (abajo) |
 
 **Para corregir el video publicado** (lo hace el operador): «Volver a revisar» → «Volver al escritorio del guion» → pies en las escenas 2, 8, 11 y 17, otra imagen en la 4, y en la 13 «aviones espía» (eso vuelve a grabar toda la voz). La miniatura se rehace al aprobar. En YouTube hay que subirlo de nuevo.
 
@@ -42,6 +42,14 @@ Antes, 24 de 25 hechos de D.B. Cooper daban «no está en la página»: la búsq
 - **Probado con el dossier real de D.B. Cooper** (3 pruebas, ajustando): 23 de 31 hechos y citas textuales, 8 a medias, 0 descartados. Marcó «la página dice SR-71, no U-2», «un año después, no menos de cinco meses» y que la página citada no da la fecha del 8 de julio de 2016. 82 s y ~94.000 tokens de entrada.
 - Lo que se aprendió en las pruebas: con la página entera de Wikipedia (más de 120.000 caracteres) la IA no encontraba frases que estaban («el único secuestro sin resolver»): por eso va de a partes. Y un dato repartido en dos oraciones daba «a medias»: por eso hasta 3 frases.
 - El escritorio muestra la frase de cada hecho y lo que la página no dice, y tacha los que no llegaron al guion.
+
+## Etapa 5: el guion en menos intentos (2026-11-26)
+
+En D.B. Cooper el guion pasó en el 3.º intento: el 1.º se pasó por ~400 caracteres. La causa estaba en las instrucciones: pedían 1.400–1.800 en total pero permitían escenas de hasta 28 palabras (20 × 28 da más del doble).
+- Cada escena: **70 a 100 caracteres** (12 a 17 palabras). Las fechas en pantalla, solo con números que dice la voz.
+- Cuando se pasa, el aviso dice **cuánto sobra y qué escenas acortar** (las 4 más largas, con su largo).
+- La etiqueta de una cifra que repite la unidad la arregla el código (`tidyScript`) sin gastar un intento.
+- **Probado con el dossier y las imágenes de D.B. Cooper:** 2 intentos (el 1.º, por números de una fecha), 1.732 caracteres de entrada, 124 s, ~100.000 tokens. Declaró `exact` en todas las escenas y puso pie a las que no son el hecho; el código sacó dos carteles que las fotos no respaldaban («Dan Cooper» sobre un afiche, «JCPenney» sobre la sede del FBI).
 
 ## Lo que todavía no se controla
 

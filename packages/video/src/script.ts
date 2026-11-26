@@ -145,8 +145,18 @@ export function checkScript(
   const dossierNums = new Set(numbersIn(dossierText));
   const total = g.scenes.reduce((n, s) => n + s.narration.length, 0);
   if (total < 1300 || total > 1950) {
+    // Say exactly what to do: a vague "too long" took the first real video three tries.
+    const longest = g.scenes
+      .map((s, i) => ({ n: i + 1, length: s.narration.length }))
+      .sort((a, b) => b.length - a.length)
+      .slice(0, 4)
+      .map((s) => `${s.n} (${s.length})`);
+    const fix =
+      total > 1950
+        ? `sobran ${total - 1800} para llegar a 1.800: acortá las más largas (escenas ${longest.join(", ")}) a menos de 100 cada una, o sacá una escena`
+        : `faltan ${1400 - total} para llegar a 1.400: sumá una o dos escenas con hechos del dossier`;
     errors.push(
-      `scenes › la narración suma ${total} caracteres; tienen que ser 1.300 a 1.950 (~100 a 140 s)`,
+      `scenes › la narración suma ${total} caracteres; tienen que ser 1.300 a 1.950 (~100 a 140 s): ${fix}`,
     );
   }
   g.scenes.forEach((s, i) => {
@@ -193,7 +203,7 @@ export function checkScript(
         for (const n of numbersIn(`${gr.text} ${gr.sub ?? ""}`)) {
           if (!said.has(n))
             errors.push(
-              `${at}.graphics.${j} › la fecha en pantalla incluye ${n}, que la narración de la escena no dice`,
+              `${at}.graphics.${j} › la fecha en pantalla incluye ${n}, que la narración de la escena no dice: sacá ese número del cartel o decilo en la narración`,
             );
         }
       }
@@ -257,5 +267,28 @@ export function normalizeHighlights(script: Script): Script {
           }
         : s,
     ),
+  };
+}
+
+/**
+ * Arreglos que hace el código antes de controlar, para no gastar un intento de la IA en ellos: la
+ * etiqueta de una cifra que repite la unidad («200.000 dólares · dólares exigidos») pierde la palabra
+ * repetida. No modifica el guion que recibe.
+ */
+export function tidyScript(script: Script): Script {
+  return {
+    ...normalizeHighlights(script),
+    scenes: normalizeHighlights(script).scenes.map((s) => ({
+      ...s,
+      graphics: s.graphics.map((g) => {
+        if (g.kind !== "cifra" || !g.unit) return g;
+        const unit = normWord(g.unit);
+        const words = g.label.split(/\s+/);
+        const kept = words.filter((w) => normWord(w) !== unit);
+        return kept.length === words.length || kept.length === 0
+          ? g
+          : { ...g, label: kept.join(" ") };
+      }),
+    })),
   };
 }

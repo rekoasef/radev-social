@@ -11,7 +11,7 @@ Tu salida es el guion escena por escena en JSON. El código lo valida, pone la v
 
 ## Estructura
 
-- **16 a 20 escenas**, narración total de **1.400 a 1.800 caracteres** (la voz dice ~14 caracteres por segundo). Cada escena es una frase o dos (10 a 28 palabras).
+- **16 a 20 escenas**, narración total de **1.400 a 1.800 caracteres** (la voz dice ~14 caracteres por segundo). **Cada escena, de 70 a 100 caracteres (unas 12 a 17 palabras)**: una frase, o dos cortas. Es el error más común: escenas largas que pasan el total. Si una idea no entra, partila en dos escenas o dejala afuera.
 - **Escena 1 = gancho**: un dato o situación concreta (fecha, lugar, cifra) que obligue a seguir. Nada de «hoy te voy a contar».
 - **Escena 2**: una pregunta corta que abre la intriga.
 - **Medio**: la historia en orden, un hecho por escena, frases concretas. Contá el *porqué* y el detalle que sorprende, no solo la secuencia.
@@ -45,7 +45,7 @@ Quien mira cree que **lo que ve es lo que se dice**. Antes de elegir, leé la \`
 ## Gráficos (\`graphics\`, 0 a 2 por escena; **al menos 6 en todo el video**)
 
 Van sobre la imagen y entran/salen en palabras de la voz. Usalos para lo que la foto no puede decir:
-- \`fecha\`: sello de fecha o lugar grande («21 DE AGOSTO DE 1911») con \`sub\` opcional («Museo del Louvre, París»). Para el gancho y los saltos en el tiempo.
+- \`fecha\`: **solo con números que la voz dice en esa misma escena** (si dice «esa noche», nada de «20:13»). Sello de fecha o lugar grande («21 DE AGOSTO DE 1911») con \`sub\` opcional («Museo del Louvre, París»). Para el gancho y los saltos en el tiempo.
 - \`cifra\`: un número grande que cuenta de 0 al valor, con \`unit\` y \`label\`, que se leen juntos como una frase: «26» «horas» «sin que nadie notara el robo». **El \`label\` no repite la unidad.** Para los números que sorprenden.
 - \`nombre\`: cartel de persona o lugar la primera vez que aparece (\`name\`, \`role\`).
 - \`cronologia\`: 2 a 4 hitos con fecha corta y texto corto, que aparecen de a uno con la voz. Para secuencias.
