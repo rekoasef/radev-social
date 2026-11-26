@@ -102,7 +102,7 @@ export function OfficeInside({
                   <div className="min-w-0 flex-1">
                     <Link
                       href={`/videos/${current.video.id}`}
-                      className="block text-sm font-medium text-ink underline-offset-2 hover:underline"
+                      className="-my-1 block py-3 text-sm font-medium text-ink underline-offset-2 hover:underline"
                     >
                       {current.video.title ?? current.video.topic}
                     </Link>
@@ -178,7 +178,7 @@ export function OfficeInside({
                     <span className="timecode text-xs text-ink-faint">{when(row.at)}</span>
                     <Link
                       href={`/videos/${row.videoId}`}
-                      className="min-w-0 truncate text-sm text-ink hover:underline max-sm:order-first max-sm:w-full sm:flex-1"
+                      className="min-w-0 truncate text-sm text-ink hover:underline max-sm:order-first max-sm:-my-2 max-sm:w-full max-sm:py-3 sm:flex-1"
                     >
                       {row.video}
                     </Link>

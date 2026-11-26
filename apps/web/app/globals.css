@@ -373,6 +373,13 @@
     background: var(--color-tally-amber);
     border-radius: 999px;
   }
+  /* Nine sections: on narrow phones the labels give up size and tracking so they don't touch. */
+  @media (max-width: 26rem) {
+    .dock-label {
+      font-size: 9.5px;
+      letter-spacing: 0;
+    }
+  }
   .dock-badge {
     position: absolute;
     top: 5px;
@@ -1146,6 +1153,19 @@
     border-color: var(--color-ink-faint);
     color: var(--color-ink);
   }
+  /* "← Estudio": a quiet link with a full-size touch area. */
+  .back-link {
+    @apply plate-text;
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 44px;
+    margin-block: -14px;
+    color: var(--color-ink-faint);
+  }
+  .back-link:hover {
+    color: var(--color-ink);
+  }
   .desk-panel {
     padding: 16px;
     border: 1px solid var(--color-bezel);
@@ -1256,5 +1276,29 @@
 @keyframes floor-breathe {
   50% {
     transform: scale(1.07);
+  }
+}
+
+/* Touch screens: every console key is at least 44px tall (DESIGN.md). In `components`, so that
+   utilities such as `hidden` still win. */
+@layer components {
+  @media (pointer: coarse) {
+    .console-button,
+    .console-chip {
+      min-height: 44px;
+    }
+    :where(a.console-button) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
+/* A fixed decision bar sits above the dock: leave room so it never covers the end of the page.
+   Unlayered, to win over the layout's padding utility. */
+@media (max-width: 47.99rem) {
+  main:has(.review-bar) {
+    padding-bottom: calc(11rem + env(safe-area-inset-bottom));
   }
 }

@@ -238,12 +238,14 @@ Diseño aprobado el 2026-11-26 (T10). Capturas y maqueta en `docs/references/stu
 
 - **Plano del estudio (componente distintivo).** El edificio visto desde arriba, de noche, en SVG generado a partir de los datos (no es una imagen). Las oficinas 1 a 5 van arriba, Recepción a la izquierda, tu oficina vidriada al centro, el Archivo a la derecha y las oficinas 6 a 8 abajo. Hay flechas tenues en el pasillo. Cada oficina tiene su piso (madera, alfombra, baldosa, goma acústica) y paredes de bisel. En el celular, el mismo plano va apilado en dos columnas.
 - **La luz es el estado.** Una oficina trabajando tiene la lámpara prendida (un charco cálido; frío en Render). Una libre queda a oscuras. Una con falla tiene un resplandor rojo. Tu oficina se ilumina en ámbar cuando algo te espera. Igual, cada oficina lleva su **cartel de puerta**: un plate con número y nombre, y debajo su lámpara tally con un texto. La luz nunca es la única señal.
-- **Quién trabaja.** Las oficinas de Claude tienen personas, las de código tienen robots, y tu oficina tiene la silla vacía con "VOS". Los globos de diálogo son cortos: "intento 2/3", "¡429!", "¡te espera!".
+- **Quién trabaja.** Las oficinas de Claude tienen personas, las de código tienen robots, y tu oficina tiene la silla vacía con "VOS". Los globos de diálogo son cortos: "intento 2/3", "¡falló!", "¡te espera!". El código del error va en la planilla y en la oficina, no en el globo.
 - **Carpeta.** Cada video es una carpeta de papel manila (#d9b66f) con una pestaña de color pastel y su número de dos cifras en mono. La pestaña identifica al video y **nunca es un color de estado**: menta #8cc9a6, rosa #ee8fc0, celeste #7fb4e8, lila #b49af0 y turquesa #5ec4c4. La misma pestaña aparece en la planilla y en los títulos de las pantallas de ese video.
 - **Cartel "Te espera".** Una franja ámbar de todo el ancho, arriba del plano, con la única acción principal de la pantalla ("Ir a tu escritorio"). Solo aparece si algo te espera.
 - **Cabecera de oficina.** Al entrar a una oficina, su escena va en grande a la izquierda. A la derecha van qué hace, el video actual con su reloj, la barra de intentos (rojo si fue rechazado, tinta si está en curso) y, si hubo un rechazo, la lista de problemas. Debajo van el historial y el informe, en filas de ficha técnica.
 - **Escritorios (aprobar guion y video).** Son pantallas de trabajo, sin ilustración. Llevan una columna principal (las escenas, o los dos reproductores) y a la derecha un panel fijo con la decisión: aprobar dice qué cuesta y devolver pide una nota. En el celular, la decisión pasa a una barra fija sobre la navegación. Las correcciones de la verificación se ven tachadas y corregidas, con un borde verde. Los hechos llevan su lámpara: cuadrado verde si está en su página, triángulo ámbar si es casi igual, anillo punteado si no está.
-- **Movimiento previsto (T12).** Las carpetas caminan por el pasillo cuando cambian de oficina, el de Guion teclea, los LEDs de Render titilan y el globo ámbar respira. Nada más se mueve, y con `prefers-reduced-motion` no se mueve nada.
+- **Movimiento (T12).** La carpeta se desliza en línea recta cuando cambia de oficina, el de Guion teclea, los LEDs de Render titilan y el globo ámbar respira. Nada más se mueve, y con `prefers-reduced-motion` no se mueve nada.
+- **Navegar el estudio.** Cada sala del plano abre su oficina; tu escritorio abre el video que más hace que espera; el Archivo, lo aprobado; Recepción, "Nuevo video". Los videos también se abren desde la planilla. Las pantallas internas vuelven con "← Estudio".
+- **En el celular (revisado en la etapa 6 de T12, a 390 y 360px).** Nada desborda a lo ancho. La tabla del informe muestra oficina, gasto y tiempo (quién y notas aparecen desde `md`). Cuando hay barra fija de decisión, la página deja lugar abajo para que no tape el final. Los links sueltos dentro de un texto (la fuente de un hecho) quedan chicos a propósito.
 
 ## Do's and Don'ts
 
@@ -252,7 +254,7 @@ Diseño aprobado el 2026-11-26 (T10). Capturas y maqueta en `docs/references/stu
 - **Do** mostrar el estado real con una lámpara tally (forma + texto), incluso cuando está vacío ("En espera · sin posts", "0 en cola").
 - **Do** mostrar las secciones de fases futuras apagadas con su fase, en vez de crear páginas vacías.
 - **Do** escribir todo valor numérico, código u hora en timecode.
-- **Do** mantener los controles táctiles en 44px o más y la navegación del celular abajo.
+- **Do** mantener los controles táctiles en 44px o más y la navegación del celular abajo. `.console-button` y `.console-chip` ya miden 44px en pantallas táctiles. La excepción es el ancho de la barra de abajo: con 9 secciones, cada una mide unos 40px a 360px de pantalla (rótulos más chicos por debajo de 26rem).
 - **Do** respetar `prefers-reduced-motion`: el encendido de los monitores es el único momento de movimiento y se apaga ahí.
 
 ### Don't:

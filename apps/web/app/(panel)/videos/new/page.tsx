@@ -27,7 +27,7 @@ export default async function NewVideoPage() {
 
   return (
     <section aria-labelledby="new-video-heading" className="flex flex-col gap-6">
-      <Link href="/videos" className="plate-text w-fit text-ink-faint hover:text-ink">
+      <Link href="/videos" className="back-link">
         ← Estudio
       </Link>
       <Plate as="h1" id="new-video-heading" aside="va a Recepción">

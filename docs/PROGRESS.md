@@ -141,7 +141,13 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - Comparada con la maqueta con capturas de compu y celular (componente con datos de ejemplo). Falta verla en la app.
 > - La base de casa necesita `pnpm db:migrate` (migraciones `0030` y `0031`).
 >
-> **▶ Próximo paso: etapa 6 de T12, cierre** (repaso en celular de todas las pantallas, imagen de Docker, `DESIGN.md`, `ROADMAP.md`; el operador mira las pantallas con su login y baja el ZIP). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **Etapa 6, cierre (hecha, 2026-11-26):**
+> - Repaso de las 16 pantallas con los videos de ejemplo, a 390, 360 y 1280px, más editar escena, hoja de imágenes y devolver. Se hizo en `next dev` con una página temporal bajo `/render` (protegida con `RENDER_TOKEN`, borrada después): son las pantallas reales, pero sin la barra de arriba del panel y sin probar las acciones que guardan (piden login).
+> - Corregido: la barra fija de decisión tapaba el final de la página; botones y links por debajo de 44px; la tabla del informe se cortaba 7px; los rótulos de la barra de abajo se pegaban. Los dos primeros eran estilos de todo el panel: también cambian las otras pantallas en el celular.
+> - La imagen `web` de Docker se construye en 106 s (antes, más de 10 min por los videos del spike en el contexto) y arranca; las rutas del estudio piden sesión.
+> - **Sin hacer:** la revisión final de Impeccable que pide la ficha de diseño (usa un subagente: preguntarle al operador).
+>
+> **▶ Próximo paso: que el operador cierre T12** (mirar las pantallas con su login, aprobar un ejemplo y bajar el ZIP desde el botón; recién ahí se tilda en `docs/ROADMAP.md`). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >

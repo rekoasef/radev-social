@@ -46,7 +46,7 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
   return (
     <section aria-labelledby="video-heading" className="flex flex-col gap-6">
       {(view.working || view.tally === "standby") && <AutoRefresh seconds={5} />}
-      <Link href="/videos" className="plate-text w-fit text-ink-faint hover:text-ink">
+      <Link href="/videos" className="back-link">
         ← Estudio
       </Link>
       <Plate aside={view.time}>

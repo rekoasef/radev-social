@@ -55,7 +55,7 @@ export default async function OfficePage({ params }: PageProps<"/videos/offices/
   return (
     <section className="flex flex-col gap-6">
       {(room.mode === "working" || room.mode === "queued") && <AutoRefresh seconds={5} />}
-      <Link href="/videos" className="plate-text w-fit text-ink-faint hover:text-ink">
+      <Link href="/videos" className="back-link">
         ← Estudio
       </Link>
       <OfficeInside

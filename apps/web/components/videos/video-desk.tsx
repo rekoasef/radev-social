@@ -87,24 +87,24 @@ export function VideoDesk({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="plate-text border-b border-bezel text-left text-ink-faint">
-                    <th className="px-3 py-2.5">Oficina</th>
+                    <th className="px-2 py-2.5 sm:px-3">Oficina</th>
                     <th className="px-3 py-2.5 max-md:hidden">Quién</th>
-                    <th className="px-3 py-2.5 text-right">Gasto</th>
-                    <th className="px-3 py-2.5 text-right">Tiempo</th>
+                    <th className="px-2 py-2.5 sm:px-3 text-right">Gasto</th>
+                    <th className="px-2 py-2.5 sm:px-3 text-right">Tiempo</th>
                     <th className="px-3 py-2.5 max-md:hidden">Notas</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-bezel">
                   {[...report.rows, report.total].map((row) => (
                     <tr key={row.office} className={row === report.total ? "font-semibold" : ""}>
-                      <th scope="row" className="px-3 py-2.5 text-left font-[inherit]">
+                      <th scope="row" className="px-2 py-2.5 sm:px-3 text-left font-[inherit]">
                         {row.office}
                       </th>
                       <td className="px-3 py-2.5 text-ink-dim max-md:hidden">{row.who}</td>
-                      <td className="timecode px-3 py-2.5 text-right whitespace-nowrap">
+                      <td className="timecode px-2 py-2.5 text-right sm:px-3 whitespace-nowrap">
                         {row.spent}
                       </td>
-                      <td className="timecode px-3 py-2.5 text-right">
+                      <td className="timecode px-2 py-2.5 text-right sm:px-3">
                         {row.ms === null ? "—" : elapsed(row.ms)}
                       </td>
                       <td className="px-3 py-2.5 text-[13px] text-ink-dim max-md:hidden">
