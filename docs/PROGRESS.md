@@ -131,7 +131,11 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - Los ejemplos ahora traen videos de relleno hechos con `ffmpeg`.
 > - **Aprobado por el operador:** "Volver al escritorio del guion" (evento `returnToScriptDesk`, `in_review` → `script_review`), para cumplir el criterio 2: corregir una imagen sin pagar la voz.
 >
-> **▶ Próximo paso: etapa 4 de T12** (el plano del piso en React: `docs/references/studio/maqueta/scene-top.js`). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **Etapa 4, el plano del piso (hecha):** `apps/web/components/videos/floor/` (SVG de servidor, sin JavaScript) y `lib/video-floor.ts` (qué muestra cada sala). Las salas con un video abren ese video; tu escritorio abre lo que más espera; Recepción, "Nuevo video". Movimiento: carpetas que se deslizan al cambiar de oficina, manos que teclean, LEDs de Render y globo ámbar; nada con `prefers-reduced-motion`.
+> - Comparado con la maqueta con capturas de compu y celular (el componente renderizado con datos de ejemplo). **Falta verlo andando en la app** (login del operador).
+> - Diferencias: las carpetas van en línea recta, no por el pasillo; el globo de una falla dice "¡falló!" y no el código del error; Recepción no cuenta temas.
+>
+> **▶ Próximo paso: etapa 5 de T12** (una oficina por dentro: escena grande, qué hace, historial e informe; y que las salas del plano abran la oficina). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >

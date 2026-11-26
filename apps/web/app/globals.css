@@ -1188,3 +1188,70 @@
     }
   }
 }
+
+@layer components {
+  /* The floor plan of the studio. */
+  .floor {
+    padding: 6px;
+    border: 1px solid var(--color-bezel);
+    border-radius: 12px;
+    background: var(--color-panel);
+  }
+  .floor svg {
+    display: block;
+    border-radius: 8px;
+  }
+  .floor-room {
+    cursor: pointer;
+    outline: none;
+  }
+  .floor-room:hover,
+  .floor-room:focus-visible {
+    filter: brightness(1.2);
+  }
+  .floor-room:focus-visible {
+    outline: 2px solid var(--color-ink);
+  }
+  /* The only things that move: folders walking, the typist, the LEDs and the waiting bubble. */
+  @media (prefers-reduced-motion: no-preference) {
+    .floor-folder {
+      transition: transform 1.4s cubic-bezier(0.45, 0, 0.25, 1);
+    }
+    .floor-typing {
+      animation: floor-type 420ms ease-in-out infinite alternate;
+    }
+    .floor-typing-b {
+      animation-delay: 210ms;
+    }
+    .floor-led {
+      animation: floor-blink 1.2s steps(2, jump-none) infinite;
+    }
+    .floor-led-1 {
+      animation-delay: 0.4s;
+    }
+    .floor-led-2 {
+      animation-delay: 0.8s;
+    }
+    .floor-breathe {
+      transform-box: fill-box;
+      transform-origin: center bottom;
+      animation: floor-breathe 2.4s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes floor-type {
+  to {
+    transform: translateY(1.6px);
+  }
+}
+@keyframes floor-blink {
+  to {
+    opacity: 0.25;
+  }
+}
+@keyframes floor-breathe {
+  50% {
+    transform: scale(1.07);
+  }
+}

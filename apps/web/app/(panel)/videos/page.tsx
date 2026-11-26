@@ -4,16 +4,18 @@ import Link from "next/link";
 import { Plate } from "@/components/console/plate";
 import { Tally } from "@/components/console/tally";
 import { AutoRefresh } from "@/components/videos/auto-refresh";
+import { FloorPlan } from "@/components/videos/floor/floor-plan";
 import { FolderTab } from "@/components/videos/folder-tab";
 import { db } from "@/lib/db";
 import { describeVideo, folders } from "@/lib/video-display";
+import { studioFloor } from "@/lib/video-floor";
 import { STUDIO_TIME_ZONE, startOfDay, startOfMonth } from "@/lib/video-time";
 
 export const metadata: Metadata = { title: "Estudio · RAdev Social" };
 
 const number = new Intl.NumberFormat("es-AR");
 
-// The studio: what waits for the operator, today's spending and every video. All brands at once
+// The studio: what waits for the operator, the floor plan, today's spending and every video. All brands at once
 // (a video may have none), so the brand switcher does not filter here.
 export default async function VideosPage() {
   const now = new Date();
@@ -28,6 +30,21 @@ export default async function VideosPage() {
   const working = videos.filter((v) => v.view.working).length;
   const waiting = videos.filter((v) => v.view.waiting);
   const first = waiting.at(-1);
+  const clock = new Intl.DateTimeFormat("es-AR", {
+    timeZone: STUDIO_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const floor = studioFloor(
+    videos.map(({ video }) => ({
+      ...video,
+      title: video.title ?? video.topic,
+      folder: folder.get(video.id) ?? { code: "00", color: 1 },
+    })),
+    now,
+    (at) => clock.format(at),
+  );
   // While something is queued or working the page keeps itself up to date.
   const moving = videos.some((v) => v.view.working || v.view.tally === "standby");
 
@@ -69,6 +86,8 @@ export default async function VideosPage() {
           </Link>
         </div>
       )}
+
+      <FloorPlan floor={floor} />
 
       <p className="timecode flex flex-wrap gap-x-8 gap-y-2 text-[13px] text-ink-dim">
         <span>
