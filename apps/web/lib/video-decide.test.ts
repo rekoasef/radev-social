@@ -36,6 +36,12 @@ describe("decideAndQueue: the video desk", () => {
     expect(d.queue).not.toHaveBeenCalled();
   });
 
+  it("going back to the script desk queues nothing (the operator changes it himself)", async () => {
+    const d = deps(true);
+    await decideAndQueue(d, "v1", 1, { event: "returnToScriptDesk" });
+    expect(d.queue).not.toHaveBeenCalled();
+  });
+
   it.each([
     ["rejectVideoToRender", "rendering"],
     ["rejectVideoToVoice", "voicing"],

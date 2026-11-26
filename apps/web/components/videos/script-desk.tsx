@@ -32,6 +32,7 @@ export function ScriptDesk({
   desk,
   paused,
   voiceLeft,
+  voiceReused,
 }: {
   videoId: string;
   version: number;
@@ -40,6 +41,8 @@ export function ScriptDesk({
   paused: boolean;
   /** Voice credits left, as of the last take that read them. */
   voiceLeft: number | null;
+  /** The narration is the one already recorded: approving does not pay for the voice. */
+  voiceReused: boolean;
 }) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sheet, setSheet] = useState<{ scene: number | null } | null>(null);
@@ -153,8 +156,12 @@ export function ScriptDesk({
               </button>
             </form>
             <p className="text-sm text-ink-faint">
-              Pasa a Locución y gasta unos {number.format(desk.characters)} créditos de voz.
-              {voiceLeft !== null && ` En la última locución quedaban ${number.format(voiceLeft)}.`}
+              {voiceReused
+                ? "La narración no cambió: se usa la voz ya grabada, sin gastar créditos."
+                : `Pasa a Locución y gasta unos ${number.format(desk.characters)} créditos de voz.`}
+              {!voiceReused &&
+                voiceLeft !== null &&
+                ` En la última locución quedaban ${number.format(voiceLeft)}.`}
               {paused && " Está pausado: retomalo antes de aprobar."}
             </p>
             {approval.status === "error" && <DeskErrors messages={approval.messages} />}

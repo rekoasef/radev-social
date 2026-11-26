@@ -428,7 +428,12 @@ export function decideVideo(
   db: Executor,
   videoId: string,
   packageVersion: number,
-  event: "approveVideo" | "rejectVideoToScript" | "rejectVideoToVoice" | "rejectVideoToRender",
+  event:
+    | "approveVideo"
+    | "returnToScriptDesk"
+    | "rejectVideoToScript"
+    | "rejectVideoToVoice"
+    | "rejectVideoToRender",
   note?: string,
 ): Promise<DeskOutcome> {
   return atomic(db, async (tx) => {

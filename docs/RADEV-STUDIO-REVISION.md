@@ -395,6 +395,7 @@ cualquiera (salvo archived) → archived      [scheduled → publishing → publ
 - **Eventos.**
   - `officeDone`: la oficina terminó y el video pasa a la etapa siguiente.
   - `approveScript` / `rejectScript(nota)`: el rechazo vuelve a `scripting`, con la nota para la IA.
+  - `returnToScriptDesk` (T12): de `in_review` a `script_review`, sin nota ni IA, para que el operador cambie una imagen o un texto; si la narración no cambia, la voz se reutiliza.
   - `approveVideo`, `reopen` (un video aprobado vuelve a `in_review`) y tres rechazos con nota: `rejectVideoToScript` (→ `scripting`), `rejectVideoToVoice` (→ `voicing`) y `rejectVideoToRender` (→ `rendering`: solo se corrige la imagen, sin volver a pagar la voz).
   - `editScript`: en `script_review` crea una versión nueva del guion, validada con `checkDocu`.
   - `archive`.

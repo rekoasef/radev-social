@@ -129,7 +129,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - Verificado en la base local: ZIP solo con el video aprobado; una versión vieja no se aprueba. **Falta (lo hace el operador, necesita su login):** mirar las pantallas y bajar el ZIP desde el botón, que es la ruta real con sesión (pendiente de T11).
 > - Cambios respecto de la maqueta: reproductor del navegador (sin barra propia); los capítulos son botones debajo del video normal.
 > - Los ejemplos ahora traen videos de relleno hechos con `ffmpeg`.
-> - **Pendiente de decisión del operador:** el criterio de aceptación 2 (REVISION §7.7) pide corregir una imagen de un video terminado sin pagar la voz. Hoy no se puede: Render repite lo mismo y Guion hace reescribir a la IA, que puede cambiar la narración. Propuesta: un evento "volver al escritorio del guion" (`in_review` → `script_review`), sin IA.
+> - **Aprobado por el operador:** "Volver al escritorio del guion" (evento `returnToScriptDesk`, `in_review` → `script_review`), para cumplir el criterio 2: corregir una imagen sin pagar la voz.
 >
 > **▶ Próximo paso: etapa 4 de T12** (el plano del piso en React: `docs/references/studio/maqueta/scene-top.js`). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >

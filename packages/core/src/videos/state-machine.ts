@@ -64,6 +64,15 @@ export const VIDEO_TRANSITIONS = {
     needsNote: true,
     label: "rechazar el video y volver a renderizar",
   },
+  /**
+   * The operator wants to change something himself (an image, a caption) without the AI writing
+   * again: back to his script desk. Approving it again reuses the voice if the text did not change.
+   */
+  returnToScriptDesk: {
+    from: ["in_review"],
+    to: "script_review",
+    label: "volver al escritorio del guion",
+  },
   /** An approved video that needs another look (any edit invalidates the approval). */
   reopen: { from: ["approved"], to: "in_review", label: "volver a revisar" },
   archive: {

@@ -69,6 +69,7 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
           desk={scriptDesk({ videoId: video.id, ...documents })}
           paused={video.pausedAt !== null}
           voiceLeft={quota ? Math.max(0, quota.limit - quota.used) : null}
+          voiceReused={documents.voiceReused}
         />
       )}
       {video.stage === "script_review" && !documents && (

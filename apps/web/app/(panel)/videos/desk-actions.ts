@@ -103,6 +103,15 @@ export async function approveVideoAction(_previous: DeskState, form: FormData): 
   return answer(form, "approveVideo");
 }
 
+/** Back to the script desk to change an image or a text without the AI. */
+export async function returnToScriptAction(
+  _previous: DeskState,
+  form: FormData,
+): Promise<DeskState> {
+  await requireOperator();
+  return answer(form, "returnToScriptDesk");
+}
+
 const RETURN_TO = {
   render: "rejectVideoToRender",
   voice: "rejectVideoToVoice",

@@ -9,6 +9,7 @@ const NEXT_OFFICE = {
   approveScript: "voicing",
   rejectScript: "scripting",
   approveVideo: null,
+  returnToScriptDesk: null,
   rejectVideoToScript: "scripting",
   rejectVideoToVoice: "voicing",
   rejectVideoToRender: "rendering",

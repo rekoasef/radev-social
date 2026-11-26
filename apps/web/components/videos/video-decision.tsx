@@ -6,6 +6,7 @@ import {
   type DeskState,
   rejectVideoAction,
   reopenVideoAction,
+  returnToScriptAction,
 } from "@/app/(panel)/videos/desk-actions";
 import { DeskErrors } from "./desk-errors";
 
@@ -26,10 +27,11 @@ export function VideoDecision({
 }) {
   const [approval, approve, approving] = useActionState(approveVideoAction, idle);
   const [rejection, reject, rejecting] = useActionState(rejectVideoAction, idle);
+  const [back, goBack, goingBack] = useActionState(returnToScriptAction, idle);
   const [note, setNote] = useState("");
   const noteId = useId();
   const approveForm = useId();
-  const busy = approving || rejecting || paused;
+  const busy = approving || rejecting || goingBack || paused;
 
   const destinations = [
     {
@@ -107,6 +109,18 @@ export function VideoDecision({
           <button type="submit" className="console-button" disabled={busy || !note.trim()}>
             {rejecting ? "Devolviendo…" : "Devolver con la nota"}
           </button>
+        </form>
+
+        <form action={goBack} className="flex flex-col gap-2 border-t border-bezel pt-3">
+          {target}
+          <button type="submit" className="console-button" disabled={busy}>
+            {goingBack ? "Volviendo…" : "Volver al escritorio del guion"}
+          </button>
+          <p className="text-sm text-ink-faint">
+            Para cambiar vos una imagen o un texto, sin que escriba la IA. Si la narración no
+            cambia, la voz no se vuelve a pagar.
+          </p>
+          {back.status === "error" && <DeskErrors messages={back.messages} />}
         </form>
       </section>
 

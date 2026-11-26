@@ -523,7 +523,7 @@ Para eso, `GenerationTask` suma `effort?: "low" | "medium" | "high"`, que `claud
 
 **Escritorio del guion (T12).** Cada cambio viaja con la versión del guion que el operador estaba mirando (`saveOperatorScript` y `decideScript` bloquean el video y la comparan): una pestaña vieja no pisa ni aprueba nada. Una edición pasa por `editScene` (`packages/video`), que la acepta solo si no suma errores de `checkScript`. La voz se encola únicamente después de que la etapa cambió.
 
-**Escritorio del video (T12).** La decisión viaja con la versión del documento `package` que el operador miró (`decideVideo`). Se puede devolver a Render (rehace Render y Publicación con lo mismo), a Locución (graba otra toma aunque el texto no haya cambiado: en la etapa `voicing`, una nota de rechazo significa eso) o a Guion. Un video aprobado se puede reabrir, y la descarga se cierra hasta aprobarlo de nuevo.
+**Escritorio del video (T12).** La decisión viaja con la versión del documento `package` que el operador miró (`decideVideo`). Se puede volver al escritorio del guion (`returnToScriptDesk`: sin IA; Locución reutiliza la toma si la narración no cambió), devolver a Render (rehace Render y Publicación con lo mismo), a Locución (graba otra toma aunque el texto no haya cambiado: en la etapa `voicing`, una nota de rechazo significa eso) o a Guion. Un video aprobado se puede reabrir, y la descarga se cierra hasta aprobarlo de nuevo.
 
 **Lo que no está en el proceso:**
 - Avisos por Telegram: fuera de V1.

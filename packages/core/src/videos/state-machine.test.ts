@@ -170,11 +170,12 @@ describe("availableVideoEvents (the panel's buttons)", () => {
     );
   });
 
-  it("offers the three rejections, the approval and discard at the second desk", () => {
+  it("offers the approval, the returns and discard at the second desk", () => {
     expect(availableVideoEvents("in_review").sort()).toEqual(
       [
         "approveVideo",
         "archive",
+        "returnToScriptDesk",
         "rejectVideoToRender",
         "rejectVideoToScript",
         "rejectVideoToVoice",
@@ -188,5 +189,20 @@ describe("availableVideoEvents (the panel's buttons)", () => {
 
   it("offers nothing once archived", () => {
     expect(availableVideoEvents("archived")).toEqual([]);
+  });
+});
+
+describe("returnToScriptDesk", () => {
+  it("takes a video in review back to the script desk, with no note and no office", () => {
+    expect(nextStage("in_review", "returnToScriptDesk")).toEqual({
+      ok: true,
+      to: "script_review",
+    });
+    expect(needsNote("returnToScriptDesk")).toBe(false);
+  });
+
+  it("only from the video desk: an approved video is reopened first", () => {
+    expect(nextStage("approved", "returnToScriptDesk").ok).toBe(false);
+    expect(nextStage("voicing", "returnToScriptDesk").ok).toBe(false);
   });
 });
