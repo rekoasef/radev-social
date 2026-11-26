@@ -4,6 +4,7 @@ import { useActionState, useCallback, useId, useState } from "react";
 import {
   approveScriptAction,
   type DeskState,
+  drawFramesAction,
   rejectScriptAction,
 } from "@/app/(panel)/videos/desk-actions";
 import { Plate } from "@/components/console/plate";
@@ -30,6 +31,7 @@ export function ScriptDesk({
   videoId,
   version,
   desk,
+  drawing,
   paused,
   voiceLeft,
   voiceReused,
@@ -37,6 +39,8 @@ export function ScriptDesk({
   videoId: string;
   version: number;
   desk: ScriptDeskView;
+  /** Frames are on their way (the page refreshes itself). */
+  drawing: boolean;
   /** A paused video cannot be approved until it is resumed. */
   paused: boolean;
   /** Voice credits left, as of the last take that read them. */
@@ -208,6 +212,7 @@ export function ScriptDesk({
                   </li>
                 ))}
               </ul>
+              {desk.framesPending > 0 && <DrawFrames videoId={videoId} drawing={drawing} />}
             </section>
           )}
 
@@ -268,5 +273,22 @@ export function ScriptDesk({
         onClose={closeSheet}
       />
     </>
+  );
+}
+
+/** Asks the video-worker to draw the frames that are missing. */
+function DrawFrames({ videoId, drawing }: { videoId: string; drawing: boolean }) {
+  const [state, action, pending] = useActionState(drawFramesAction, { status: "idle" as const });
+  if (drawing) {
+    return <Tally state="standby">Dibujando los cuadros (necesita el video-worker)</Tally>;
+  }
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="videoId" value={videoId} />
+      <button type="submit" className="console-button self-start" disabled={pending}>
+        {pending ? "Pidiendo…" : "Dibujar los cuadros"}
+      </button>
+      {state.status === "error" && <DeskErrors messages={state.messages} />}
+    </form>
   );
 }

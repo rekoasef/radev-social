@@ -10,6 +10,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import type { Graphic } from "../script";
+import { PHOTO_SIZE, type PhotoFormat, place, showsWhole, type View } from "./framing";
 import { GraphicView } from "./graphics";
 import { Karaoke } from "./karaoke";
 
@@ -22,7 +23,8 @@ export type SceneVoice = {
 
 // Prototipo de formato "imágenes reales": una foto o documento de archivo por escena, con zoom lento
 // (Ken Burns), subtítulos de la voz y el crédito de la imagen. Las imágenes se acreditan siempre.
-export type View = { cx: number; cy: number; vw: number };
+export type { PhotoFormat, View };
+export { PHOTO_SIZE };
 export type Shot = {
   voice: number;
   image: string;
@@ -31,18 +33,15 @@ export type Shot = {
   from: View;
   to: View;
   credit: string;
+  /** La foto entera sobre un fondo desenfocado, en vez de cubrir el cuadro (ver `showsWhole`). */
+  whole?: boolean;
   highlight?: string[];
   graphics?: Graphic[];
   /** Cola después de la voz, en segundos. */
   tail?: number;
 };
-export type PhotoFormat = "9x16" | "16x9";
 export type PhotoVideoProps = { voices: SceneVoice[]; shots: Shot[]; format?: PhotoFormat };
 
-export const PHOTO_SIZE = {
-  "9x16": { width: 1080, height: 1920 },
-  "16x9": { width: 1920, height: 1080 },
-} as const;
 // Karaoke y crédito según el formato: en 16:9 los subtítulos van arriba y más chicos.
 const LAYOUT = {
   "9x16": {
@@ -59,55 +58,55 @@ const LAYOUT = {
   },
 } as const;
 
+type SceneShot = Pick<
+  Shot,
+  "image" | "aspect" | "from" | "to" | "credit" | "whole" | "highlight" | "graphics"
+>;
+
 /**
- * Las vistas se piensan en vertical. En 16:9 se conserva cuánto se ve de ALTO de la imagen (para que
- * el sujeto no quede cortado) y se abre el ancho; si la imagen no alcanza, se muestra entera de ancho.
+ * Lo que se ve de una escena en un momento: la foto (cubriendo el cuadro, o entera sobre una copia
+ * desenfocada), la viñeta, los gráficos, los subtítulos y el crédito. Lo usan el video y el cuadro
+ * fijo de cada escena (`FrameStill`), así el cuadro es lo mismo que va a salir.
  */
-function adaptView(v: View, aspect: number, format: PhotoFormat): View {
-  if (format === "9x16") return v;
-  const V = PHOTO_SIZE["9x16"];
-  const Wd = PHOTO_SIZE["16x9"];
-  const dwV = Math.max(V.width / v.vw, V.height / aspect);
-  const heightFraction = Math.min(1, V.height / (dwV * aspect));
-  const dwWide = Math.max(Wd.width, Wd.height / (heightFraction * aspect));
-  return { cx: v.cx, cy: v.cy, vw: Math.min(1, Wd.width / dwWide) };
-}
-
-/** Dónde queda la imagen en el cuadro para una vista (centro y fracción de ancho visible). */
-function place(v: View, aspect: number, format: PhotoFormat) {
-  const { width: W, height: H } = PHOTO_SIZE[format];
-  const dw = Math.max(W / v.vw, H / aspect); // que la imagen siempre cubra el cuadro
-  const dh = dw * aspect;
-  const cx = Math.min(1 - W / 2 / dw, Math.max(W / 2 / dw, v.cx));
-  const cy = Math.min(1 - H / 2 / dh, Math.max(H / 2 / dh, v.cy));
-  return { dw, dh, left: W / 2 - cx * dw, top: H / 2 - cy * dh };
-}
-
-const framesOf = (shot: Shot, voice: SceneVoice) =>
-  voice.frames + Math.round((shot.tail ?? 0) * 30);
-
-function PhotoScene({
+export function SceneLayers({
   shot,
-  voice,
   format,
+  k,
+  words,
+  t,
+  graphicTime,
 }: {
-  shot: Shot;
-  voice: SceneVoice;
+  shot: SceneShot;
   format: PhotoFormat;
+  /** 0 = encuadre `from`, 1 = `to`. */
+  k: number;
+  words: SceneVoice["words"];
+  /** Segundo de la escena, para los subtítulos. */
+  t: number;
+  /** El segundo en que se dibuja cada gráfico; null: no se dibuja. */
+  graphicTime: (g: Graphic) => number | null;
 }) {
   const lay = LAYOUT[format];
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const k = interpolate(frame, [0, framesOf(shot, voice)], [0, 1], {
-    extrapolateRight: "clamp",
-    easing: (x) => x * x * (3 - 2 * x),
-  });
-  const a = place(adaptView(shot.from, shot.aspect, format), shot.aspect, format);
-  const b = place(adaptView(shot.to, shot.aspect, format), shot.aspect, format);
+  const whole = showsWhole(shot.from, shot.to, shot.aspect, format, shot.whole);
+  const a = place(shot.from, shot.aspect, format, whole);
+  const b = place(shot.to, shot.aspect, format, whole);
   const mix = (p: number, q: number) => p + (q - p) * k;
-  const fade = interpolate(frame, [0, 8], [0, 1], { extrapolateRight: "clamp" });
   return (
-    <AbsoluteFill style={{ background: "#0C0B0A", overflow: "hidden", opacity: fade }}>
+    <>
+      {whole && (
+        <Img
+          src={staticFile(shot.image)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transform: "scale(1.15)",
+            filter: "blur(48px) brightness(0.42) saturate(0.85)",
+          }}
+        />
+      )}
       <Img
         src={staticFile(shot.image)}
         style={{
@@ -117,6 +116,7 @@ function PhotoScene({
           left: mix(a.left, b.left),
           top: mix(a.top, b.top),
           filter: "sepia(0.18) contrast(1.05) brightness(0.92)",
+          boxShadow: whole ? "0 20px 60px rgba(0,0,0,0.6)" : undefined,
         }}
       />
       {/* viñeta y degradados para que se lean los subtítulos y el crédito */}
@@ -126,16 +126,14 @@ function PhotoScene({
             "radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%), linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.6) 100%)",
         }}
       />
-      {(shot.graphics ?? []).map((g, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: el orden de los gráficos es fijo
-        <GraphicView key={i} g={g} t={frame / fps} words={voice.words} format={format} />
-      ))}
-      <Karaoke
-        words={voice.words}
-        highlight={shot.highlight ?? []}
-        t={frame / fps}
-        {...lay.karaoke}
-      />
+      {(shot.graphics ?? []).map((g, i) => {
+        const at = graphicTime(g);
+        return at === null ? null : (
+          // biome-ignore lint/suspicious/noArrayIndexKey: el orden de los gráficos es fijo
+          <GraphicView key={i} g={g} t={at} words={words} format={format} />
+        );
+      })}
+      <Karaoke words={words} highlight={shot.highlight ?? []} t={t} {...lay.karaoke} />
       <div
         style={{
           position: "absolute",
@@ -151,6 +149,39 @@ function PhotoScene({
       >
         {shot.credit}
       </div>
+    </>
+  );
+}
+
+const framesOf = (shot: Shot, voice: SceneVoice) =>
+  voice.frames + Math.round((shot.tail ?? 0) * 30);
+
+function PhotoScene({
+  shot,
+  voice,
+  format,
+}: {
+  shot: Shot;
+  voice: SceneVoice;
+  format: PhotoFormat;
+}) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const k = interpolate(frame, [0, framesOf(shot, voice)], [0, 1], {
+    extrapolateRight: "clamp",
+    easing: (x) => x * x * (3 - 2 * x),
+  });
+  const fade = interpolate(frame, [0, 8], [0, 1], { extrapolateRight: "clamp" });
+  return (
+    <AbsoluteFill style={{ background: "#0C0B0A", overflow: "hidden", opacity: fade }}>
+      <SceneLayers
+        shot={shot}
+        format={format}
+        k={k}
+        words={voice.words}
+        t={frame / fps}
+        graphicTime={() => frame / fps}
+      />
       {voice.audio ? <Audio src={staticFile(voice.audio)} /> : null}
     </AbsoluteFill>
   );

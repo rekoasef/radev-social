@@ -41,6 +41,10 @@ export const reviewSchema = z.object({
             .regex(/^i\d{2,3}$/)
             .optional()
             .describe("Id de una candidata mejor, si la imagen no muestra lo que se dice."),
+          whole: z
+            .boolean()
+            .optional()
+            .describe("true: la foto va entera en el Short, si el recorte pierde lo importante."),
           from: viewSchema.optional(),
           to: viewSchema.optional(),
           graphics: z
@@ -69,6 +73,7 @@ export function reviewView(g: Script, candidates: ImageCandidate[]) {
       image: candidates.find((c) => c.id === s.image)?.title,
       caption: s.caption,
       exact: s.exact,
+      whole: s.whole,
       graphics: s.graphics,
     })),
     facts: g.facts,
@@ -99,6 +104,7 @@ export function applyFixes(
     if (fix.narration) sc.narration = fix.narration;
     if (fix.caption) sc.caption = fix.caption;
     if (fix.graphics) sc.graphics = fix.graphics;
+    if (fix.whole !== undefined) sc.whole = fix.whole;
     if (fix.image) {
       // sin encuadres propios: un acercamiento suave al centro
       sc.image = fix.image;

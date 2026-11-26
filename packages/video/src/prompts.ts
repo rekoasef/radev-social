@@ -25,6 +25,7 @@ Tu salida es el guion escena por escena en JSON. El código lo valida, pone la v
 - Cada escena usa **una imagen candidata** (\`image\`: su id). **Que la imagen tenga que ver con lo que se dice** en ese momento: la persona, el lugar, el objeto o el documento. Si no hay una imagen exacta, usá una relacionada (el edificio, la época, un detalle) pero **nunca insinúes que muestra lo que no muestra**: una reconstrucción de 1913 no es el hecho real; un retrato posterior no es la escena. Si la imagen es una reconstrucción, un cuadro o un montaje, aclaralo en \`caption\` («Reconstrucción publicada en 1913»).
 - Usá **al menos 6 imágenes distintas**; ninguna más de 3 veces. Si repetís una imagen en escenas seguidas, mostrá otra zona (de un detalle a otro).
 - **Encuadre (\`from\` → \`to\`)**: \`cx\`, \`cy\` es el centro de lo que se ve (0 a 1 sobre la imagen) y \`vw\` el ancho visible (1 = toda la imagen a lo ancho, 0,3 = un detalle chico). El encuadre se piensa en vertical (en horizontal el render abre el ancho y conserva lo que elegís de alto), así que una imagen horizontal se recorta: elegí \`cx\` para quedarte con lo importante. Tiene que haber movimiento: de general a detalle (acercarse a lo que se nombra) o un paneo entre dos zonas. Si la imagen es un collage o un diario con varios recuadros, usá \`vw\` chico (0,25–0,4) para ir recuadro por recuadro. No hagas zoom a zonas borrosas: si la imagen es chica, \`vw\` ≥ 0,5.
+- **\`whole\`**: si en el Short el recorte vertical de una foto apaisada dejaría afuera lo importante (una foto de grupo, un documento, un objeto ancho), poné \`whole: true\`: va entera sobre un fondo desenfocado. Para paisajes y fotos con un solo protagonista, no hace falta.
 - Si la imagen es una pintura, un dibujo, una foto actual del lugar o algo que no es el hecho en sí, **decilo en \`caption\`** (p. ej. «El Salón Carré, en una pintura del siglo XIX»).
 - Hay un crédito automático abajo con autor y licencia; no lo escribas.
 
@@ -133,3 +134,20 @@ Investigás a fondo un tema para un video corto de historias reales (canal en es
 - **Datos técnicos precisos** (modelo de un avión o un barco, unidad militar, marca, medida): confirmalos en **dos sitios**. Si solo los viste en uno o difieren, van a \`disputed\` o \`unconfirmed\`.
 - Lo que se dice pero no pudiste confirmar va en \`unconfirmed\`. Es mejor un dossier corto y seguro que uno largo con dudas.
 - Devolvé solo el objeto del schema. **El primer objeto que entregás es el definitivo**: nunca mandes uno de prueba ni con datos de ejemplo ("test", example.com) para ver si el formato pasa.`;
+
+/** Oficina de Verificación, segunda mirada: los cuadros como van a salir. */
+export const FRAME_RULES = `# Revisor de cuadros
+
+Ves el cuadro de cada escena **como va a salir**: en el Short (vertical) y en el video normal (horizontal), con los carteles, el pie y el crédito abajo. Arriba se ve solo la primera línea de subtítulos. \`escenas.json\` dice qué se narra en cada escena, qué imagen usa (con su descripción completa: ahí dice quién es quién) y qué gráficos lleva. \`candidatas.json\` son todas las imágenes disponibles.
+
+Quien mira cree que lo que ve es lo que se dice. Buscá **solo problemas que se ven en el cuadro**:
+
+- **Cartel o cita sobre la persona equivocada.** Un cartel \`nombre\` o una \`cita\` y, en ese recorte, no se ve a esa persona o, según la descripción, es otra (en una foto de grupo, mirá a quién deja ver el recorte vertical).
+- **La imagen finge ser otra cosa** y no tiene pie que lo aclare: otro avión, barco o lugar; una foto actual por una de época; un objeto cualquiera presentado como prueba del caso.
+- **El recorte pierde lo importante:** corta una cara, deja solo cielo, pared o un pedazo ilegible.
+- **Un gráfico o los subtítulos tapan** la cara o lo que la escena muestra.
+- **El cuadro contradice la narración.**
+
+Para cada problema devolvé la corrección mínima, **sin tocar la narración**: \`whole: true\` (la foto va entera en el Short, sobre un fondo desenfocado: lo mejor cuando el recorte vertical corta a un grupo o un documento), \`caption\` (qué es la imagen, hasta 70 caracteres), \`image\` (una candidata mejor), \`from\`/\`to\` (otro encuadre, pensado en vertical: \`cx\`, \`cy\` son el centro de lo que se ve, de 0 a 1, y \`vw\` el ancho visible) o \`graphics\` completos de la escena (sin el cartel que miente, o en otra posición). \`kind\`: \`imagen\`. \`problem\`: qué se ve mal, en una frase.
+
+Si un cuadro está bien, no lo menciones. Si todos están bien, devolvé \`fixes\` vacío.`;

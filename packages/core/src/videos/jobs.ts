@@ -16,6 +16,8 @@ export const VIDEO_JOBS = {
   pin: "video.pin",
   /** "Proponer ideas" and "Investigar temas" of a new video. */
   ideas: "video.ideas",
+  /** Draws again the still frames of the scenes the operator changed at the script desk. */
+  frames: "video.frames",
   /** Cron: queues again the videos at a working stage that have no job (a lost send). */
   sweep: "video.sweep",
 } as const;
@@ -53,6 +55,10 @@ export type VideoPinResult =
 
 /** Every 10 minutes. */
 export type VideoIdeasJob = { requestId: string };
+
+export type VideoFramesJob = { videoId: string };
+/** One waiting job per video: a later edit is drawn by the same run (it draws what is missing). */
+export const videoFramesKey = (job: VideoFramesJob) => `frames:${job.videoId}`;
 
 export const VIDEO_SWEEP_CRON = "*/10 * * * *";
 
@@ -115,6 +121,8 @@ export const VIDEO_QUEUE_OPTIONS = {
   [VIDEO_JOBS.pin]: { retryLimit: 1, retryDelay: 30, expireInSeconds: 10 * 60 },
   // A research is up to 10 minutes, and it may wait for the office that holds the AI lock.
   [VIDEO_JOBS.ideas]: { retryLimit: 1, retryDelay: 60, expireInSeconds: 45 * 60 },
+  // One bundle and a few stills: under a minute.
+  [VIDEO_JOBS.frames]: { retryLimit: 1, retryDelay: 20, expireInSeconds: 10 * 60 },
   [VIDEO_JOBS.sweep]: { retryLimit: 0 },
 } as const satisfies Record<
   VideoJobName,

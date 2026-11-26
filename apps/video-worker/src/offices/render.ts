@@ -61,6 +61,7 @@ export const createRenderOffice =
         from: s.from,
         to: s.to,
         credit: shortCredit(c, s.caption),
+        whole: s.whole,
         highlight: s.highlight,
         graphics: s.graphics,
         tail: s.tail,

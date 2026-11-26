@@ -1075,6 +1075,40 @@
     background: #000;
     object-fit: cover;
   }
+  /* The scene as it will come out in the Short: 9:16, not wider than a phone screen in the card. */
+  .video-frame-short {
+    display: block;
+    width: min(100%, 11rem);
+    aspect-ratio: 9 / 16;
+    margin-inline: auto;
+    border-radius: 4px;
+    background: #000;
+    object-fit: cover;
+  }
+  .frame-switch {
+    display: flex;
+    min-width: 0;
+    padding: 0;
+    margin-bottom: 6px;
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .frame-switch button {
+    @apply plate-text;
+    flex: 1;
+    min-height: 32px;
+    color: var(--color-ink-faint);
+  }
+  @media (pointer: coarse) {
+    .frame-switch button {
+      min-height: 44px;
+    }
+  }
+  .frame-switch button[aria-pressed="true"] {
+    color: var(--color-ink);
+    background: var(--color-panel-raised);
+  }
   .thumb-license,
   .thumb-swap {
     position: absolute;

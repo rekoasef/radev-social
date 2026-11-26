@@ -12,7 +12,13 @@ import { commonsTitle, editScene } from "@radev/video";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { type PinStatus, pinStatus, queuePinImage, queueVideoOffice } from "@/lib/jobs";
+import {
+  type PinStatus,
+  pinStatus,
+  queuePinImage,
+  queueVideoFrames,
+  queueVideoOffice,
+} from "@/lib/jobs";
 import { requireOperator } from "@/lib/session";
 import { type DecideDeps, type DeskEvent, decideAndQueue } from "@/lib/video-decide";
 import { loadScriptDocuments } from "@/lib/video-documents";
@@ -56,6 +62,10 @@ export async function editSceneAction(_previous: DeskState, form: FormData): Pro
   if (!edited.ok) return fail(...edited.errors);
   const saved = await saveOperatorScript(db, videoId, version, edited.script);
   if (!saved.ok) return fail(saved.reason);
+  // The edited scene is drawn again by the video-worker; the desk shows the photo meanwhile.
+  await queueVideoFrames(videoId).catch((cause) =>
+    console.error("video: frames not queued", cause),
+  );
   revalidatePath(`/videos/${videoId}`);
   return { status: "done" };
 }
@@ -163,4 +173,16 @@ export async function pinStatusAction(videoId: string, jobId: string): Promise<P
   const status = await pinStatus(...ids.data);
   if (status.state === "done" && status.result.ok) revalidatePath(`/videos/${videoId}`);
   return status;
+}
+
+/** "Dibujar los cuadros": for a script whose frames were never drawn (or got lost). */
+export async function drawFramesAction(_previous: DeskState, form: FormData): Promise<DeskState> {
+  await requireOperator();
+  const id = z.uuid().safeParse(form.get("videoId"));
+  if (!id.success) return fail("Ese video no existe.");
+  const video = await getVideo(db, id.data);
+  if (video?.stage !== "script_review") return fail("El video ya no está en tu escritorio.");
+  await queueVideoFrames(id.data);
+  revalidatePath(`/videos/${id.data}`);
+  return { status: "done" };
 }

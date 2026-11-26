@@ -12,6 +12,7 @@ import { ScriptDesk } from "@/components/videos/script-desk";
 import { DiscardVideoButton, RetryVideoForm } from "@/components/videos/video-controls";
 import { VideoDesk } from "@/components/videos/video-desk";
 import { db } from "@/lib/db";
+import { framesQueued } from "@/lib/jobs";
 import { loadDelivery } from "@/lib/video-delivery";
 import { describeVideo, folders } from "@/lib/video-display";
 import { loadScriptDocuments } from "@/lib/video-documents";
@@ -32,6 +33,10 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
   const documents = video.stage === "script_review" ? await loadScriptDocuments(video.id) : null;
   const finished = video.stage === "in_review" || video.stage === "approved";
   const delivery = finished ? await loadDelivery(video) : null;
+  const desk = documents ? scriptDesk({ videoId: video.id, ...documents }) : null;
+  // Only while a drawing is on its way: without the worker the page would refresh forever.
+  const drawing =
+    desk !== null && desk.framesPending > 0 && (await framesQueued(video.id).catch(() => false));
   const now = new Date();
   const quota = documents
     ? (
@@ -45,7 +50,7 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
 
   return (
     <section aria-labelledby="video-heading" className="flex flex-col gap-6">
-      {(view.working || view.tally === "standby") && <AutoRefresh seconds={5} />}
+      {(view.working || view.tally === "standby" || drawing) && <AutoRefresh seconds={5} />}
       <Link href="/videos" className="back-link">
         ← Estudio
       </Link>
@@ -62,11 +67,12 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
         </div>
       </div>
       <Tally state={view.tally}>{view.status}</Tally>
-      {documents && (
+      {documents && desk && (
         <ScriptDesk
           videoId={video.id}
           version={documents.version}
-          desk={scriptDesk({ videoId: video.id, ...documents })}
+          desk={desk}
+          drawing={drawing}
           paused={video.pausedAt !== null}
           voiceLeft={quota ? Math.max(0, quota.limit - quota.used) : null}
           voiceReused={documents.voiceReused}

@@ -18,10 +18,20 @@ Primer video hecho entero desde el panel: 39 min desde el tema hasta aprobarlo, 
 
 **Para corregir el video publicado** (lo hace el operador): «Volver a revisar» → «Volver al escritorio del guion» → pies en las escenas 2, 8, 11 y 17, otra imagen en la 4, y en la 13 «aviones espía» (eso vuelve a grabar toda la voz). La miniatura se rehace al aprobar. En YouTube hay que subirlo de nuevo.
 
+## Etapas 1 y 2 del recorrido por las oficinas (2026-11-26)
+
+**1. Ver el cuadro final.** Al terminar su revisión de texto, la Verificación dibuja un cuadro fijo por escena en los dos formatos (a mitad del zoom, con carteles, pie, crédito y la primera línea de subtítulos; sin voz) y una segunda IA los mira con las descripciones completas. Corrige imagen, pie, encuadre, gráficos o pide la foto entera; nunca la narración. Si los cuadros no se pueden dibujar, el video sigue y el escritorio lo avisa.
+- **El operador ve los mismos cuadros** en el escritorio del guion (Short / Normal). Al editar una escena, el `video-worker` la vuelve a dibujar (job `video.frames`). Los archivos se llaman por su contenido (`frames/<clave>-<formato>.jpg`): solo se dibuja lo que cambió.
+- **Probado con el guion publicado de D.B. Cooper:** atrapó el cartel de Florence Schaffner («ella no aparece ahí»), el Boeing de Lufthansa y el de la FAA, «Noche del salto» sobre una montaña de día y el U-2 de 1960. Se le escapó la etiqueta de tabaco como «Evidencia» (ese cartel lo saca el código). 40 cuadros, ~90.000 tokens de entrada, 2 min.
+- Dibujar 38 cuadros: 29 s.
+
+**2. Fotos apaisadas en el Short.** Una escena puede ir con la foto **entera** sobre una copia desenfocada (`whole`), en vez de llenar la pantalla. La pide el guionista o la revisión de cuadros (un grupo de personas, un documento); el código la fuerza solo si cubrir mostraría menos de la mitad de lo pedido (una panorámica). Por defecto la foto llena la pantalla, como antes: probar «entera» para todas las apaisadas dejaba casi todo el video en una franja.
+
 ## Lo que todavía no se controla
 
-- **Nadie mira el cuadro final.** Las IA ven cada foto entera, no el recorte vertical con sus carteles. Propuesta pendiente: un control visual que dibuje un cuadro por escena (sin voz, antes de tu aprobación del guion) y lo haga revisar.
 - **Homónimos:** el código compara nombres, no personas (en el ejemplo de la Mona Lisa, un Giovanni Poggi de 1770). Queda como regla para la IA.
 - **Un cartel con nombre sobre una foto de grupo** que sí lo nombra: depende del encuadre que elija la IA.
 - Las reglas nuevas **no se probaron todavía con un video real**.
 - Fuentes: 24 de 25 hechos «no están» en su página (WebFetch le pasa a la IA un resumen). Sigue siendo informativa.
+- La revisión de cuadros mira el **medio** del zoom: lo que se ve al empezar o al terminar la escena puede ser distinto.
+- Las etapas 1 y 2 **no se probaron con un video nuevo de punta a punta**.

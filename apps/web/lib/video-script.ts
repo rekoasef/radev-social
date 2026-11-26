@@ -53,6 +53,8 @@ export type SceneView = {
   facts: FactView[];
   fix: { problem: string; before: Piece[]; after: Piece[] } | null;
   unverified: boolean;
+  /** The scene as it will come out (null: not drawn yet, or the scene changed since). */
+  frames: { short: string | null; normal: string | null } | null;
 };
 
 export type ScriptDeskView = {
@@ -64,6 +66,8 @@ export type ScriptDeskView = {
   seconds: number;
   imagesUsed: number;
   notes: { tone: "cued" | "ready"; text: string }[];
+  /** Scenes whose frame is still to be drawn. */
+  framesPending: number;
 };
 
 /** The two texts word by word, marking what each does not share with the other (LCS). */
@@ -141,9 +145,16 @@ export function scriptDesk(input: {
   images: ImagesDoc;
   dossier: Dossier;
   sources: SourcesDoc | null;
-  review: { applied: Review["fixes"]; rejected: unknown[] } | null;
+  review: {
+    applied: Review["fixes"];
+    rejected: unknown[];
+    frames?:
+      | { status: "done"; frames: number; applied: number }
+      | { status: "skipped"; reason: string };
+  } | null;
   /** The script before the fact check changed it, for the corrections. */
   beforeReview: Script | null;
+  frames?: ReadonlyMap<number, { short: string | null; normal: string | null }>;
 }): ScriptDeskView {
   const { script, dossier } = input;
   const images: ImageView[] = input.images.candidates.map((c) => ({
@@ -205,6 +216,7 @@ export function scriptDesk(input: {
           }
         : null,
       unverified: mine.some((f) => unverifiedResult(f.result)),
+      frames: input.frames?.get(n) ?? null,
     };
   });
 
@@ -231,7 +243,25 @@ export function scriptDesk(input: {
     });
   }
 
+  const look = input.review?.frames;
+  if (look?.status === "done") {
+    notes.push({
+      tone: "ready",
+      text: `Cuadros mirados por la IA: ${look.frames / 2} escenas en los dos formatos, ${look.applied} corregidas.`,
+    });
+  } else if (look?.status === "skipped") {
+    notes.push({ tone: "cued", text: `No se miraron los cuadros: ${look.reason}` });
+  }
+  const pending = scenes.filter((s) => !s.frames?.short || !s.frames.normal).length;
+  if (input.frames && pending > 0) {
+    notes.push({
+      tone: "cued",
+      text: `${pending === 1 ? "1 escena" : `${pending} escenas`} sin su cuadro dibujado: se ve la foto entera, no cómo sale.`,
+    });
+  }
+
   return {
+    framesPending: input.frames ? pending : 0,
     title: script.title,
     scenes,
     facts: facts.map((f) => ({ ...f, scene: f.scene === null ? null : f.scene + 1 })),

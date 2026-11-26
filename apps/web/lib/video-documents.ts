@@ -1,11 +1,18 @@
 import "server-only";
 import { canReuseVoice } from "@radev/core";
-import { getCurrentVideoDocument, listVideoDocumentVersions, type VideoDocument } from "@radev/db";
+import {
+  getCurrentVideoDocument,
+  listVideoDocumentVersions,
+  statMediaFile,
+  type VideoDocument,
+} from "@radev/db";
 import {
   compactDossier,
   dossierSchema,
+  framePath,
   imagesDocSchema,
   reviewSchema,
+  sceneFrames,
   scriptSchema,
   sourcesSchema,
   voiceDocSchema,
@@ -19,7 +26,35 @@ import { db } from "./db";
 const reviewDocSchema = z.object({
   applied: reviewSchema.shape.fixes,
   rejected: z.array(z.unknown()),
+  /** The second look of the Verification, at the drawn frames (older reviews have none). */
+  frames: z
+    .union([
+      z.object({ status: z.literal("done"), frames: z.number(), applied: z.number() }),
+      z.object({ status: z.literal("skipped"), reason: z.string() }),
+    ])
+    .optional(),
 });
+
+/** The frames of the script as it is now: a URL per scene and format, or null if not drawn yet. */
+async function loadFrames(
+  videoId: string,
+  script: z.infer<typeof scriptSchema>,
+  candidates: z.infer<typeof imagesDocSchema>["candidates"],
+) {
+  const url = async (path: string) =>
+    (await statMediaFile(`videos/${videoId}/${path}`)) ? `/media/videos/${videoId}/${path}` : null;
+  const frames = new Map<number, { short: string | null; normal: string | null }>();
+  await Promise.all(
+    sceneFrames(script, candidates).map(async ({ scene, key }) => {
+      const [short, normal] = await Promise.all([
+        url(framePath(key, "9x16")),
+        url(framePath(key, "16x9")),
+      ]);
+      frames.set(scene, { short, normal });
+    }),
+  );
+  return frames;
+}
 
 export async function loadScriptDocuments(videoId: string) {
   const [scriptDoc, imagesDoc, dossierDoc, sourcesDoc, reviewDoc, versions, voiceDoc] =
@@ -48,7 +83,9 @@ export async function loadScriptDocuments(videoId: string) {
       model: voice.data.model,
       speed: voice.data.speed,
     });
+  const frames = await loadFrames(videoId, script.data, images.data.candidates);
   return {
+    frames,
     voiceReused,
     version: scriptDoc.version,
     script: script.data,

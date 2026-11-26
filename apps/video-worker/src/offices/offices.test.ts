@@ -7,7 +7,7 @@ import { OfficeFailure } from "../office";
 import { answer, failure, makeCtx, video } from "./harness";
 import { createImagesOffice } from "./images";
 import { research } from "./research";
-import { review } from "./review";
+import { createReviewOffice } from "./review";
 import { script } from "./script";
 import { createSourcesOffice } from "./sources";
 
@@ -239,13 +239,44 @@ describe("script office", () => {
 
 describe("review office", () => {
   const noFixes: Review = { fixes: [] };
+  /** A renderer that "draws" each frame into the fake media folder. */
+  const drawing = (ctx: ReturnType<typeof makeCtx>["ctx"]) => ({
+    renderStills: async (jobs: readonly { outFile: string }[]) => {
+      for (const job of jobs) {
+        await ctx.files.write(job.outFile.replace(`${ctx.mediaDir}/`, ""), jpg);
+      }
+    },
+  });
+  const run = (ctx: ReturnType<typeof makeCtx>["ctx"], renderer = drawing(ctx)) =>
+    createReviewOffice({ renderer })(ctx);
 
   it("with nothing to fix, leaves only the review (the script stays as it is)", async () => {
-    const { ctx, asked } = makeCtx({ docs, answers: [answer(noFixes)], files: smallFiles() });
-    const r = await review(ctx);
+    const { ctx, asked } = makeCtx({
+      docs,
+      answers: [answer(noFixes), answer(noFixes)],
+      files: smallFiles(),
+    });
+    const r = await run(ctx);
     if (r.kind !== "done") throw new Error("debía terminar");
     expect(r.documents.map((d) => d.kind)).toEqual(["review"]);
     expect(asked[0]).toMatchObject({ task: "video.review", effort: "medium", maxTurns: 5 });
+  });
+
+  it("looks at the frame of every scene in both formats", async () => {
+    const { ctx, asked } = makeCtx({
+      docs,
+      answers: [answer(noFixes), answer(noFixes)],
+      files: smallFiles(),
+    });
+    const r = await run(ctx);
+    if (r.kind !== "done") throw new Error("debía terminar");
+    const scenes = goodScript().scenes.length;
+    expect(asked[1]?.images).toHaveLength(scenes * 2);
+    expect(asked[1]?.images?.[1]).toMatchObject({ id: "e01-16x9", mime: "image/jpeg" });
+    expect(asked[1]?.files["escenas.json"]).toContain("description");
+    expect(r.documents[0]?.data).toMatchObject({
+      frames: { status: "done", frames: scenes * 2, applied: 0 },
+    });
   });
 
   it("applies a safe fix and leaves a new version of the script", async () => {
@@ -259,12 +290,51 @@ describe("review office", () => {
         },
       ],
     };
-    const { ctx } = makeCtx({ docs, answers: [answer(fix)], files: smallFiles() });
-    const r = await review(ctx);
+    const { ctx } = makeCtx({ docs, answers: [answer(fix), answer(noFixes)], files: smallFiles() });
+    const r = await run(ctx);
     if (r.kind !== "done") throw new Error("debía terminar");
     expect(r.documents.map((d) => d.kind)).toEqual(["review", "script"]);
     const saved = r.documents[1]?.data as { scenes: { caption?: string }[] };
     expect(saved.scenes[1]?.caption).toBe("El Louvre, foto actual");
+  });
+
+  it("the frame look fixes what it sees, but never the narration", async () => {
+    const original = goodScript().scenes[3]?.narration;
+    const seen: Review = {
+      fixes: [
+        {
+          scene: 4,
+          kind: "imagen",
+          problem: "el recorte deja solo una pared",
+          caption: "Detalle de la sala",
+          narration: "Una narración que la segunda mirada no puede cambiar nunca.",
+        },
+      ],
+    };
+    const { ctx } = makeCtx({
+      docs,
+      answers: [answer(noFixes), answer(seen)],
+      files: smallFiles(),
+    });
+    const r = await run(ctx);
+    if (r.kind !== "done") throw new Error("debía terminar");
+    const saved = r.documents[1]?.data as { scenes: { caption?: string; narration: string }[] };
+    expect(saved.scenes[3]).toMatchObject({ caption: "Detalle de la sala", narration: original });
+    const review = r.documents[0]?.data as { applied: { problem: string }[] };
+    expect(review.applied[0]?.problem).toBe("Cuadro: el recorte deja solo una pared");
+  });
+
+  it("goes on without the frame look when the frames cannot be drawn", async () => {
+    const { ctx, asked } = makeCtx({ docs, answers: [answer(noFixes)], files: smallFiles() });
+    const broken = {
+      renderStills: async () => {
+        throw new Error("sin Chrome");
+      },
+    };
+    const r = await run(ctx, broken);
+    if (r.kind !== "done") throw new Error("debía terminar");
+    expect(asked).toHaveLength(1);
+    expect(r.documents[0]?.data).toMatchObject({ frames: { status: "skipped" } });
   });
 
   it("does not apply a fix that breaks a rule, and says so in the review", async () => {
@@ -278,20 +348,19 @@ describe("review office", () => {
         },
       ],
     };
-    const { ctx } = makeCtx({ docs, answers: [answer(fix)], files: smallFiles() });
-    const r = await review(ctx);
+    const { ctx } = makeCtx({ docs, answers: [answer(fix), answer(noFixes)], files: smallFiles() });
+    const r = await run(ctx);
     if (r.kind !== "done") throw new Error("debía terminar");
     expect(r.documents.map((d) => d.kind)).toEqual(["review"]);
     const saved = r.documents[0]?.data as { rejected: unknown[] };
     expect(saved.rejected).toHaveLength(1);
   });
 
-  it("returns Claude's limit", async () => {
-    const { ctx } = makeCtx({
-      docs,
-      answers: [failure({ kind: "rate_limited", message: "l", retryAfterMs: null })],
-      files: smallFiles(),
-    });
-    expect(await review(ctx)).toEqual({ kind: "rate_limited", retryAfterMs: null });
+  it("returns Claude's limit, in either look", async () => {
+    const limit = failure({ kind: "rate_limited", message: "l", retryAfterMs: null });
+    const first = makeCtx({ docs, answers: [limit], files: smallFiles() });
+    expect(await run(first.ctx)).toEqual({ kind: "rate_limited", retryAfterMs: null });
+    const second = makeCtx({ docs, answers: [answer(noFixes), limit], files: smallFiles() });
+    expect(await run(second.ctx)).toEqual({ kind: "rate_limited", retryAfterMs: null });
   });
 });

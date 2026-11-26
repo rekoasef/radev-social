@@ -1,5 +1,7 @@
 // Las composiciones se importan desde acá en el render (no desde el índice del paquete: Remotion y
 // React no tienen por qué cargarse donde solo se usan los schemas).
+
+export { FrameStill, fakeWords, settledTime } from "./FrameStill";
 export {
   PHOTO_SIZE,
   PhotoVideo,

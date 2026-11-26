@@ -22,10 +22,12 @@ import {
   tiktokPublishKey,
   VIDEO_JOBS,
   VIDEO_QUEUE_OPTIONS,
+  type VideoFramesJob,
   type VideoIdeasJob,
   type VideoOfficeJob,
   type VideoPinJob,
   type VideoPinResult,
+  videoFramesKey,
   videoOfficeKey,
   WORKING_STAGES,
   type WorkingStage,
@@ -68,6 +70,7 @@ function boss(): Promise<PgBoss> {
     }
     await client.createQueue(VIDEO_JOBS.pin, VIDEO_QUEUE_OPTIONS[VIDEO_JOBS.pin]);
     await client.createQueue(VIDEO_JOBS.ideas, VIDEO_QUEUE_OPTIONS[VIDEO_JOBS.ideas]);
+    await client.createQueue(VIDEO_JOBS.frames, VIDEO_QUEUE_OPTIONS[VIDEO_JOBS.frames]);
     return client;
   })();
   return globalForBoss.radevBoss;
@@ -210,6 +213,20 @@ export async function queueVideoOffice(videoId: string, stage: WorkingStage): Pr
 export async function queuePinImage(videoId: string, title: string): Promise<string | null> {
   const data: VideoPinJob = { videoId, title };
   return (await boss()).send(VIDEO_JOBS.pin, data);
+}
+
+/** Queues drawing the frames of the scenes that changed (the video-worker draws what is missing). */
+export async function queueVideoFrames(videoId: string): Promise<void> {
+  const data: VideoFramesJob = { videoId };
+  await (await boss()).send(VIDEO_JOBS.frames, data, { singletonKey: videoFramesKey(data) });
+}
+
+/** Whether frames of this video are waiting to be drawn or being drawn. */
+export async function framesQueued(videoId: string): Promise<boolean> {
+  const jobs = await (await boss()).findJobs(VIDEO_JOBS.frames, {
+    key: videoFramesKey({ videoId }),
+  });
+  return jobs.some((job) => ["created", "retry", "active"].includes(job.state));
 }
 
 /** Queues a request for topic ideas: the video-worker answers it. */

@@ -45,6 +45,8 @@ export function SceneCard({
   const [state, action, pending] = useActionState(editSceneAction, idle);
   const [editing, setEditing] = useState(false);
   const ids = { narration: useId(), caption: useId() };
+  const [format, setFormat] = useState<"short" | "normal">("short");
+  const frame = scene.frames?.[format] ?? null;
 
   useEffect(() => {
     if (state.status === "done") setEditing(false);
@@ -59,14 +61,39 @@ export function SceneCard({
       </p>
 
       <div className="min-w-0">
+        {(scene.frames?.short || scene.frames?.normal) && (
+          <fieldset className="frame-switch">
+            <legend className="sr-only">Formato del cuadro</legend>
+            {(["short", "normal"] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                aria-pressed={format === f}
+                onClick={() => setFormat(f)}
+              >
+                {f === "short" ? "Short" : "Normal"}
+              </button>
+            ))}
+          </fieldset>
+        )}
         <div className="relative">
-          {scene.image ? (
+          {frame ? (
+            // biome-ignore lint/performance/noImgElement: a frame of the video, already small
+            <img
+              src={frame}
+              alt={`Cuadro de la escena ${scene.n}, ${format === "short" ? "Short" : "video normal"}`}
+              loading="lazy"
+              className={format === "short" ? "video-frame-short" : "video-thumb"}
+            />
+          ) : scene.image ? (
             // biome-ignore lint/performance/noImgElement: a file of the video, already small
             <img src={scene.image.src} alt="" loading="lazy" className="video-thumb" />
           ) : (
             <div className="video-thumb" />
           )}
-          {scene.image && <span className="thumb-license">{license(scene.image.license)}</span>}
+          {scene.image && !frame && (
+            <span className="thumb-license">{license(scene.image.license)}</span>
+          )}
           <button type="button" className="thumb-swap" onClick={onSwap}>
             <Replace className="size-3" aria-hidden="true" />
             Cambiar
@@ -75,6 +102,11 @@ export function SceneCard({
         <p className="mt-1.5 truncate text-xs text-ink-faint">
           {scene.image ? `${scene.image.id} · ${scene.image.title}` : "Sin imagen"}
         </p>
+        {!frame && scene.image && (
+          <p className="text-xs text-tally-amber">
+            Foto entera: el cuadro todavía no está dibujado.
+          </p>
+        )}
       </div>
 
       <div className="min-w-0">

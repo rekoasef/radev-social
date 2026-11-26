@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { VideoProbe } from "@radev/video";
+import type { FrameProps, VideoProbe } from "@radev/video";
 import type { PhotoVideoProps, ThumbProps } from "@radev/video/render";
 import { bundle } from "@remotion/bundler";
 import { openBrowser, renderMedia, renderStill, selectComposition } from "@remotion/renderer";
@@ -19,10 +19,14 @@ export type RenderJob = {
   outFile: string;
 };
 
-export type StillJob = { props: ThumbProps; publicDir: string; outFile: string };
+export type StillJob = { publicDir: string; outFile: string } & (
+  | { composition?: "thumb"; props: ThumbProps }
+  /** A scene's still frame: a half-size JPEG (for the AI and the desk, not for publishing). */
+  | { composition: "frame"; props: FrameProps }
+);
 
 export type VideoRenderer = {
-  /** The thumbnails (PNG), one still each. */
+  /** One still each: the thumbnails (PNG) and the scenes' frames (JPEG). One bundle and one Chrome. */
   renderStills(jobs: readonly StillJob[]): Promise<void>;
   /** Renders every job with one bundle and one Chrome. Returns the milliseconds each took. */
   renderAll(
@@ -45,11 +49,12 @@ export const remotionRenderer: VideoRenderer = {
         const inputProps = job.props as unknown as Record<string, unknown>;
         const composition = await selectComposition({
           serveUrl,
-          id: "thumb",
+          id: job.composition ?? "thumb",
           inputProps,
           puppeteerInstance: browser,
         });
         await mkdir(dirname(job.outFile), { recursive: true });
+        const frame = job.composition === "frame";
         await renderStill({
           composition,
           serveUrl,
@@ -57,6 +62,7 @@ export const remotionRenderer: VideoRenderer = {
           frame: 0,
           output: job.outFile,
           puppeteerInstance: browser,
+          ...(frame ? { imageFormat: "jpeg" as const, jpegQuality: 82, scale: 0.5 } : {}),
         });
       }
     } finally {

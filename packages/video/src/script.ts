@@ -96,6 +96,12 @@ export const scriptSceneSchema = z
       .describe(
         "true SOLO si la imagen es la persona, el objeto, el documento o el lugar de esa época que se nombra. Si es otro avión, otro objeto, una foto actual, un dibujo o algo parecido: false, y `caption` dice qué es.",
       ),
+    whole: z
+      .boolean()
+      .optional()
+      .describe(
+        "true: en el Short la foto va entera, sobre un fondo desenfocado, en vez de llenar la pantalla. Para una foto apaisada donde el recorte vertical dejaría afuera lo importante (un grupo de personas, un documento, un objeto ancho).",
+      ),
     highlight: z
       .array(z.string().min(1))
       .max(4)

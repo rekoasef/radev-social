@@ -12,6 +12,7 @@ import {
   VIDEO_JOBS,
   VIDEO_QUEUE_OPTIONS,
   VIDEO_SWEEP_CRON,
+  type VideoFramesJob,
   type VideoIdeasJob,
   type VideoOfficeJob,
   type VideoPinJob,
@@ -38,13 +39,15 @@ import {
   readMediaFile,
   resolveMediaPath,
   startVideoIdeaRequest,
+  statMediaFile,
   type Video,
   writeMediaFile,
 } from "@radev/db";
-import { createCommonsClient } from "@radev/video";
+import { createCommonsClient, imagesDocSchema, scriptSchema } from "@radev/video";
 import { type JobWithMetadata, PgBoss } from "pg-boss";
 import { createVideoAi } from "./ai";
 import { createAiLock } from "./ai-lock";
+import { drawFrames } from "./frames";
 import { proposeIdeas } from "./ideas";
 import { decodeToPcm, fetchPage, shrinkImage, sizeOf } from "./io";
 import { createLogger } from "./logger";
@@ -53,7 +56,7 @@ import { createImagesOffice } from "./offices/images";
 import { createPackageOffice } from "./offices/package";
 import { createRenderOffice } from "./offices/render";
 import { research } from "./offices/research";
-import { review } from "./offices/review";
+import { createReviewOffice } from "./offices/review";
 import { script } from "./offices/script";
 import { createSourcesOffice } from "./offices/sources";
 import { createVoiceOffice } from "./offices/voice";
@@ -138,7 +141,7 @@ export async function startVideoWorker(): Promise<VideoWorker> {
     checking_sources: createSourcesOffice({ fetchPage }),
     finding_images: createImagesOffice({ commons, shrink: shrinkImage, sizeOf }),
     scripting: script,
-    checking_facts: review,
+    checking_facts: createReviewOffice({ renderer: remotionRenderer }),
     packaging: createPackageOffice({ renderer: remotionRenderer }),
     rendering: createRenderOffice({ renderer: remotionRenderer, probe: probeVideo }),
     voicing: createVoiceOffice({ tts, decode: decodeToPcm }),
@@ -198,6 +201,33 @@ export async function startVideoWorker(): Promise<VideoWorker> {
     );
     log.info("pinned image", { videoId: data.videoId, ok: result.ok });
     return result;
+  });
+
+  // The script desk's edits: the frames of the changed scenes are drawn again.
+  await boss.createQueue(VIDEO_JOBS.frames, VIDEO_QUEUE_OPTIONS[VIDEO_JOBS.frames]);
+  await boss.work(VIDEO_JOBS.frames, { batchSize: 1 }, async ([job]) => {
+    if (!job) return;
+    const { videoId } = job.data as VideoFramesJob;
+    const video = await getVideo(db, videoId);
+    if (video?.stage !== "script_review") return;
+    const script = scriptSchema.safeParse(
+      (await getCurrentVideoDocument(db, videoId, "script"))?.data,
+    );
+    const images = imagesDocSchema.safeParse(
+      (await getCurrentVideoDocument(db, videoId, "images"))?.data,
+    );
+    if (!script.success || !images.success) return;
+    const folder = `videos/${videoId}`;
+    const { drawn } = await drawFrames(
+      {
+        renderer: remotionRenderer,
+        exists: async (path) => (await statMediaFile(`${folder}/${path}`)) !== undefined,
+        mediaDir: resolveMediaPath(folder) ?? folder,
+      },
+      script.data,
+      images.data.candidates,
+    );
+    log.info("frames drawn", { videoId, drawn });
   });
 
   // Topic ideas for a new video. They share the AI lock with the offices.
