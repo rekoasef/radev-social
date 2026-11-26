@@ -124,7 +124,14 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - El `.dockerignore` ahora deja fuera `media` y `spikes/*/out` (4,9 GB que se copiaban en cada build).
 > - **Ojo con los ejemplos:** "Aprobar guion", "Devolver" y "Reintentar" encolan trabajos reales (voz, Claude) si el `video-worker` está corriendo.
 >
-> **▶ Próximo paso: etapa 3 de T12** (aprobar video: reproductores con capítulos, miniaturas, descripciones, devolver, informe y la descarga por la ruta real). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **Etapa 3, aprobar video (hecha; falta que el operador la mire):** `/videos/<id>` en `in_review` o `approved`: los dos reproductores, capítulos, miniaturas, descripciones con "Copiar", informe por oficina, paquete con tamaños, aprobar o devolver, descargar y "Volver a revisar".
+> - **Error corregido (estaba desde T8):** "devolver a Locución" reutilizaba la misma toma, porque el texto y la voz no cambiaban.
+> - Verificado en la base local: ZIP solo con el video aprobado; una versión vieja no se aprueba. **Falta (lo hace el operador, necesita su login):** mirar las pantallas y bajar el ZIP desde el botón, que es la ruta real con sesión (pendiente de T11).
+> - Cambios respecto de la maqueta: reproductor del navegador (sin barra propia); los capítulos son botones debajo del video normal.
+> - Los ejemplos ahora traen videos de relleno hechos con `ffmpeg`.
+> - **Pendiente de decisión del operador:** el criterio de aceptación 2 (REVISION §7.7) pide corregir una imagen de un video terminado sin pagar la voz. Hoy no se puede: Render repite lo mismo y Guion hace reescribir a la IA, que puede cambiar la narración. Propuesta: un evento "volver al escritorio del guion" (`in_review` → `script_review`), sin IA.
+>
+> **▶ Próximo paso: etapa 4 de T12** (el plano del piso en React: `docs/references/studio/maqueta/scene-top.js`). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >

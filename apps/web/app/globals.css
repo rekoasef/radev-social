@@ -1153,3 +1153,38 @@
     background: var(--color-panel);
   }
 }
+
+@layer components {
+  /* Video desk: the Short beside the normal video, stacked on a phone. */
+  .players {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    align-items: end;
+  }
+  @media (min-width: 40rem) {
+    .players {
+      grid-template-columns: 15rem minmax(0, 1fr);
+    }
+  }
+  .player-short,
+  .player-normal {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--color-bezel-strong);
+    border-radius: 6px;
+    background: #000;
+  }
+  .player-short {
+    aspect-ratio: 9 / 16;
+  }
+  .player-normal {
+    aspect-ratio: 16 / 9;
+  }
+  @media (max-width: 39.9375rem) {
+    .player-short {
+      width: 72%;
+      margin: 0 auto;
+    }
+  }
+}

@@ -407,7 +407,7 @@ cualquiera (salvo archived) → archived      [scheduled → publishing → publ
   - Un rechazo no borra documentos.
   - Una pausa no avanza la etapa.
   - Repetir un job no duplica documentos ni archivos (regla 8).
-  - La voz no se vuelve a pagar si la narración y la voz no cambiaron: se compara el hash del texto y de la voz con el documento `voice` vigente.
+  - La voz no se vuelve a pagar si la narración y la voz no cambiaron: se compara el hash del texto y de la voz con el documento `voice` vigente. Excepción: si el operador devuelve el video terminado a Locución, se graba otra toma.
 
 ### 7.3 Datos (migración solo aditiva)
 

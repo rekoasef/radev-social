@@ -2,7 +2,7 @@ import { SAMPLE_RATE, type TtsProvider, type TtsResult, type TtsWord } from "@ra
 import { voiceFingerprint } from "@radev/core";
 import { describe, expect, it, vi } from "vitest";
 import scriptFixture from "../../../../packages/video/test/fixtures/mona-script.json";
-import { makeCtx } from "./harness";
+import { makeCtx, video } from "./harness";
 import { createVoiceOffice } from "./voice";
 
 const script = () => structuredClone(scriptFixture);
@@ -61,6 +61,21 @@ describe("voice office", () => {
     expect(r.usage).toEqual([
       { kind: "tts", quantity: ok.ok ? ok.characters : 0, unit: "characters", durationMs: 1234 },
     ]);
+  });
+
+  it("makes another take when the video was sent back to the voice", async () => {
+    const a = makeCtx({ docs });
+    const r1 = await createVoiceOffice({ tts: provider(ok), decode })(a.ctx);
+    if (r1.kind !== "done") throw new Error("debía terminar");
+
+    const second = provider(ok);
+    const b = makeCtx({
+      video: video({ stage: "voicing", rejectionNote: "pronuncia mal Peruggia" }),
+      docs: { ...docs, voice: r1.documents[0]?.data },
+      files: Object.fromEntries(a.files),
+    });
+    await createVoiceOffice({ tts: second, decode })(b.ctx);
+    expect(second.synthesize).toHaveBeenCalledOnce();
   });
 
   it("does not pay for the voice again when nothing changed", async () => {

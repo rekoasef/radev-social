@@ -368,11 +368,19 @@ export type DeskOutcome = { ok: true } | { ok: false; reason: string };
 
 const STALE = "El guion cambió desde que abriste la pantalla. Recargala y mirá la versión nueva.";
 
-/** Locks the video and checks the operator is looking at the current script. */
-async function lockScript(tx: Executor, videoId: string, version: number): Promise<DeskOutcome> {
+const STALE_VIDEO = "El video cambió desde que abriste la pantalla. Recargala y miralo de nuevo.";
+
+/** Locks the video and checks the operator is looking at the current version of a document. */
+async function lockDocument(
+  tx: Executor,
+  videoId: string,
+  kind: "script" | "package",
+  version: number,
+): Promise<DeskOutcome> {
   await tx.select({ id: videos.id }).from(videos).where(eq(videos.id, videoId)).for("update");
-  const current = await getCurrentVideoDocument(tx, videoId, "script");
-  return current?.version === version ? { ok: true } : { ok: false, reason: STALE };
+  const current = await getCurrentVideoDocument(tx, videoId, kind);
+  if (current?.version === version) return { ok: true };
+  return { ok: false, reason: kind === "script" ? STALE : STALE_VIDEO };
 }
 
 /**
@@ -387,7 +395,7 @@ export function saveOperatorScript(
   title?: string,
 ): Promise<DeskOutcome> {
   return atomic(db, async (tx) => {
-    const seen = await lockScript(tx, videoId, baseVersion);
+    const seen = await lockDocument(tx, videoId, "script", baseVersion);
     if (!seen.ok) return seen;
     const allowed = await transitionVideo(tx, videoId, "editScript");
     if (!allowed.ok) return allowed;
@@ -406,7 +414,25 @@ export function decideScript(
   note?: string,
 ): Promise<DeskOutcome> {
   return atomic(db, async (tx) => {
-    const seen = await lockScript(tx, videoId, version);
+    const seen = await lockDocument(tx, videoId, "script", version);
+    if (!seen.ok) return seen;
+    const outcome = await transitionVideo(tx, videoId, event, { note });
+    return outcome.ok ? { ok: true } : outcome;
+  });
+}
+
+// ───────────── the video desk ─────────────
+
+/** Approves or returns the video the operator watched (its package version). */
+export function decideVideo(
+  db: Executor,
+  videoId: string,
+  packageVersion: number,
+  event: "approveVideo" | "rejectVideoToScript" | "rejectVideoToVoice" | "rejectVideoToRender",
+  note?: string,
+): Promise<DeskOutcome> {
+  return atomic(db, async (tx) => {
+    const seen = await lockDocument(tx, videoId, "package", packageVersion);
     if (!seen.ok) return seen;
     const outcome = await transitionVideo(tx, videoId, event, { note });
     return outcome.ok ? { ok: true } : outcome;

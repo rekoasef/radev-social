@@ -7,14 +7,16 @@
 // real Claude and voice credits. These are never swept: their `updated_at` is in the future. Do not
 // press "Reintentar", "Aprobar guion" or "Devolver" on one with the worker running: those queue
 // real jobs (voice credits, Claude).
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { readFile, rm } from "node:fs/promises";
+import { mkdir, readFile, rm, stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { eq, like } from "drizzle-orm";
 import { createDb } from "../client";
 import { requireDatabaseUrl } from "../env";
 import { loadRootEnv } from "../load-root-env";
 import { resolveMediaPath, writeMediaFile } from "../media";
+import { recordGenerationRun } from "../queries/ai";
 import {
   addVideoDocument,
   createVideo,
@@ -97,6 +99,10 @@ async function main() {
       });
     }
     if (stage === "script_review") await scriptDocuments(id);
+    if (stage === "in_review" || stage === "approved") {
+      await scriptDocuments(id);
+      await deliveryDocuments(id);
+    }
     // Last, because the writes above touch the row: keep it away from the sweep.
     await db.update(videos).set({ updatedAt: NEVER_SWEPT }).where(eq(videos.id, id));
   }
@@ -126,23 +132,156 @@ async function main() {
       overlap: 0,
       missingNumbers: [],
     }));
-    const save = (kind: "dossier" | "images" | "script" | "sources" | "review", data: object) =>
-      addVideoDocument(db, {
-        videoId: id,
-        kind,
-        data: data as Record<string, unknown>,
-        origin: "office",
-      });
-    await save("dossier", dossier);
-    await save("images", { candidates });
-    await save("script", script);
-    await save("sources", {
+    await save(id, "dossier", dossier);
+    await save(id, "images", { candidates });
+    await save(id, "script", script);
+    await save(id, "sources", {
       facts,
-      summary: { textual: 0, casi: 0, noEsta: 0, sinPagina: 0 },
+      summary: {
+        textual: facts.filter((f) => f.result === "textual").length,
+        casi: facts.filter((f) => f.result === "casi").length,
+        noEsta: facts.filter((f) => f.result === "no-esta").length,
+        sinPagina: 0,
+      },
     });
-    await save("review", {
+    await save(id, "review", {
       applied: [{ scene: 4, kind: "no-respaldado", problem: "Corrección de ejemplo." }],
       rejected: [],
+    });
+  }
+
+  // The video desk: voice, render and package, with filler MP4s (a running counter, so seeking
+  // shows) made with ffmpeg.
+  async function deliveryDocuments(id: string) {
+    const root = (path: string) => fileURLToPath(new URL(`../../../../${path}`, import.meta.url));
+    const fixture = async (name: string) =>
+      JSON.parse(await readFile(root(`packages/video/test/fixtures/mona-${name}.json`), "utf8"));
+    const manifest = (await fixture("voice-manifest")) as {
+      scenes: { frames: number; text: string }[];
+    };
+    const publication = await fixture("publication");
+    const totalFrames = manifest.scenes.reduce((n, s) => n + s.frames, 0);
+    const folder = resolveMediaPath(`videos/${id}`);
+    if (!folder) throw new Error("No encuentro la carpeta de medios.");
+    await mkdir(`${folder}/render`, { recursive: true });
+    await mkdir(`${folder}/package`, { recursive: true });
+    const ffmpeg = (...args: string[]) => execFileSync("ffmpeg", ["-v", "error", "-y", ...args]);
+
+    const formats = [];
+    for (const [format, width, height] of [
+      ["9x16", 270, 480],
+      ["16x9", 480, 270],
+    ] as const) {
+      const file = `render/video-${format}.mp4`;
+      const seconds = String(totalFrames / 30);
+      ffmpeg(
+        ...["-f", "lavfi", "-i", `testsrc=size=${width}x${height}:rate=10:duration=${seconds}`],
+        ...["-f", "lavfi", "-i", `anullsrc=r=48000:cl=mono`, "-shortest"],
+        ...["-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-c:a", "aac"],
+        ...["-movflags", "+faststart", `${folder}/${file}`],
+      );
+      ffmpeg(
+        ...["-f", "lavfi", "-i", `color=c=0x2a2f3a:size=${width * 2}x${height * 2}`],
+        ...["-frames:v", "1", `${folder}/package/miniatura-${format}.png`],
+      );
+      formats.push({
+        format,
+        file,
+        seconds: totalFrames / 30,
+        bytes: (await stat(`${folder}/${file}`)).size,
+        width: format === "9x16" ? 1080 : 1920,
+        height: format === "9x16" ? 1920 : 1080,
+        renderMs: format === "9x16" ? 258_000 : 252_000,
+      });
+    }
+
+    const normal = `${publication.title}\n\n${publication.hook}\n\n[descripción de ejemplo]\n`;
+    const short = `${publication.title}\n\n${publication.hook}\n\n#Shorts [ejemplo]\n`;
+    const text = new Map([
+      ["package/descripcion.txt", normal],
+      ["package/descripcion-short.txt", short],
+      ["package/creditos.txt", "Imágenes (Wikimedia Commons): ejemplo.\n"],
+    ]);
+    for (const [path, content] of text) {
+      await writeMediaFile(`videos/${id}/${path}`, new TextEncoder().encode(content));
+    }
+
+    await save(id, "voice", {
+      fingerprint: "ejemplo",
+      voiceId: "ejemplo",
+      model: "eleven_multilingual_v2",
+      speed: null,
+      characters: 1917,
+      fps: 30,
+      totalFrames,
+      full: "voice/full.mp3",
+      scenes: manifest.scenes.map((s, index) => ({
+        index,
+        frames: s.frames,
+        text: s.text,
+        audio: "voice/full.mp3",
+        words: "voice/words.json",
+      })),
+    });
+    await save(id, "render", { fps: 30, totalFrames, formats });
+    await save(id, "package", {
+      publication,
+      descriptionNormal: normal,
+      descriptionShort: short,
+      credits: "ejemplo",
+      thumbnails: { "9x16": "package/miniatura-9x16.png", "16x9": "package/miniatura-16x9.png" },
+    });
+
+    // The report: the tokens measured with a real video (docs/PROGRESS.md, T9).
+    for (const [task, inputTokens, outputTokens] of [
+      ["video.research", 73_090, 26_539],
+      ["video.images", 32_381, 3_593],
+      ["video.script", 94_900, 16_504],
+      ["video.review", 91_671, 9_068],
+      ["video.package", 24_838, 1_226],
+    ] as const) {
+      await recordGenerationRun(db, {
+        videoId: id,
+        task,
+        role: "primary",
+        provider: "claude-code",
+        model: "ejemplo",
+        status: "succeeded",
+        inputTokens,
+        outputTokens,
+      });
+    }
+    for (const [office, seconds] of [
+      ["researching", 235],
+      ["checking_sources", 6],
+      ["finding_images", 472],
+      ["scripting", 126],
+      ["checking_facts", 94],
+      ["voicing", 12],
+      ["rendering", 510],
+      ["packaging", 41],
+    ] as const) {
+      await recordUsageEvent(db, {
+        videoId: id,
+        kind: "office",
+        office,
+        quantity: seconds,
+        unit: "seconds",
+        durationMs: seconds * 1000,
+      });
+    }
+  }
+
+  function save(
+    videoId: string,
+    kind: Parameters<typeof addVideoDocument>[1]["kind"],
+    data: object,
+  ) {
+    return addVideoDocument(db, {
+      videoId,
+      kind,
+      data: data as Record<string, unknown>,
+      origin: "office",
     });
   }
 

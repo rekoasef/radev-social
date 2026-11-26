@@ -10,7 +10,9 @@ import { AutoRefresh } from "@/components/videos/auto-refresh";
 import { FolderTab } from "@/components/videos/folder-tab";
 import { ScriptDesk } from "@/components/videos/script-desk";
 import { DiscardVideoButton, RetryVideoForm } from "@/components/videos/video-controls";
+import { VideoDesk } from "@/components/videos/video-desk";
 import { db } from "@/lib/db";
+import { loadDelivery } from "@/lib/video-delivery";
 import { describeVideo, folders } from "@/lib/video-display";
 import { loadScriptDocuments } from "@/lib/video-documents";
 import { scriptDesk } from "@/lib/video-script";
@@ -18,8 +20,8 @@ import { STUDIO_TIME_ZONE, startOfDay, startOfMonth } from "@/lib/video-time";
 
 export const metadata: Metadata = { title: "Video · RAdev Social" };
 
-// A video's page: where it is, the script desk when it waits there, and what can be done when it
-// stopped.
+// A video's page: where it is, the desk where it waits (script or video) or what it left once
+// approved, and what can be done when it stopped.
 export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
   const id = z.uuid().safeParse((await params).id);
   const video = id.success ? await getVideo(db, id.data) : null;
@@ -28,6 +30,8 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
   const tab = folders(await listVideos(db)).get(video.id);
   const stopped = video.failure !== null || video.pausedAt !== null;
   const documents = video.stage === "script_review" ? await loadScriptDocuments(video.id) : null;
+  const finished = video.stage === "in_review" || video.stage === "approved";
+  const delivery = finished ? await loadDelivery(video) : null;
   const now = new Date();
   const quota = documents
     ? (
@@ -45,7 +49,9 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
       <Link href="/videos" className="plate-text w-fit text-ink-faint hover:text-ink">
         ← Estudio
       </Link>
-      <Plate aside={view.time}>{documents ? "Aprobar guion" : view.office}</Plate>
+      <Plate aside={view.time}>
+        {documents ? "Aprobar guion" : video.stage === "in_review" ? "Aprobar video" : view.office}
+      </Plate>
       <div className="flex items-start gap-4">
         {tab && <FolderTab {...tab} />}
         <div className="min-w-0">
@@ -70,16 +76,18 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
           Faltan documentos de este video o no se pueden leer: no se puede mostrar el guion.
         </p>
       )}
-      {video.stage === "in_review" && (
-        <p className="max-w-[60ch] text-sm text-ink-dim">
-          La pantalla para aprobar el video llega en la próxima etapa. Mientras tanto se contesta
-          desde la terminal con <code className="timecode">--resume {video.id}</code>.
-        </p>
+      {delivery && (
+        <VideoDesk
+          videoId={video.id}
+          delivery={delivery}
+          approved={video.stage === "approved"}
+          paused={video.pausedAt !== null}
+        />
       )}
-      {video.stage === "approved" && (
-        <a href={`/videos/${video.id}/download`} className="console-button w-fit">
-          Descargar el paquete
-        </a>
+      {finished && !delivery && (
+        <p role="alert" className="text-sm text-ink">
+          Faltan documentos de este video o no se pueden leer: no se puede mostrar.
+        </p>
       )}
       {stopped && video.pauseReason !== "provider_limit" && video.stage !== "archived" && (
         <RetryVideoForm videoId={video.id} label={video.failure ? "Reintentar" : "Retomar"} />

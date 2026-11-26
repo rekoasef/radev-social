@@ -14,7 +14,8 @@ import { readDocument } from "./util";
 
 // Oficina 6, Locución: toda la narración en UN pedido a ElevenLabs (la entonación no se corta entre
 // escenas), cortada por escena con los tiempos de las palabras. La voz se paga: si el texto, la voz,
-// el modelo y la velocidad no cambiaron desde la última vez, se reutiliza el audio que ya está.
+// el modelo y la velocidad no cambiaron desde la última vez, se reutiliza el audio que ya está
+// (salvo que el operador haya devuelto el video a Locución).
 
 export type VoiceDeps = {
   /** Null without ELEVENLABS_API_KEY: the office then fails saying so. */
@@ -57,9 +58,12 @@ export const createVoiceOffice =
       speed: voice.speed,
     };
 
-    // The same narration and voice as the last time: the audio is already paid for.
+    // The same narration and voice as the last time: the audio is already paid for. Except when the
+    // operator sent the finished video back to the voice: he wants another take. At this stage a
+    // rejection note only means that (approving the script clears the note).
     const saved = voiceDocSchema.safeParse(await ctx.document("voice"));
-    if (saved.success && canReuseVoice(saved.data.fingerprint, input)) {
+    const retake = ctx.video.rejectionNote !== null;
+    if (!retake && saved.success && canReuseVoice(saved.data.fingerprint, input)) {
       const first = saved.data.scenes[0];
       if (first && (await ctx.files.read(first.audio))) {
         ctx.log.info("voice reused: nothing changed since the last take");

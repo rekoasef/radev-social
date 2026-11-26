@@ -252,6 +252,7 @@ export {
   createVideo,
   type DeskOutcome,
   decideScript,
+  decideVideo,
   getCurrentVideoDocument,
   getDefaultVoice,
   getVideo,

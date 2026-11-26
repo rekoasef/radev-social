@@ -28,3 +28,21 @@ describe("decideAndQueue", () => {
     expect(d.queue).toHaveBeenCalledWith("v1", "scripting");
   });
 });
+
+describe("decideAndQueue: the video desk", () => {
+  it("approving the video queues nothing", async () => {
+    const d = deps(true);
+    await decideAndQueue(d, "v1", 1, { event: "approveVideo" });
+    expect(d.queue).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["rejectVideoToRender", "rendering"],
+    ["rejectVideoToVoice", "voicing"],
+    ["rejectVideoToScript", "scripting"],
+  ] as const)("%s sends it to %s", async (event, stage) => {
+    const d = deps(true);
+    await decideAndQueue(d, "v1", 1, { event, note: "cambiar algo" });
+    expect(d.queue).toHaveBeenCalledWith("v1", stage);
+  });
+});
