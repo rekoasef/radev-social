@@ -36,6 +36,7 @@ import {
   voices,
 } from "../schema";
 import type { Executor } from "./brand-assets";
+import { videoIdeaTokens } from "./video-ideas";
 
 // Videos, the documents the offices leave and their usage. `transitionVideo` is the only code that
 // writes `videos.stage` (CLAUDE.md, rule 2): it applies the state machine of packages/core inside a
@@ -576,6 +577,7 @@ export async function studioUsage(
     })
     .from(generationRuns)
     .where(and(isNotNull(generationRuns.videoId), gte(generationRuns.createdAt, dayStart)));
+  const ideas = await videoIdeaTokens(db, dayStart);
   const sumOf = async (kind: UsageKind, since: Date) => {
     const [row] = await db
       .select({ total: sql<number>`coalesce(sum(${usageEvents.quantity}), 0)::int` })
@@ -591,8 +593,8 @@ export async function studioUsage(
     .limit(1);
   const quota = last?.data?.quota as { used?: unknown; limit?: unknown } | undefined;
   return {
-    inputTokens: tokens?.input ?? 0,
-    outputTokens: tokens?.output ?? 0,
+    inputTokens: (tokens?.input ?? 0) + ideas.input,
+    outputTokens: (tokens?.output ?? 0) + ideas.output,
     renderSeconds: await sumOf("render", dayStart),
     voiceCharacters: await sumOf("tts", monthStart),
     quota:

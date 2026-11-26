@@ -14,6 +14,9 @@ export const AI_TASKS = [
   "video.script",
   "video.review",
   "video.package",
+  // Topic ideas for a new video, without and with web search.
+  "video.ideas",
+  "video.ideas.research",
 ] as const;
 
 export type AiTask = (typeof AI_TASKS)[number];

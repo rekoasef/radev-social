@@ -22,6 +22,7 @@ import {
   tiktokPublishKey,
   VIDEO_JOBS,
   VIDEO_QUEUE_OPTIONS,
+  type VideoIdeasJob,
   type VideoOfficeJob,
   type VideoPinJob,
   type VideoPinResult,
@@ -66,6 +67,7 @@ function boss(): Promise<PgBoss> {
       await client.createQueue(name, VIDEO_QUEUE_OPTIONS[name]);
     }
     await client.createQueue(VIDEO_JOBS.pin, VIDEO_QUEUE_OPTIONS[VIDEO_JOBS.pin]);
+    await client.createQueue(VIDEO_JOBS.ideas, VIDEO_QUEUE_OPTIONS[VIDEO_JOBS.ideas]);
     return client;
   })();
   return globalForBoss.radevBoss;
@@ -208,6 +210,12 @@ export async function queueVideoOffice(videoId: string, stage: WorkingStage): Pr
 export async function queuePinImage(videoId: string, title: string): Promise<string | null> {
   const data: VideoPinJob = { videoId, title };
   return (await boss()).send(VIDEO_JOBS.pin, data);
+}
+
+/** Queues a request for topic ideas: the video-worker answers it. */
+export async function queueVideoIdeas(requestId: string): Promise<void> {
+  const data: VideoIdeasJob = { requestId };
+  await (await boss()).send(VIDEO_JOBS.ideas, data);
 }
 
 export type PinStatus = { state: "waiting" } | { state: "done"; result: VideoPinResult };

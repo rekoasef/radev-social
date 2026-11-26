@@ -3,6 +3,8 @@
 import { isWorkingStage, type WorkingStage } from "@radev/core";
 import {
   createVideo,
+  createVideoIdeaRequest,
+  failVideoIdeaRequest,
   getBrandById,
   getVideo,
   getVoiceById,
@@ -14,9 +16,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { queueVideoOffice } from "@/lib/jobs";
+import { queueVideoIdeas, queueVideoOffice } from "@/lib/jobs";
 import { requireOperator } from "@/lib/session";
-import { newVideoSchema } from "@/lib/video-form";
+import { ideasRequestSchema, newVideoSchema } from "@/lib/video-form";
 
 // The web only changes the stage (through `transitionVideo`) and queues the office's job: the
 // video-worker does the work (rule 5).
@@ -84,4 +86,32 @@ export async function discardVideoAction(
   if (!outcome.ok) return error(outcome.reason);
   revalidatePath("/videos", "layout");
   redirect("/videos");
+}
+
+/** Asks for topic ideas; the page shows them when the video-worker answers. */
+export async function requestIdeasAction(input: {
+  mode: string;
+  brandId: string;
+  focus: string;
+}): Promise<VideoActionState> {
+  await requireOperator();
+  const parsed = ideasRequestSchema.safeParse(input);
+  if (!parsed.success) return error(parsed.error.issues[0]?.message ?? "Revisá los datos.");
+  const { mode, brandId, focus } = parsed.data;
+  if (brandId && !(await getBrandById(db, brandId))) return error("Esa marca no existe.");
+  const created = await createVideoIdeaRequest(db, {
+    mode,
+    brandId: brandId || null,
+    focus: focus || null,
+  });
+  if (!created.ok) return error(created.error);
+  try {
+    await queueVideoIdeas(created.request.id);
+  } catch (cause) {
+    console.error("video: ideas not queued", cause);
+    await failVideoIdeaRequest(db, created.request.id, "No se pudo encolar el pedido.");
+    return error("No se pudo mandar el pedido. Probá de nuevo.");
+  }
+  revalidatePath("/videos/new");
+  return { status: "idle" };
 }

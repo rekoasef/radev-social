@@ -1,3 +1,4 @@
+import { VIDEO_IDEA_FOCUS_MAX, VIDEO_IDEA_MODES } from "@radev/core";
 import { z } from "zod";
 
 // What "Nuevo video" accepts.
@@ -14,4 +15,14 @@ export const newVideoSchema = z.object({
   /** Empty: no brand (the stories channel). */
   brandId: z.union([z.literal(""), z.uuid("Esa marca no existe.")]),
   voiceId: z.uuid("Elegí una voz."),
+});
+
+/** "Proponer ideas" and "Investigar temas". */
+export const ideasRequestSchema = z.object({
+  mode: z.enum(VIDEO_IDEA_MODES),
+  brandId: z.union([z.literal(""), z.uuid("Esa marca no existe.")]),
+  focus: z
+    .string()
+    .trim()
+    .max(VIDEO_IDEA_FOCUS_MAX, `El enfoque puede tener hasta ${VIDEO_IDEA_FOCUS_MAX} caracteres.`),
 });

@@ -390,6 +390,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | Better Auth | `user`, `session`, `account`, `verification` |
 | `videos` (RAdev Studio, ADR 0029) | id, brand_id (nullable), topic, title, language, voice_id, stage (una etapa por oficina), paused_at, pause_reason, resume_at, failure (jsonb), rejection_note, approved_at. La etapa solo cambia con `transitionVideo` (regla 2) |
 | `video_documents` | id, video_id, kind (`dossier` \| `sources` \| `images` \| `script` \| `review` \| `voice` \| `render` \| `package`), version, data (jsonb validado con Zod), schema_version, origin (`office` \| `operator`), generation_run_id. Versionados: una versión nueva nunca pisa la anterior |
+| `video_idea_requests` (migración `0032`) | id, brand_id (nullable), mode (`generate` \| `research`), focus, status (`queued` \| `running` \| `succeeded` \| `failed`), error, ideas (jsonb: tema, gancho, fuentes), model, input_tokens, output_tokens, duration_ms, created_at, finished_at. Aparte de `ideas` (Social): un video puede no tener marca y no tiene pilar |
 | `voices` | id, provider (`elevenlabs` \| `kokoro`), external_id, name, use, language, speed, is_default, active |
 | `usage_events` | id, video_id, office, kind (`tts` \| `render` \| `download`), quantity, unit, duration_ms, data |
 
@@ -525,6 +526,8 @@ Para eso, `GenerationTask` suma `effort?: "low" | "medium" | "high"`, que `claud
 **Escritorio del guion (T12).** Cada cambio viaja con la versión del guion que el operador estaba mirando (`saveOperatorScript` y `decideScript` bloquean el video y la comparan): una pestaña vieja no pisa ni aprueba nada. Una edición pasa por `editScene` (`packages/video`), que la acepta solo si no suma errores de `checkScript`. La voz se encola únicamente después de que la etapa cambió.
 
 **Escritorio del video (T12).** La decisión viaja con la versión del documento `package` que el operador miró (`decideVideo`). Se puede volver al escritorio del guion (`returnToScriptDesk`: sin IA; Locución reutiliza la toma si la narración no cambió), devolver a Render (rehace Render y Publicación con lo mismo), a Locución (graba otra toma aunque el texto no haya cambiado: en la etapa `voicing`, una nota de rechazo significa eso) o a Guion. Un video aprobado se puede reabrir, y la descarga se cierra hasta aprobarlo de nuevo.
+
+**Ideas para un video nuevo (2026-11-26).** "Proponer ideas" (`video.ideas`, sin herramientas) e "Investigar temas" (`video.ideas.research`, `WebSearch` y `WebFetch`, hasta 30 turnos y 10 min). La web crea la fila en `video_idea_requests` (uno abierto por botón; uno de más de una hora se da por perdido) y encola `video.ideas` `{ requestId }`; el worker (`ideas.ts`) suma las notas de la marca si la hay, le pasa los temas ya hechos o propuestos para que no repita, valida con `videoIdeasSchema` (un reintento si viene mal), comparte el candado de IA con las oficinas y cierra el pedido en un solo update (regla 8). El consumo queda en la fila y suma al total del día del estudio (no va a `generation_runs`, que exige marca o video). Cada botón tiene su ruta en Ajustes → Ruteo de IA. Medido: proponer, 3.000 a 10.000 tokens y 10–25 s; investigar, ~53.000 tokens y 70 s.
 
 **Lo que no está en el proceso:**
 - Avisos por Telegram: fuera de V1.

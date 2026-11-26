@@ -480,11 +480,12 @@ Re-renderizar pisa el archivo: la web sirve `videos/` con `no-cache` y `ETag`, a
 4. Cada oficina muestra su informe: tiempo, tokens, créditos de voz, errores y devoluciones.
 5. Social Studio sigue igual: tests en verde y un carrusel generado y renderizado de punta a punta en local.
 
+**Sumado después de aprobar el alcance (2026-11-26, pedido del operador):** la IA propone temas en "Nuevo video", con dos botones: "Proponer ideas" (con lo que el modelo sabe) e "Investigar temas" (busca en la web y trae fuentes). El operador igual puede escribir el tema, y siempre lo puede editar antes de mandarlo (detalle: `docs/ARCHITECTURE.md` §14.1).
+
 **Fuera de V1:**
 - Inglés.
 - Subir a YouTube y analytics (V0-7 y V6).
 - Videos de 3–5 min para el canal.
-- Ideas propuestas por la IA (el tema lo escribe el operador).
 - Avisos por Telegram (el estudio muestra el cartel).
 - Rehacer escenas sueltas (D-D).
 - Fuentes de imágenes además de Commons (Library of Congress, Europeana).

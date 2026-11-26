@@ -1,6 +1,7 @@
 // Starts the pg-boss worker of RAdev Studio: one queue per office of the video (ADR 0029,
 // docs/ARCHITECTURE.md §14.1). `index.ts` runs it as a service; `cli.ts` runs it inside one command.
 import {
+  buildBrandClaudeMd,
   createClaudeCodeProvider,
   createElevenLabsProvider,
   createOpenRouterProvider,
@@ -11,6 +12,7 @@ import {
   VIDEO_JOBS,
   VIDEO_QUEUE_OPTIONS,
   VIDEO_SWEEP_CRON,
+  type VideoIdeasJob,
   type VideoOfficeJob,
   type VideoPinJob,
   videoOfficeKey,
@@ -21,13 +23,21 @@ import {
   addVideoDocument,
   createDb,
   type Database,
+  finishVideoIdeaRequest,
+  getBrandById,
   getCurrentVideoDocument,
   getDefaultVoice,
   getVideo,
   getVoiceById,
+  listAiRoutes,
+  listCurrentBrandDocuments,
+  listPillars,
   listStuckVideos,
+  listVideoIdeaRequests,
+  listVideos,
   readMediaFile,
   resolveMediaPath,
+  startVideoIdeaRequest,
   type Video,
   writeMediaFile,
 } from "@radev/db";
@@ -35,6 +45,7 @@ import { createCommonsClient } from "@radev/video";
 import { type JobWithMetadata, PgBoss } from "pg-boss";
 import { createVideoAi } from "./ai";
 import { createAiLock } from "./ai-lock";
+import { proposeIdeas } from "./ideas";
 import { decodeToPcm, fetchPage, shrinkImage, sizeOf } from "./io";
 import { createLogger } from "./logger";
 import type { Office, OfficeContext } from "./office";
@@ -89,7 +100,8 @@ export async function startVideoWorker(): Promise<VideoWorker> {
     "claude-code": createClaudeCodeProvider(),
     openrouter: createOpenRouterProvider(),
   });
-  const ai = createVideoAi({ db, router, lock: createAiLock() });
+  const lock = createAiLock();
+  const ai = createVideoAi({ db, router, lock });
   const commons = createCommonsClient();
   const store = dbStore(db);
 
@@ -186,6 +198,47 @@ export async function startVideoWorker(): Promise<VideoWorker> {
     );
     log.info("pinned image", { videoId: data.videoId, ok: result.ok });
     return result;
+  });
+
+  // Topic ideas for a new video. They share the AI lock with the offices.
+  const brandNotes = async (brandId: string) => {
+    const brand = await getBrandById(db, brandId);
+    if (!brand) return null;
+    const [documents, pillars] = await Promise.all([
+      listCurrentBrandDocuments(db, brand.id),
+      listPillars(db, brand.id),
+    ]);
+    return buildBrandClaudeMd({
+      name: brand.name,
+      documents: Object.fromEntries(
+        Object.entries(documents).flatMap(([kind, doc]) => (doc ? [[kind, doc.content]] : [])),
+      ),
+      pillars,
+    });
+  };
+  const existingTopics = async () => {
+    const [videos, requests] = await Promise.all([listVideos(db), listVideoIdeaRequests(db)]);
+    return [
+      ...videos.flatMap((v) => (v.title ? [v.title, v.topic] : [v.topic])),
+      ...requests.flatMap((r) => r.ideas.map((idea) => idea.topic)),
+    ].slice(0, 150);
+  };
+  await boss.createQueue(VIDEO_JOBS.ideas, VIDEO_QUEUE_OPTIONS[VIDEO_JOBS.ideas]);
+  await boss.work(VIDEO_JOBS.ideas, { batchSize: 1 }, async ([job]) => {
+    if (!job) return;
+    await proposeIdeas(
+      {
+        start: (id) => startVideoIdeaRequest(db, id),
+        finish: (id, outcome) => finishVideoIdeaRequest(db, id, outcome),
+        routes: () => listAiRoutes(db),
+        router,
+        lock,
+        brandNotes,
+        existing: existingTopics,
+        log: log.child({ job: VIDEO_JOBS.ideas }),
+      },
+      job.data as VideoIdeasJob,
+    );
   });
 
   // The sweep: a video at a working stage with no activity for a while lost its job (the send after

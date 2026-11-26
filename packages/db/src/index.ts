@@ -243,6 +243,15 @@ export {
   type TiktokPublishContext,
 } from "./queries/tiktok-publishing";
 export {
+  type CreateVideoIdeaRequestResult,
+  createVideoIdeaRequest,
+  failVideoIdeaRequest,
+  finishVideoIdeaRequest,
+  listVideoIdeaRequests,
+  startVideoIdeaRequest,
+  type VideoIdeaUsage,
+} from "./queries/video-ideas";
+export {
   type AddVideoDocumentInput,
   addVideoDocument,
   type CreateVideoInput,

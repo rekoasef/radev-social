@@ -147,6 +147,11 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > - La imagen `web` de Docker se construye en 106 s (antes, más de 10 min por los videos del spike en el contexto) y arranca; las rutas del estudio piden sesión.
 > - **Sin hacer:** la revisión final de Impeccable que pide la ficha de diseño (usa un subagente: preguntarle al operador).
 >
+> **Ideas de la IA en "Nuevo video" (hecha, 2026-11-26; pedido del operador, antes fuera de V1):** dos botones, "Proponer ideas" e "Investigar temas"; tocar una la copia en "Tema". Detalle en ARCHITECTURE §14.1.
+> - Probadas con Claude real por el `video-worker`: proponer ~2.600 tokens y 11 s (la 2ª tanda ~9.500 y 23 s); investigar ~53.000 y 70 s.
+> - La prueba mostró un borrador colado en una idea y que investigar se iba a hallazgos de la semana sin imágenes: se ajustaron las instrucciones. Proponer se volvió a probar y salió bien; **investigar no se volvió a probar**.
+> - La base de casa necesita `pnpm db:migrate` (`0032`) y `pnpm db:seed` (dos rutas de IA nuevas).
+>
 > **▶ Próximo paso: que el operador cierre T12** (mirar las pantallas con su login, aprobar un ejemplo y bajar el ZIP desde el botón; recién ahí se tilda en `docs/ROADMAP.md`). Después T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)

@@ -3,7 +3,9 @@
 import { Play, Square } from "lucide-react";
 import { useActionState, useId, useRef, useState } from "react";
 import { createVideoAction, type VideoActionState } from "@/app/(panel)/videos/actions";
+import { IdeaPicker } from "@/components/videos/idea-picker";
 import { TOPIC_MAX, TOPIC_MIN } from "@/lib/video-form";
+import type { IdeaBoard } from "@/lib/video-ideas";
 
 const idle: VideoActionState = { status: "idle" };
 
@@ -19,7 +21,9 @@ export type VoiceOption = {
 export function NewVideoForm({
   brands,
   voices,
+  ideas,
 }: {
+  ideas: IdeaBoard;
   brands: { id: string; name: string; codePrefix: string }[];
   voices: VoiceOption[];
 }) {
@@ -28,6 +32,7 @@ export function NewVideoForm({
   const [playing, setPlaying] = useState<string | null>(null);
   const audio = useRef<HTMLAudioElement>(null);
   const topicId = useId();
+  const field = useRef<HTMLTextAreaElement>(null);
   const length = topic.trim().length;
   const initialVoice = (voices.find((v) => v.isDefault) ?? voices[0])?.id;
 
@@ -46,6 +51,14 @@ export function NewVideoForm({
 
   return (
     <form action={action} className="flex flex-col gap-7">
+      <IdeaPicker
+        board={ideas}
+        onPick={(picked) => {
+          setTopic(picked);
+          field.current?.focus();
+        }}
+      />
+
       <div className="flex flex-col gap-2">
         <label htmlFor={topicId} className="flex items-baseline justify-between gap-3">
           <span className="plate-text text-ink-dim">Tema</span>
@@ -57,6 +70,7 @@ export function NewVideoForm({
         </label>
         <textarea
           id={topicId}
+          ref={field}
           name="topic"
           rows={4}
           required

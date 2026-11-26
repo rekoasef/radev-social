@@ -47,6 +47,8 @@ const TASK_HINTS: Record<AiTask, string> = {
   "video.script": "Video: escribe el guion mirando las imágenes. Conviene la mejor calidad.",
   "video.review": "Video: verifica los hechos del guion contra el dossier.",
   "video.package": "Video: título, capítulos y miniatura para subir a YouTube.",
+  "video.ideas": "Video: propone temas sin buscar en la web.",
+  "video.ideas.research": "Video: busca en la web temas actuales y trae sus fuentes.",
 };
 
 // Which provider and model each AI task uses, and its fallback (docs/ARCHITECTURE.md §7).

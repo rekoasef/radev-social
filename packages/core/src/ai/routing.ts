@@ -16,6 +16,8 @@ export const AI_TASK_LABELS: Record<AiTask, string> = {
   "video.script": "Video: escribir el guion",
   "video.review": "Video: verificar los hechos",
   "video.package": "Video: título, capítulos y miniatura",
+  "video.ideas": "Video: proponer temas",
+  "video.ideas.research": "Video: investigar temas actuales",
 };
 
 export const AI_PROVIDER_LABELS: Record<AiProviderId, string> = {
@@ -32,6 +34,7 @@ export const TOOL_TASKS: readonly AiTask[] = [
   "video.script",
   "video.review",
   "video.package",
+  "video.ideas.research",
 ];
 
 export const MAX_MODEL_ID_LENGTH = 200;

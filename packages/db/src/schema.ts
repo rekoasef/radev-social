@@ -33,7 +33,9 @@ import {
   USAGE_KINDS,
   VERSION_ORIGINS,
   VIDEO_DOCUMENT_KINDS,
+  VIDEO_IDEA_MODES,
   VIDEO_STAGES,
+  type VideoIdea,
   type VideoProgress,
   VOICE_PROVIDERS,
   VOICE_USES,
@@ -970,3 +972,37 @@ export type Voice = typeof voices.$inferSelect;
 export type Video = typeof videos.$inferSelect;
 export type VideoDocument = typeof videoDocuments.$inferSelect;
 export type UsageEvent = typeof usageEvents.$inferSelect;
+
+/**
+ * A request for topic ideas, with its answer. Apart from `ideas` (Social): a video may have no
+ * brand and has no pillar. Its own usage columns, since a run needs a brand or a video.
+ */
+export const videoIdeaRequests = pgTable(
+  "video_idea_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    brandId: uuid("brand_id").references(() => brands.id, { onDelete: "cascade" }),
+    mode: text("mode", { enum: VIDEO_IDEA_MODES }).notNull(),
+    focus: text("focus"),
+    status: text("status", { enum: IDEA_REQUEST_STATUSES }).notNull().default("queued"),
+    /** Why it failed, for the panel. */
+    error: text("error"),
+    ideas: jsonb("ideas").$type<VideoIdea[]>().notNull().default([]),
+    model: text("model"),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    durationMs: integer("duration_ms"),
+    createdAt: createdAt(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("video_idea_requests_created_idx").on(t.createdAt),
+    check("video_idea_requests_mode_valid", sql`${t.mode} in (${inList(VIDEO_IDEA_MODES)})`),
+    check(
+      "video_idea_requests_status_valid",
+      sql`${t.status} in (${inList(IDEA_REQUEST_STATUSES)})`,
+    ),
+  ],
+);
+
+export type VideoIdeaRequest = typeof videoIdeaRequests.$inferSelect;

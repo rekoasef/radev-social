@@ -14,6 +14,8 @@ export const VIDEO_JOBS = {
   package: "video.package",
   /** Adds a Commons image the operator asked for (script desk). Not an office. */
   pin: "video.pin",
+  /** "Proponer ideas" and "Investigar temas" of a new video. */
+  ideas: "video.ideas",
   /** Cron: queues again the videos at a working stage that have no job (a lost send). */
   sweep: "video.sweep",
 } as const;
@@ -50,6 +52,8 @@ export type VideoPinResult =
   | { ok: false; message: string };
 
 /** Every 10 minutes. */
+export type VideoIdeasJob = { requestId: string };
+
 export const VIDEO_SWEEP_CRON = "*/10 * * * *";
 
 /** Queue settings, the same wherever the queue is created. Times in seconds. */
@@ -109,6 +113,8 @@ export const VIDEO_QUEUE_OPTIONS = {
   },
   // One search and one download, with Commons' pauses and retries.
   [VIDEO_JOBS.pin]: { retryLimit: 1, retryDelay: 30, expireInSeconds: 10 * 60 },
+  // A research is up to 10 minutes, and it may wait for the office that holds the AI lock.
+  [VIDEO_JOBS.ideas]: { retryLimit: 1, retryDelay: 60, expireInSeconds: 45 * 60 },
   [VIDEO_JOBS.sweep]: { retryLimit: 0 },
 } as const satisfies Record<
   VideoJobName,

@@ -225,6 +225,13 @@
       "when": 1795698198009,
       "tag": "0031_clumsy_wolf_cub",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1795700413433,
+      "tag": "0032_numerous_the_twelve",
+      "breakpoints": true
     }
   ]
 }

@@ -1,10 +1,12 @@
-import { listVoices } from "@radev/db";
+import { listVideoIdeaRequests, listVoices } from "@radev/db";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
+import { AutoRefresh } from "@/components/videos/auto-refresh";
 import { NewVideoForm } from "@/components/videos/new-video-form";
 import { getBrandContext } from "@/lib/active-brand";
 import { db } from "@/lib/db";
+import { ideaBoard } from "@/lib/video-ideas";
 
 export const metadata: Metadata = { title: "Nuevo video · RAdev Social" };
 
@@ -23,10 +25,16 @@ const ROUTE = [
 ] as const;
 
 export default async function NewVideoPage() {
-  const [{ brands }, voices] = await Promise.all([getBrandContext(), listVoices(db)]);
+  const [{ brands }, voices, requests] = await Promise.all([
+    getBrandContext(),
+    listVoices(db),
+    listVideoIdeaRequests(db),
+  ]);
+  const ideas = ideaBoard(requests);
 
   return (
     <section aria-labelledby="new-video-heading" className="flex flex-col gap-6">
+      {ideas.waiting.length > 0 && <AutoRefresh seconds={3} />}
       <Link href="/videos" className="back-link">
         ← Estudio
       </Link>
@@ -35,6 +43,7 @@ export default async function NewVideoPage() {
       </Plate>
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <NewVideoForm
+          ideas={ideas}
           brands={brands
             .filter((brand) => brand.archivedAt === null)
             .map(({ id, name, codePrefix }) => ({ id, name, codePrefix }))}
