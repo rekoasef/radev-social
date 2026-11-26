@@ -51,6 +51,11 @@ En D.B. Cooper el guion pasó en el 3.º intento: el 1.º se pasó por ~400 cara
 - La etiqueta de una cifra que repite la unidad la arregla el código (`tidyScript`) sin gastar un intento.
 - **Probado con el dossier y las imágenes de D.B. Cooper:** 2 intentos (el 1.º, por números de una fecha), 1.732 caracteres de entrada, 124 s, ~100.000 tokens. Declaró `exact` en todas las escenas y puso pie a las que no son el hecho; el código sacó dos carteles que las fotos no respaldaban («Dan Cooper» sobre un afiche, «JCPenney» sobre la sede del FBI).
 
+## Etapa 6: la voz (2026-11-26) — sin cambios
+
+Cuatro tomas de las escenas 7 a 9 de D.B. Cooper, con el volumen igualado (−14 LUFS), para elegir de oído: A como hoy (`eleven_multilingual_v2`, ajustes guardados de Alberto: estabilidad 0,3, estilo 0,3), B más estable (0,5 y estilo 0,15), C `eleven_v3` (estabilidad 0,5) y D `eleven_v3` con puntuación para las pausas. **El operador eligió dejarla como está** (B le sonó muy parecida). ~1.200 créditos.
+- Dato útil para más adelante: `eleven_v3` funciona con `with-timestamps` (trae los tiempos de cada letra) y habla más rápido (17,7 s contra 20,8 s del mismo texto).
+
 ## Lo que todavía no se controla
 
 - **Homónimos:** el código compara nombres, no personas (en el ejemplo de la Mona Lisa, un Giovanni Poggi de 1770). Queda como regla para la IA.

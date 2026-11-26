@@ -23,7 +23,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 > **Al seguir en la PC de casa:** `git switch feat/video-v1 && git pull`, `nvm use && pnpm install`, `pnpm db:migrate` (`0030`–`0032`) y `pnpm db:seed` (dos rutas de IA nuevas).
 >
 > **Primer video real hecho y publicado (2026-11-26): D.B. Cooper.** Tenía errores de imágenes y carteles y una miniatura floja: están en `docs/VIDEO-CALIDAD.md` con sus arreglos (controles más estrictos, miniatura nueva, volumen), ya programados y **sin probar con un video real**. El `video-worker` hay que reiniciarlo para tomarlos. Falta que el operador corrija el video publicado y decida si tilda T12.
-> - **Recorrido por las oficinas (con Opus), plan de 6 etapas** en el chat del 2026-11-26: (1) ver el cuadro final, (2) fotos apaisadas en el Short, (3) más imágenes del caso real (las del artículo de Wikipedia primero), (4) fuentes que sirvan (el código baja la página y la IA copia la frase exacta), (5) guion en menos intentos, (6) voz más fluida. **1 a 5 hechas** (`docs/VIDEO-CALIDAD.md`); falta probarlas juntas con un video nuevo. Sigue la 6 (la voz: la elige el operador de oído). La base de casa necesita `pnpm db:migrate` (hasta `0033`) y `pnpm db:seed` (ruta `video.sources`).
+> - **Recorrido por las oficinas (con Opus), plan de 6 etapas** en el chat del 2026-11-26: (1) ver el cuadro final, (2) fotos apaisadas en el Short, (3) más imágenes del caso real (las del artículo de Wikipedia primero), (4) fuentes que sirvan (el código baja la página y la IA copia la frase exacta), (5) guion en menos intentos, (6) voz más fluida. **Las 6 cerradas** (`docs/VIDEO-CALIDAD.md`; la 6, la voz, sin cambios por decisión del operador). Falta probarlas juntas con un video nuevo. La base de casa necesita `pnpm db:migrate` (hasta `0033`) y `pnpm db:seed` (ruta `video.sources`).
 >
 > **Después de V1:** decidir el «tu aporte» por la política de YouTube, la fluidez de la voz y los videos comerciales (ver «Anotado para más adelante»); revisión final de diseño con Impeccable, si el operador la quiere.
 >
@@ -175,7 +175,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 >
 > **Ejemplos borrados (2026-11-26)** a pedido del operador, para pasar al flujo real. Se recrean con `pnpm --filter @radev/db video:examples`.
 >
-> **Anotado por el operador:** la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **Anotado por el operador:** la voz del video anterior «safa, pero no es del todo fluida». Probado el 2026-11-26 (`eleven_v3`, ajustes, puntuación): eligió dejarla como está.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >
