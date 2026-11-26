@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudio · C · Pared de cámaras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+  .wall { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px 16px; padding: 18px; border: 1px solid var(--bezel); border-radius: 12px; background: #0f1216; }
+  .mon { display: flex; flex-direction: column; gap: 10px; }
+  .mon.pgm { grid-column: 1 / span 2; grid-row: 1 / span 2; }
+  .mon.pgm .bezel { flex: 1; display: flex; } .mon.pgm .screen { flex: 1; aspect-ratio: auto; min-height: 300px; }
+  .mon:not(.pgm) .osd.tr span { display: none; }
+  .bezel { padding: 6px; border-radius: 10px; background: var(--panel); border: 1px solid var(--bezel-strong); box-shadow: inset 0 1px 0 rgb(255 255 255 / .04), 0 18px 40px -18px rgb(0 0 0 / .8); }
+  .mon.cued .bezel { border-color: color-mix(in oklab, var(--amber) 55%, var(--bezel-strong)); box-shadow: 0 0 0 1px color-mix(in oklab, var(--amber) 25%, transparent), 0 18px 40px -18px rgb(0 0 0 / .8); }
+  .mon.fail .bezel { border-color: color-mix(in oklab, var(--red) 60%, var(--bezel-strong)); }
+  .screen { position: relative; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; background: #05070a; }
+  .screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+  .screen::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgb(0 0 0 / .22) 0 1px, transparent 1px 3px), radial-gradient(ellipse at center, transparent 55%, rgb(0 0 0 / .55)); }
+  .mon.off canvas { filter: brightness(.5) saturate(.4); }
+  .mon.off .screen::before { content: ""; position: absolute; inset: 0; z-index: 1; opacity: .16; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .osd { position: absolute; z-index: 2; font: 600 10px/1 "Geist Mono", monospace; letter-spacing: .08em; color: #f4f5f6; text-shadow: 0 1px 2px #000; }
+  .osd.tl { top: 8px; left: 9px; } .osd.tr { top: 8px; right: 9px; display: flex; gap: 6px; align-items: center; }
+  .rec { width: 7px; height: 7px; border-radius: 50%; background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .osd.bl { bottom: 8px; left: 9px; right: 9px; display: flex; justify-content: space-between; align-items: end; }
+  .chip { padding: 4px 7px 3px; border-radius: 3px; font: 600 10px/1 "Geist", sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #141414; }
+  .pgm .osd { font-size: 12px; } .pgm .osd.tl { top: 14px; left: 16px; } .pgm .osd.tr { top: 14px; right: 16px; }
+  .pgm .lower { position: absolute; z-index: 2; left: 16px; right: 16px; bottom: 16px; display: flex; align-items: end; justify-content: space-between; gap: 16px; padding: 14px 16px; border-radius: 6px; background: rgb(12 14 18 / .82); border: 1px solid color-mix(in oklab, var(--amber) 45%, var(--bezel)); }
+  .pgm .lower b { display: block; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; margin-top: 6px; }
+  .pgm .lower span.sub { color: var(--ink-dim); }
+  .under { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 22px; }
+  .under .nm { font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; }
+  .under .nm i { font-style: normal; color: var(--ink-faint); font-family: "Geist Mono", monospace; margin-right: 6px; letter-spacing: 0; }
+  .under .ct { font: 400 11px "Geist Mono", monospace; color: var(--ink-faint); white-space: nowrap; }
+  @media (max-width: 600px) {
+    .wall { grid-template-columns: 1fr 1fr; padding: 10px; gap: 14px 10px; }
+    .mon.pgm { grid-column: 1 / span 2; grid-row: auto; }
+    .pgm .lower { left: 8px; right: 8px; bottom: 8px; padding: 10px; } .pgm .lower .btn { display: none; } .pgm .lower b { font-size: 15px; }
+    .under .ct { display: none; } .under .nm { font-size: 10px; letter-spacing: .1em; }
+    .osd { font-size: 8.5px; } .osd.tr span { display: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="zone"><h1 class="plate">Estudio</h1><span class="rule"></span><span class="count mono">5 videos · 2 cámaras grabando</span><span class="btn desk-only"><i data-lucide="plus"></i>Nuevo video</span></div>
+  <div id="sign"></div>
+  <section class="wall" id="wall"></section>
+  <div id="ledger"></div>
+  <div id="rundown"></div>
+  <p class="note desk-only"><b>Boceto C · Pared de cámaras.</b> La sala de control mira el estudio por circuito cerrado: el monitor grande de programa siempre muestra tu escritorio y lo que te espera, y alrededor está una cámara por oficina. Las que graban (punto rojo) están trabajando; las apagadas, con ruido, están libres; la que tiene borde rojo tiene una falla. Es la más fiel al panel actual (los monitores de la portada) y la más fácil de leer de un vistazo, pero la menos "juego". Animación prevista: imagen de cámara con leve parpadeo, y los personajes se mueven dentro de cada cámara. Se toca una cámara para entrar a la oficina.</p>
+</main>
+<script src="shared.js"></script>
+<script src="scene-side.js"></script>
+<script>
+  chrome();
+  document.getElementById("sign").outerHTML = sign();
+  document.getElementById("ledger").outerHTML = ledger();
+  document.getElementById("rundown").outerHTML = rundown();
+
+  const VARS = { "--v1": "#8cc9a6", "--v2": "#ee8fc0", "--v3": "#7fb4e8", "--v4": "#b49af0", "--v5": "#5ec4c4" };
+  const CAMS = [
+    { id: "deskVideo", cam: "00", office: { name: "Tu escritorio" }, pgm: true },
+    { id: "research" }, { id: "sources" }, { id: "images" }, { id: "script" }, { id: "facts" }, { id: "voice" },
+    { id: "render" }, { id: "package" }, { id: "archive", office: { name: "Archivo" } }, { id: "lobby", office: { name: "Recepción" } },
+  ];
+  const offices = Object.fromEntries(STUDIO.offices.map((o) => [o.id, o]));
+  const wall = document.getElementById("wall");
+  let pending = CAMS.length;
+
+  function feed(id, canvas) {
+    const svg = E("svg", { xmlns: SN, viewBox: "-40 58 302 170", width: 604, height: 340 });
+    sdefs(svg);
+    E("rect", { x: -40, y: 58, width: 302, height: 180, fill: "url(#panels)" }, svg);
+    E("rect", { x: -40, y: FLOOR, width: 302, height: 20, fill: "#1e222a" }, svg);
+    const info = ST[id](E("g", {}, svg));
+    let str = new XMLSerializer().serializeToString(svg);
+    for (const [k, v] of Object.entries(VARS)) str = str.replaceAll(`var(${k})`, v);
+    const img = new Image();
+    img.onload = () => {
+      // cover: fill the screen whatever its proportion, cropping the centre of the feed
+      const k = Math.max(canvas.width / 604, canvas.height / 340), w = 604 * k, h = 340 * k;
+      canvas.getContext("2d").drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+      if (--pending === 0) finish();
+    };
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(str);
+    return info;
+  }
+
+  CAMS.forEach((c, i) => {
+    const office = c.office ?? offices[c.id];
+    const camNo = c.cam ?? String(i).padStart(2, "0");
+    const mon = document.createElement("article");
+    const screen = document.createElement("div");
+    screen.className = "screen";
+    const canvas = document.createElement("canvas");
+    canvas.width = c.pgm ? 300 : 168; canvas.height = c.pgm ? 169 : 95;
+    screen.appendChild(canvas);
+    const info = ST[c.id](E("g"));
+    const working = ["live", "fail", "cued"].includes(info.state);
+    mon.className = `mon ${c.pgm ? "pgm" : ""} ${info.state === "off" ? "off" : info.state}`;
+    screen.insertAdjacentHTML("beforeend", `
+      <div class="osd tl">CAM ${camNo} · ${office.name.toUpperCase()}</div>
+      <div class="osd tr">${working ? '<i class="rec"></i>' : ""}<span>14:32:07</span></div>`);
+    if (c.pgm) {
+      const v = STUDIO.videos[0];
+      screen.insertAdjacentHTML("beforeend", `<div class="lower"><div>${tally("cued", "Te espera · aprobar video")}<b>${v.title}</b><span class="sub">${v.topic} · 149 s · los dos formatos · ${v.time}</span></div><span class="btn primary">Entrar <i data-lucide="arrow-right"></i></span></div>`);
+    } else if (info.state === "fail") {
+      screen.insertAdjacentHTML("beforeend", `<div class="osd bl"><span class="chip" style="background:var(--red);color:#fff">Alerta · 429</span><span class="chip" style="background:var(--ink)">Reintentar</span></div>`);
+    } else if (info.state === "live") {
+      screen.insertAdjacentHTML("beforeend", `<div class="osd bl"><span class="chip" style="background:var(--ink)">${info.status}</span></div>`);
+    } else if (info.state === "ready") {
+      screen.insertAdjacentHTML("beforeend", `<div class="osd bl"><span class="chip" style="background:var(--green)">1 paquete listo</span></div>`);
+    }
+    const bezel = document.createElement("div");
+    bezel.className = "bezel";
+    bezel.appendChild(screen);
+    mon.appendChild(bezel);
+    if (!c.pgm) mon.insertAdjacentHTML("beforeend", `<div class="under"><span class="nm">${office.n ? `<i>${office.n}</i>` : ""}${office.name}</span>${c.pgm ? "" : tally(info.state === "off" ? "off" : info.state, info.state === "off" ? "Libre" : info.state === "fail" ? "Falla" : info.state === "ready" ? "Listo" : "Grabando")}</div>${c.pgm ? "" : `<div class="under"><span class="ct">${info.count.toUpperCase()}</span></div>`}`);
+    wall.appendChild(mon);
+    mon._feed = () => {
+      if (c.pgm) { const r = screen.getBoundingClientRect(); canvas.width = Math.round(r.width / 2.4); canvas.height = Math.round(r.height / 2.4); }
+      feed(c.id, canvas);
+    };
+  });
+  requestAnimationFrame(() => wall.querySelectorAll(".mon").forEach((m) => m._feed()));
+</script>
+</body>
+</html>

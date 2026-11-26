@@ -13,6 +13,13 @@ colors:
   tally-red: "#f2555a"
   tally-amber: "#f2b53a"
   tally-green: "#3dd68c"
+  tally-blue: "#5bbcf5"
+  folder-manila: "#d9b66f"
+  folder-tab-1: "#8cc9a6"
+  folder-tab-2: "#ee8fc0"
+  folder-tab-3: "#7fb4e8"
+  folder-tab-4: "#b49af0"
+  folder-tab-5: "#5ec4c4"
 typography:
   display:
     fontFamily: "Geist, system-ui, sans-serif"
@@ -143,11 +150,13 @@ Una paleta de grafito casi monocroma, con tres lámparas de estado como único c
 - **Rojo al aire** (#f2555a): publicado o en emisión; errores destructivos. Lámpara circular con brillo.
 - **Ámbar en cola** (#f2b53a): en cola o seleccionado (la marca activa). También es el color del foco del teclado. Lámpara triangular.
 - **Verde listo** (#3dd68c): sistema sano (base en línea). Lámpara cuadrada.
+- **Azul a su hora** (#5bbcf5): programado, o una pausa que retoma sola a una hora (el límite de Claude en el estudio de video). Lámpara de rombo.
+- **Rojo falla** (#f2555a): algo falló y espera "Reintentar" (estudio de video). Lámpara en cruz, para no confundirla con "al aire".
 
 ### Named Rules
 **La regla del canal propio.** El color de una marca solo se pinta dentro de su canal (pantalla del monitor, barras de color). El cromo del panel nunca toma el color de una marca, ni siquiera el de la marca activa.
 
-**La regla de la lámpara.** Todo estado lleva forma y texto además del color: círculo al aire, triángulo en cola, cuadrado listo, anillo en espera, guion apagado.
+**La regla de la lámpara.** Todo estado lleva forma y texto además del color: círculo al aire, triángulo en cola, cuadrado listo, rombo a su hora, cruz falla, anillo en espera, guion apagado.
 
 ## Typography
 
@@ -223,6 +232,18 @@ Avatar circular de 36px (el de GitHub o las iniciales en mono). El menú muestra
 
 ### Popups
 Fondo panel elevado, borde de bisel fuerte, 8px de radio y la sombra desplegable. Entran y salen con opacidad y escala 0.97 en 120ms, desde el punto de origen del disparador.
+
+### Estudio de video (RAdev Studio, `/videos`)
+Diseño aprobado el 2026-11-26 (T10). Capturas y maqueta en `docs/references/studio/`. El operador pidió un tono "bien de juego": el estudio es el único lugar del panel con ilustración. Igual que el color de una marca en su canal, la ilustración vive **solo dentro de su escena**; el cromo (barra, plates, lámparas, botones, tablas) es la consola de siempre.
+
+- **Plano del estudio (componente distintivo).** El edificio visto desde arriba, de noche, en SVG generado a partir de los datos (no es una imagen). Las oficinas 1 a 5 van arriba, Recepción a la izquierda, tu oficina vidriada al centro, el Archivo a la derecha y las oficinas 6 a 8 abajo. Hay flechas tenues en el pasillo. Cada oficina tiene su piso (madera, alfombra, baldosa, goma acústica) y paredes de bisel. En el celular, el mismo plano va apilado en dos columnas.
+- **La luz es el estado.** Una oficina trabajando tiene la lámpara prendida (un charco cálido; frío en Render). Una libre queda a oscuras. Una con falla tiene un resplandor rojo. Tu oficina se ilumina en ámbar cuando algo te espera. Igual, cada oficina lleva su **cartel de puerta**: un plate con número y nombre, y debajo su lámpara tally con un texto. La luz nunca es la única señal.
+- **Quién trabaja.** Las oficinas de Claude tienen personas, las de código tienen robots, y tu oficina tiene la silla vacía con "VOS". Los globos de diálogo son cortos: "intento 2/3", "¡429!", "¡te espera!".
+- **Carpeta.** Cada video es una carpeta de papel manila (#d9b66f) con una pestaña de color pastel y su número de dos cifras en mono. La pestaña identifica al video y **nunca es un color de estado**: menta #8cc9a6, rosa #ee8fc0, celeste #7fb4e8, lila #b49af0 y turquesa #5ec4c4. La misma pestaña aparece en la planilla y en los títulos de las pantallas de ese video.
+- **Cartel "Te espera".** Una franja ámbar de todo el ancho, arriba del plano, con la única acción principal de la pantalla ("Ir a tu escritorio"). Solo aparece si algo te espera.
+- **Cabecera de oficina.** Al entrar a una oficina, su escena va en grande a la izquierda. A la derecha van qué hace, el video actual con su reloj, la barra de intentos (rojo si fue rechazado, tinta si está en curso) y, si hubo un rechazo, la lista de problemas. Debajo van el historial y el informe, en filas de ficha técnica.
+- **Escritorios (aprobar guion y video).** Son pantallas de trabajo, sin ilustración. Llevan una columna principal (las escenas, o los dos reproductores) y a la derecha un panel fijo con la decisión: aprobar dice qué cuesta y devolver pide una nota. En el celular, la decisión pasa a una barra fija sobre la navegación. Las correcciones de la verificación se ven tachadas y corregidas, con un borde verde. Los hechos llevan su lámpara: cuadrado verde si está en su página, triángulo ámbar si es casi igual, anillo punteado si no está.
+- **Movimiento previsto (T12).** Las carpetas caminan por el pasillo cuando cambian de oficina, el de Guion teclea, los LEDs de Render titilan y el globo ámbar respira. Nada más se mueve, y con `prefers-reduced-motion` no se mueve nada.
 
 ## Do's and Don'ts
 

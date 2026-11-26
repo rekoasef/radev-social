@@ -8,7 +8,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-> ### ▶ Retomar acá (última sesión: 2026-11-25 a la noche, PC de casa)
+> ### ▶ Retomar acá (última sesión: 2026-11-26, PC de la fábrica)
 >
 > **En qué estamos: V1 del video (RAdev Studio), rama `feat/video-v1`** (sale de `spike/video-v0`; `main` no cambió desde que empezó la spike). **V0 está cerrada.** El formato es el **documental**: imágenes de archivo + gráficos animados + voz de Alberto, en **dos formatos** (Short 9:16 y normal 16:9). Los monigotes y el kit quedaron descartados. Decisión: **ADR 0029**. Alcance, etapas, datos, tareas y criterio de aceptación: **`docs/RADEV-STUDIO-REVISION.md` §7**. Lista para tildar: `docs/ROADMAP.md` → "Video — V1".
 >
@@ -78,7 +78,30 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 >
 > **Decisión del operador (2026-11-25, noche):** mañana (2026-11-26) **arranca B en la PC de la fábrica** (T10: diseño del estudio, con Opus) y **aprueba el video cuando lo vea**. T10 es solo diseño (capturas, sin servicios) y no necesita el video ni la base de esta PC. T9 queda sin tildar hasta que apruebe. Si la fábrica va a correr el worker, ver la opción 2 de arriba.
 >
-> **Después de T9:** B (T10: diseño del estudio con Opus, capturas aprobadas). Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
+> **▶ T10 CERRADA (2026-11-26, PC de la fábrica, con Opus): diseño del estudio aprobado.** T9 sigue sin tildar: el video de Hill vive en la PC de casa y espera que el operador lo mire y lo apruebe (ver arriba).
+>
+> - **Cómo se eligió:** tres direcciones en bocetos (compu y celular): **A plano del piso** (el edificio visto desde arriba, de noche), B línea de montaje (fábrica de costado con una cinta y barreras en tus escritorios) y C pared de cámaras (circuito cerrado con monitor de programa). El operador pidió un tono **"bien de juego"**, pensado **más para la compu**, y eligió **A**. B y C quedan en `docs/references/studio/descartados/`.
+> - **Lo aprobado** (`docs/references/studio/`, cinco pantallas en compu y celular):
+>   1. **Estudio:** plano, cartel "Te espera", gastos de hoy y planilla.
+>   2. **Una oficina por dentro:** la escena en grande, lo que hace ahora, intentos y problemas, historial, informe, y cómo se ve pausada, con falla o libre.
+>   3. **Nuevo video:** tema, marca opcional, voz, idioma y recorrido con tiempos y gasto.
+>   4. **Aprobar guion:** escenas con imagen, licencia, "Cambiar", tiempos, correcciones de la verificación, estado de cada hecho e imágenes repetidas; decisión con su costo; devolver con nota; «tu aporte» reservado como "próximamente".
+>   5. **Aprobar video:** los dos formatos con capítulos en la barra, miniaturas, descripciones con "Copiar", informe por oficina, devolver a Render, Locución o Guion con su costo, y el paquete con su carpeta.
+> - **Reglas nuevas del estilo:** en `apps/web/DESIGN.md` → "Estudio de video":
+>   - la luz es el estado, y siempre va también el cartel de puerta con su lámpara;
+>   - personas para Claude, robots para el código y una silla vacía "VOS" en tu oficina;
+>   - carpetas manila con pestaña pastel que identifica al video y nunca es un color de estado;
+>   - lámparas nuevas: rombo azul (pausa con hora) y cruz roja (falla).
+>
+>   La ficha de dirección para Impeccable está en `apps/web/.impeccable/surfaces/app-panel-videos-page-tsx.md`.
+> - **Maqueta:** `docs/references/studio/maqueta/` tiene páginas HTML estáticas: las escenas son SVG generado desde los datos. **`scene-top.js` es lo que se porta a React en T12.** Para volver a capturar: `bash docs/references/studio/maqueta/bajar-imagenes.sh` (miniaturas de Commons, no van a git) y `node docs/references/studio/maqueta/capturar.cjs`.
+> - **Pendientes para T12:**
+>   - la barra de abajo del celular pasa a 9 secciones con "Videos" y queda apretada;
+>   - el texto tenue sobre panel elevado da 4,4:1 de contraste (pide 4,5);
+>   - el movimiento previsto (carpetas que caminan, el que teclea, los LEDs, el globo que respira) se implementa ahí.
+> - **Herramienta:** Impeccable se actualizó a la v4.11.1 en esta PC y sumó su detector de diseño a `~/.claude/settings.json` (ver `docs/ENVIRONMENTS.md`).
+>
+> **▶ Próximo paso: T11** (con Sonnet): `/media` con `Range` y el ZIP del paquete por streaming. Después T12 (panel `/videos`, portando la maqueta), T13 (Docker) y T14. Antes o después de B, decidir lo del «contenido no auténtico» de YouTube (ver «Anotado para más adelante»; el lugar de «tu aporte» ya está en el diseño). Anotado por el operador: la voz del video anterior «safa, pero no es del todo fluida»: probar `eleven_v3`, los ajustes de la voz y la puntuación del guion.
 >
 > ### Bitácora de V0 (spike, `spikes/video-v0`; cerrada el 2026-11-25)
 >

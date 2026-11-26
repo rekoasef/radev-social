@@ -510,7 +510,14 @@ Re-renderizar pisa el archivo, y la web lo pide con `?v=<checksum>`, como los PN
 | Crecimiento del alcance | Alta | Alto | V1 cerrado en §7; todo lo demás, a su fase |
 | `/etc/wsl.conf` mal formado | Ya pasa | Bajo | Anotado (D-I-2); no se toca sin una decisión aparte |
 
-**Limitaciones conocidas de V1**: solo 9:16 y 30–45 s; transiciones de corte o de entrada y salida; personajes simples; sin investigación automática (los hechos los ponés vos o salen del guion de Claude, que revisás en la primera puerta); sin publicación.
+**Limitaciones conocidas de V1** (actualizadas el 2026-11-26, ADR 0029):
+- Videos de 1,5 a 2,5 min.
+- Solo imágenes de Wikimedia Commons.
+- Solo en español.
+- El video se rehace entero: no se rehacen escenas sueltas.
+- La verificación de fuentes es informativa: un hecho que no aparece en su página igual puede pasar al guion, y lo revisás al aprobarlo.
+- Sin subida a YouTube: se descarga el paquete y se sube a mano.
+- Corre solo en la notebook.
 
 ---
 

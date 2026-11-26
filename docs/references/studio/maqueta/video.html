@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aprobar video</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<link rel="stylesheet" href="screens.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 32px; align-items: start; }
+  aside { position: sticky; top: 132px; display: flex; flex-direction: column; gap: 16px; }
+  .players { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; align-items: end; }
+  .player { display: flex; flex-direction: column; gap: 10px; }
+  .frame { position: relative; overflow: hidden; border-radius: 6px; background: #000; border: 1px solid var(--bezel-strong); }
+  .frame.v { aspect-ratio: 9 / 16; } .frame.h { aspect-ratio: 16 / 9; }
+  .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .frame .shade { position: absolute; inset: 0; background: linear-gradient(transparent 45%, rgb(0 0 0 / .7)); }
+  .gfx { position: absolute; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; color: #fff; }
+  .gfx.date { left: 7%; top: 7%; padding: 5px 9px; background: #f2b53a; color: #141414; font-size: 13px; border-radius: 2px; }
+  .kara { position: absolute; left: 6%; right: 6%; text-align: center; font-weight: 700; color: #fff; text-shadow: 0 2px 6px rgb(0 0 0 / .8); line-height: 1.2; }
+  .kara em { font-style: normal; color: #f2b53a; }
+  .frame.v .kara { bottom: 22%; font-size: 19px; } .frame.h .kara { bottom: 16%; font-size: 22px; }
+  .credit { position: absolute; right: 8px; bottom: 6px; font: 400 9px "Geist Mono", monospace; color: rgb(255 255 255 / .7); }
+  .controls { display: flex; align-items: center; gap: 10px; font: 400 12px "Geist Mono", monospace; color: var(--ink-dim); }
+  .controls .pp { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--console); flex: none; }
+  .controls .pp svg { width: 14px; height: 14px; }
+  .scrub { position: relative; flex: 1; height: 6px; border-radius: 3px; background: var(--bezel); }
+  .scrub i { position: absolute; left: 0; top: 0; bottom: 0; width: 14%; border-radius: 3px; background: var(--ink); }
+  .scrub b { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--ink-faint); }
+  .specs { font: 400 11.5px "Geist Mono", monospace; color: var(--ink-faint); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .thumbs { display: grid; grid-template-columns: 440px 140px; justify-content: start; gap: 20px; align-items: end; }
+  .tn { position: relative; overflow: hidden; border-radius: 6px; border: 1px solid var(--bezel-strong); background: #000; }
+  .tn img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) brightness(.8); }
+  .tn .txt { position: absolute; left: 7%; bottom: 9%; display: flex; flex-direction: column; gap: 2px; }
+  .tn .k { align-self: flex-start; padding: 3px 7px; background: #fff; color: #111; font: 800 12px "Geist", sans-serif; letter-spacing: .12em; }
+  .tn .l { font: 900 44px/0.95 "Geist", sans-serif; color: #fff; text-transform: uppercase; letter-spacing: -0.02em; text-shadow: 0 3px 10px rgb(0 0 0 / .7); }
+  .tn .l.a { color: #f2b53a; }
+  .tn.v .l { font-size: 26px; } .tn.v .k { font-size: 9px; }
+  .desc { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .desc .panel { display: flex; flex-direction: column; }
+  .desc header { display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--bezel); }
+  .desc pre { margin: 0; padding: 14px; font: 400 12.5px/1.55 "Geist", sans-serif; white-space: pre-wrap; color: var(--ink-dim); max-height: 330px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 80%, transparent); mask-image: linear-gradient(#000 80%, transparent); }
+  .decide { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .decide hr { border: 0; border-top: 1px solid var(--bezel); margin: 4px 0; }
+  .dest { display: flex; flex-direction: column; gap: 6px; }
+  .dest > span { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding: 9px 10px; border: 1px solid var(--bezel-strong); border-radius: 6px; font-size: 13px; }
+  .dest > span.on { border-color: var(--ink-dim); background: var(--panel-raised); }
+  .dest .r { width: 14px; height: 14px; margin-top: 2px; border-radius: 50%; border: 1.5px solid var(--ink-faint); }
+  .dest > span.on .r { border: 4px solid var(--ink); }
+  .dest small { display: block; color: var(--ink-faint); font-size: 12px; }
+  .tree { padding: 14px 16px; font: 400 12.5px/1.8 "Geist Mono", monospace; color: var(--ink-dim); }
+  .tree b { color: var(--ink); font-weight: 600; } .tree .sz { float: right; color: var(--ink-faint); }
+  @media (max-width: 600px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    aside { position: static; } aside .decide { display: none; }
+    .players { grid-template-columns: minmax(0, 1fr); } .frame.v { width: 72%; margin: 0 auto; }
+    .thumbs, .desc { grid-template-columns: minmax(0, 1fr); } .thumbs { justify-content: stretch; } .tn.v { width: 46%; }
+    .hide-s { display: none; }
+  }
+</style>
+</head>
+<body>
+<main class="has-bar">
+  <div class="stack" style="gap:20px">
+    <div id="crumbs"></div>
+    <div class="zone"><h1 class="plate">Aprobar video</h1><span class="rule"></span><span class="count mono">llegó hace 15 h</span></div>
+    <div style="display:flex;gap:16px;align-items:flex-start"><span class="tab" style="background:var(--v2);margin-top:6px">02</span>
+      <div class="stack" style="gap:8px"><h2 class="h-title" id="title"></h2>
+        <div class="ledger mono" style="font-size:13px"><span><b>137,6 s</b></span><span>Short 9:16 y normal 16:9</span><span><b>20</b> escenas</span><span>voz Alberto</span><span id="qc"></span></div></div></div>
+  </div>
+
+  <div class="layout">
+    <div class="stack" style="gap:44px">
+      <section class="players">
+        <div class="player">
+          <div class="frame v"><img src="img/i33.jpg" alt=""><div class="shade"></div><span class="gfx date">21 de agosto de 1911</span>
+            <div class="kara">El Louvre amanece <em>cerrado</em> y, en el Salón Carré…</div><span class="credit">Commons · DP</span></div>
+          <div class="controls"><span class="pp"><i data-lucide="play"></i></span><span class="scrub"><i style="width:4%"></i></span><span>0:05</span></div>
+          <div class="specs"><span>SHORT</span><span>1080×1920</span><span>34,6 MB</span></div>
+        </div>
+        <div class="player">
+          <div class="frame h"><img src="img/i08.jpg" alt="" style="object-position:50% 40%"><div class="shade"></div>
+            <div class="kara">entre un Correggio y un Tiziano, sostenida <em>apenas</em> por cuatro clavijas</div><span class="credit">Louis Béroud, 1911 · Commons · DP</span></div>
+          <div class="controls"><span class="pp"><i data-lucide="play"></i></span><span class="scrub" id="chap"><i></i></span><span>0:19 / 2:18</span></div>
+          <div class="specs"><span>NORMAL</span><span>1920×1080</span><span>29,1 MB</span><span>h264 + aac · 30 fps</span><span id="chaps"></span></div>
+        </div>
+      </section>
+
+      <section class="stack">
+        <div class="zone"><h2 class="plate">Miniaturas</h2><span class="rule"></span><span class="count">la IA eligió la imagen y las palabras</span></div>
+        <div class="thumbs">
+          <div class="tn" style="aspect-ratio:16/9"><img src="img/i33.jpg" alt="" style="object-position:50% 45%"><div class="txt"><span class="k">CASO 1911</span><span class="l a">Robo</span><span class="l">al Louvre</span></div></div>
+          <div class="tn v" style="aspect-ratio:9/16"><img src="img/i33.jpg" alt="" style="object-position:50% 45%"><div class="txt"><span class="k">CASO 1911</span><span class="l a">Robo</span><span class="l">al Louvre</span></div></div>
+        </div>
+      </section>
+
+      <section class="stack">
+        <div class="zone"><h2 class="plate">Descripciones</h2><span class="rule"></span><span class="count">para pegar en YouTube</span></div>
+        <div class="desc">
+          <div class="panel"><header><span class="label">Normal · con capítulos</span><span class="btn ghost"><i data-lucide="copy"></i>Copiar</span></header><pre id="dn"></pre></div>
+          <div class="panel"><header><span class="label">Short · #Shorts</span><span class="btn ghost"><i data-lucide="copy"></i>Copiar</span></header><pre id="ds"></pre></div>
+        </div>
+      </section>
+
+      <section class="stack">
+        <div class="zone"><h2 class="plate">Informe del video</h2><span class="rule"></span><span class="count mono">de tema a paquete · 25 min</span></div>
+        <div class="panel" style="overflow:hidden"><table class="grid">
+          <thead><tr><th>Oficina</th><th>Quién</th><th class="num">Gasto</th><th class="num hide-s">Tiempo</th><th class="hide-s">Notas</th></tr></thead>
+          <tbody id="rep"></tbody></table></div>
+      </section>
+    </div>
+
+    <aside>
+      <section class="panel decide">
+        <span class="btn primary block">Aprobar video <i data-lucide="check"></i></span>
+        <span class="hint">Habilita la descarga del paquete.</span>
+        <hr>
+        <span class="label dim">Devolver a</span>
+        <div class="dest">
+          <span class="on"><i class="r"></i><span>Render<small>Solo la imagen. No gasta voz.</small></span></span>
+          <span><i class="r"></i><span>Locución<small>Otra toma de voz: ~1.900 créditos.</small></span></span>
+          <span><i class="r"></i><span>Guion<small>Reescribe; después hay que aprobarlo y pagar la voz.</small></span></span>
+        </div>
+        <textarea class="input" rows="3" placeholder="Qué hay que cambiar. Ej.: en la escena 4 el zoom tapa a la Mona Lisa."></textarea>
+        <span class="btn block">Devolver con la nota</span>
+      </section>
+      <section class="panel" style="overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bezel)"><span class="label">Paquete</span><span class="faint mono" style="font-size:12px">ZIP · 64 MB</span></div>
+        <div class="tree" id="tree"></div>
+        <div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px"><span class="btn block" aria-disabled="true"><i data-lucide="download"></i>Descargar paquete</span><span class="hint">Se habilita al aprobar el video.</span></div>
+      </section>
+    </aside>
+  </div>
+  <p class="note desk-only"><b>Aprobar video.</b> Los dos formatos se miran y se adelantan en el navegador; el normal muestra las marcas de los capítulos en la barra. Abajo, las dos miniaturas, las dos descripciones listas para copiar y el informe de lo que costó cada oficina. A la derecha: aprobar, o devolver eligiendo a dónde (con lo que cuesta cada camino), y el paquete con la misma carpeta que entregó la spike. Imágenes y descripciones: las reales de la Mona Lisa; tamaños, tiempos y gastos, de ejemplo (los gastos son los medidos con Betty y Barney Hill).</p>
+</main>
+<div class="actionbar"><span class="btn">Devolver</span><span class="btn primary">Aprobar video</span></div>
+<script src="shared.js"></script>
+<script src="mona.js"></script>
+<script>
+  chrome();
+  document.getElementById("crumbs").outerHTML = crumbs("Estudio", "Tu escritorio", "El día que robaron la Mona Lisa");
+  const P = MONA.pub;
+  document.getElementById("title").textContent = P.title;
+  document.getElementById("qc").outerHTML = tally("ready", "Control OK");
+  const starts = []; MONA.frames.reduce((t, f, i) => (starts[i] = t, t + f), 0);
+  const total = MONA.frames.reduce((a, b) => a + b);
+  const clock = (fr) => { const s = Math.round(fr / 30); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+  document.getElementById("chap").insertAdjacentHTML("beforeend", P.chapters.slice(1).map((c) => `<b style="left:${(starts[c.scene - 1] / total) * 100}%"></b>`).join(""));
+  document.getElementById("chaps").textContent = `${P.chapters.length} capítulos`;
+  const used = [...new Set(MONA.script.scenes.map((s) => s.image))];
+  const fuentes = ["Wikipedia · Vincenzo Peruggia", "Smithsonian Magazine · The theft that made the Mona Lisa a masterpiece", "History.com · The Mona Lisa is stolen"];
+  const ai = "La narración usa una voz generada por IA (ElevenLabs). Guion investigado y revisado por una persona.";
+  document.getElementById("dn").textContent = [P.title, "", P.hook, "", "Capítulos", ...P.chapters.map((c) => `${clock(starts[c.scene - 1])} ${c.title}`), "", "Fuentes", ...fuentes, "", "Imágenes de archivo (Wikimedia Commons)", ...used.slice(0, 6).map((id) => `${MONA.cand[id].title} · ${MONA.cand[id].author.split(" ").slice(0, 3).join(" ")} · ${MONA.cand[id].license}`), `… y ${used.length - 6} más`, "", ai, "", P.hashtags.join(" ")].join("\n");
+  document.getElementById("ds").textContent = [P.title, "", P.hook, "", "Fuentes", ...fuentes, "", "Imágenes de archivo: Wikimedia Commons (detalle de cada una en el video completo).", ai, "", [...P.hashtags, "#Shorts"].join(" ")].join("\n");
+  const rows = [
+    ["1 Investigación", "Claude", "73.090 / 26.539", "3:55", "30 hechos, 3 en disputa"],
+    ["2 Fuentes", "Código", "—", "0:06", "4 en su página, 25 no, 1 sin página"],
+    ["3 Imágenes", "Claude + Commons", "32.381 / 3.593", "7:52", "34 candidatas, sin 429"],
+    ["4 Guion", "Claude", "94.900 / 16.504", "2:06", "2º intento"],
+    ["5 Verificación", "Claude", "91.671 / 9.068", "1:34", "5 correcciones"],
+    ["Tu escritorio", "Vos", "—", "58 min", "aprobado sin cambios"],
+    ["6 Locución", "ElevenLabs", "1.917 créditos", "0:12", "una toma"],
+    ["7 Render", "Remotion", "—", "8:30", "9:16 4:18 · 16:9 4:12"],
+    ["8 Publicación", "Claude + código", "24.838 / 1.226", "0:41", "título, capítulos, miniaturas"],
+  ];
+  document.getElementById("rep").innerHTML = rows.map(([o, w, g, t, n]) => `<tr><td style="white-space:nowrap">${o}</td><td class="dim">${w}</td><td class="num">${g}</td><td class="num hide-s">${t}</td><td class="dim hide-s" style="font-size:13px">${n}</td></tr>`).join("")
+    + `<tr><td><b style="font-weight:600">Total</b></td><td class="dim">7 corridas de Claude</td><td class="num"><b style="font-weight:600">316.880 / 56.930</b></td><td class="num hide-s">25 min</td><td class="dim hide-s" style="font-size:13px">+ 1.917 créditos de voz</td></tr>`;
+  document.getElementById("tree").innerHTML = `<b>el-dia-que-robaron-la-mona-lisa/</b><br>
+    &nbsp;&nbsp;short/<br>&nbsp;&nbsp;&nbsp;&nbsp;video.mp4<span class="sz">34,6 MB</span><br>&nbsp;&nbsp;&nbsp;&nbsp;miniatura.png<span class="sz">0,9 MB</span><br>&nbsp;&nbsp;&nbsp;&nbsp;descripcion.txt<br>
+    &nbsp;&nbsp;normal/<br>&nbsp;&nbsp;&nbsp;&nbsp;video.mp4<span class="sz">29,1 MB</span><br>&nbsp;&nbsp;&nbsp;&nbsp;miniatura.png<span class="sz">1,2 MB</span><br>&nbsp;&nbsp;&nbsp;&nbsp;descripcion.txt<br>
+    &nbsp;&nbsp;creditos.txt`;
+  finish();
+</script>
+</body>
+</html>

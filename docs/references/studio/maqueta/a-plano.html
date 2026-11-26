@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudio · A · Plano del piso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+  .stage { border: 1px solid var(--bezel); border-radius: 12px; padding: 6px; background: var(--panel); box-shadow: inset 0 1px 0 rgb(255 255 255 / .04), 0 18px 40px -18px rgb(0 0 0 / .8); }
+  .stage svg { display: block; border-radius: 8px; }
+  .head-actions { display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="zone"><h1 class="plate">Estudio</h1><span class="rule"></span><span class="count mono">5 videos · 2 oficinas trabajando</span><span class="btn desk-only"><i data-lucide="plus"></i>Nuevo video</span></div>
+  <div id="sign"></div>
+  <div class="stage" id="floor"></div>
+  <div id="ledger"></div>
+  <div id="rundown"></div>
+  <p class="note desk-only"><b>Boceto A · Plano del piso.</b> El estudio visto desde arriba, de noche: la luz prendida es una oficina trabajando, apagada está libre, roja es una falla. Claude trabaja en las oficinas con personas, el código en las de robots, y en el centro está tu oficina vidriada, con la silla vacía. Cada video es una carpeta con su pestaña de color que viaja de escritorio en escritorio. Animación prevista: las carpetas caminan por el pasillo cuando cambian de oficina, el que escribe teclea, el render titila. Se toca una oficina para entrar.</p>
+</main>
+<script src="shared.js"></script>
+<script src="scene-top.js"></script>
+<script>
+  chrome();
+  document.getElementById("sign").outerHTML = sign();
+  document.getElementById("ledger").outerHTML = ledger();
+  document.getElementById("rundown").outerHTML = rundown();
+  drawFloor(document.getElementById("floor"), matchMedia("(max-width: 600px)").matches);
+  finish();
+</script>
+</body>
+</html>

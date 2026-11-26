@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oficina · Guion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<link rel="stylesheet" href="screens.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+  .head { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px; align-items: start; }
+  .now { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .now .row { display: flex; align-items: center; gap: 14px; }
+  .now .clock { margin-left: auto; font: 400 28px "Geist Mono", monospace; letter-spacing: .02em; }
+  .attempts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .attempts span { height: 6px; border-radius: 3px; background: var(--bezel); }
+  .attempts .rej { background: color-mix(in oklab, var(--red) 70%, var(--bezel)); }
+  .attempts .run { background: var(--ink); }
+  .issues { margin: 0; padding: 12px 14px 12px 32px; border: 1px solid var(--bezel); border-radius: 6px; background: var(--console); color: var(--ink-dim); font-size: 13px; }
+  .issues li + li { margin-top: 4px; }
+  .cols { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 32px; align-items: start; }
+  .states { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .state { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .state p { color: var(--ink-dim); font-size: 13px; }
+  @media (max-width: 600px) {
+    .head, .cols, .states { grid-template-columns: 1fr; gap: 20px; }
+    .now .clock { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="stack" style="gap:20px">
+    <div id="crumbs"></div>
+    <section class="head">
+      <div class="room" id="room"></div>
+      <div class="stack">
+        <div class="zone"><h1 class="plate"><span class="faint mono" style="letter-spacing:0;margin-right:8px">4</span>Guion</h1><span class="rule"></span><span class="count">Claude</span></div>
+        <p class="lede">Escribe el guion mirando las imágenes. Lee el dossier y las candidatas, y deja de 16 a 20 escenas que pasan por los controles. Si no pasan, lo vuelve a intentar con la lista de problemas, hasta 3 veces.</p>
+        <section class="panel now">
+          <div class="row">
+            <span class="tab" style="background:var(--v4)">04</span>
+            <div><div style="font-weight:600;font-size:16px">La explosión que nadie vio</div><div class="faint" style="font-size:13px">Tunguska, 1908</div></div>
+            <span class="clock">1:12</span>
+          </div>
+          <div class="row" style="justify-content:space-between">${tally}</div>
+          <div class="attempts" aria-label="Intento 2 de 3"><span class="rej"></span><span class="run"></span><span></span></div>
+          <div class="stack" style="gap:8px">
+            <span class="faint" style="font-size:13px">El intento 1 no pasó los controles:</span>
+            <ol class="issues">
+              <li>Escena 7: el número 26 no está en el dossier.</li>
+              <li>Escena 12: dura 9,8 s y el máximo es 9 s.</li>
+              <li>Escenas 3 y 4: la misma imagen seguida.</li>
+            </ol>
+          </div>
+        </section>
+        <dl class="spec">
+          <dt>Modelo</dt><dd class="mono">claude-sonnet-5 · esfuerzo low</dd>
+          <dt>Límites</dt><dd>3 intentos · 10 min cada uno</dd>
+          <dt>Lee</dt><dd>dossier · 34 imágenes candidatas · tu nota si lo devolviste</dd>
+          <dt>Deja</dt><dd>guion → Verificación de hechos</dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+
+  <div class="cols">
+    <section class="stack">
+      <div class="zone"><h2 class="plate">Historial</h2><span class="rule"></span><span class="count mono">últimos 7 días</span></div>
+      <div class="panel" style="overflow:hidden"><table class="grid">
+        <thead><tr><th>Cuándo</th><th>Video</th><th>Resultado</th><th class="num hide-s">Tokens</th><th class="num hide-s">Tiempo</th></tr></thead>
+        <tbody id="hist"></tbody>
+      </table></div>
+    </section>
+    <section class="stack">
+      <div class="zone"><h2 class="plate">Informe</h2><span class="rule"></span></div>
+      <dl class="spec">
+        <dt>Corridas</dt><dd class="mono">6</dd>
+        <dt>Al 1er intento</dt><dd><span class="mono">1 de 3</span> <span class="faint">videos</span></dd>
+        <dt>Por corrida</dt><dd class="mono">47.400 / 8.300 · 1:03</dd>
+        <dt>En cola</dt><dd>${standby}</dd>
+        <dt>Devueltos</dt><dd><span class="mono">1</span> <span class="faint">por vos: «la escena 2 es una pregunta suelta»</span></dd>
+        <dt>Errores</dt><dd><span class="mono">0</span></dd>
+      </dl>
+    </section>
+  </div>
+
+  <section class="stack">
+    <div class="zone"><h2 class="plate">Otros estados</h2><span class="rule"></span><span class="count">cómo se ve la cabecera</span></div>
+    <div class="states">
+      <div class="panel state"><span id="s-pause"></span><p>Claude llegó a su límite. La oficina retoma sola a las 17:45 (en 3 h 13 min) y no pierde nada de lo hecho.</p></div>
+      <div class="panel state" style="border-color:color-mix(in oklab, var(--red) 45%, var(--bezel))"><span id="s-fail"></span><p>Commons respondió 429 tres veces. Lo ya bajado queda; Reintentar vuelve a encolar esta oficina.</p><span class="btn" style="align-self:flex-start"><i data-lucide="rotate-ccw"></i>Reintentar</span></div>
+      <div class="panel state"><span id="s-free"></span><p>Nada en cola. El próximo llega cuando Imágenes termine con «La noche que se apagó Nueva York».</p></div>
+    </div>
+  </section>
+  <p class="note desk-only"><b>Una oficina por dentro (Guion).</b> Arriba, la oficina del plano en grande y lo que está haciendo ahora: el video, el reloj, la barra de intentos y por qué se rechazó el anterior. Abajo, el historial de corridas con tokens y tiempo, y el informe de la semana. Las oficinas sin IA (Fuentes, Render) muestran créditos o segundos en vez de tokens. Datos de ejemplo.</p>
+</main>
+<script src="shared.js"></script>
+<script src="scene-top.js"></script>
+<script>
+  chrome();
+  document.getElementById("crumbs").outerHTML = crumbs("Estudio", "4 · Guion");
+  document.body.innerHTML = document.body.innerHTML
+    .replace("${tally}", tally("live", "Escribiendo · intento 2 de 3") + '<span class="faint mono" style="font-size:12px">empezó 14:31</span>')
+    .replace("${standby}", tally("off", "Nada en cola"));
+  document.getElementById("s-pause").outerHTML = tally("timed", "Pausada · retoma 17:45");
+  document.getElementById("s-fail").outerHTML = tally("fail", "Falla · Imágenes");
+  document.getElementById("s-free").outerHTML = tally("off", "Libre");
+  const rows = [
+    ["hoy 14:31", "04", "var(--v4)", "La explosión que nadie vio", tally("live", "Escribiendo · 2º"), "—", "1:12"],
+    ["hoy 14:29", "04", "var(--v4)", "La explosión que nadie vio", tally("fail", "No pasó · 3"), "47.210 / 8.902", "1:14"],
+    ["ayer 21:36", "01", "var(--v1)", "El mapa que no debía existir", tally("ready", "Aceptado · 2º"), "47.690 / 7.602", "0:52"],
+    ["ayer 21:35", "01", "var(--v1)", "El mapa que no debía existir", tally("fail", "No pasó · 3"), "47.210 / 8.902", "1:14"],
+    ["24 nov 18:02", "02", "var(--v2)", "El día que robaron la Mona Lisa", tally("ready", "Aceptado · 1º"), "46.880 / 8.120", "0:58"],
+    ["24 nov 17:20", "02", "var(--v2)", "El día que robaron la Mona Lisa", tally("cued", "Devuelto por vos"), "47.020 / 8.340", "1:01"],
+  ];
+  document.getElementById("hist").innerHTML = rows.map(([w, c, t, title, st, tok, tm]) => `<tr>
+    <td class="mono dim" style="white-space:nowrap">${w}</td>
+    <td><div style="display:flex;gap:10px;align-items:center"><span class="tab" style="background:${t}">${c}</span><span>${title}</span></div></td>
+    <td>${st}</td><td class="num hide-s dim">${tok}</td><td class="num hide-s">${tm}</td></tr>`).join("");
+  drawRoom(document.getElementById("room"), "script", 560, 400, 2.1);
+  finish();
+</script>
+</body>
+</html>

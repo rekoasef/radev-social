@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuevo video</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<link rel="stylesheet" href="screens.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+  .layout { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 40px; align-items: start; }
+  form { display: flex; flex-direction: column; gap: 28px; }
+  textarea.input { min-height: 120px; font-size: 16px; line-height: 1.5; }
+  .voices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .voice { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 12px; border: 1px solid var(--bezel-strong); border-radius: 6px; background: var(--panel); }
+  .voice.on { border-color: var(--ink-dim); background: var(--panel-raised); box-shadow: inset 0 0 0 1px var(--ink-dim); }
+  .voice .radio { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--ink-faint); flex: none; display: grid; place-items: center; }
+  .voice.on .radio { border-color: var(--ink); } .voice.on .radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
+  .voice .who { flex: 1; min-width: 0; } .voice .who b { font-weight: 500; } .voice .who span { display: block; font-size: 12px; color: var(--ink-faint); }
+  .play { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--bezel-strong); border-radius: 50%; color: var(--ink-dim); }
+  .play svg { width: 14px; height: 14px; }
+  .route { display: grid; grid-template-columns: 1.6rem 1fr auto; gap: 0; }
+  .route > * { padding: 9px 0; border-bottom: 1px solid var(--bezel); }
+  .route .n { font: 400 12px "Geist Mono", monospace; color: var(--ink-faint); }
+  .route .t { font: 400 12px "Geist Mono", monospace; color: var(--ink-dim); text-align: right; }
+  .route .you { color: var(--amber); }
+  .cost { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .cost .line { display: flex; justify-content: space-between; gap: 16px; }
+  @media (max-width: 600px) { .layout { grid-template-columns: 1fr; gap: 28px; } .voices { grid-template-columns: 1fr; } .aside-room { display: none; } }
+</style>
+</head>
+<body>
+<main class="has-bar">
+  <div class="stack" style="gap:20px">
+    <div id="crumbs"></div>
+    <div class="zone"><h1 class="plate">Nuevo video</h1><span class="rule"></span><span class="count">va a Recepción</span></div>
+  </div>
+  <div class="layout">
+    <form>
+      <div class="field">
+        <label for="topic">Tema</label>
+        <textarea class="input" id="topic">El apagón de Nueva York de julio de 1977: qué lo causó y qué pasó esa noche</textarea>
+        <span class="hint">Contalo como se lo contarías a alguien. Investigación busca las fuentes; nada de lo que diga el video sale de otro lado.</span>
+      </div>
+      <div class="field">
+        <span class="lab">Marca</span>
+        <div class="seg"><span class="on">Sin marca</span><span><span class="callsign" style="font-size:11px;padding:1px 5px">RA</span>RAdev</span><span><span class="callsign" style="font-size:11px;padding:1px 5px">LU</span>Lumus</span></div>
+        <span class="hint">Sin marca, el video va al canal de historias.</span>
+      </div>
+      <div class="field">
+        <span class="lab">Voz</span>
+        <div class="voices">
+          <div class="voice on"><span class="radio"></span><span class="who"><b>Alberto Rodríguez</b><span>Narrativa · por defecto</span></span><span class="play"><i data-lucide="play"></i></span></div>
+          <div class="voice"><span class="radio"></span><span class="who"><b>Fran</b><span>Narrativa</span></span><span class="play"><i data-lucide="play"></i></span></div>
+          <div class="voice"><span class="radio"></span><span class="who"><b>Juan</b><span>Narrativa</span></span><span class="play"><i data-lucide="play"></i></span></div>
+          <div class="voice"><span class="radio"></span><span class="who"><b>Carlos Pro</b><span>Comercial</span></span><span class="play"><i data-lucide="play"></i></span></div>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lab">Idioma</span>
+        <div class="seg"><span class="on">Español</span><span style="color:var(--ink-faint)">Inglés <span class="soon">después</span></span></div>
+      </div>
+      <div class="desk-only" style="display:flex;gap:12px;align-items:center">
+        <span class="btn primary">Mandar a Investigación <i data-lucide="arrow-right"></i></span>
+        <span class="hint">No gasta voz hasta que apruebes el guion.</span>
+      </div>
+    </form>
+
+    <aside class="stack" style="gap:24px">
+      <div class="room aside-room" id="room"></div>
+      <section class="stack" style="gap:12px">
+        <div class="zone"><h2 class="plate">Qué pasa después</h2><span class="rule"></span></div>
+        <div class="route" id="route"></div>
+      </section>
+      <section class="panel cost">
+        <div class="line"><span class="dim">Claude, hasta el guion</span><span class="mono">~290.000 tokens</span></div>
+        <div class="line"><span class="dim">Voz, al aprobar el guion</span><span class="mono">~1.900 créditos</span></div>
+        <div class="line"><span class="faint">Te quedan este mes</span><span class="mono">34.605 <span class="faint">de 38.439</span></span></div>
+      </section>
+    </aside>
+  </div>
+  <p class="note desk-only"><b>Nuevo video.</b> El tema, la marca (opcional) y la voz; nada más. A la derecha, la recepción del estudio y el recorrido que va a hacer la carpeta, con lo que tarda cada oficina (medido en el video de Betty y Barney Hill) y lo que gasta. El primer momento en que te toca algo es el guion, en unos 16 minutos.</p>
+</main>
+<div class="actionbar"><span class="btn primary">Mandar a Investigación <i data-lucide="arrow-right"></i></span></div>
+<script src="shared.js"></script>
+<script src="scene-top.js"></script>
+<script>
+  chrome();
+  document.getElementById("crumbs").outerHTML = crumbs("Estudio", "Nuevo video");
+  const steps = [
+    ["1", "Investigación", "~4 min"], ["2", "Fuentes", "~10 s"], ["3", "Imágenes", "~8 min"], ["4", "Guion", "~2 min"], ["5", "Verificación", "~2 min"],
+    ["", "Tu escritorio: aprobar el guion", "~16 min", true], ["6", "Locución", "~15 s"], ["7", "Render", "~9 min"], ["8", "Publicación", "~1 min"], ["", "Tu escritorio: aprobar el video", "~10 min", true],
+  ];
+  document.getElementById("route").innerHTML = steps.map(([n, name, t, you]) => `<span class="n">${n}</span><span class="${you ? "you" : ""}">${you ? lamp("cued").replace("<svg", '<svg style="width:10px;height:10px;margin-right:8px;color:var(--amber)"') : ""}${name}</span><span class="t ${you ? "you" : ""}">${t}</span>`).join("");
+  FORCE_LIT = true;
+  drawRoom(document.getElementById("room"), "lobby", 520, 240, 1.7);
+  finish();
+</script>
+</body>
+</html>

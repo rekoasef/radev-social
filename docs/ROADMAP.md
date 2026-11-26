@@ -150,7 +150,7 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 - [ ] T9 Comando de punta a punta: un video completo sin pantallas — **hecho y probado con servicios reales** (Betty y Barney Hill: 7 corridas de Claude, 1.917 créditos de voz, los dos formatos de 149 s, paquete completo); falta que el operador lo mire y lo apruebe para tildarla
 
 **B. Tu escritorio en la web**
-- [ ] T10 Diseño visual del estudio y del escritorio (capturas aprobadas)
+- [x] T10 Diseño visual del estudio y del escritorio (capturas aprobadas el 2026-11-26: el plano del piso, `docs/references/studio/`)
 - [ ] T11 `/media` con `Range` y ZIP del paquete por streaming
 - [ ] T12 Panel `/videos`: estudio, nuevo video, aprobar guion y video, descarga del paquete, informes
 - [ ] T13 Docker: destino `video-worker` y perfil `video`
