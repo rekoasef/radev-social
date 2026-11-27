@@ -75,7 +75,7 @@ docker compose down          # los datos quedan guardados en el volumen de Docke
 
 `docker compose down -v` **borra la base de datos**: no lo uses salvo que quieras empezar de cero.
 
-### Hacer un video (rama `feat/video-v1`)
+### Hacer un video
 
 Necesita en el `.env` `CLAUDE_CODE_OAUTH_TOKEN` y `ELEVENLABS_API_KEY`, y `ffmpeg` instalado.
 
