@@ -161,6 +161,10 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 
 ---
 
+## Video — después de V1
+
+- [ ] Formas de contar (ADR 0030): cronología, misterio, contraste y «qué pasó después», elegidas por la oficina de Guion con rotación, selector opcional al crear el video, y control en código de que la forma se cumpla
+
 ## Después de la v1
 
 - Instagram (el formato ya es 4:5)

@@ -32,4 +32,5 @@ Registro corto de decisiones importantes y su porqué. Formato: contexto, decisi
 | 0026 | Composiciones por slide, escenas a sangre e imagen del medio | aceptada |
 | 0027 | Voces del video con ElevenLabs (pago) y voz elegida por video | aceptada |
 | 0028 | Escenarios del video armados con piezas, a medida de cada historia | reemplazada por 0029 |
-| 0029 | Video documental producido por oficinas, en dos formatos | aceptada |
+| 0029 | Video documental producido por oficinas, en dos formatos | aceptada (ampliada por 0030) |
+| 0030 | Formas de contar los videos (cronología, misterio, contraste, qué pasó después) | aceptada |
