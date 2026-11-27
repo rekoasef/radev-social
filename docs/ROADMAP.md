@@ -164,6 +164,7 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 ## Video — después de V1
 
 - [ ] Formas de contar (ADR 0030): cronología, misterio, contraste y «qué pasó después», elegidas por la oficina de Guion con rotación, selector opcional al crear el video, y control en código de que la forma se cumpla
+- [ ] «Tu aporte» (ADR 0031): la opinión del operador, escrita en el escritorio del guion, en 1 o 2 escenas en primera persona con el cartel «Opinión»; sin datos nuevos y revisada por la Verificación
 
 ## Después de la v1
 
