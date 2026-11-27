@@ -14,7 +14,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 >
 > **▶ EN CURSO: formas de contar (rama `feat/video-forms`, sale de `main`; ADR 0030).** Pasos 1 y 2 (diseño y quién elige) aprobados por el operador el 2026-11-27. **Paso 3 programado (puntos 1 a 5 de abajo), 1.360 tests, tipos y build en verde.** Migración `0035` aplicada en la base de la fábrica (la de casa necesita `pnpm db:migrate`).
 > - Lo que cambió del plan: el control de «2 carteles `nombre`» en «qué pasó después» corre solo en Guion (si no, la Verificación no podía sacar un cartel engañoso); una devolución conserva la forma del guion rechazado salvo que se elija otra.
-> - **Falta:** el punto 6, la prueba real (antes: `docker compose --profile video up -d --build video-worker`, porque el que corre es el anterior), y mirar las pantallas con login (selector en «Nuevo video», forma y papeles en el escritorio, «Cambiar la forma»).
+> - **`video-worker` reconstruido** con este código (2026-11-27, PC de la fábrica). **Falta:** mirar las pantallas con login (selector en «Nuevo video», forma y papeles en el escritorio, «Cambiar la forma») y el punto 6, la prueba real, **postergada**: el operador no quiere generar un video ahora. Las formas quedan sin probar con un video real hasta el próximo.
 >
 > **Plan (referencia):**
 > 1. **`packages/video`** (`script.ts` o un `forms.ts` nuevo, exportado en `index.ts`):
