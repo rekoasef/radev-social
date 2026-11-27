@@ -277,6 +277,7 @@ export {
   officeHistory,
   pauseVideoById,
   type RecordUsageInput,
+  recentScriptForms,
   recordUsageEvent,
   recordVideoFailure,
   resumeVideoById,

@@ -1,4 +1,4 @@
-import type { VideoEvent, WorkingStage } from "@radev/core";
+import type { VideoEvent, VideoForm, WorkingStage } from "@radev/core";
 import type { DeskOutcome } from "@radev/db";
 
 // The operator's answer at one of his two desks. An office is only queued after the stage actually
@@ -16,7 +16,12 @@ const NEXT_OFFICE = {
 } as const satisfies Partial<Record<VideoEvent, WorkingStage | null>>;
 
 export type DeskEvent = keyof typeof NEXT_OFFICE;
-export type Decision = { event: DeskEvent; note?: string };
+export type Decision = {
+  event: DeskEvent;
+  note?: string;
+  /** Only on a returned script: tell it another way (ADR 0030). */
+  form?: VideoForm;
+};
 
 export type DecideDeps = {
   decide(videoId: string, version: number, decision: Decision): Promise<DeskOutcome>;

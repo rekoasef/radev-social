@@ -27,6 +27,13 @@ describe("decideAndQueue", () => {
     await decideAndQueue(d, "v1", 2, { event: "rejectScript", note: "cambiar el final" });
     expect(d.queue).toHaveBeenCalledWith("v1", "scripting");
   });
+
+  it("a return can ask for another form", async () => {
+    const d = deps(true);
+    const decision = { event: "rejectScript", note: "otra forma", form: "misterio" } as const;
+    await decideAndQueue(d, "v1", 2, decision);
+    expect(d.decide).toHaveBeenCalledWith("v1", 2, decision);
+  });
 });
 
 describe("decideAndQueue: the video desk", () => {

@@ -16,12 +16,13 @@ import {
   type VideoDocumentKind,
   type VideoEvent,
   type VideoFailure,
+  type VideoForm,
   type VideoProgress,
   type VideoStage,
   WORKING_STAGES,
   type WorkingStage,
 } from "@radev/core";
-import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import {
   type GenerationRun,
   generationRuns,
@@ -73,6 +74,8 @@ export type CreateVideoInput = {
   brandId?: string | null;
   language?: string;
   voiceId?: string | null;
+  /** Null: the Script office picks the form (ADR 0030). */
+  form?: VideoForm | null;
 };
 
 /** A new video starts at the first office (Research). The job is queued by the caller. */
@@ -84,6 +87,7 @@ export async function createVideo(db: Executor, input: CreateVideoInput): Promis
       brandId: input.brandId ?? null,
       language: input.language ?? "es",
       voiceId: input.voiceId ?? null,
+      form: input.form ?? null,
       stage: INITIAL_STAGE,
     })
     .returning();
@@ -417,20 +421,59 @@ export function saveOperatorScript(
   });
 }
 
-/** Approves or returns the script the operator saw (never another version of it). */
+/**
+ * Approves or returns the script the operator saw (never another version of it). A return can also
+ * change the form the video is told in (ADR 0030).
+ */
 export function decideScript(
   db: Executor,
   videoId: string,
   version: number,
   event: "approveScript" | "rejectScript",
   note?: string,
+  form?: VideoForm,
 ): Promise<DeskOutcome> {
   return atomic(db, async (tx) => {
     const seen = await lockDocument(tx, videoId, "script", version);
     if (!seen.ok) return seen;
     const outcome = await transitionVideo(tx, videoId, event, { note });
-    return outcome.ok ? { ok: true } : outcome;
+    if (!outcome.ok) return outcome;
+    if (form) await tx.update(videos).set({ form }).where(eq(videos.id, videoId));
+    return { ok: true };
   });
+}
+
+/**
+ * The forms of the latest other videos that have a script (not discarded), newest video first: the
+ * Script office does not repeat them (ADR 0030). A script written before the forms counts as a
+ * chronology.
+ */
+export async function recentScriptForms(
+  db: Executor,
+  options: { excludeVideoId: string; limit?: number },
+): Promise<VideoForm[]> {
+  const rows = await db
+    .select({
+      form: sql<VideoForm>`coalesce((
+        select ${videoDocuments.data} ->> 'form' from ${videoDocuments}
+        where ${videoDocuments.videoId} = ${videos}.id and ${videoDocuments.kind} = 'script'
+        order by ${videoDocuments.version} desc limit 1
+      ), 'cronologia')`,
+    })
+    .from(videos)
+    .where(
+      and(
+        ne(videos.id, options.excludeVideoId),
+        ne(videos.stage, "archived"),
+        sql`exists (
+          select 1 from ${videoDocuments}
+          where ${videoDocuments.videoId} = ${videos}.id and ${videoDocuments.kind} = 'script'
+        )`,
+      ),
+    )
+    .orderBy(desc(videos.createdAt))
+    .limit(options.limit ?? 2);
+  return rows.map((r) => r.form);
 }
 
 // ───────────── the video desk ─────────────

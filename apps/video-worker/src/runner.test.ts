@@ -15,6 +15,7 @@ const video = (over: Partial<Video> = {}): Video => ({
   title: null,
   language: "es",
   voiceId: null,
+  form: null,
   stage: "researching",
   progress: null,
   pausedAt: null,
@@ -80,6 +81,7 @@ function setup(
     offices: opts.office ? { researching: opts.office } : {},
     makeContext: (v) => ({
       voice: async () => null,
+      recentForms: async () => [],
       mediaDir: "/media/videos/v1",
       video: v,
       log: quiet,

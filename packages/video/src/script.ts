@@ -1,7 +1,9 @@
 // Oficina de Guion: el documento `script` (escenas con imagen, encuadre y gráficos) y sus
 // controles. La IA lo escribe (Zod lo valida, `checkScript` controla el sentido); el código dibuja
 // y acredita. Las vistas se piensan en vertical: el render adapta el encuadre al formato 16:9.
+import { VIDEO_BEATS, VIDEO_FORMS } from "@radev/core";
 import { z } from "zod";
+import { checkForm, type FormRequest } from "./forms";
 import type { ImageCandidate } from "./images";
 import { narrationWords, normWord, numbersIn } from "./text";
 
@@ -109,6 +111,8 @@ export const scriptSceneSchema = z
       .describe("Palabras de la narración que se resaltan en los subtítulos."),
     graphics: z.array(graphicSchema).max(2),
     tail: z.number().min(0).max(3).optional(),
+    // Optional so that scripts written before the forms still parse (ADR 0030).
+    beat: z.enum(VIDEO_BEATS).optional().describe("El papel de la escena en la forma de contar."),
   })
   .strict();
 export type ScriptScene = z.infer<typeof scriptSceneSchema>;
@@ -116,6 +120,7 @@ export type ScriptScene = z.infer<typeof scriptSceneSchema>;
 export const scriptSchema = z
   .object({
     title: short(80),
+    form: z.enum(VIDEO_FORMS).optional().describe("La forma de contar del video."),
     scenes: z.array(scriptSceneSchema).min(10).max(26),
     facts: z
       .array(z.object({ claim: short(200), source: short(200) }).strict())
@@ -127,8 +132,14 @@ export type Script = z.infer<typeof scriptSchema>;
 
 /** What the Script office asks the AI for: the same script, declaring `exact` in every scene. */
 export const aiScriptSchema = scriptSchema.extend({
+  form: z.enum(VIDEO_FORMS).describe("La forma de contar del video."),
   scenes: z
-    .array(scriptSceneSchema.extend({ exact: z.boolean().describe("Ver la regla de imágenes.") }))
+    .array(
+      scriptSceneSchema.extend({
+        exact: z.boolean().describe("Ver la regla de imágenes."),
+        beat: z.enum(VIDEO_BEATS).describe("El papel de la escena en la forma de contar."),
+      }),
+    )
     .min(10)
     .max(26),
 });
@@ -139,6 +150,8 @@ export type CheckOptions = {
    * The AI may repeat one only when no candidate is left unused.
    */
   repeats?: "free";
+  /** Only the Script office: which form the script has to use (ADR 0030). */
+  form?: FormRequest;
 };
 
 /** Errores de sentido del guion (vacío = bien). */
@@ -148,7 +161,7 @@ export function checkScript(
   dossierText: string,
   options: CheckOptions = {},
 ): string[] {
-  const errors: string[] = [];
+  const errors: string[] = checkForm(g, options.form);
   const ids = new Set(candidates.map((c) => c.id));
   const used = new Map<string, number>();
   const dossierNums = new Set(numbersIn(dossierText));

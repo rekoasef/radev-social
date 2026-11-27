@@ -1,6 +1,7 @@
 export * from "./commons";
 export * from "./dossier";
 export * from "./edit";
+export * from "./forms";
 export * from "./frames";
 export * from "./ideas";
 export * from "./images";

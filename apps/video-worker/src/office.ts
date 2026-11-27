@@ -1,5 +1,5 @@
 import type { AIError } from "@radev/ai";
-import type { ProgressPatch, VideoDocumentKind, WorkingStage } from "@radev/core";
+import type { ProgressPatch, VideoDocumentKind, VideoForm, WorkingStage } from "@radev/core";
 import type { OfficeDocumentOut, Video } from "@radev/db";
 import type { VideoAi } from "./ai";
 import type { Logger } from "./logger";
@@ -16,6 +16,8 @@ export type OfficeContext = {
   progress(patch: ProgressPatch): Promise<void>;
   /** The current (highest) version of a document of this video, or null. */
   document(kind: VideoDocumentKind): Promise<unknown | null>;
+  /** The forms of the latest other videos, so this one is told another way (ADR 0030). */
+  recentForms(): Promise<VideoForm[]>;
   /** The voice of the video (its own, or the default narrator); null when there is none. */
   voice(): Promise<{ externalId: string; name: string; speed: number | null } | null>;
   /** Absolute path of the video's media folder (Remotion reads the images and audio from it). */

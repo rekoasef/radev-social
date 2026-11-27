@@ -12,7 +12,11 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 >
 > **Dónde estamos (resumen):** **V1 del video cerrada** en la rama `feat/video-v1`: T1–T14 tildadas (2026-11-27). El operador dio por buenos los dos videos de T14 (D.B. Cooper y Anticitera) y el de Hill de T9, sin la prueba de devolver el video para cambiar una imagen. **En `main` desde el 2026-11-27** (fast-forward, sin conflictos; `pnpm build` y `pnpm test` en verde). **Falta el deploy** (lo corre el operador: `ssh radev-oracle '~/radev-social/infra/server/deploy.sh'`): aplica las migraciones `0028`–`0034` (solo agregan) y suma el panel `/videos`, que en el servidor solo encola (el `video-worker` va con el perfil `video` y no arranca ahí). Lo próximo de «después de V1»: **formas de contar** (abajo).
 >
-> **▶ EN CURSO: formas de contar (rama `feat/video-forms`, sale de `main`; ADR 0030).** Pasos 1 y 2 (diseño y quién elige) aprobados por el operador el 2026-11-27. **Paso 3, implementarlo (con Sonnet):**
+> **▶ EN CURSO: formas de contar (rama `feat/video-forms`, sale de `main`; ADR 0030).** Pasos 1 y 2 (diseño y quién elige) aprobados por el operador el 2026-11-27. **Paso 3 programado (puntos 1 a 5 de abajo), 1.360 tests, tipos y build en verde.** Migración `0035` aplicada en la base de la fábrica (la de casa necesita `pnpm db:migrate`).
+> - Lo que cambió del plan: el control de «2 carteles `nombre`» en «qué pasó después» corre solo en Guion (si no, la Verificación no podía sacar un cartel engañoso); una devolución conserva la forma del guion rechazado salvo que se elija otra.
+> - **Falta:** el punto 6, la prueba real (antes: `docker compose --profile video up -d --build video-worker`, porque el que corre es el anterior), y mirar las pantallas con login (selector en «Nuevo video», forma y papeles en el escritorio, «Cambiar la forma»).
+>
+> **Plan (referencia):**
 > 1. **`packages/video`** (`script.ts` o un `forms.ts` nuevo, exportado en `index.ts`):
 >    - `FORMS = ["cronologia", "misterio", "contraste", "despues"]` y los papeles de cada una: cronología `gancho, pregunta, hecho, cierre`; misterio `gancho, pregunta, pista, hipotesis, giro, revelacion, cierre`; contraste `gancho, pregunta, ladoA, ladoB, veredicto, cierre`; después `gancho, pregunta, hecho, despues, cierre`. `FORM_LABELS` y `BEAT_LABELS` en español para el panel.
 >    - `scriptSchema`: `form` opcional y `beat` opcional por escena (los guiones viejos siguen valiendo; sin `form` cuentan como cronología). `aiScriptSchema` los exige.

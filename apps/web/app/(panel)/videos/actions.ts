@@ -36,14 +36,20 @@ export async function createVideoAction(
     topic: form.get("topic"),
     brandId: form.get("brandId") ?? "",
     voiceId: form.get("voiceId") ?? "",
+    form: form.get("form") ?? "",
   });
   if (!input.success) return error(input.error.issues[0]?.message ?? "Revisá los datos.");
-  const { topic, brandId, voiceId } = input.data;
+  const { topic, brandId, voiceId, form: told } = input.data;
   const voice = await getVoiceById(db, voiceId);
   if (!voice?.active) return error("Esa voz ya no está disponible.");
   if (brandId && !(await getBrandById(db, brandId))) return error("Esa marca no existe.");
 
-  const video = await createVideo(db, { topic, voiceId, brandId: brandId || null });
+  const video = await createVideo(db, {
+    topic,
+    voiceId,
+    brandId: brandId || null,
+    form: told || null,
+  });
   // If the queue is down the video stays at Research and the worker's sweep picks it up.
   await queueVideoOffice(video.id, "researching").catch((cause) =>
     console.error("video: research not queued", cause),

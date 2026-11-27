@@ -1,4 +1,4 @@
-import type { ProgressPatch, VideoDocumentKind } from "@radev/core";
+import type { ProgressPatch, VideoDocumentKind, VideoForm } from "@radev/core";
 import type { Video } from "@radev/db";
 import { vi } from "vitest";
 import type { AiAnswer, AiRequest } from "../ai";
@@ -15,6 +15,7 @@ export const video = (over: Partial<Video> = {}): Video => ({
   title: null,
   language: "es",
   voiceId: null,
+  form: null,
   stage: "researching",
   progress: null,
   pausedAt: null,
@@ -36,6 +37,7 @@ export function makeCtx(opts: {
   answers?: AiAnswer<unknown>[];
   files?: Record<string, Uint8Array>;
   voice?: { externalId: string; name: string; speed: number | null } | null;
+  recentForms?: VideoForm[];
 }) {
   const asked: Asked[] = [];
   const rejected: { runId: string; problems: string[] }[] = [];
@@ -44,6 +46,7 @@ export function makeCtx(opts: {
   const files = new Map(Object.entries(opts.files ?? {}));
   const ctx: OfficeContext = {
     video: opts.video ?? video(),
+    recentForms: async () => opts.recentForms ?? [],
     mediaDir: "/media/videos/v1",
     log: createLogger({}, "error"),
     ai: {

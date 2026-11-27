@@ -1,5 +1,6 @@
 "use client";
 
+import { FORM_LABELS, VIDEO_FORMS } from "@radev/core";
 import { useActionState, useCallback, useId, useState } from "react";
 import {
   approveScriptAction,
@@ -53,7 +54,9 @@ export function ScriptDesk({
   const [approval, approve, approving] = useActionState(approveScriptAction, idle);
   const [rejection, reject, rejecting] = useActionState(rejectScriptAction, idle);
   const [note, setNote] = useState("");
+  const [newForm, setNewForm] = useState("");
   const noteId = useId();
+  const formId = useId();
   const approveForm = useId();
   const closeSheet = useCallback(() => setSheet(null), []);
 
@@ -69,6 +72,7 @@ export function ScriptDesk({
   return (
     <>
       <p className="timecode flex flex-wrap gap-x-6 gap-y-1 text-[13px] text-ink-dim">
+        <span>Forma: {FORM_LABELS[desk.form]}</span>
         <span>{desk.scenes.length} escenas</span>
         <span>{number.format(desk.characters)} caracteres</span>
         <span>~{desk.seconds} s de voz</span>
@@ -195,11 +199,28 @@ export function ScriptDesk({
                 placeholder="Qué hay que cambiar. Ej.: la escena 2 es una pregunta suelta."
                 className="console-field w-full scroll-mt-32 text-sm"
               />
+              <label htmlFor={formId} className="text-sm text-ink-dim">
+                Cambiar la forma de contar
+              </label>
+              <select
+                id={formId}
+                name="form"
+                value={newForm}
+                onChange={(event) => setNewForm(event.target.value)}
+                className="console-field w-full text-sm"
+              >
+                <option value="">Dejarla como está</option>
+                {VIDEO_FORMS.filter((f) => f !== desk.form).map((f) => (
+                  <option key={f} value={f}>
+                    {FORM_LABELS[f]}
+                  </option>
+                ))}
+              </select>
               {rejection.status === "error" && <DeskErrors messages={rejection.messages} />}
               <button
                 type="submit"
                 className="console-button"
-                disabled={rejecting || approving || paused || !note.trim()}
+                disabled={rejecting || approving || paused || (!note.trim() && !newForm)}
               >
                 {rejecting ? "Devolviendo…" : "Devolver con la nota"}
               </button>

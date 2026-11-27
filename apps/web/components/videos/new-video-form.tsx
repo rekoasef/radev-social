@@ -1,5 +1,6 @@
 "use client";
 
+import { FORM_LABELS, FORM_USES, VIDEO_FORMS, type VideoForm } from "@radev/core";
 import { Play, Square } from "lucide-react";
 import { useActionState, useId, useRef, useState } from "react";
 import { createVideoAction, type VideoActionState } from "@/app/(panel)/videos/actions";
@@ -30,6 +31,7 @@ export function NewVideoForm({
   const [state, action, pending] = useActionState(createVideoAction, idle);
   const [topic, setTopic] = useState("");
   const [playing, setPlaying] = useState<string | null>(null);
+  const [told, setTold] = useState<VideoForm | "">("");
   const audio = useRef<HTMLAudioElement>(null);
   const topicId = useId();
   const field = useRef<HTMLTextAreaElement>(null);
@@ -102,6 +104,29 @@ export function NewVideoForm({
           ))}
         </div>
         <p className="text-sm text-ink-faint">Sin marca, el video va al canal de historias.</p>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="plate-text mb-2 text-ink-dim">Forma de contar</legend>
+        <div className="segmented">
+          {(["", ...VIDEO_FORMS] as const).map((value) => (
+            <label key={value}>
+              <input
+                type="radio"
+                name="form"
+                value={value}
+                checked={told === value}
+                onChange={() => setTold(value)}
+              />
+              {value ? FORM_LABELS[value] : "Automática"}
+            </label>
+          ))}
+        </div>
+        <p className="text-sm text-ink-faint">
+          {told
+            ? FORM_USES[told]
+            : "Guion elige la que mejor aguanten los hechos, sin repetir la de tus últimos dos videos."}
+        </p>
       </fieldset>
 
       <fieldset>

@@ -58,6 +58,7 @@ export function SceneCard({
         <b className="text-[15px] font-semibold text-ink">{String(scene.n).padStart(2, "0")}</b>
         <span>{scene.start}</span>
         <span>{scene.seconds.toFixed(1).replace(".", ",")} s</span>
+        {scene.beat && <span className="text-ink-dim">{scene.beat}</span>}
       </p>
 
       <div className="min-w-0">

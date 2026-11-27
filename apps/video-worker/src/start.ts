@@ -37,6 +37,7 @@ import {
   listVideoIdeaRequests,
   listVideos,
   readMediaFile,
+  recentScriptForms,
   resolveMediaPath,
   startVideoIdeaRequest,
   statMediaFile,
@@ -129,6 +130,7 @@ export async function startVideoWorker(): Promise<VideoWorker> {
       return voice ? { externalId: voice.externalId, name: voice.name, speed: voice.speed } : null;
     },
     document: async (kind) => (await getCurrentVideoDocument(db, video.id, kind))?.data ?? null,
+    recentForms: () => recentScriptForms(db, { excludeVideoId: video.id }),
     files: {
       write: (path, bytes) => writeMediaFile(`videos/${video.id}/${path}`, bytes),
       read: (path) => readMediaFile(`videos/${video.id}/${path}`),

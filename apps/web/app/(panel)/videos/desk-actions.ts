@@ -1,6 +1,6 @@
 "use server";
 
-import { checkRejectionNote } from "@radev/core";
+import { checkRejectionNote, FORM_LABELS, VIDEO_FORMS, type VideoForm } from "@radev/core";
 import {
   decideScript,
   decideVideo,
@@ -71,19 +71,24 @@ export async function editSceneAction(_previous: DeskState, form: FormData): Pro
 }
 
 const decideDeps: DecideDeps = {
-  decide: (videoId, version, { event, note }) =>
+  decide: (videoId, version, { event, note, form }) =>
     event === "approveScript" || event === "rejectScript"
-      ? decideScript(db, videoId, version, event, note)
+      ? decideScript(db, videoId, version, event, note, form)
       : decideVideo(db, videoId, version, event, note),
   queue: queueVideoOffice,
 };
 
 /** Applies the operator's answer and reloads the studio. */
-async function answer(form: FormData, event: DeskEvent, note?: string): Promise<DeskState> {
+async function answer(
+  form: FormData,
+  event: DeskEvent,
+  note?: string,
+  told?: VideoForm,
+): Promise<DeskState> {
   const input = target.safeParse(Object.fromEntries(form));
   if (!input.success) return fail("Ese video no existe.");
   const { videoId, version } = input.data;
-  const outcome = await decideAndQueue(decideDeps, videoId, version, { event, note });
+  const outcome = await decideAndQueue(decideDeps, videoId, version, { event, note, form: told });
   if (!outcome.ok) return fail(outcome.reason);
   revalidatePath("/videos", "layout");
   return { status: "done" };
@@ -105,7 +110,13 @@ export async function approveScriptAction(
 
 export async function rejectScriptAction(_previous: DeskState, form: FormData): Promise<DeskState> {
   await requireOperator();
-  return sendBack(form, "rejectScript");
+  const told = z.union([z.literal(""), z.enum(VIDEO_FORMS)]).safeParse(form.get("form") ?? "");
+  if (!told.success) return fail("Esa forma de contar no existe.");
+  if (!told.data) return sendBack(form, "rejectScript");
+  // Changing the form is a reason on its own: the note is optional then.
+  const written = form.get("note")?.toString().trim();
+  const note = checkRejectionNote(written || `Contalo como «${FORM_LABELS[told.data]}».`);
+  return note.ok ? answer(form, "rejectScript", note.note, told.data) : fail(note.reason);
 }
 
 export async function approveVideoAction(_previous: DeskState, form: FormData): Promise<DeskState> {

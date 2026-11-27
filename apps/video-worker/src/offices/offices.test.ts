@@ -1,4 +1,4 @@
-import type { Review } from "@radev/video";
+import type { Review, Script } from "@radev/video";
 import { describe, expect, it } from "vitest";
 import candidatesFixture from "../../../../packages/video/test/fixtures/mona-candidates.json";
 import dossierFixture from "../../../../packages/video/test/fixtures/mona-dossier.json";
@@ -13,7 +13,15 @@ import { createSourcesOffice } from "./sources";
 
 const dossier = () => structuredClone(dossierFixture);
 const candidates = () => structuredClone(candidatesFixture);
-const goodScript = () => structuredClone(scriptFixture);
+/** The fixture predates the forms: told as the chronology it is. */
+const goodScript = () => {
+  const s = structuredClone(scriptFixture) as Script;
+  s.form = "cronologia";
+  s.scenes.forEach((scene, i) => {
+    scene.beat = i === 0 ? "gancho" : i === s.scenes.length - 1 ? "cierre" : "hecho";
+  });
+  return s;
+};
 const jpg = new Uint8Array([1, 2, 3]);
 const smallFiles = () =>
   Object.fromEntries(candidates().map((c) => [`images/${c.id}.small.jpg`, jpg]));
@@ -333,6 +341,46 @@ describe("script office", () => {
     await script(ctx);
     expect(asked[0]?.prompt).toContain("la escena 3 usa la foto equivocada");
     expect(asked[0]?.files["anterior.json"]).toBeDefined();
+  });
+
+  it("asks for a form the latest videos did not use, and refuses one they did", async () => {
+    const { ctx, asked } = makeCtx({
+      docs,
+      recentForms: ["cronologia"],
+      answers: [
+        answer(goodScript()),
+        answer(goodScript()),
+        answer(goodScript()),
+        answer(goodScript()),
+      ],
+      files: smallFiles(),
+    });
+    await expect(script(ctx)).rejects.toThrow(/ya se usó en los últimos videos/);
+    expect(asked[0]?.prompt).toContain("entre: `misterio`, `contraste`, `despues`.");
+  });
+
+  it("uses the form the operator chose, even if it was used lately", async () => {
+    const { ctx, asked } = makeCtx({
+      video: video({ form: "cronologia" }),
+      docs,
+      recentForms: ["cronologia"],
+      answers: [answer(goodScript())],
+      files: smallFiles(),
+    });
+    await expect(script(ctx)).resolves.toMatchObject({ kind: "done" });
+    expect(asked[0]?.prompt).toContain("La forma de contar de este video es `cronologia`.");
+  });
+
+  it("a rewrite keeps the form of the rejected script, a chronology if it had none", async () => {
+    const { ctx, asked } = makeCtx({
+      video: video({ rejectionNote: "acortá el final" }),
+      docs: { ...docs, script: structuredClone(scriptFixture) },
+      recentForms: ["cronologia"],
+      answers: [answer(goodScript())],
+      files: smallFiles(),
+    });
+    await expect(script(ctx)).resolves.toMatchObject({ kind: "done" });
+    expect(asked[0]?.prompt).toContain("La forma de contar de este video es `cronologia`.");
   });
 
   it("without a rejection it sends no previous script", async () => {

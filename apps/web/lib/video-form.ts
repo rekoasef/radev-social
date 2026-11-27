@@ -1,4 +1,4 @@
-import { VIDEO_IDEA_FOCUS_MAX, VIDEO_IDEA_MODES } from "@radev/core";
+import { VIDEO_FORMS, VIDEO_IDEA_FOCUS_MAX, VIDEO_IDEA_MODES } from "@radev/core";
 import { z } from "zod";
 
 // What "Nuevo video" accepts.
@@ -15,6 +15,8 @@ export const newVideoSchema = z.object({
   /** Empty: no brand (the stories channel). */
   brandId: z.union([z.literal(""), z.uuid("Esa marca no existe.")]),
   voiceId: z.uuid("Elegí una voz."),
+  /** Empty: automatic, the Script office picks it (ADR 0030). */
+  form: z.union([z.literal(""), z.enum(VIDEO_FORMS, "Esa forma de contar no existe.")]),
 });
 
 /** "Proponer ideas" and "Investigar temas". */

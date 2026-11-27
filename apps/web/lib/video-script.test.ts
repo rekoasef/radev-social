@@ -66,6 +66,11 @@ describe("scriptDesk", () => {
 });
 
 describe("helpers", () => {
+  it("a script from before the forms shows as a chronology, with no roles", () => {
+    expect(view.form).toBe("cronologia");
+    expect(view.scenes.every((s) => s.beat === null)).toBe(true);
+  });
+
   it("diffs word by word", () => {
     expect(diffWords("sostenida por clavijas", "sostenida apenas por clavijas").after).toEqual([
       { text: "sostenida", changed: false },

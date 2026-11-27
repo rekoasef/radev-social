@@ -1,0 +1,2 @@
+ALTER TABLE "videos" ADD COLUMN "form" text;--> statement-breakpoint
+ALTER TABLE "videos" ADD CONSTRAINT "videos_form_valid" CHECK ("videos"."form" in ('cronologia', 'misterio', 'contraste', 'despues'));

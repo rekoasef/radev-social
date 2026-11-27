@@ -1,4 +1,5 @@
 import type { TaskImage } from "@radev/ai";
+import { VIDEO_FORMS, type VideoForm } from "@radev/core";
 import {
   aiScriptSchema,
   checkScript,
@@ -62,6 +63,13 @@ export const script: Office = async (ctx) => {
     : null;
   const rejection = ctx.video.rejectionNote && rejected ? ctx.video.rejectionNote : null;
 
+  // The form (ADR 0030): the operator's choice; a rewrite keeps the form of the rejected script;
+  // otherwise any the latest videos did not use. A script from before the forms is a chronology.
+  const fixed = ctx.video.form ?? (rejection ? (rejected?.form ?? "cronologia") : null);
+  const avoid = fixed ? [] : await ctx.recentForms();
+  const request = { fixed, avoid };
+  const formOrder = formInstruction(fixed, avoid);
+
   let previous: Script | undefined = rejection ? (rejected ?? undefined) : undefined;
   let problems: string[] = [];
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -70,12 +78,12 @@ export const script: Office = async (ctx) => {
     const answer = await ctx.ai.run(ctx.video, {
       task: "video.script",
       prompt: first
-        ? `Escribí el guion del video con \`dossier.json\`, \`candidatas.json\` y las imágenes. Devolvé el objeto que pide el schema.${
+        ? `Escribí el guion del video con \`dossier.json\`, \`candidatas.json\` y las imágenes. Devolvé el objeto que pide el schema. ${formOrder}${
             rejection
               ? ` El operador rechazó el guion anterior (\`anterior.json\`) y pidió esto: «${rejection}». Reescribilo resolviendo eso y manteniendo lo que estaba bien.`
               : ""
           }`
-        : `El guion anterior (\`anterior.json\`) tiene estos errores. Devolvé el guion COMPLETO corregido, cambiando lo mínimo:\n${problems.map((p) => `- ${p}`).join("\n")}`,
+        : `El guion anterior (\`anterior.json\`) tiene estos errores. Devolvé el guion COMPLETO corregido, cambiando lo mínimo. ${formOrder}\n${problems.map((p) => `- ${p}`).join("\n")}`,
       files: {
         "CLAUDE.md": SCRIPT_RULES,
         "dossier.json": json,
@@ -97,7 +105,7 @@ export const script: Office = async (ctx) => {
       return failedAi(answer.error, "El guion");
     }
     const draft = tidyScript(answer.data);
-    problems = checkScript(draft, candidates, text);
+    problems = checkScript(draft, candidates, text, { form: request });
     if (problems.length === 0) {
       const { script: clean, dropped } = dropNameCards(draft, candidates);
       if (dropped.length) ctx.log.warn("name cards the image does not back", { dropped });
@@ -117,3 +125,10 @@ export const script: Office = async (ctx) => {
     `El guion no pasó los controles en ${MAX_ATTEMPTS} intentos: ${problems.slice(0, 5).join(" | ")}`,
   );
 };
+
+/** What the AI is told about the form of this video. */
+function formInstruction(fixed: VideoForm | null, avoid: VideoForm[]): string {
+  if (fixed) return `La forma de contar de este video es \`${fixed}\`.`;
+  const free = VIDEO_FORMS.filter((f) => !avoid.includes(f)).map((f) => `\`${f}\``);
+  return `Elegí la forma de contar que mejor aguante el dossier, entre: ${free.join(", ")}.`;
+}

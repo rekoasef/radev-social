@@ -1,3 +1,4 @@
+import { BEAT_LABELS, type VideoForm } from "@radev/core";
 import {
   clock,
   type Dossier,
@@ -48,6 +49,8 @@ export type ImageView = {
 
 export type SceneView = {
   n: number;
+  /** The scene's role in the form (null: a script from before the forms). */
+  beat: string | null;
   /** "0:12", estimated until there is a voice. */
   start: string;
   seconds: number;
@@ -66,6 +69,8 @@ export type SceneView = {
 
 export type ScriptDeskView = {
   title: string;
+  /** How the video is told; a script from before the forms is a chronology (ADR 0030). */
+  form: VideoForm;
   scenes: SceneView[];
   facts: (FactView & { scene: number | null })[];
   images: ImageView[];
@@ -212,6 +217,7 @@ export function scriptDesk(input: {
     const mine = facts.filter((f) => f.scene === i);
     return {
       n,
+      beat: s.beat ? BEAT_LABELS[s.beat] : null,
       start,
       seconds,
       narration: s.narration,
@@ -282,6 +288,7 @@ export function scriptDesk(input: {
   return {
     framesPending: input.frames ? pending : 0,
     title: script.title,
+    form: script.form ?? "cronologia",
     scenes,
     facts: facts.map((f) => ({ ...f, scene: f.scene === null ? null : f.scene + 1 })),
     images,
