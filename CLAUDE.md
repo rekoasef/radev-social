@@ -2,7 +2,7 @@
 
 Gestor de redes sociales que genera, renderiza, programa y publica carruseles para múltiples marcas (hoy: RAdev y Lumus). La IA escribe el contenido; las imágenes se dibujan con plantillas en código. Uso personal de un solo operador (Renzo). Objetivo de costo: **USD 0 extra por mes** (única excepción: la voz de ElevenLabs del video, USD 6/mes, ADR 0027).
 
-En la rama `feat/video-v1` crece **RAdev Studio**: videos documentales para YouTube (imágenes de archivo + gráficos + voz), producidos por una línea de oficinas y descargables como paquete (Short 9:16 y normal 16:9). Ver ADR 0029.
+Desde el 2026-11-27 está en `main` (V1 cerrada) **RAdev Studio**: videos documentales para YouTube (imágenes de archivo + gráficos + voz), producidos por una línea de oficinas y descargables como paquete (Short 9:16 y normal 16:9). Ver ADR 0029.
 
 ## Antes de trabajar, leé lo que corresponda
 
@@ -102,7 +102,7 @@ pnpm capture --check "/render/preview/lumus/flow?variant=extreme" -
                     # control del render (desbordes, zonas seguras); falla si hay problemas.
                     # "-" como salida no guarda captura
 
-# Video: RAdev Studio V1 (rama feat/video-v1)
+# Video: RAdev Studio V1
 pnpm --filter @radev/video-worker start # worker del video: una cola por oficina, usa la base local. Para producir videos: no se reinicia solo
 pnpm --filter @radev/video-worker dev   # lo mismo, reiniciando al cambiar el código (`pnpm dev` también lo levanta)
         # el panel está en /videos; sin este worker la web no gasta nada (solo encola)

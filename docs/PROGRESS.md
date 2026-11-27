@@ -10,7 +10,7 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 > ### ▶ Retomar acá (última sesión: 2026-11-27, PC de la fábrica)
 >
-> **Dónde estamos (resumen):** **V1 del video cerrada** en la rama `feat/video-v1`: T1–T14 tildadas (2026-11-27). El operador dio por buenos los dos videos de T14 (D.B. Cooper y Anticitera) y el de Hill de T9, sin la prueba de devolver el video para cambiar una imagen. Lo que sigue (llevar la rama a `main`, lo de «después de V1») lo decide el operador.
+> **Dónde estamos (resumen):** **V1 del video cerrada** en la rama `feat/video-v1`: T1–T14 tildadas (2026-11-27). El operador dio por buenos los dos videos de T14 (D.B. Cooper y Anticitera) y el de Hill de T9, sin la prueba de devolver el video para cambiar una imagen. **En `main` desde el 2026-11-27** (fast-forward, sin conflictos; `pnpm build` y `pnpm test` en verde). **Falta el deploy** (lo corre el operador: `ssh radev-oracle '~/radev-social/infra/server/deploy.sh'`): aplica las migraciones `0028`–`0034` (solo agregan) y suma el panel `/videos`, que en el servidor solo encola (el `video-worker` va con el perfil `video` y no arranca ahí). Lo próximo de «después de V1» lo elige el operador.
 >
 > **▶ Cierre de V1 (2026-11-27, PC de la fábrica):** los dos bugs de Anticitera, arreglados:
 > - **Verificación y `highlight`:** al aplicar una corrección que cambia la narración, el código saca de `highlight` las palabras que ya no se dicen (`dropUnspokenHighlights`, la misma regla del escritorio) en vez de descartar la corrección.
