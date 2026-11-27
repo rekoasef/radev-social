@@ -6,6 +6,7 @@ import { Tally } from "@/components/console/tally";
 import { AutoRefresh } from "@/components/videos/auto-refresh";
 import { FloorPlan } from "@/components/videos/floor/floor-plan";
 import { FolderTab } from "@/components/videos/folder-tab";
+import { API_COST_NOTE, apiUsd } from "@/lib/api-cost";
 import { db } from "@/lib/db";
 import { describeVideo, folders } from "@/lib/video-display";
 import { studioFloor } from "@/lib/video-floor";
@@ -91,9 +92,10 @@ export default async function VideosPage() {
 
       <p className="timecode flex flex-wrap gap-x-8 gap-y-2 text-[13px] text-ink-dim">
         <span>
-          HOY · Claude <b className="font-normal text-ink">{number.format(usage.inputTokens)}</b>{" "}
-          entrada / <b className="font-normal text-ink">{number.format(usage.outputTokens)}</b>{" "}
-          salida
+          HOY · Claude <b className="font-normal text-ink">{apiUsd(usage.costUsd)}</b>{" "}
+          <abbr title={API_COST_NOTE} className="no-underline">
+            equivalente API
+          </abbr>
         </span>
         <span>
           Voz del mes <b className="font-normal text-ink">{number.format(usage.voiceCharacters)}</b>{" "}

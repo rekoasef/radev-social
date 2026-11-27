@@ -252,14 +252,20 @@ async function report(db: Database, videoId: string, startedAt: number) {
   say(`Tiempo total: ${((Date.now() - startedAt) / 60_000).toFixed(1)} min`);
   let tokensIn = 0;
   let tokensOut = 0;
+  let costUsd = 0;
+  const usd = (n: number | null) => (n == null ? "USD ?" : `USD ${n.toFixed(2)}`);
   for (const r of runs) {
     tokensIn += r.inputTokens;
     tokensOut += r.outputTokens;
+    costUsd += r.costUsd ?? 0;
     say(
-      `  IA ${r.task.padEnd(14)} ${r.status.padEnd(10)} ${r.model} · ${r.inputTokens} in / ${r.outputTokens} out · ${((r.durationMs ?? 0) / 1000).toFixed(0)} s${r.errorKind ? ` · ${r.errorKind}` : ""}`,
+      `  IA ${r.task.padEnd(14)} ${r.status.padEnd(10)} ${r.model} · ${usd(r.costUsd)} · ${r.inputTokens} in / ${r.outputTokens} out · ${((r.durationMs ?? 0) / 1000).toFixed(0)} s${r.errorKind ? ` · ${r.errorKind}` : ""}`,
     );
   }
-  say(`  Claude: ${runs.length} corridas · ${tokensIn} tokens de entrada · ${tokensOut} de salida`);
+  // The input tokens add up the cache, which every turn sends again: the cost is the fair measure.
+  say(
+    `  Claude: ${runs.length} corridas · ≈ ${usd(costUsd)} equivalente API (no se paga con la suscripción) · ${tokensIn} tokens de entrada (con caché) · ${tokensOut} de salida`,
+  );
   for (const u of usage) {
     say(
       `  ${u.kind.padEnd(7)} ${u.office ?? "-"} · ${u.quantity} ${u.unit}${u.durationMs ? ` · ${(u.durationMs / 1000).toFixed(0)} s` : ""}`,

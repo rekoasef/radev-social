@@ -11,7 +11,13 @@ const route: AiRoute = {
   fallback: null,
 };
 const request = { id: "r1", brandId: null, mode: "generate", focus: null } as VideoIdeaRequest;
-const usage = { model: "claude-sonnet", inputTokens: 100, outputTokens: 10, durationMs: 5 };
+const usage = {
+  model: "claude-sonnet",
+  inputTokens: 100,
+  outputTokens: 10,
+  costUsd: 0.05,
+  durationMs: 5,
+};
 
 const answer = (result: object) => ({
   result,
@@ -82,7 +88,7 @@ describe("proposeIdeas", () => {
     expect(generate.mock.calls[1]?.[1].prompt).toContain("- mal");
     expect(deps.finish).toHaveBeenCalledWith(
       "r1",
-      expect.objectContaining({ inputTokens: 200, outputTokens: 20 }),
+      expect.objectContaining({ inputTokens: 200, outputTokens: 20, costUsd: 0.1 }),
     );
   });
 

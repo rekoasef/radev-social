@@ -122,7 +122,8 @@ export type HistoryRow = {
   video: string;
   tally: TallyState;
   result: string;
-  tokens: { input: number; output: number } | null;
+  /** API-equivalent cost of an AI run (undefined for events, null when not reported). */
+  costUsd?: number | null;
   ms: number | null;
   /** Why it did not pass, or the operator's note. */
   detail: string[];
@@ -146,7 +147,8 @@ export type OfficeView = {
     failed: number;
     returns: number;
     averageMs: number | null;
-    tokens: { input: number; output: number } | null;
+    /** API-equivalent cost of the office's AI runs (see api-cost.ts); null for code offices. */
+    costUsd: number | null;
     characters: number | null;
   };
 };
@@ -189,7 +191,7 @@ export function officeView(input: {
       video: name(run),
       tally: failed ? "fail" : rejected ? "cued" : "ready",
       result: failed ? "Con error" : rejected ? `No pasó · ${rejected.length}` : "Aceptada",
-      tokens: { input: run.inputTokens, output: run.outputTokens },
+      costUsd: run.costUsd,
       ms: run.durationMs,
       detail: failed && run.error ? [run.error] : (rejected ?? []).map(operatorError),
     };
@@ -200,7 +202,6 @@ export function officeView(input: {
       at: event.createdAt,
       videoId: event.videoId,
       video: name(event),
-      tokens: null,
     };
     if (event.kind === "return") {
       const note = typeof event.data?.note === "string" ? [event.data.note] : [];
@@ -239,12 +240,7 @@ export function officeView(input: {
       failed: officeRuns.filter((e) => e.data?.outcome === "failed").length,
       returns: history.events.filter((e) => e.kind === "return").length,
       averageMs: timed.length ? total(timed.map((e) => e.durationMs ?? 0)) / timed.length : null,
-      tokens: OFFICE_INFO[stage].task
-        ? {
-            input: total(history.runs.map((r) => r.inputTokens)),
-            output: total(history.runs.map((r) => r.outputTokens)),
-          }
-        : null,
+      costUsd: OFFICE_INFO[stage].task ? total(history.runs.map((r) => r.costUsd ?? 0)) : null,
       characters: stage === "voicing" ? total(voice.map((e) => e.quantity)) : null,
     },
   };

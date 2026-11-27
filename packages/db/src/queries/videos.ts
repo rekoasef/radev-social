@@ -558,6 +558,8 @@ export type StudioUsage = {
   /** Claude's tokens for videos since `dayStart`. */
   inputTokens: number;
   outputTokens: number;
+  /** What those tokens would cost through the API: with the subscription it is not paid. */
+  costUsd: number;
   renderSeconds: number;
   /** Characters sent to the voice since `monthStart`. */
   voiceCharacters: number;
@@ -574,6 +576,7 @@ export async function studioUsage(
     .select({
       input: sql<number>`coalesce(sum(${generationRuns.inputTokens}), 0)::int`,
       output: sql<number>`coalesce(sum(${generationRuns.outputTokens}), 0)::int`,
+      costUsd: sql<number>`coalesce(sum(${generationRuns.costUsd}), 0)::float8`,
     })
     .from(generationRuns)
     .where(and(isNotNull(generationRuns.videoId), gte(generationRuns.createdAt, dayStart)));
@@ -595,6 +598,7 @@ export async function studioUsage(
   return {
     inputTokens: (tokens?.input ?? 0) + ideas.input,
     outputTokens: (tokens?.output ?? 0) + ideas.output,
+    costUsd: (tokens?.costUsd ?? 0) + ideas.costUsd,
     renderSeconds: await sumOf("render", dayStart),
     voiceCharacters: await sumOf("tts", monthStart),
     quota:

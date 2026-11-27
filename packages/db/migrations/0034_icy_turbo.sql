@@ -1,0 +1,1 @@
+ALTER TABLE "video_idea_requests" ADD COLUMN "cost_usd" real;

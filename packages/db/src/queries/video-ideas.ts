@@ -71,6 +71,8 @@ export type VideoIdeaUsage = {
   model: string | null;
   inputTokens: number;
   outputTokens: number;
+  /** API-equivalent cost; null when the provider does not report it. */
+  costUsd: number | null;
   durationMs: number | null;
 };
 
@@ -80,7 +82,7 @@ export async function finishVideoIdeaRequest(
   id: string,
   outcome: ({ ideas: VideoIdea[] } | { error: string }) & VideoIdeaUsage,
 ): Promise<void> {
-  const { model, inputTokens, outputTokens, durationMs } = outcome;
+  const { model, inputTokens, outputTokens, costUsd, durationMs } = outcome;
   await db
     .update(videoIdeaRequests)
     .set({
@@ -90,6 +92,7 @@ export async function finishVideoIdeaRequest(
       model,
       inputTokens,
       outputTokens,
+      costUsd,
       durationMs,
       finishedAt: new Date(),
     })
@@ -103,21 +106,23 @@ export async function failVideoIdeaRequest(db: Database, id: string, error: stri
     model: null,
     inputTokens: 0,
     outputTokens: 0,
+    costUsd: null,
     durationMs: null,
   });
 }
 
-/** Tokens spent on ideas since a date, for the studio's daily total. */
+/** Tokens (and their API-equivalent cost) spent on ideas since a date, for the studio's daily total. */
 export async function videoIdeaTokens(
   db: Pick<Database, "select">,
   since: Date,
-): Promise<{ input: number; output: number }> {
+): Promise<{ input: number; output: number; costUsd: number }> {
   const [total] = await db
     .select({
       input: sql<number>`coalesce(sum(${videoIdeaRequests.inputTokens}), 0)::int`,
       output: sql<number>`coalesce(sum(${videoIdeaRequests.outputTokens}), 0)::int`,
+      costUsd: sql<number>`coalesce(sum(${videoIdeaRequests.costUsd}), 0)::float8`,
     })
     .from(videoIdeaRequests)
     .where(gte(videoIdeaRequests.createdAt, since));
-  return { input: total?.input ?? 0, output: total?.output ?? 0 };
+  return { input: total?.input ?? 0, output: total?.output ?? 0, costUsd: total?.costUsd ?? 0 };
 }

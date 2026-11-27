@@ -48,7 +48,13 @@ export async function proposeIdeas(deps: IdeasDeps, job: VideoIdeasJob): Promise
   const request = await deps.start(job.requestId);
   if (!request) return "skipped";
 
-  const usage: VideoIdeaUsage = { model: null, inputTokens: 0, outputTokens: 0, durationMs: null };
+  const usage: VideoIdeaUsage = {
+    model: null,
+    inputTokens: 0,
+    outputTokens: 0,
+    costUsd: null,
+    durationMs: null,
+  };
   const fail = async (error: string): Promise<IdeasOutcome> => {
     deps.log.warn("ideas failed", { requestId: request.id, error });
     await deps.finish(request.id, { ...usage, error: error.slice(0, 1000) });
@@ -126,5 +132,6 @@ function addUsage(total: VideoIdeaUsage, result: GenerationResult<unknown>, mode
   total.model = usage?.model ?? model;
   total.inputTokens += usage?.inputTokens ?? 0;
   total.outputTokens += usage?.outputTokens ?? 0;
+  if (usage?.costUsd != null) total.costUsd = (total.costUsd ?? 0) + usage.costUsd;
   if (usage?.durationMs != null) total.durationMs = (total.durationMs ?? 0) + usage.durationMs;
 }

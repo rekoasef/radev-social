@@ -117,16 +117,16 @@
     },
     {
       "narration": "Nadie notó la falta hasta el día siguiente, cuando un pintor llegó a copiarlo y encontró la pared vacía.",
-      "image": "i33",
+      "image": "i13",
       "from": {
-        "cx": 0.6,
-        "cy": 0.4,
-        "vw": 0.5
+        "cx": 0.5,
+        "cy": 0.5,
+        "vw": 1
       },
       "to": {
         "cx": 0.5,
-        "cy": 0.55,
-        "vw": 1
+        "cy": 0.45,
+        "vw": 0.6
       },
       "highlight": ["vacía", "pintor"],
       "graphics": [
@@ -138,20 +138,21 @@
           "pos": "centro",
           "at": 0
         }
-      ]
+      ],
+      "caption": "La sala del Louvre, foto actual"
     },
     {
       "narration": "Un oficial de policía estaba seguro de resolver el caso en pocos días.",
-      "image": "i26",
+      "image": "i22",
       "from": {
-        "cx": 0.3,
+        "cx": 0.5,
         "cy": 0.5,
-        "vw": 0.7
+        "vw": 1
       },
       "to": {
-        "cx": 0.6,
-        "cy": 0.55,
-        "vw": 0.5
+        "cx": 0.5,
+        "cy": 0.45,
+        "vw": 0.6
       },
       "graphics": [
         {
@@ -162,7 +163,7 @@
           "at": 0
         }
       ],
-      "caption": "El puerto del Louvre en 1911, fotografiado por Atget"
+      "caption": "El Louvre, foto actual"
     },
     {
       "narration": "El director del Louvre, Théophile Homolle, terminó renunciando ante la indignación pública.",
@@ -271,7 +272,7 @@
     },
     {
       "narration": "Más de dos años después, confesó que a veces pensaba en quemar la pintura.",
-      "image": "i03",
+      "image": "i01",
       "from": {
         "cx": 0.5,
         "cy": 0.5,

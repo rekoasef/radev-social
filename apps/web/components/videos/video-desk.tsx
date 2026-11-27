@@ -1,5 +1,6 @@
 import { Plate } from "@/components/console/plate";
 import { CopyButton } from "@/components/posts/copy-button";
+import { API_COST_NOTE } from "@/lib/api-cost";
 import type { Delivery } from "@/lib/video-delivery";
 import { elapsed } from "@/lib/video-display";
 import { Players } from "./players";
@@ -115,6 +116,7 @@ export function VideoDesk({
                 </tbody>
               </table>
             </div>
+            <p className="text-[13px] text-ink-faint">{API_COST_NOTE}</p>
           </section>
         </div>
 

@@ -2,6 +2,7 @@ import type { WorkingStage } from "@radev/core";
 import Link from "next/link";
 import { Plate } from "@/components/console/plate";
 import { Tally } from "@/components/console/tally";
+import { apiUsd } from "@/lib/api-cost";
 import { elapsed } from "@/lib/video-display";
 import type { OfficeRoom } from "@/lib/video-floor";
 import { OFFICE_INFO, type OfficeView } from "@/lib/video-office";
@@ -46,13 +47,8 @@ export function OfficeInside({
     ["Fallas", String(report.failed)],
     ["Devueltos", String(report.returns)],
     ["Tiempo medio", report.averageMs === null ? "—" : elapsed(report.averageMs)],
-    ...(report.tokens
-      ? [
-          [
-            "Tokens",
-            `${number.format(report.tokens.input)} / ${number.format(report.tokens.output)}`,
-          ] as [string, string],
-        ]
+    ...(report.costUsd !== null
+      ? [["Equivalente API", apiUsd(report.costUsd)] as [string, string]]
       : []),
     ...(report.characters !== null
       ? [["Créditos de voz", number.format(report.characters)] as [string, string]]
@@ -184,8 +180,7 @@ export function OfficeInside({
                     </Link>
                     <Tally state={row.tally}>{row.result}</Tally>
                     <span className="timecode text-xs text-ink-dim">
-                      {row.tokens &&
-                        `${number.format(row.tokens.input)} / ${number.format(row.tokens.output)} · `}
+                      {row.costUsd !== undefined && `${apiUsd(row.costUsd)} · `}
                       {row.ms === null ? "—" : elapsed(row.ms)}
                     </span>
                   </div>

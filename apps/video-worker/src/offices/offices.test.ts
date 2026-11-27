@@ -36,13 +36,30 @@ describe("research office", () => {
     expect(asked[0]?.files["task.json"]).toContain("El robo de la Mona Lisa");
   });
 
-  it("asks again from scratch when the dossier has test data (V0-13)", async () => {
+  it("asks to fix the rejected dossier, not to research again from scratch (V0-13)", async () => {
     const fake = dossier();
     fake.facts[0] = { ...fake.facts[0]!, url: "https://example.com/x", claim: "test" };
     const { ctx, asked } = makeCtx({ answers: [answer(fake), answer(dossier(), "run-2")] });
     const r = await research(ctx);
     expect(r).toMatchObject({ kind: "done", documents: [{ generationRunId: "run-2" }] });
     expect(asked[1]?.prompt).toContain("datos de prueba");
+    expect(asked[1]?.prompt).toContain("anterior.json");
+    expect(JSON.parse(asked[1]?.files["anterior.json"] ?? "{}")).toEqual(fake);
+    expect(asked[1]).toMatchObject({ tools: ["WebSearch", "WebFetch"], maxTurns: 20 });
+    expect(asked[0]?.files["anterior.json"]).toBeUndefined();
+  });
+
+  it("without a valid answer there is nothing to fix: it asks again, with the format errors", async () => {
+    const { ctx, asked } = makeCtx({
+      answers: [
+        failure({ kind: "validation", message: "formato", issues: ["facts: falta"] }),
+        answer(dossier(), "run-2"),
+      ],
+    });
+    expect(await research(ctx)).toMatchObject({ kind: "done" });
+    expect(asked[1]?.prompt).toContain("facts: falta");
+    expect(asked[1]?.files["anterior.json"]).toBeUndefined();
+    expect(asked[1]?.maxTurns).toBe(40);
   });
 
   it("fails when the second dossier is bad too", async () => {

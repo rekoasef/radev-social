@@ -58,6 +58,12 @@ Cuatro tomas de las escenas 7 a 9 de D.B. Cooper, con el volumen igualado (−14
 - v3 solo acepta estabilidad 0, 0,5 o 1: se manda 0,5 siempre. Los subtítulos muestran «...» como «…» si aparece.
 - **Falta escucharlo en un video entero.** Si se siente rápido, se puede bajar la velocidad de la voz (0,95) en su ficha.
 
+## Después de Anticitera (2026-11-27)
+
+En el video de tecnología, la devolución con nota «no repitas imágenes» igual dejó tres repetidas, y la verificación perdió una corrección de estilo («empezó a obsesionarse») porque la palabra resaltada ya no estaba en la narración.
+- **Imágenes:** el código no deja que la IA repita una imagen mientras queden candidatas sin usar (Guion y Verificación). Si no alcanzan, se repite lo mínimo (máximo 3 veces). El operador puede repetir desde el escritorio.
+- **Verificación:** al cambiar la narración, las palabras resaltadas que ya no se dicen dejan de resaltarse; la corrección se aplica.
+
 ## Lo que todavía no se controla
 
 - **Homónimos:** el código compara nombres, no personas (en el ejemplo de la Mona Lisa, un Giovanni Poggi de 1770). Queda como regla para la IA.

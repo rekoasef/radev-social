@@ -991,6 +991,8 @@ export const videoIdeaRequests = pgTable(
     model: text("model"),
     inputTokens: integer("input_tokens").notNull().default(0),
     outputTokens: integer("output_tokens").notNull().default(0),
+    /** What the same tokens would cost through the API (claude -p reports it; not paid). */
+    costUsd: real("cost_usd"),
     durationMs: integer("duration_ms"),
     createdAt: createdAt(),
     finishedAt: timestamp("finished_at", { withTimezone: true }),

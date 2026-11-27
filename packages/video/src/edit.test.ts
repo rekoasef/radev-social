@@ -35,6 +35,11 @@ describe("editScene", () => {
     expect(r.ok && r.script.scenes[0]?.caption).toBeUndefined();
   });
 
+  it("lets the operator pick an image another scene already uses", () => {
+    const r = edit({ scene: 10, image: script().scenes[2]?.image });
+    expect(r.ok).toBe(true);
+  });
+
   it("resets the framing only when the image changes", () => {
     const same = edit({ scene: 1, image: script().scenes[0]?.image });
     expect(same.ok && same.script.scenes[0]?.from).toEqual(script().scenes[0]?.from);

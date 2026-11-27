@@ -239,6 +239,13 @@
       "when": 1795710727913,
       "tag": "0033_light_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1795786270309,
+      "tag": "0034_icy_turbo",
+      "breakpoints": true
     }
   ]
 }

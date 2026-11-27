@@ -49,6 +49,23 @@ describe("checkScript detecta errores conocidos", () => {
     expect(errorsOf(s).join("\n")).toMatch(/"inexistente" no está en la narración/);
   });
 
+  it("una imagen repetida mientras quedan candidatas sin usar", () => {
+    const s = monaScript();
+    s.scenes[9]!.image = s.scenes[2]!.image;
+    expect(errorsOf(s).join("\n")).toMatch(
+      /se repite en las escenas 3, 10 y quedan \d+ candidatas/,
+    );
+  });
+
+  it("repetir se puede cuando no quedan candidatas sin usar", () => {
+    const s = monaScript();
+    s.scenes[9]!.image = s.scenes[2]!.image;
+    const used = new Set(s.scenes.map((x) => x.image));
+    const few = candidates.filter((c) => used.has(c.id));
+    const errors = checkScript(s, few, dossierText).join("\n");
+    expect(errors).not.toMatch(/se repite/);
+  });
+
   it("una imagen que no es candidata", () => {
     const s = monaScript();
     s.scenes[2]!.image = "i999";

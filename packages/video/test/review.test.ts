@@ -71,6 +71,32 @@ describe("applyFixes", () => {
     expect(checkScript(r.script, candidates, dossierText)).toEqual([]);
   });
 
+  it("una narración corregida que ya no dice una palabra resaltada deja de resaltarla", () => {
+    // Anticitera, escena 10: «obsesionarse» salió de la narración y el control descartaba la corrección
+    const narration =
+      "El ladrón fue un inmigrante italiano de 29 años que había trabajado en el museo.";
+    const r = apply([
+      { scene: 3, kind: "estilo", problem: "el nombre va en la escena siguiente", narration },
+    ]);
+    expect(r.rejected).toEqual([]);
+    expect(r.script.scenes[2]!.narration).toBe(narration);
+    expect(r.script.scenes[2]!.highlight).toEqual(["29"]);
+  });
+
+  it("si no queda ninguna palabra resaltada, saca el highlight", () => {
+    const narration = "Ese día, la sala amaneció sin su cuadro más famoso: nadie sabía cómo.";
+    const r = apply([{ scene: 3, kind: "estilo", problem: "otra forma de decirlo", narration }]);
+    expect(r.applied).toHaveLength(1);
+    expect(r.script.scenes[2]!.highlight).toBeUndefined();
+  });
+
+  it("rechaza cambiar a una imagen que ya usa otra escena si quedan candidatas sin usar", () => {
+    const s = monaScript();
+    const r = apply([{ scene: 4, kind: "imagen", problem: "otra", image: s.scenes[0]!.image }], s);
+    expect(r.applied).toHaveLength(0);
+    expect(r.rejected[0]!.why).toMatch(/se repite en las escenas 1, 4/);
+  });
+
   it("sin correcciones devuelve el mismo guion", () => {
     const r = apply([]);
     expect(r.script).toEqual(monaScript());

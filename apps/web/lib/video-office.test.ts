@@ -32,6 +32,7 @@ const run = (id: string, minutes: number, over: object = {}) =>
     error: null,
     inputTokens: 1000,
     outputTokens: 100,
+    costUsd: 0.1,
     durationMs: 60_000,
     createdAt: new Date(now.getTime() - minutes * 60_000),
     ...over,
@@ -77,23 +78,23 @@ describe("officeView", () => {
     ]);
   });
 
-  it("reports runs, returns, average time and tokens", () => {
+  it("reports runs, returns, average time and the API-equivalent cost", () => {
     expect(view(history).report).toMatchObject({
       runs: 2,
       returns: 1,
       averageMs: 90_000,
-      tokens: { input: 2000, output: 200 },
+      costUsd: 0.2,
     });
   });
 
-  it("an office of code lists its own runs and has no tokens", () => {
+  it("an office of code lists its own runs and has no AI cost", () => {
     const code = view(
       { runs: [], events: [event("e1", "office", 4, { outcome: "failed" })] },
       "rendering",
     );
     expect(code.current).toBeNull();
     expect(code.history).toMatchObject([{ result: "Falló", ms: 90_000 }]);
-    expect(code.report).toMatchObject({ runs: 1, failed: 1, tokens: null });
+    expect(code.report).toMatchObject({ runs: 1, failed: 1, costUsd: null });
   });
 });
 

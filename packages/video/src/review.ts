@@ -2,7 +2,13 @@
 // correcciones mínimas. El código solo aplica las que no rompen ninguna regla.
 import { z } from "zod";
 import type { ImageCandidate } from "./images";
-import { checkScript, graphicSchema, type Script, viewSchema } from "./script";
+import {
+  checkScript,
+  dropUnspokenHighlights,
+  graphicSchema,
+  type Script,
+  viewSchema,
+} from "./script";
 
 export const reviewSchema = z.object({
   fixes: z
@@ -101,7 +107,11 @@ export function applyFixes(
       rejected.push({ fix, why: "escena inexistente" });
       continue;
     }
-    if (fix.narration) sc.narration = fix.narration;
+    if (fix.narration) {
+      sc.narration = fix.narration;
+      // a highlighted word the fix took out must not sink the whole fix
+      dropUnspokenHighlights(sc);
+    }
     if (fix.caption) sc.caption = fix.caption;
     if (fix.graphics) sc.graphics = fix.graphics;
     if (fix.whole !== undefined) sc.whole = fix.whole;

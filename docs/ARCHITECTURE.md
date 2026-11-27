@@ -390,7 +390,7 @@ Todas las tablas de contenido cuelgan de `brands`. Timestamps en UTC (`timestamp
 | Better Auth | `user`, `session`, `account`, `verification` |
 | `videos` (RAdev Studio, ADR 0029) | id, brand_id (nullable), topic, title, language, voice_id, stage (una etapa por oficina), paused_at, pause_reason, resume_at, failure (jsonb), rejection_note, approved_at. La etapa solo cambia con `transitionVideo` (regla 2) |
 | `video_documents` | id, video_id, kind (`dossier` \| `sources` \| `images` \| `script` \| `review` \| `voice` \| `render` \| `package`), version, data (jsonb validado con Zod), schema_version, origin (`office` \| `operator`), generation_run_id. Versionados: una versión nueva nunca pisa la anterior |
-| `video_idea_requests` (migración `0032`) | id, brand_id (nullable), mode (`generate` \| `research`), focus, status (`queued` \| `running` \| `succeeded` \| `failed`), error, ideas (jsonb: tema, gancho, fuentes), model, input_tokens, output_tokens, duration_ms, created_at, finished_at. Aparte de `ideas` (Social): un video puede no tener marca y no tiene pilar |
+| `video_idea_requests` (migración `0032`) | id, brand_id (nullable), mode (`generate` \| `research`), focus, status (`queued` \| `running` \| `succeeded` \| `failed`), error, ideas (jsonb: tema, gancho, fuentes), model, input_tokens, output_tokens, cost_usd (equivalente por API, migración `0034`), duration_ms, created_at, finished_at. Aparte de `ideas` (Social): un video puede no tener marca y no tiene pilar |
 | `voices` | id, provider (`elevenlabs` \| `kokoro`), external_id, name, use, language, speed, is_default, active |
 | `usage_events` | id, video_id, office, kind (`tts` \| `render` \| `download`), quantity, unit, duration_ms, data |
 

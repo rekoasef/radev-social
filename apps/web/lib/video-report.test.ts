@@ -6,6 +6,7 @@ const run = (task: string, status = "succeeded") => ({
   status,
   inputTokens: 1000,
   outputTokens: 100,
+  costUsd: 0.25 as number | null,
   durationMs: 5000,
 });
 
@@ -24,7 +25,7 @@ describe("videoReport", () => {
   it("adds up every run of an office, failed ones included", () => {
     expect(rows[3]).toMatchObject({
       office: "4 Guion",
-      spent: "2.000 / 200",
+      spent: "≈ USD 0,50",
       ms: 120_000,
       notes: "2 corridas · 1 con error",
     });
@@ -35,12 +36,22 @@ describe("videoReport", () => {
     expect(rows[2]).toMatchObject({ spent: "—", ms: null, notes: "34 candidatas" });
   });
 
-  it("totals tokens, time and voice", () => {
+  it("totals the API-equivalent cost, time and voice", () => {
     expect(total).toMatchObject({
       who: "3 corridas de Claude",
-      spent: "3.000 / 300",
+      spent: "≈ USD 0,75",
       ms: 132_000,
       notes: "+ 1.917 créditos de voz",
     });
+  });
+
+  it("leaves the cost empty when no run reported it", () => {
+    const old = videoReport({
+      runs: [{ ...run("video.script"), costUsd: null }],
+      usage: [],
+      notes: {},
+    });
+    expect(old.rows[3]?.spent).toBe("—");
+    expect(old.total.spent).toBe("—");
   });
 });

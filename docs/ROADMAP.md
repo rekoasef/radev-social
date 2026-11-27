@@ -147,7 +147,7 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 - [x] T6 Cliente de Wikimedia Commons con filtro de licencias (probado con respuestas guardadas; la búsqueda real se hizo en T9)
 - [x] T7 `apps/video-worker` + oficinas 1 a 5 (hasta el guion) — corredor probado contra la base real con oficinas falsas; las oficinas con Claude y Commons de verdad se prueban en T9
 - [x] T8 Oficinas 6 a 8 (voz, render 9:16 y 16:9, publicación) — probadas con fakes; el render probado de verdad con 3 escenas de la Mona Lisa; la voz, la publicación y las imágenes con servicios reales se prueban en T9
-- [ ] T9 Comando de punta a punta: un video completo sin pantallas — **hecho y probado con servicios reales** (Betty y Barney Hill: 7 corridas de Claude, 1.917 créditos de voz, los dos formatos de 149 s, paquete completo); falta que el operador lo mire y lo apruebe para tildarla
+- [x] T9 Comando de punta a punta: un video completo sin pantallas — probado con servicios reales (Betty y Barney Hill: 7 corridas de Claude, 1.917 créditos de voz, los dos formatos de 149 s, paquete completo); el operador lo dio por bueno (2026-11-27)
 
 **B. Tu escritorio en la web**
 - [x] T10 Diseño visual del estudio y del escritorio (capturas aprobadas el 2026-11-26: el plano del piso, `docs/references/studio/`)
@@ -155,7 +155,7 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 - [x] T12 Panel `/videos`: estudio, nuevo video, aprobar guion y video, descarga del paquete, informes — usado de punta a punta por el operador con el video de D.B. Cooper (2026-11-26)
 - [x] Sumado (2026-11-26, pedido del operador): la IA propone temas en "Nuevo video", sin búsqueda web o investigando en la web
 - [x] T13 Docker: destino `video-worker` y perfil `video` — probado en amd64 (cuadros con Remotion e ideas con Claude dentro del contenedor) y construido en arm64 (2026-11-27)
-- [ ] T14 Punta a punta
+- [x] T14 Punta a punta — dos videos desde el panel: D.B. Cooper (historia, 2026-11-26) y el mecanismo de Anticitera (tecnología, 2026-11-27, con una devolución con nota). El operador los dio por buenos sin la prueba de devolver el video para cambiar una imagen
 
 **Terminado cuando:** dos videos de temas distintos salen desde el panel, los apruebo y descargo cada uno como una carpeta con el Short y el normal (video, miniatura y descripción), listos para subir a YouTube y guardar en Drive.
 

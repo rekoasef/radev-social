@@ -133,11 +133,20 @@ export const aiScriptSchema = scriptSchema.extend({
     .max(26),
 });
 
+export type CheckOptions = {
+  /**
+   * The operator picks on the desk: an image already in another scene is allowed (up to 3 times).
+   * The AI may repeat one only when no candidate is left unused.
+   */
+  repeats?: "free";
+};
+
 /** Errores de sentido del guion (vacío = bien). */
 export function checkScript(
   g: Script,
   candidates: ImageCandidate[],
   dossierText: string,
+  options: CheckOptions = {},
 ): string[] {
   const errors: string[] = [];
   const ids = new Set(candidates.map((c) => c.id));
@@ -235,6 +244,17 @@ export function checkScript(
   });
   for (const [id, n] of used)
     if (n > 3) errors.push(`scenes › la imagen ${id} se usa ${n} veces (máximo 3)`);
+  // Anticitera: told «no repitas imágenes», the rewrite still repeated three with candidates to spare.
+  const unused = candidates.filter((c) => !used.has(c.id)).map((c) => c.id);
+  if (options.repeats !== "free" && unused.length > 0) {
+    for (const [id, n] of used) {
+      if (n < 2 || !ids.has(id)) continue;
+      const scenes = g.scenes.flatMap((s, i) => (s.image === id ? [i + 1] : []));
+      errors.push(
+        `scenes › la imagen ${id} se repite en las escenas ${scenes.join(", ")} y quedan ${unused.length} candidatas sin usar (${unused.slice(0, 8).join(", ")}${unused.length > 8 ? "…" : ""}): cada imagen va en una sola escena mientras alcancen`,
+      );
+    }
+  }
   if (used.size < 6)
     errors.push(
       `scenes › solo ${used.size} imágenes distintas; usá al menos 6 para que no se haga monótono`,
@@ -248,6 +268,17 @@ export function checkScript(
       `graphics › hay ${gcount}; poné al menos 5 gráficos en el video (fechas, cifras, nombres, cronología)`,
     );
   return errors;
+}
+
+/**
+ * Las palabras resaltadas que la narración ya no dice dejan de resaltarse (al cambiarla el operador
+ * o la verificación). Modifica la escena que recibe.
+ */
+export function dropUnspokenHighlights(scene: { narration: string; highlight?: string[] }): void {
+  const words = narrationWords(scene.narration);
+  const kept = scene.highlight?.filter((h) => words.includes(normWord(h)));
+  if (kept?.length) scene.highlight = kept;
+  else delete scene.highlight;
 }
 
 /**

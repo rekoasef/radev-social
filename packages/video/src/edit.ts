@@ -2,8 +2,7 @@
 // mismos controles que pasa la oficina de Guion. Sin I/O: guardar es de packages/db.
 import type { ImageCandidate } from "./images";
 import { dropSceneNameCards } from "./name-cards";
-import { checkScript, type Script, scriptSchema } from "./script";
-import { narrationWords, normWord } from "./text";
+import { checkScript, dropUnspokenHighlights, type Script, scriptSchema } from "./script";
 
 export type SceneEdit = {
   /** Número de escena (1 = la primera). */
@@ -40,11 +39,7 @@ export function editScene(
 
   if (edit.narration !== undefined) {
     scene.narration = edit.narration.replace(/\s+/g, " ").trim();
-    // Las palabras resaltadas que ya no se dicen dejan de resaltarse.
-    const words = narrationWords(scene.narration);
-    const kept = scene.highlight?.filter((h) => words.includes(normWord(h)));
-    if (kept?.length) scene.highlight = kept;
-    else delete scene.highlight;
+    dropUnspokenHighlights(scene);
   }
   if (edit.caption !== undefined) {
     const caption = edit.caption.trim();
@@ -67,8 +62,9 @@ export function editScene(
     );
     return { ok: false, errors };
   }
-  const before = new Set(checkScript(script, candidates, dossierText));
-  const errors = checkScript(next, candidates, dossierText).filter((e) => !before.has(e));
+  const free = { repeats: "free" } as const;
+  const before = new Set(checkScript(script, candidates, dossierText, free));
+  const errors = checkScript(next, candidates, dossierText, free).filter((e) => !before.has(e));
   if (errors.length) return { ok: false, errors: errors.map(operatorError) };
   // After the checks: losing a card must not make the change fail.
   if (edit.image !== undefined) {
