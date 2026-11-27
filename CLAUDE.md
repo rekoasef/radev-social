@@ -106,6 +106,8 @@ pnpm capture --check "/render/preview/lumus/flow?variant=extreme" -
 pnpm --filter @radev/video-worker start # worker del video: una cola por oficina, usa la base local. Para producir videos: no se reinicia solo
 pnpm --filter @radev/video-worker dev   # lo mismo, reiniciando al cambiar el código (`pnpm dev` también lo levanta)
         # el panel está en /videos; sin este worker la web no gasta nada (solo encola)
+docker compose --profile video up -d --build video-worker   # el mismo worker en Docker (T13; + `web` para todo en Docker)
+docker compose stop video-worker        # UNA sola copia del worker a la vez: frenar esta antes de usar la de pnpm
 pnpm --filter @radev/video-worker video "<tema>" [--out <carpeta>]   # un video de punta a punta desde la terminal (T9)
         # se frena en el guion y en el video; --resume <id> [--approve | --reject "<nota>" --to script|voice|render] [--no-prompt]
 npx vitest run packages/video packages/core apps/video-worker   # tests del módulo
@@ -142,7 +144,7 @@ Notas del entorno:
 - Archivos subidos: `media/` en la raíz (`MEDIA_DIR`), compartida por `pnpm dev` y Docker; la web los sirve en `/media/...`. No viajan con el repo: el seed recrea los de las marcas iniciales.
 - El puerto 5432 lo usa un Postgres nativo de WSL de otros proyectos: el nuestro va por 5433. No tocar el nativo.
 - `pnpm dev` y la web de Docker usan el puerto 3000 (lo exige la OAuth App de GitHub): frená uno antes de levantar el otro. `WEB_PORT=3001 docker compose up -d` sirve solo para probar la imagen.
-- Imágenes: un solo `Dockerfile` con destinos `web`, `worker` y `migrate`. El servicio `migrate` corre en cada `up` y termina; web y worker esperan a que salga bien.
+- Imágenes: un solo `Dockerfile` con destinos `web`, `worker`, `migrate` y `video-worker` (este último solo con el perfil `video`: ffmpeg, Claude Code y el Chrome de Remotion; ~2 GB). El servicio `migrate` corre en cada `up` y termina; web y los workers esperan a que salga bien.
 - En Docker, el worker renderiza a través de la web (`http://web:3000`) con el `RENDER_TOKEN` del `.env` y escribe los PNG en la misma `media/`.
 - El worker escribe logs JSON (una línea por evento); `LOG_LEVEL=debug` muestra más. pg-boss guarda su cola en el esquema `pgboss` de la misma base.
 - pnpm bloquea scripts de instalación y versiones muy recientes: se autorizan en `pnpm-workspace.yaml`.

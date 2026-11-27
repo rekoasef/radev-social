@@ -8,19 +8,24 @@ Bitácora viva del proyecto: en qué tarea estamos, qué falta, qué se decidió
 
 ## Estado actual
 
-> ### ▶ Retomar acá (última sesión: 2026-11-26, PC de la fábrica)
+> ### ▶ Retomar acá (última sesión: 2026-11-27, PC de la fábrica)
 >
-> **Dónde estamos (resumen):** V1 del video en la rama `feat/video-v1`, subida a GitHub. Las oficinas (T1–T8) y el panel `/videos` (T10–T12, con las ideas de la IA) están programados. Sin tildar: **T9** (falta que el operador apruebe el video de Hill, en la PC de casa) y **T12** (falta que lo use). Quedan **T13** (Docker) y **T14** (punta a punta).
+> **Dónde estamos (resumen):** V1 del video en la rama `feat/video-v1`. Las oficinas (T1–T8), el panel `/videos` (T10–T12, con las ideas de la IA) y **Docker (T13)** están hechos. Sin tildar: **T9** (falta que el operador apruebe el video de Hill, en la PC de casa) y **T14** (punta a punta).
 >
-> **▶ Próximo paso: el primer flujo real desde el panel**, en la PC de la fábrica. Los videos de ejemplo se borraron el 2026-11-26 y no hay trabajos en la cola.
-> 1. `docker compose up -d postgres` y `nvm use && pnpm --filter @radev/web dev`.
-> 2. En otra terminal: `pnpm --filter @radev/video-worker start` (`start` y no `dev`: un cambio de código no lo reinicia en medio de un render). No usar `pnpm dev`: levanta también el worker de Social.
-> 3. `localhost:3000/videos/new`: elegir una idea o escribir el tema; aprobar el guion (~16 min) y el video (~10 min después); bajar el ZIP.
+> **▶ Próximo paso: T14**, el criterio de V1 (REVISION §7.7). Ya cuenta D.B. Cooper (historia, hecho desde el panel el 2026-11-26). Falta:
+> 1. **El segundo video, de tecnología**, desde el panel. Es el primero con las 6 mejoras de `docs/VIDEO-CALIDAD.md` juntas. Hay 5 ideas de tecnología ya propuestas (pedido `cc97fb95…`, el de la prueba de T13).
+> 2. En ese video: devolver el guion con una nota (rehace solo Guion y Verificación) y devolver el video para corregir una imagen (no paga la voz otra vez).
+> 3. Mirar los informes por oficina y que Social siga igual (`pnpm test` y un carrusel de punta a punta).
+> - En la fábrica, las oficinas corren **en Docker**: `docker compose --profile video up -d video-worker`, con la web de `pnpm --filter @radev/web dev`. Una sola copia del worker a la vez (ver `README.md`).
 > - Gasta ~350.000 tokens de Claude y ~1.900 créditos de voz por video. El 2026-11-26 quedaban 29.889 créditos (se renuevan el 2026-12-23).
-> - A mirar: la memoria durante el render (WSL ve 7,8 GiB; cerrar lo pesado y no dejar que se suspenda) y la descarga con sesión. En esta PC nunca se renderizó un video entero desde el panel.
-> - Para el criterio de V1 (REVISION §7.7): dos videos de temas sin relación; en alguno, devolver el guion con una nota y corregir una imagen sin pagar la voz.
+> - A mirar: la memoria durante el render (WSL ve 7,8 GiB; cerrar lo pesado y no dejar que se suspenda) y el disco `C:` (37 GB libres el 2026-11-27).
 >
-> **▶ T13 EN CURSO (2026-11-26, se sigue en la PC de casa).** T12 tildada. Hecho y sin probar: destino `video-worker` en el `Dockerfile` (Node, `ffmpeg`, las librerías de Chrome, el Chrome de Remotion bajado al construir, Claude Code con las dependencias) y servicio `video-worker` en `compose.yaml` con el perfil `video` (`shm_size: 1gb`, `restart: unless-stopped`). Uso previsto: `docker compose --profile video up -d --build web video-worker` (sin el worker de redes). **La primera construcción se cortó en la fábrica porque el disco `C:` se llenó** (ver `docs/ENVIRONMENTS.md`). Falta: construirla con espacio libre, probarla (`ffmpeg -version`, un pedido de ideas y un `video.frames` con los ejemplos), verificar arm64 si se puede, y documentar los comandos en `CLAUDE.md` y `README.md`.
+> **▶ T13 CERRADA (2026-11-27, PC de la fábrica).** Destino `video-worker` en el `Dockerfile` (Node 24, `ffmpeg` 5.1, las librerías de Chrome, el Chrome de Remotion bajado al construir, Claude Code 2.1.282 con las dependencias) y servicio `video-worker` en `compose.yaml` con el perfil `video` (`shm_size: 1gb`, `restart: unless-stopped`). Probado:
+> - **amd64:** construida en 7 min (2,1 GB). Arranca después de `migrate` con las 8 oficinas; `video.frames` de un ejemplo dibujó **40 cuadros** (9:16 y 16:9) en ~2 min, bien, escritos en `media/` con el usuario del operador (uid 1000 = `node`); un pedido de ideas («Proponer ideas», tecnología) con Claude adentro: 5 ideas en 1,5 min, 15.257 / 3.501 tokens.
+> - **arm64** (emulada con `docker buildx --platform linux/arm64`, 9 min): `ffmpeg`, Claude Code y el Chrome de Remotion para arm64 (`headless_shell`, sin librerías faltantes). No se renderizó en arm64: el video en el servidor está fuera de V1.
+> - `docker compose up -d` sin el perfil sigue igual (postgres, migrate, web, worker).
+> - Sin probar dentro de Docker: la voz y el render del video entero. Se prueban con el video de T14.
+> - **Una sola copia de las oficinas a la vez:** el candado de IA vive en el proceso; con la de `pnpm` y la de Docker juntas podrían correr dos `claude -p`. Comandos en `README.md` y `CLAUDE.md`.
 >
 > **Al seguir en la PC de casa:** `git switch feat/video-v1 && git pull`, `nvm use && pnpm install`, `pnpm db:migrate` (`0030`–`0032`) y `pnpm db:seed` (dos rutas de IA nuevas).
 >

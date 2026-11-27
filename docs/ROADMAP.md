@@ -154,7 +154,7 @@ Rama `feat/video-v1`. Detalle de cada tarea: `docs/RADEV-STUDIO-REVISION.md` §7
 - [x] T11 `/media` con `Range` y ZIP del paquete por streaming
 - [x] T12 Panel `/videos`: estudio, nuevo video, aprobar guion y video, descarga del paquete, informes — usado de punta a punta por el operador con el video de D.B. Cooper (2026-11-26)
 - [x] Sumado (2026-11-26, pedido del operador): la IA propone temas en "Nuevo video", sin búsqueda web o investigando en la web
-- [ ] T13 Docker: destino `video-worker` y perfil `video`
+- [x] T13 Docker: destino `video-worker` y perfil `video` — probado en amd64 (cuadros con Remotion e ideas con Claude dentro del contenedor) y construido en arm64 (2026-11-27)
 - [ ] T14 Punta a punta
 
 **Terminado cuando:** dos videos de temas distintos salen desde el panel, los apruebo y descargo cada uno como una carpeta con el Short y el normal (video, miniatura y descripción), listos para subir a YouTube y guardar en Drive.

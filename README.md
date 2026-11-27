@@ -88,6 +88,17 @@ pnpm --filter @radev/video-worker start      # terminal 2: las oficinas (acá se
 
 En http://localhost:3000/videos: **Nuevo video** → aprobar el guion → aprobar el video → **Descargar paquete**. En qué estamos: `docs/PROGRESS.md`.
 
+**Las oficinas en Docker** (perfil `video`; no hace falta `ffmpeg` en la máquina, la imagen trae `ffmpeg`, Claude Code y el Chrome de Remotion):
+
+```bash
+docker compose --profile video up -d --build video-worker   # las oficinas, con la web de pnpm
+docker compose --profile video up -d --build web video-worker   # o todo en Docker (sin el worker de redes)
+docker compose logs -f video-worker
+docker compose stop video-worker
+```
+
+Una sola copia de las oficinas a la vez: antes de `pnpm --filter @radev/video-worker start`, `docker compose stop video-worker` (y al revés). Con dos, cada una tiene su candado de IA y podrían correr dos `claude -p` juntos. El contenedor tiene `restart: unless-stopped`: si quedó andando, vuelve a arrancar solo al abrir Docker Desktop. `docker compose up -d` sin el perfil no lo toca.
+
 ### 6. Ver las slides
 
 - En el panel: **Marcas** → una marca → **Slides** muestra los 12 tipos con su identidad y el carrusel de ejemplo; **Identidad visual** edita colores, tipografías y archivos con vista previa en vivo.
