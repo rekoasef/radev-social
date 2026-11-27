@@ -13,7 +13,7 @@ Hoy una opinión no puede entrar: el control del guion pide que cada dato salga 
 4. **Suena en primera persona:** «Para mí, lo más raro de este caso es…». El código controla que la narración de esa escena tenga una marca de primera persona («para mí», «creo», «me parece», «pienso»…). Si no la tiene, se la devuelve a la IA como cualquier otro error.
 5. **Solo opinión, sin datos nuevos.** La IA usa el ángulo del operador y se apoya en hechos del dossier. Si el aporte trae un dato que la investigación no tiene, no entra. Sigue valiendo la regla de los números: todo número de la narración tiene que estar en el dossier.
 6. **La Verificación no la saca, pero la revisa.** Las instrucciones le dicen que las escenas `aporte` son la opinión del operador. Tiene que controlar que no afirme como cierto algo que el dossier no dice ni lo contradiga, y que siga sonando a opinión. Puede corregirla, pero el código descarta la corrección si le saca la primera persona.
-7. **En pantalla, un cartel chico «Opinión»** en las escenas `aporte`. Lo dibuja el código según el papel de la escena, sin que la IA lo pida, así no se puede olvidar. Se ve en los dos formatos y en el cuadro que mira la Verificación.
+7. **En pantalla, un cartel chico «Opinión»** en las escenas `aporte`. Lo dibuja el código según el papel de la escena, sin que la IA lo pida, así no se puede olvidar. Se ve en los dos formatos (arriba a la izquierda en vertical; abajo a la izquierda en horizontal, donde los subtítulos anchos ocupan la parte de arriba) y en el cuadro que mira la Verificación.
 
 **Alternativas.**
 - **Escribirlo al crear el video:** no suma una vuelta, pero se escribe antes de saber qué encontró la investigación. Queda para después, si el operador lo pide.

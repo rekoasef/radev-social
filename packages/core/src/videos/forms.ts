@@ -17,6 +17,8 @@ export const VIDEO_BEATS = [
   "veredicto",
   "despues",
   "cierre",
+  // The operator's opinion (ADR 0031): any form may carry it.
+  "aporte",
 ] as const;
 export type VideoBeat = (typeof VIDEO_BEATS)[number];
 
@@ -56,4 +58,8 @@ export const BEAT_LABELS: Record<VideoBeat, string> = {
   veredicto: "Veredicto",
   despues: "Después",
   cierre: "Cierre",
+  aporte: "Tu aporte",
 };
+
+/** The longest «tu aporte» the operator can write (ADR 0031). */
+export const CONTRIBUTION_MAX = 500;

@@ -22,6 +22,8 @@ export type FrameProps = {
   graphics: Graphic[];
   highlight: string[];
   narration: string;
+  /** The scene is the operator's opinion: it carries the «Opinión» card (ADR 0031). */
+  opinion?: boolean;
 };
 
 export function frameProps(
@@ -40,6 +42,8 @@ export function frameProps(
     graphics: scene.graphics,
     highlight: scene.highlight ?? [],
     narration: scene.narration,
+    // Only when true, so the frames already drawn keep their names.
+    ...(scene.beat === "aporte" ? { opinion: true } : {}),
   };
 }
 

@@ -70,6 +70,15 @@ export const script: Office = async (ctx) => {
   const request = { fixed, avoid };
   const formOrder = formInstruction(fixed, avoid);
 
+  // The operator's opinion (ADR 0031): kept on the video, so every rewrite carries it.
+  const contribution = ctx.video.contribution;
+  const opinionOrder = contribution
+    ? ` Aporte del operador, para 1 o 2 escenas \`aporte\` (ver «Tu aporte»): «${contribution}»`
+    : rejected?.scenes.some((s) => s.beat === "aporte")
+      ? " El operador sacó su aporte: ninguna escena lleva `aporte`."
+      : "";
+  const orders = `${formOrder}${opinionOrder}`;
+
   let previous: Script | undefined = rejection ? (rejected ?? undefined) : undefined;
   let problems: string[] = [];
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -78,12 +87,12 @@ export const script: Office = async (ctx) => {
     const answer = await ctx.ai.run(ctx.video, {
       task: "video.script",
       prompt: first
-        ? `Escribí el guion del video con \`dossier.json\`, \`candidatas.json\` y las imágenes. Devolvé el objeto que pide el schema. ${formOrder}${
+        ? `Escribí el guion del video con \`dossier.json\`, \`candidatas.json\` y las imágenes. Devolvé el objeto que pide el schema. ${orders}${
             rejection
               ? ` El operador rechazó el guion anterior (\`anterior.json\`) y pidió esto: «${rejection}». Reescribilo resolviendo eso y manteniendo lo que estaba bien.`
               : ""
           }`
-        : `El guion anterior (\`anterior.json\`) tiene estos errores. Devolvé el guion COMPLETO corregido, cambiando lo mínimo. ${formOrder}\n${problems.map((p) => `- ${p}`).join("\n")}`,
+        : `El guion anterior (\`anterior.json\`) tiene estos errores. Devolvé el guion COMPLETO corregido, cambiando lo mínimo. ${orders}\n${problems.map((p) => `- ${p}`).join("\n")}`,
       files: {
         "CLAUDE.md": SCRIPT_RULES,
         "dossier.json": json,
@@ -105,7 +114,10 @@ export const script: Office = async (ctx) => {
       return failedAi(answer.error, "El guion");
     }
     const draft = tidyScript(answer.data);
-    problems = checkScript(draft, candidates, text, { form: request });
+    problems = checkScript(draft, candidates, text, {
+      form: request,
+      contribution: Boolean(contribution),
+    });
     if (problems.length === 0) {
       const { script: clean, dropped } = dropNameCards(draft, candidates);
       if (dropped.length) ctx.log.warn("name cards the image does not back", { dropped });

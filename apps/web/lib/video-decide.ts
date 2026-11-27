@@ -21,6 +21,8 @@ export type Decision = {
   note?: string;
   /** Only on a returned script: tell it another way (ADR 0030). */
   form?: VideoForm;
+  /** Only on a returned script: «tu aporte»; empty takes it out (ADR 0031). */
+  contribution?: string;
 };
 
 export type DecideDeps = {

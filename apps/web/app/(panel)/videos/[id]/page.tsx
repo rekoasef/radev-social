@@ -76,6 +76,7 @@ export default async function VideoPage({ params }: PageProps<"/videos/[id]">) {
           paused={video.pausedAt !== null}
           voiceLeft={quota ? Math.max(0, quota.limit - quota.used) : null}
           voiceReused={documents.voiceReused}
+          contribution={video.contribution ?? ""}
         />
       )}
       {video.stage === "script_review" && !documents && (

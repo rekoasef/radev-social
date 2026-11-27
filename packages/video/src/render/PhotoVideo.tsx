@@ -37,6 +37,8 @@ export type Shot = {
   whole?: boolean;
   highlight?: string[];
   graphics?: Graphic[];
+  /** La opinión del operador: lleva el cartel «Opinión» (ADR 0031). */
+  opinion?: boolean;
   /** Cola después de la voz, en segundos. */
   tail?: number;
 };
@@ -49,18 +51,22 @@ const LAYOUT = {
     creditBottom: 150,
     creditSize: 30,
     creditSide: 48,
+    // under the apps' top bar, above the subtitles
+    opinion: { top: 196, left: 70, fontSize: 34 },
   },
   "16x9": {
     karaoke: { top: 56, maxWidth: 1500, fontSize: 52 },
     creditBottom: 36,
     creditSize: 24,
     creditSide: 60,
+    // bottom left, above the credit: wide subtitles take the top
+    opinion: { bottom: 84, left: 60, fontSize: 28 },
   },
 } as const;
 
 type SceneShot = Pick<
   Shot,
-  "image" | "aspect" | "from" | "to" | "credit" | "whole" | "highlight" | "graphics"
+  "image" | "aspect" | "from" | "to" | "credit" | "whole" | "highlight" | "graphics" | "opinion"
 >;
 
 /**
@@ -133,6 +139,25 @@ export function SceneLayers({
           <GraphicView key={i} g={g} t={at} words={words} format={format} />
         );
       })}
+      {shot.opinion && (
+        <div
+          style={{
+            position: "absolute",
+            ...lay.opinion,
+            padding: "8px 22px",
+            borderRadius: 999,
+            background: "#E3B04B",
+            color: "#100D0A",
+            fontFamily: "'Inter Tight Variable', sans-serif",
+            fontWeight: 800,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.5)",
+          }}
+        >
+          Opinión
+        </div>
+      )}
       <Karaoke words={words} highlight={shot.highlight ?? []} t={t} {...lay.karaoke} />
       <div
         style={{

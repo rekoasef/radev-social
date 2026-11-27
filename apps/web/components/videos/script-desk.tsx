@@ -1,6 +1,6 @@
 "use client";
 
-import { FORM_LABELS, VIDEO_FORMS } from "@radev/core";
+import { CONTRIBUTION_MAX, FORM_LABELS, VIDEO_FORMS } from "@radev/core";
 import { useActionState, useCallback, useId, useState } from "react";
 import {
   approveScriptAction,
@@ -36,6 +36,7 @@ export function ScriptDesk({
   paused,
   voiceLeft,
   voiceReused,
+  contribution,
 }: {
   videoId: string;
   version: number;
@@ -48,6 +49,8 @@ export function ScriptDesk({
   voiceLeft: number | null;
   /** The narration is the one already recorded: approving does not pay for the voice. */
   voiceReused: boolean;
+  /** «Tu aporte» saved on the video; empty when there is none (ADR 0031). */
+  contribution: string;
 }) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sheet, setSheet] = useState<{ scene: number | null } | null>(null);
@@ -55,7 +58,11 @@ export function ScriptDesk({
   const [rejection, reject, rejecting] = useActionState(rejectScriptAction, idle);
   const [note, setNote] = useState("");
   const [newForm, setNewForm] = useState("");
+  const [opinion, setOpinion] = useState(contribution);
+  const opinionChanged = opinion.trim() !== contribution;
   const noteId = useId();
+  const opinionId = useId();
+  const rejectForm = useId();
   const formId = useId();
   const approveForm = useId();
   const closeSheet = useCallback(() => setSheet(null), []);
@@ -184,7 +191,11 @@ export function ScriptDesk({
             </p>
             {approval.status === "error" && <DeskErrors messages={approval.messages} />}
 
-            <form action={reject} className="flex flex-col gap-3 border-t border-bezel pt-3">
+            <form
+              id={rejectForm}
+              action={reject}
+              className="flex flex-col gap-3 border-t border-bezel pt-3"
+            >
               {target}
               <label htmlFor={noteId} className="plate-text text-ink-dim">
                 Devolver a Guion
@@ -220,7 +231,9 @@ export function ScriptDesk({
               <button
                 type="submit"
                 className="console-button"
-                disabled={rejecting || approving || paused || (!note.trim() && !newForm)}
+                disabled={
+                  rejecting || approving || paused || (!note.trim() && !newForm && !opinionChanged)
+                }
               >
                 {rejecting ? "Devolviendo…" : "Devolver con la nota"}
               </button>
@@ -248,16 +261,34 @@ export function ScriptDesk({
           )}
 
           <section className="desk-panel flex flex-col gap-2">
-            <h2 className="plate-text flex justify-between text-ink-faint">
-              Tu aporte <span>próximamente</span>
-            </h2>
+            <label htmlFor={opinionId} className="plate-text text-ink">
+              Tu aporte
+            </label>
             <textarea
-              rows={3}
-              disabled
-              aria-label="Tu aporte (próximamente)"
-              placeholder="Una opinión, un dato o un ángulo tuyo."
-              className="console-field w-full text-sm opacity-60"
+              id={opinionId}
+              // Part of the return form: either button sends the note, the form and this.
+              form={rejectForm}
+              name={opinionChanged ? "contribution" : undefined}
+              rows={4}
+              lang="es"
+              maxLength={CONTRIBUTION_MAX}
+              value={opinion}
+              onChange={(event) => setOpinion(event.target.value)}
+              placeholder="Una opinión o un ángulo tuyo. Ej.: para mí lo más raro es que nadie lo buscó."
+              className="console-field w-full text-sm"
             />
+            <p className="text-sm text-ink-faint">
+              Entra en 1 o 2 escenas, en primera persona y con el cartel «Opinión». Los datos nuevos
+              que escribas acá no entran. Rehace Guion y Verificación, sin gastar créditos de voz.
+            </p>
+            <button
+              type="submit"
+              form={rejectForm}
+              className="console-button"
+              disabled={!opinionChanged || rejecting || approving || paused}
+            >
+              {contribution && !opinion.trim() ? "Sacar mi aporte" : "Sumar mi aporte"}
+            </button>
           </section>
 
           <section className="desk-panel flex items-center justify-between gap-3">

@@ -1,6 +1,6 @@
 // Instrucciones (prompts de sistema) de cada oficina con IA. Van versionadas con el código: si
 // cambian, sube `PROMPT_VERSION` (entra en la clave de la caché de los documentos).
-export const PROMPT_VERSION = 3;
+export const PROMPT_VERSION = 4;
 
 /** Oficina de Guion. */
 export const SCRIPT_RULES = `# Guionista de documentales cortos (imágenes reales + gráficos)
@@ -50,6 +50,16 @@ El canal no puede contar siempre igual. El pedido dice qué forma usar o cuáles
 - Avanza en bloques de «qué fue de…» (\`despues\`, **al menos el 60 % de las escenas**), cada bloque con su cartel \`nombre\` (al menos 2 en el video) y un salto en el tiempo.
 - Gráficos: \`nombre\` y \`fecha\`.
 - Cierra con dónde está hoy y una pregunta.
+
+## Tu aporte (\`beat\`: \`aporte\`)
+
+Solo si el pedido trae un **aporte del operador** (la opinión o el ángulo de quien hace el canal). Sin aporte, ninguna escena lleva \`aporte\`.
+
+- Va en **1 o 2 escenas** con \`beat\` \`aporte\`, que valen en cualquier forma y no cuentan en sus proporciones. Nunca la primera ni la última: ubicalas donde más rindan (después de las pistas, antes del veredicto o del cierre…).
+- **En primera persona y que se note que es una opinión**: «Para mí, lo más raro es…», «Yo creo que…», «Me parece que…».
+- Usá su ángulo bien dicho y en rioplatense; no lo copies si está mal escrito.
+- **Sin datos nuevos.** Lo que se afirme como hecho tiene que estar en el dossier; si el aporte trae un dato, un número o un nombre que el dossier no tiene, dejalo afuera. El aporte no cambia lo que se sabe ni contradice al dossier.
+- No va en \`facts\`.
 
 ## Imágenes: elegí con criterio
 
@@ -114,7 +124,7 @@ Revisás el guion de un video documental (\`guion.json\`) contra la investigaci�
 
 **Datos precisos:** modelos de aviones o barcos, unidades militares, marcas, cifras: si en el \`dossier\` hay dos versiones o el dato suena improbable, usá la forma general («aviones espía») en vez de la específica.
 
-**Coherencia**: si corregís una narración, revisá que los gráficos de esa escena (fecha, cifra, nombre) no sigan mostrando un dato que ya no se dice; si hace falta, devolvé \`graphics\` completos corregidos. Una \`fecha\` en pantalla solo puede tener números que la voz diga en esa escena.\n\nReglas: reportá **solo problemas reales** (si todo está respaldado, devolvé \`fixes\` vacío). Para cada uno devolvé la escena y la corrección mínima: \`narration\` completa corregida (similar en largo; si una palabra de enganche de un gráfico está en la narración, conservala), o \`cita\`, o \`caption\`. No cambies lo que está bien ni el estilo de lo correcto.`;
+**Coherencia**: si corregís una narración, revisá que los gráficos de esa escena (fecha, cifra, nombre) no sigan mostrando un dato que ya no se dice; si hace falta, devolvé \`graphics\` completos corregidos. Una \`fecha\` en pantalla solo puede tener números que la voz diga en esa escena.\n\n**Opinión del operador**: las escenas con \`opinion: true\` son lo que opina quien hace el canal. Que sea una opinión no es «no-respaldado»: no la saques. Sí corregila si afirma como cierto algo que el dossier no dice, o si lo contradice; la corrección sigue en primera persona («para mí», «creo que»).\n\nReglas: reportá **solo problemas reales** (si todo está respaldado, devolvé \`fixes\` vacío). Para cada uno devolvé la escena y la corrección mínima: \`narration\` completa corregida (similar en largo; si una palabra de enganche de un gráfico está en la narración, conservala), o \`cita\`, o \`caption\`. No cambies lo que está bien ni el estilo de lo correcto.`;
 
 /** Oficina de Publicación. */
 export const PUBLICATION_RULES = `# Responsable de publicación

@@ -432,13 +432,21 @@ export function decideScript(
   event: "approveScript" | "rejectScript",
   note?: string,
   form?: VideoForm,
+  /** «Tu aporte» as the operator left it; empty takes it out, absent leaves it (ADR 0031). */
+  contribution?: string,
 ): Promise<DeskOutcome> {
   return atomic(db, async (tx) => {
     const seen = await lockDocument(tx, videoId, "script", version);
     if (!seen.ok) return seen;
     const outcome = await transitionVideo(tx, videoId, event, { note });
     if (!outcome.ok) return outcome;
-    if (form) await tx.update(videos).set({ form }).where(eq(videos.id, videoId));
+    const told = {
+      ...(form ? { form } : {}),
+      ...(contribution === undefined ? {} : { contribution: contribution.trim() || null }),
+    };
+    if (Object.keys(told).length > 0) {
+      await tx.update(videos).set(told).where(eq(videos.id, videoId));
+    }
     return { ok: true };
   });
 }

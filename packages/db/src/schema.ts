@@ -813,6 +813,8 @@ export const videos = pgTable(
     voiceId: uuid("voice_id").references(() => voices.id, { onDelete: "restrict" }),
     /** The way of telling it the operator chose; null: the Script office picks it (ADR 0030). */
     form: text("form", { enum: VIDEO_FORMS }),
+    /** The operator's opinion for the video («tu aporte», ADR 0031); null: none. */
+    contribution: text("contribution"),
     stage: text("stage", { enum: VIDEO_STAGES }).notNull(),
     pausedAt: timestamp("paused_at", { withTimezone: true }),
     pauseReason: text("pause_reason", { enum: PAUSE_REASONS }),

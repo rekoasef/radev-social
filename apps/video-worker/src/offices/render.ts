@@ -64,6 +64,7 @@ export const createRenderOffice =
         whole: s.whole,
         highlight: s.highlight,
         graphics: s.graphics,
+        ...(s.beat === "aporte" ? { opinion: true } : {}),
         tail: s.tail,
       };
     });

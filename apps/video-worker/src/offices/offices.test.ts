@@ -390,6 +390,51 @@ describe("script office", () => {
   });
 });
 
+describe("script office: «tu aporte»", () => {
+  const opinion = () => {
+    const s = goodScript();
+    const scene = s.scenes[5]!;
+    scene.beat = "aporte";
+    scene.narration = `Para mí, ${scene.narration.charAt(0).toLowerCase()}${scene.narration.slice(1)}`;
+    return s;
+  };
+  const told = video({ rejectionNote: "Sumá mi aporte.", contribution: "nadie miraba nada" });
+
+  it("hands the AI the operator's opinion and takes a script that carries it", async () => {
+    const { ctx, asked } = makeCtx({
+      video: told,
+      docs,
+      answers: [answer(opinion())],
+      files: smallFiles(),
+    });
+    await expect(script(ctx)).resolves.toMatchObject({ kind: "done" });
+    expect(asked[0]?.prompt).toContain("«nadie miraba nada»");
+  });
+
+  it("asks again when the script leaves it out", async () => {
+    const { ctx, asked } = makeCtx({
+      video: told,
+      docs,
+      answers: [answer(goodScript()), answer(opinion(), "run-2")],
+      files: smallFiles(),
+    });
+    await expect(script(ctx)).resolves.toMatchObject({ kind: "done" });
+    expect(asked[1]?.prompt).toContain("el aporte del operador va en 1 o 2 escenas");
+    expect(asked[1]?.prompt).toContain("«nadie miraba nada»");
+  });
+
+  it("says it was taken out when the rejected script had one", async () => {
+    const { ctx, asked } = makeCtx({
+      video: video({ rejectionNote: "Sacá mi aporte." }),
+      docs: { ...docs, script: opinion() },
+      answers: [answer(goodScript())],
+      files: smallFiles(),
+    });
+    await expect(script(ctx)).resolves.toMatchObject({ kind: "done" });
+    expect(asked[0]?.prompt).toContain("sacó su aporte");
+  });
+});
+
 describe("review office", () => {
   const noFixes: Review = { fixes: [] };
   /** A renderer that "draws" each frame into the fake media folder. */

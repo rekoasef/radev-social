@@ -1,6 +1,12 @@
 "use server";
 
-import { checkRejectionNote, FORM_LABELS, VIDEO_FORMS, type VideoForm } from "@radev/core";
+import {
+  CONTRIBUTION_MAX,
+  checkRejectionNote,
+  FORM_LABELS,
+  VIDEO_FORMS,
+  type VideoForm,
+} from "@radev/core";
 import {
   decideScript,
   decideVideo,
@@ -71,9 +77,9 @@ export async function editSceneAction(_previous: DeskState, form: FormData): Pro
 }
 
 const decideDeps: DecideDeps = {
-  decide: (videoId, version, { event, note, form }) =>
+  decide: (videoId, version, { event, note, form, contribution }) =>
     event === "approveScript" || event === "rejectScript"
-      ? decideScript(db, videoId, version, event, note, form)
+      ? decideScript(db, videoId, version, event, note, form, contribution)
       : decideVideo(db, videoId, version, event, note),
   queue: queueVideoOffice,
 };
@@ -84,11 +90,17 @@ async function answer(
   event: DeskEvent,
   note?: string,
   told?: VideoForm,
+  contribution?: string,
 ): Promise<DeskState> {
   const input = target.safeParse(Object.fromEntries(form));
   if (!input.success) return fail("Ese video no existe.");
   const { videoId, version } = input.data;
-  const outcome = await decideAndQueue(decideDeps, videoId, version, { event, note, form: told });
+  const outcome = await decideAndQueue(decideDeps, videoId, version, {
+    event,
+    note,
+    form: told,
+    contribution,
+  });
   if (!outcome.ok) return fail(outcome.reason);
   revalidatePath("/videos", "layout");
   return { status: "done" };
@@ -112,11 +124,29 @@ export async function rejectScriptAction(_previous: DeskState, form: FormData): 
   await requireOperator();
   const told = z.union([z.literal(""), z.enum(VIDEO_FORMS)]).safeParse(form.get("form") ?? "");
   if (!told.success) return fail("Esa forma de contar no existe.");
-  if (!told.data) return sendBack(form, "rejectScript");
-  // Changing the form is a reason on its own: the note is optional then.
+  // The field is only sent when the operator changed «tu aporte».
+  const opinion = z
+    .string()
+    .trim()
+    .max(CONTRIBUTION_MAX)
+    .optional()
+    .safeParse(form.get("contribution") ?? undefined);
+  if (!opinion.success) {
+    return fail(`Tu aporte es muy largo (máximo ${CONTRIBUTION_MAX} caracteres).`);
+  }
+  const newForm = told.data || undefined;
+  const contribution = opinion.data;
+  if (!newForm && contribution === undefined) return sendBack(form, "rejectScript");
+  // A new form or a new opinion is a reason on its own: the note is optional then.
+  const reasons = [
+    newForm && `Contalo como «${FORM_LABELS[newForm]}».`,
+    contribution !== undefined && (contribution ? "Sumá mi aporte." : "Sacá mi aporte."),
+  ].filter(Boolean);
   const written = form.get("note")?.toString().trim();
-  const note = checkRejectionNote(written || `Contalo como «${FORM_LABELS[told.data]}».`);
-  return note.ok ? answer(form, "rejectScript", note.note, told.data) : fail(note.reason);
+  const note = checkRejectionNote(written || reasons.join(" "));
+  return note.ok
+    ? answer(form, "rejectScript", note.note, newForm, contribution)
+    : fail(note.reason);
 }
 
 export async function approveVideoAction(_previous: DeskState, form: FormData): Promise<DeskState> {

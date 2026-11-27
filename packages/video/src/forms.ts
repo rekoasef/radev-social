@@ -44,7 +44,9 @@ export function checkForm(g: FormedScript, request?: FormRequest): string[] {
   const total = g.scenes.length;
   const beats = g.scenes.map((s) => s.beat);
   const allowed: readonly VideoBeat[] = FORM_BEATS[form];
-  const bad = beats.flatMap((b, i) => (b && allowed.includes(b) ? [] : [i]));
+  // The operator's opinion fits any form, and does not count in its proportions (ADR 0031).
+  const bad = beats.flatMap((b, i) => (b === "aporte" || (b && allowed.includes(b)) ? [] : [i]));
+  const told = beats.filter((b) => b !== "aporte").length;
   for (const i of bad) {
     errors.push(
       `scenes.${i}.beat › en «${form}» el papel tiene que ser uno de: ${allowed.join(", ")}`,
@@ -63,7 +65,7 @@ export function checkForm(g: FormedScript, request?: FormRequest): string[] {
   };
 
   if (form === "cronologia") {
-    atLeast("hecho", Math.ceil(total * 0.6));
+    atLeast("hecho", Math.ceil(told * 0.6));
   }
 
   if (form === "misterio") {
@@ -76,9 +78,10 @@ export function checkForm(g: FormedScript, request?: FormRequest): string[] {
     if (reveal === undefined) {
       errors.push("scenes › «misterio» necesita una escena «revelacion» en el último tercio");
     } else {
-      if ((reveal + 1) / total <= 0.6) {
+      const opinions = at("aporte").filter((i) => i < reveal).length;
+      if ((reveal - opinions + 1) / told <= 0.6) {
         errors.push(
-          `scenes.${reveal}.beat › la primera «revelacion» va en el último tercio (de la escena ${Math.floor(total * 0.6) + 1} en adelante), no en la ${reveal + 1}`,
+          `scenes.${reveal}.beat › la primera «revelacion» va en el último tercio (de la escena ${Math.floor(told * 0.6) + opinions + 1} en adelante), no en la ${reveal + 1}`,
         );
       }
       const clues = at("pista").filter((i) => i < reveal).length;
@@ -116,7 +119,7 @@ export function checkForm(g: FormedScript, request?: FormRequest): string[] {
     if (first !== undefined && facts.some((i) => i > first)) {
       errors.push("scenes › todas las escenas «hecho» van antes de la primera «despues»");
     }
-    atLeast("despues", Math.ceil(total * 0.6));
+    atLeast("despues", Math.ceil(told * 0.6));
     if (request) {
       const cards = after.filter((i) => g.scenes[i]?.graphics.some((x) => x.kind === "nombre"));
       if (cards.length < 2) {

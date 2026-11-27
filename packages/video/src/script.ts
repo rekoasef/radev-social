@@ -152,7 +152,41 @@ export type CheckOptions = {
   repeats?: "free";
   /** Only the Script office: which form the script has to use (ADR 0030). */
   form?: FormRequest;
+  /**
+   * Only the Script office: whether the operator wrote «tu aporte» (ADR 0031). true: the script
+   * carries it; false: it carries none. Absent: whatever the script already has.
+   */
+  contribution?: boolean;
 };
+
+// «creo» with its accent rules out «creó»; «mí» rules out «mi hermano».
+const FIRST_PERSON =
+  /(?<!\p{L})(para mí|a mí|a mi juicio|mi opinión|yo|creo|pienso|sospecho|me parece|me llama|me cuesta|me quedo|me inclino|me impresiona)(?!\p{L})/iu;
+
+/** The scenes with the operator's opinion: 1 or 2, in the middle, in first person. */
+function checkContribution(g: Script, expected: boolean | undefined): string[] {
+  const errors: string[] = [];
+  const opinions = g.scenes.flatMap((s, i) => (s.beat === "aporte" ? [i] : []));
+  if (expected === true && (opinions.length < 1 || opinions.length > 2)) {
+    errors.push(
+      `scenes › el aporte del operador va en 1 o 2 escenas con \`beat\` «aporte»; hay ${opinions.length}`,
+    );
+  }
+  if (expected === false && opinions.length > 0) {
+    errors.push("scenes › este video no tiene aporte del operador: sacá las escenas «aporte»");
+  }
+  for (const i of opinions) {
+    if (i === 0 || i === g.scenes.length - 1) {
+      errors.push(`scenes.${i}.beat › el «aporte» nunca es la primera ni la última escena`);
+    }
+    if (!FIRST_PERSON.test(g.scenes[i]?.narration ?? "")) {
+      errors.push(
+        `scenes.${i}.narration › la escena «aporte» es una opinión en primera persona: empezala con «para mí», «creo que» o «me parece que»`,
+      );
+    }
+  }
+  return errors;
+}
 
 /** Errores de sentido del guion (vacío = bien). */
 export function checkScript(
@@ -161,7 +195,10 @@ export function checkScript(
   dossierText: string,
   options: CheckOptions = {},
 ): string[] {
-  const errors: string[] = checkForm(g, options.form);
+  const errors: string[] = [
+    ...checkForm(g, options.form),
+    ...checkContribution(g, options.contribution),
+  ];
   const ids = new Set(candidates.map((c) => c.id));
   const used = new Map<string, number>();
   const dossierNums = new Set(numbersIn(dossierText));

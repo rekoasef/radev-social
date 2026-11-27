@@ -119,3 +119,39 @@ describe("which form", () => {
     expect(aiScriptSchema.safeParse(old).success).toBe(false);
   });
 });
+
+describe("«tu aporte» inside a form", () => {
+  const opinion = (beats: VideoBeat[], at: number): VideoBeat[] => [
+    ...beats.slice(0, at),
+    "aporte",
+    ...beats.slice(at),
+  ];
+
+  it("fits every form", () => {
+    for (const [form, beats] of [
+      ["cronologia", chronology],
+      ["misterio", mystery],
+      ["contraste", contrast],
+      ["despues", after],
+    ] as const) {
+      expect(checkForm(told(form, opinion(beats, beats.length - 1), [3, 6]), {})).toEqual([]);
+    }
+  });
+
+  it("does not count in the proportions: it neither helps nor hurts", () => {
+    // 6 of 10 scenes are facts: enough with the opinions left out of the count.
+    const beats: VideoBeat[] = ["gancho", ...times("pregunta", 2), ...times("hecho", 6), "cierre"];
+    expect(checkForm(told("cronologia", opinion(opinion(beats, 4), 5)))).toEqual([]);
+    // An opinion before the answer does not push it into the last third.
+    const early: VideoBeat[] = [
+      "gancho",
+      ...times("pista", 4),
+      "aporte",
+      "aporte",
+      "revelacion",
+      ...times("pista", 3),
+      "cierre",
+    ];
+    expect(errors(told("misterio", early))).toContain("último tercio");
+  });
+});

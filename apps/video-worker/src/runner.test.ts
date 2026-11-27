@@ -16,6 +16,7 @@ const video = (over: Partial<Video> = {}): Video => ({
   language: "es",
   voiceId: null,
   form: null,
+  contribution: null,
   stage: "researching",
   progress: null,
   pausedAt: null,

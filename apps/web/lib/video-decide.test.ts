@@ -36,6 +36,20 @@ describe("decideAndQueue", () => {
   });
 });
 
+describe("decideAndQueue: «tu aporte»", () => {
+  it("a return carries the operator's opinion to the database", async () => {
+    const d = deps(true);
+    const decision = {
+      event: "rejectScript",
+      note: "Sumá mi aporte.",
+      contribution: "para mí nadie miraba",
+    } as const;
+    await decideAndQueue(d, "v1", 2, decision);
+    expect(d.decide).toHaveBeenCalledWith("v1", 2, decision);
+    expect(d.queue).toHaveBeenCalledWith("v1", "scripting");
+  });
+});
+
 describe("decideAndQueue: the video desk", () => {
   it("approving the video queues nothing", async () => {
     const d = deps(true);

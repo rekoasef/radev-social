@@ -81,6 +81,7 @@ export function reviewView(g: Script, candidates: ImageCandidate[]) {
       exact: s.exact,
       whole: s.whole,
       graphics: s.graphics,
+      ...(s.beat === "aporte" ? { opinion: true } : {}),
     })),
     facts: g.facts,
   };
